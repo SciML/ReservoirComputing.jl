@@ -7,6 +7,12 @@ The primary goal is to replicate [these](https://arxiv.org/pdf/1710.07313.pdf) r
 
 ![Lorenz](https://github.com/MartinuzziFrancesco/EchoStateNetwork/blob/master/comp.png)
 
+It's also interesting to taka a look at the attractors:
+
+![attractors](https://github.com/MartinuzziFrancesco/EchoStateNetwork/blob/master/attractor_com.png)
+
+The predicted one actually shows a similar behaviour to the real one.
+
 After further verifying the correctness of my implementation the goal is to undergo a deep analisys on the construction choices and to implement different systems as reservoir, based on Cellular Automata (ex: The Game of Life), as described in [this](https://arxiv.org/pdf/1410.0162.pdf) paper. 
 
 To do list
