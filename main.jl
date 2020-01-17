@@ -29,6 +29,16 @@ states = states_matrix(W, W_in, data, res_size, train_len, alpha)
 W_out = esn_train(beta, res_size, states, data, nonlin_alg)
 output = esn_predict(in_size, predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
 
+#plots and images
 comp = plot(transpose(output),layout=(3,1), label="predicted")
 comp = plot!(transpose(datan[:, train_len:train_len+predict_len-1]),layout=(3,1), label="actual")
 savefig(comp, "comp")
+
+sf = plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
+sf2 = plot(transpose(datan[:, train_len:train_len+predict_len-1])[:,1], 
+           transpose(datan[:, train_len:train_len+predict_len-1])[:,2], 
+           transpose(datan[:, train_len:train_len+predict_len-1])[:,3], 
+           label="actual")
+           
+final = plot(sf, sf2, layout=(1,2), label = ["predicted" "actual"])
+savefig(final, "attractor_com")

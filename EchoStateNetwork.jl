@@ -144,5 +144,5 @@ function esn_predict(in_size::Int,
     end
     return output
 end
-end
+end #module
 
