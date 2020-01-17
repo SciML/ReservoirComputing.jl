@@ -2,8 +2,10 @@ module EchoStateNetwork
 using SparseArrays
 using LinearAlgebra
 using CSV
+using DifferentialEquations
 
-export read_data, init_reservoir, init_input_layer, states_matrix, esn_train, esn_predict
+
+export read_data, create_data, init_reservoir, init_input_layer, states_matrix, esn_train, esn_predict
 
 function read_data(filepath, 
         shift::Int, 
@@ -11,6 +13,21 @@ function read_data(filepath,
         
     dataf = CSV.read(filepath, header=false, )
     datan = transpose(Matrix(dataf))
+    data = datan[:, shift:shift+train_len-1]
+    return data, datan
+end
+
+function create_data(u0, tspan, p, shift, train_len)
+    function lorenz(du,u,p,t)
+        du[1] = p[1]*(u[2]-u[1])
+        du[2] = u[1]*(p[2]-u[3]) - u[2]
+        du[3] = u[1]*u[2] - p[3]*u[3]
+    end
+    
+    prob = ODEProblem(lorenz, u0, tspan, p)  
+    sol = solve(prob, Euler(),dt=0.02)   
+    v = sol.u
+    datan = Matrix(hcat(v...))
     data = datan[:, shift:shift+train_len-1]
     return data, datan
 end
