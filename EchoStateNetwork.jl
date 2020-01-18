@@ -43,6 +43,8 @@ function init_reservoir(res_size::Int,
     
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
+    W = 2.0 .*(W.-0.5)
+    replace!(W, -1.0=>0.0)
     rho_w = maximum(abs.(eigvals(W)))
     W .*= radius/rho_w
     return W
