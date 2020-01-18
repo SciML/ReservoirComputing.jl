@@ -104,8 +104,7 @@ function esn_train(beta::Float64,
             end
          end
     end
-    U_inv = inv(states_new*transpose(states_new)+i_mat)
-    W_out = Matrix(transpose(U_inv*(states_new*transpose(data))))
+    W_out = (data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
     return W_out
 end
 
