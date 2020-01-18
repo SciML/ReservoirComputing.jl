@@ -7,7 +7,7 @@ using DifferentialEquations
 
 export read_data, create_data, init_reservoir, init_input_layer, states_matrix, esn_train, esn_predict
 
-function read_data(filepath, 
+function read_data(filepath::String, 
         shift::Int, 
         train_len::Int)
         
@@ -17,7 +17,12 @@ function read_data(filepath,
     return data, datan
 end
 
-function create_data(u0, tspan, p, shift, train_len)
+function create_data(u0::Array{Float64}, 
+        tspan::Tuple{Float64, Float64}, 
+        p::Array{Float64}, 
+        shift::Int, 
+        train_len::Int)
+        
     function lorenz(du,u,p,t)
         du[1] = p[1]*(u[2]-u[1])
         du[2] = u[1]*(p[2]-u[3]) - u[2]
