@@ -2,40 +2,9 @@ module EchoStateNetwork
 using SparseArrays
 using LinearAlgebra
 using CSV
-using DifferentialEquations
 
 
-export read_data, create_data, init_reservoir, init_input_layer, states_matrix, esn_train, esn_predict
-
-function read_data(filepath::String, 
-        shift::Int, 
-        train_len::Int)
-        
-    dataf = CSV.read(filepath, header=false, )
-    datan = transpose(Matrix(dataf))
-    data = datan[:, shift:shift+train_len-1]
-    return data, datan
-end
-
-function create_data(u0::Array{Float64}, 
-        tspan::Tuple{Float64, Float64}, 
-        p::Array{Float64}, 
-        shift::Int, 
-        train_len::Int)
-        
-    function lorenz(du,u,p,t)
-        du[1] = p[1]*(u[2]-u[1])
-        du[2] = u[1]*(p[2]-u[3]) - u[2]
-        du[3] = u[1]*u[2] - p[3]*u[3]
-    end
-    
-    prob = ODEProblem(lorenz, u0, tspan, p)  
-    sol = solve(prob, Euler(),dt=0.02)   
-    v = sol.u
-    datan = Matrix(hcat(v...))
-    data = datan[:, shift:shift+train_len-1]
-    return data, datan
-end
+export init_reservoir, init_input_layer, states_matrix, esn_train, esn_predict
 
 function init_reservoir(res_size::Int, 
         radius::Float64, 
@@ -59,7 +28,6 @@ function init_input_layer(res_size::Int,
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
-    #W_in = (2*sigma).*(rand(Float64, res_size, in_size).-0.5)
     return W_in
 end
 
@@ -107,6 +75,7 @@ function esn_train(beta::Float64,
          end
     end
     W_out = (data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
+
     return W_out
 end
 
@@ -150,5 +119,6 @@ function esn_predict(in_size::Int,
     end
     return output
 end
+
 end #module
 
