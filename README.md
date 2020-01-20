@@ -17,6 +17,6 @@ After further verifying the correctness of my implementation the goal is to unde
 
 To do list
 * Calculate Lyapunov exponents 
-* IMplement variable number of outputs as in [this](https://aip.scitation.org/doi/10.1063/1.4979665) paper
+* Implement variable number of outputs as in [this](https://aip.scitation.org/doi/10.1063/1.4979665) paper
 * Study the difference in the non linear transformation algorithms
 * Implement different systems for the reservoir
