@@ -1,4 +1,4 @@
-using EchoStateNetwork
+using ReservoirComputing
 using ParameterizedFunctions
 using DifferentialEquations
 using Plots
@@ -40,9 +40,10 @@ test = data[:, train_len:train_len+predict_len-1]
 #create echo state network  
 W = init_reservoir(res_size, radius, degree)
 W_in = init_input_layer(res_size, in_size, sigma)
-states = states_matrix(W, W_in, train, res_size, train_len, alpha,)
-W_out = esn_train(beta, res_size, states, train, nonlin_alg)
-output = esn_predict(in_size, predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
+
+states = states_matrix(W, W_in, train, alpha)
+W_out = esn_train(states, train, beta, nonlin_alg)
+output = esn_predict(predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
 
 #plots and images
 comp = plot(transpose(output),layout=(3,1), label="predicted")
