@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
-uuid = "b0e6014a-3d0d-11ea-03a2-4de12a57c7be"
+uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
+authors = ["Francesco Martinuzzi"]
 version = "0.1.0"
-authors = ["MartinuzziFrancesco <martinuzzi.francesco@gmail.com>"]
 
 [deps]
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
@@ -18,4 +18,3 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "ParameterizedFunctions", "DifferentialEquations", "Plots"]
-

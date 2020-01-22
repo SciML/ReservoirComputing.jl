@@ -1,5 +1,7 @@
-# EchoStateNetwork
-Echo State Network implementation in Julia
+# ReservoirComputing.jl
+Reservoir computing utilities
+
+## Echo State Network
 
 The code is based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non linear transformation algorithms T1, T2 and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
 
