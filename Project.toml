@@ -1,7 +1,7 @@
-authors = ["MartinuzziFrancesco <martinuzzi.francesco@gmail.com>"]
 name = "ReservoirComputing"
 uuid = "b0e6014a-3d0d-11ea-03a2-4de12a57c7be"
 version = "0.1.0"
+authors = ["MartinuzziFrancesco <martinuzzi.francesco@gmail.com>"]
 
 [deps]
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
