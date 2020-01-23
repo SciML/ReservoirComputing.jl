@@ -1,7 +1,8 @@
-function init_reservoir(res_size::Int, 
+function init_reservoir(approx_res_size::Int, 
         radius::Float64, 
         degree::Int)
     
+    res_size = Int(floor(approx_res_size/N)*N)
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
     W = 2.0 .*(W.-0.5)
@@ -11,10 +12,10 @@ function init_reservoir(res_size::Int,
     return W
 end
 
-function init_input_layer(res_size::Int, 
+function init_input_layer(approx_res_size::Int, 
         in_size::Int, 
         sigma::Float64)
-    
+    res_size = Int(floor(approx_res_size/N)*N)
     W_in = zeros(Float64, res_size, in_size)
     q = Int(res_size/in_size)
     for i=1:in_size

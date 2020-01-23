@@ -11,7 +11,6 @@ p = [10.0,28.0,8/3]
 shift = 1
 approx_res_size = 300
 N = 3
-res_size = Int(floor(approx_res_size/N)*N)
 radius = 1.2
 degree = 6
 sigma = 0.1
@@ -38,8 +37,8 @@ train = data[:, shift:shift+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #create echo state network  
-W = init_reservoir(res_size, radius, degree)
-W_in = init_input_layer(res_size, in_size, sigma)
+W = init_reservoir(approx_res_size, radius, degree)
+W_in = init_input_layer(approx_res_size, in_size, sigma)
 
 states = states_matrix(W, W_in, train, alpha)
 W_out = esn_train(states, train, beta, nonlin_alg)
