@@ -1,4 +1,5 @@
 using Test
+using ReservoirComputing
 
 @testset "ReservoirComputing" begin
     tests = [
