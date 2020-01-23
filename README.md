@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl.svg?branch=master)](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl)
+
 # ReservoirComputing.jl
 Reservoir computing utilities
 
