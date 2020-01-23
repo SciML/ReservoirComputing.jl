@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl.svg?branch=master)](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/v7kogtjqt23id911/branch/master?svg=true)](https://ci.appveyor.com/project/MartinuzziFrancesco/reservoircomputing-jl/branch/master)
 [![codecov](https://codecov.io/gh/MartinuzziFrancesco/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/MartinuzziFrancesco/ReservoirComputing.jl)
 
 # ReservoirComputing.jl
