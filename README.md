@@ -3,25 +3,81 @@
 
 # ReservoirComputing.jl
 Reservoir computing utilities
+## Echo State Network example
+To show how to use some of the functions contained in ReservoirComputing.jl we will illustrate an example also shown in literature: reproducing the Lorenz attractor.
+First we have to define the Lorenz system and the parameters we are going to use
 
-## Echo State Network
+    using ParameterizedFunctions
+    using DifferentialEquations
+     
+    #lorenz system parameters
+    u0 = [1.0,0.0,0.0]                       
+    tspan = (0.0,200.0)                      
+    p = [10.0,28.0,8/3]
+    shift = 1 #needed for the data later
+    #define lorenz system 
+    function lorenz(du,u,p,t)
+        du[1] = p[1]*(u[2]-u[1])
+        du[2] = u[1]*(p[2]-u[3]) - u[2]
+        du[3] = u[1]*u[2] - p[3]*u[3]
+    end
+    #solve and take data
+    prob = ODEProblem(lorenz, u0, tspan, p)  
+    sol = solve(prob, AB4(), dt=0.02)   
+    v = sol.u
+    data = Matrix(hcat(v...))
+    train = data[:, shift:shift+train_len-1]
+    test = data[:, train_len:train_len+predict_len-1]
+    
+Now that we have the data we can initialize the parameters for the echo state network
 
-The code is based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non linear transformation algorithms T1, T2 and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
+    approx_res_size = 300
+    N = 3
+    radius = 1.2
+    degree = 6
+    sigma = 0.1
+    in_size = N
+    out_size = N
+    train_len = 5000
+    predict_len = 1250
+    beta = 0.0
+    alpha = 1.0
+    nonlin_alg = "T2"
 
-The primary goal is to replicate [these](https://arxiv.org/pdf/1710.07313.pdf) results, so the parameters are set as they are described in the paper. The results behave as expected, being able to reproduce the timeseries in the short term and reproducing the climate on the long term. To actually be sure of the reproduction of the results of the paper first I'll have to calculate the Lyapunov exponents thou. Below are the results for the Lorenz System
+Now it's time to initiate the reservoir, input matrix and states matrix
 
-![Lorenz](https://github.com/MartinuzziFrancesco/EchoStateNetwork/blob/master/comp.png)
+    using ReservoirComputing
+    W = init_reservoir(approx_res_size, radius, degree)
+    W_in = init_input_layer(approx_res_size, in_size, sigma)
+    states = states_matrix(W, W_in, train, alpha)
+    
+The echo state network can now be trained and tested:
 
-It's also interesting to taka a look at the attractors:
+    W_out = esn_train(states, train, beta, nonlin_alg)
+    output = esn_predict(predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
+    
+ouput is the matrix with the predicted trajectories that can be easily plotted 
 
-![attractors](https://github.com/MartinuzziFrancesco/EchoStateNetwork/blob/master/attractor_com.png)
+    using Plots
+    plot(transpose(output),layout=(3,1), label="predicted")
+    plot!(transpose(test),layout=(3,1), label="actual")
 
-The predicted one actually shows a similar behaviour to the real one.
+![Lorenz](https://user-images.githubusercontent.com/10376688/72996946-dbaf3600-3dfb-11ea-8d5d-3a7356780b5e.png)
 
-After further verifying the correctness of my implementation the goal is to undergo a deep analisys on the construction choices and to implement different systems as reservoir, based on Cellular Automata (ex: The Game of Life), as described in [this](https://arxiv.org/pdf/1410.0162.pdf) paper. 
+One can also visualize the phase space of the attractor and the comparison with the actual one:
 
-To do list
-* Calculate Lyapunov exponents 
+    plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
+    plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
+
+![attractor](https://user-images.githubusercontent.com/10376688/72997095-1913c380-3dfc-11ea-9702-a9734a375b96.png)
+
+The results are in line with the literature.
+
+The code is partly based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non linear transformation algorithms T1, T2 and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
+
+
+## To do list
+* More user-friendly functions
+* More detailed readme
 * Implement variable number of outputs as in [this](https://aip.scitation.org/doi/10.1063/1.4979665) paper
-* Study the difference in the non linear transformation algorithms
-* Implement different systems for the reservoir
+* Implement different systems for the reservoir (like [this](https://arxiv.org/pdf/1410.0162.pdf) paper)
