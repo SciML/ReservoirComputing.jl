@@ -37,7 +37,7 @@ train = data[:, shift:shift+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #create echo state network  
-W = init_reservoir(approx_res_size, radius, degree)
+W = init_reservoir(approx_res_size, in_size, radius, degree)
 W_in = init_input_layer(approx_res_size, in_size, sigma)
 
 states = states_matrix(W, W_in, train, alpha)
