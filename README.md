@@ -47,14 +47,21 @@ Now that we have the data we can initialize the parameters for the echo state ne
 Now it's time to initiate the reservoir, input matrix and states matrix
 
     using ReservoirComputing
-    W = init_reservoir(approx_res_size, radius, degree)
-    W_in = init_input_layer(approx_res_size, in_size, sigma)
-    states = states_matrix(W, W_in, train, alpha)
+    esn = ESN(approx_res_size,
+        in_size,
+        out_size,
+        train,
+        degree,
+        sigma,
+        alpha,
+        beta,
+        radius,
+        nonlin_alg)
     
 The echo state network can now be trained and tested:
 
-    W_out = esn_train(states, train, beta, nonlin_alg)
-    output = esn_predict(predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
+    W_out = ESNtrain(esn)
+    output = ESNpredict(esn, predict_len, W_out)
     
 ouput is the matrix with the predicted trajectories that can be easily plotted 
 
