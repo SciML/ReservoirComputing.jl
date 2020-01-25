@@ -40,13 +40,11 @@ Now that we have the data we can initialize the parameters for the echo state ne
     sigma = 0.1
     in_size = N
     out_size = N
-    train_len = 5000
-    predict_len = 1250
     beta = 0.0
     alpha = 1.0
     nonlin_alg = "T2"
 
-Now it's time to initiate the reservoir, input matrix and states matrix
+Now it's time to initiate the echo state network
 
     using ReservoirComputing
     esn = ESN(approx_res_size,
