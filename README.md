@@ -14,7 +14,6 @@ First we have to define the Lorenz system and the parameters we are going to use
     u0 = [1.0,0.0,0.0]                       
     tspan = (0.0,200.0)                      
     p = [10.0,28.0,8/3]
-    shift = 1 #needed for the data later
     #define lorenz system 
     function lorenz(du,u,p,t)
         du[1] = p[1]*(u[2]-u[1])
@@ -26,6 +25,9 @@ First we have to define the Lorenz system and the parameters we are going to use
     sol = solve(prob, AB4(), dt=0.02)   
     v = sol.u
     data = Matrix(hcat(v...))
+    shift = 1
+    train_len = 5000
+    predict_len = 1250
     train = data[:, shift:shift+train_len-1]
     test = data[:, train_len:train_len+predict_len-1]
     
