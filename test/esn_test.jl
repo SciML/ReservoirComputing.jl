@@ -36,13 +36,22 @@ data = Matrix(hcat(v...))
 train = data[:, shift:shift+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
-#create echo state network  
-W = init_reservoir(approx_res_size, in_size, radius, degree)
-W_in = init_input_layer(approx_res_size, in_size, sigma)
 
-states = states_matrix(W, W_in, train, alpha)
-W_out = esn_train(states, train, beta, nonlin_alg)
-output = esn_predict(predict_len, W_in, W, W_out, states, alpha, nonlin_alg)
+
+#create echo state network  
+esn = ESN(approx_res_size,
+    in_size,
+    out_size,
+    train,
+    degree,
+    sigma,
+    alpha,
+    beta,
+    radius,
+    nonlin_alg)
+
+W_out = ESNtrain(esn)
+output = ESNpredict(esn, predict_len, W_out)
 
 #plots and images
 comp = plot(transpose(output),layout=(3,1), label="predicted")
