@@ -1,44 +1,44 @@
-struct ESN
-    res_size::Int
-    in_size::Int
-    out_size::Int
-    train_data::Matrix{Float64}
-    degree::Int
-    sigma::Float64
-    alpha::Float64
-    beta::Float64
-    radius::Float64
+struct ESN{T<:AbstractFloat}
+    res_size::Integer
+    in_size::Integer
+    out_size::Integer
+    train_data::Matrix{T}
+    degree::Integer
+    sigma::T
+    alpha::T
+    beta::T
+    radius::T
     nonlin_alg::String
-    W::Matrix{Float64}
-    W_in::Matrix{Float64}
-    states::Matrix{Float64}
+    W::Matrix{T}
+    W_in::Matrix{T}
+    states::Matrix{T}
     
-    function ESN(approx_res_size::Int,
-            in_size::Int, 
-            out_size::Int, 
-            train_data::Matrix{Float64}, 
-            degree::Int, 
-            sigma::Float64,
-            alpha::Float64, 
-            beta::Float64,
-            radius::Float64,
-            nonlin_alg::String)
+    function ESN(approx_res_size::Integer,
+            in_size::Integer, 
+            out_size::Integer, 
+            train_data::Matrix{T}, 
+            degree::Integer, 
+            sigma::T,
+            alpha::T, 
+            beta::T,
+            radius::T,
+            nonlin_alg::String) where T<:AbstractFloat
 
         res_size = Int(floor(approx_res_size/in_size)*in_size)
         W = init_reservoir(res_size, in_size, radius, degree)
         W_in = init_input_layer(res_size, in_size, sigma)
         states = states_matrix(W, W_in, train_data, alpha)
         
-        return new(res_size, in_size, out_size, train_data, 
+        return new{T}(res_size, in_size, out_size, train_data, 
         degree, sigma, alpha, beta, radius, nonlin_alg, W, W_in, states)
     end
 end
 
 
-function init_reservoir(res_size::Int, 
-        in_size::Int,
+function init_reservoir(res_size::Integer, 
+        in_size::Integer,
         radius::Float64, 
-        degree::Int)
+        degree::Integer)
     
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
@@ -49,12 +49,12 @@ function init_reservoir(res_size::Int,
     return W
 end
 
-function init_input_layer(res_size::Int, 
-        in_size::Int, 
+function init_input_layer(res_size::Integer, 
+        in_size::Integer, 
         sigma::Float64)
         
     W_in = zeros(Float64, res_size, in_size)
-    q = Int(res_size/in_size)
+    q = Integer(res_size/in_size)
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
@@ -106,7 +106,7 @@ function ESNtrain(esn::ESN)
 end
 
 function ESNpredict(esn::ESN, 
-    predict_len::Int,
+    predict_len::Integer,
     W_out::Matrix{Float64})
     
     output = zeros(Float64, esn.in_size, predict_len)
