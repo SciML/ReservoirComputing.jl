@@ -24,7 +24,7 @@ struct ESN{T<:AbstractFloat}
             radius::T,
             nonlin_alg::String) where T<:AbstractFloat
 
-        res_size = Int(floor(approx_res_size/in_size)*in_size)
+        res_size = Integer(floor(approx_res_size/in_size)*in_size)
         W = init_reservoir(res_size, in_size, radius, degree)
         W_in = init_input_layer(res_size, in_size, sigma)
         states = states_matrix(W, W_in, train_data, alpha)
