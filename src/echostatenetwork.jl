@@ -53,7 +53,7 @@ function init_input_layer(res_size::Integer,
         in_size::Integer,
         sigma::Float64)
 
-    W_in = Matrix{Float64}(res_size, in_size)
+    W_in = zeros(Float64, res_size, in_size)
     q = Integer(res_size/in_size)
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
