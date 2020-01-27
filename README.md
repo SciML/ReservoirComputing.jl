@@ -6,76 +6,76 @@ Reservoir computing utilities
 ## Echo State Network example
 To show how to use some of the functions contained in ReservoirComputing.jl we will illustrate an example also shown in literature: reproducing the Lorenz attractor.
 First we have to define the Lorenz system and the parameters we are going to use
-
-    using ParameterizedFunctions
-    using DifferentialEquations
+```julia
+using ParameterizedFunctions
+using DifferentialEquations
      
-    #lorenz system parameters
-    u0 = [1.0,0.0,0.0]                       
-    tspan = (0.0,200.0)                      
-    p = [10.0,28.0,8/3]
-    #define lorenz system 
-    function lorenz(du,u,p,t)
-        du[1] = p[1]*(u[2]-u[1])
-        du[2] = u[1]*(p[2]-u[3]) - u[2]
-        du[3] = u[1]*u[2] - p[3]*u[3]
-    end
-    #solve and take data
-    prob = ODEProblem(lorenz, u0, tspan, p)  
-    sol = solve(prob, AB4(), dt=0.02)   
-    v = sol.u
-    data = Matrix(hcat(v...))
-    shift = 1
-    train_len = 5000
-    predict_len = 1250
-    train = data[:, shift:shift+train_len-1]
-    test = data[:, train_len:train_len+predict_len-1]
-    
+#lorenz system parameters
+u0 = [1.0,0.0,0.0]                       
+tspan = (0.0,200.0)                      
+p = [10.0,28.0,8/3]
+#define lorenz system 
+function lorenz(du,u,p,t)
+    du[1] = p[1]*(u[2]-u[1])
+    du[2] = u[1]*(p[2]-u[3]) - u[2]
+    du[3] = u[1]*u[2] - p[3]*u[3]
+end
+#solve and take data
+prob = ODEProblem(lorenz, u0, tspan, p)  
+sol = solve(prob, AB4(), dt=0.02)   
+v = sol.u
+data = Matrix(hcat(v...))
+shift = 1
+train_len = 5000
+predict_len = 1250
+train = data[:, shift:shift+train_len-1]
+test = data[:, train_len:train_len+predict_len-1]
+```
 Now that we have the data we can initialize the parameters for the echo state network
-
-    approx_res_size = 300
-    N = 3
-    radius = 1.2
-    degree = 6
-    sigma = 0.1
-    in_size = N
-    out_size = N
-    beta = 0.0
-    alpha = 1.0
-    nonlin_alg = "T2"
-
+```julia
+approx_res_size = 300
+N = 3
+radius = 1.2
+degree = 6
+sigma = 0.1
+in_size = N
+out_size = N
+beta = 0.0
+alpha = 1.0
+nonlin_alg = "T2"
+```
 Now it's time to initiate the echo state network
-
-    using ReservoirComputing
-    esn = ESN(approx_res_size,
-        in_size,
-        out_size,
-        train,
-        degree,
-        sigma,
-        alpha,
-        beta,
-        radius,
-        nonlin_alg)
-    
+```julia
+using ReservoirComputing
+esn = ESN(approx_res_size,
+    in_size,
+    out_size,
+    train,
+    degree,
+    sigma,
+    alpha,
+    beta,
+    radius,
+    nonlin_alg)
+```
 The echo state network can now be trained and tested:
-
-    W_out = ESNtrain(esn)
-    output = ESNpredict(esn, predict_len, W_out)
-    
+```julia
+W_out = ESNtrain(esn)
+output = ESNpredict(esn, predict_len, W_out)
+```
 ouput is the matrix with the predicted trajectories that can be easily plotted 
-
-    using Plots
-    plot(transpose(output),layout=(3,1), label="predicted")
-    plot!(transpose(test),layout=(3,1), label="actual")
-
+```julia
+using Plots
+plot(transpose(output),layout=(3,1), label="predicted")
+plot!(transpose(test),layout=(3,1), label="actual")
+```
 ![Lorenz](https://user-images.githubusercontent.com/10376688/72996946-dbaf3600-3dfb-11ea-8d5d-3a7356780b5e.png)
 
 One can also visualize the phase space of the attractor and the comparison with the actual one:
-
-    plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
-    plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
-
+```julia
+plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
+plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
+```
 ![attractor](https://user-images.githubusercontent.com/10376688/72997095-1913c380-3dfc-11ea-9702-a9734a375b96.png)
 
 The results are in line with the literature.
