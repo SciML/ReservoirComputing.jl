@@ -140,3 +140,50 @@ function ESNpredict(esn::ESN,
     end
     return output
 end
+    
+function ESNsingle_predict(esn::ESN,
+    predict_len::Integer,
+    partial::Array{Float64},
+    test_data::Matrix{Float64},
+    W_out::Matrix{Float64})
+
+    output = zeros(Float64, esn.in_size, predict_len)
+    out_new = zeros(Float64, esn.out_size)
+    x = esn.states[:, end]
+    for i=1:predict_len
+        x_new = copy(x)
+        if esn.nonlin_alg == nothing
+            x_new = x_new
+        elseif esn.nonlin_alg == "T1"
+            for j=1:size(x_new, 1)
+                if mod(j, 2)!=0
+                    x_new[j] = copy(x[j]*x[j])
+                end
+            end
+        elseif esn.nonlin_alg == "T2"
+            for j=2:size(x_new, 1)-1
+                if mod(j, 2)!=0
+                    x_new[j] = copy(x[j-1]*x[j-2])
+                end
+            end
+        elseif esn.nonlin_alg == "T3"
+            for j=2:size(x_new, 1)-1
+                if mod(j, 2)!=0
+                    x_new[j] = copy(x[j-1]*x[j+1])
+                end
+            end
+        end
+        out = (W_out*x_new)
+        for j=1:esn.out_size
+            if test_data[j,:][i] == partial[i]
+                out_new = copy(test_data[:,i])
+                out_new[j] = out[j]
+                
+            end
+        end
+        output[:, i] = out_new        
+        x = (1-esn.alpha).*x + esn.alpha*tanh.((esn.W*x)+(esn.W_in*out_new))
+    end
+    return output
+end
+
