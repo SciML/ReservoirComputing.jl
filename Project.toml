@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 authors = ["Francesco Martinuzzi"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
