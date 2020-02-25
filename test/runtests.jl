@@ -1,14 +1,5 @@
 using Test
-using ReservoirComputing
+using SafeTestsets
+#using ReservoirComputing
 
-@testset "ReservoirComputing" begin
-    tests = [
-        "esn_test",
-    ]
-    res = map(tests) do t
-        @eval module $(Symbol("Test_", t))
-            include($t * ".jl")
-        end
-        return
-    end
-end
+@time @safetestset "Constructor" begin include("esn.jl") end

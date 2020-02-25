@@ -79,7 +79,7 @@ function ESNtrain(esn::ESN)
 
     i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
     states_new = copy(esn.states)
-    if esn.nonlin_alg == nothing
+    if esn.nonlin_alg == "None"
         states_new = states_new
     elseif esn.nonlin_alg == "T1"
         for i=1:size(states_new, 1)
@@ -113,7 +113,7 @@ function ESNpredict(esn::ESN,
     x = esn.states[:, end]
     for i=1:predict_len
         x_new = copy(x)
-        if esn.nonlin_alg == nothing
+        if esn.nonlin_alg == "None"
             x_new = x_new
         elseif esn.nonlin_alg == "T1"
             for j=1:size(x_new, 1)
@@ -152,7 +152,7 @@ function ESNsingle_predict(esn::ESN,
     x = esn.states[:, end]
     for i=1:predict_len
         x_new = copy(x)
-        if esn.nonlin_alg == nothing
+        if esn.nonlin_alg == "None"
             x_new = x_new
         elseif esn.nonlin_alg == "T1"
             for j=1:size(x_new, 1)
