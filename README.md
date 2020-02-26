@@ -5,11 +5,13 @@
 Reservoir computing utilities
 ## Installation
 Usual Julia package installation. Run on the Julia terminal:
-
-    using Pkg
-    Pkg.add("ReservoirComputing")
-
+```julia
+julia> using Pkg
+julia> Pkg.add("ReservoirComputing")
+```
 ## Echo State Network example
+
+This example and others are contained in the examples folder, that will be updated anytime I find new examples.
 To show how to use some of the functions contained in ReservoirComputing.jl we will illustrate an example also shown in literature: reproducing the Lorenz attractor.
 First we have to define the Lorenz system and the parameters we are going to use
 ```julia
@@ -90,7 +92,6 @@ The code is partly based on the original [paper](http://www.scholarpedia.org/art
 
 
 ## To do list
-* More user-friendly functions
-* More detailed readme
+* Documentation
 * Implement variable number of outputs as in [this](https://aip.scitation.org/doi/10.1063/1.4979665) paper
 * Implement different systems for the reservoir (like [this](https://arxiv.org/pdf/1410.0162.pdf) paper)
