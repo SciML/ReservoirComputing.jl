@@ -1,41 +1,23 @@
 using ReservoirComputing  
-using ParameterizedFunctions
-using DifferentialEquations
 
-#lorenz system parameters
-u0 = [1.0,0.0,0.0]                       
-tspan = (0.0,200.0)                      
-p = [10.0,28.0,8/3]
 #model parameters
 shift = 1
-approx_res_size = 300
+approx_res_size = 30
 N = 3
 radius = 1.2
 degree = 6
 sigma = 0.1
 in_size = N
 out_size = N
-train_len = 5000
-predict_len = 1250
+train_len = 50
+predict_len = 12
 beta = 0.0
 alpha = 1.0
 nonlin_alg = "None"
 
-#define lorenz system 
-function lorenz(du,u,p,t)
-    du[1] = p[1]*(u[2]-u[1])
-    du[2] = u[1]*(p[2]-u[3]) - u[2]
-    du[3] = u[1]*u[2] - p[3]*u[3]
-end
-    
-prob = ODEProblem(lorenz, u0, tspan, p)  
-sol = solve(prob, AB4(), dt=0.02)   
-v = sol.u
-data = Matrix(hcat(v...))
+data = ones(Float64, N, 100)
 train = data[:, shift:shift+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
-
-
 
 #constructor
 esn = ESN(approx_res_size,
