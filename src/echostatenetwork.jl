@@ -9,6 +9,7 @@ struct ESN{T<:AbstractFloat}
     beta::T
     radius::T
     nonlin_alg::String
+    activation::Function
     W::Matrix{T}
     W_in::Matrix{T}
     states::Matrix{T}
@@ -18,19 +19,20 @@ struct ESN{T<:AbstractFloat}
             out_size::Integer,
             train_data::Matrix{T},
             degree::Integer,
-            sigma::T,
-            alpha::T,
-            beta::T,
             radius::T,
-            nonlin_alg::String) where T<:AbstractFloat
+            activation::Function = tanh,
+            sigma::T = 0.1,
+            alpha::T = 1.0,
+            beta::T = 0.0,
+            nonlin_alg::String = "None") where T<:AbstractFloat
 
         res_size = Integer(floor(approx_res_size/in_size)*in_size)
         W = init_reservoir(res_size, in_size, radius, degree)
         W_in = init_input_layer(res_size, in_size, sigma)
-        states = states_matrix(W, W_in, train_data, alpha)
+        states = states_matrix(W, W_in, train_data, alpha, activation)
 
         return new{T}(res_size, in_size, out_size, train_data,
-        degree, sigma, alpha, beta, radius, nonlin_alg, W, W_in, states)
+        degree, sigma, alpha, beta, radius, nonlin_alg, activation, W, W_in, states)
     end
 end
 
@@ -64,13 +66,14 @@ end
 function states_matrix(W::Matrix{Float64},
         W_in::Matrix{Float64},
         train_data::Matrix{Float64},
-        alpha::Float64)
+        alpha::Float64,
+        activation::Function)
 
     train_len = size(train_data)[2]
     res_size = size(W)[1]
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
-        states[:, i+1] = (1-alpha).*states[:, i] + alpha*tanh.((W*states[:, i])+(W_in*train_data[:, i]))
+        states[:, i+1] = (1-alpha).*states[:, i] + alpha*activation.((W*states[:, i])+(W_in*train_data[:, i]))
     end
     return states
 end
@@ -136,7 +139,7 @@ function ESNpredict(esn::ESN,
         end
         out = (W_out*x_new)
         output[:, i] = out
-        x = (1-esn.alpha).*x + esn.alpha*tanh.((esn.W*x)+(esn.W_in*out))
+        x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
     end
     return output
 end
@@ -182,7 +185,7 @@ function ESNsingle_predict(esn::ESN,
             end
         end
         output[:, i] = out_new        
-        x = (1-esn.alpha).*x + esn.alpha*tanh.((esn.W*x)+(esn.W_in*out_new))
+        x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out_new))
     end
     return output
 end

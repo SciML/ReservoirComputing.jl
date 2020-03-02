@@ -5,6 +5,7 @@ shift = 1
 approx_res_size = 30
 N = 3
 radius = 1.2
+activation = tanh
 degree = 6
 sigma = 0.1
 in_size = N
@@ -25,10 +26,11 @@ esn = ESN(approx_res_size,
     out_size,
     train,
     degree,
+    radius,
+    activation,
     sigma,
     alpha,
     beta,
-    radius,
     nonlin_alg)
 
 #test constructor
@@ -41,6 +43,7 @@ esn = ESN(approx_res_size,
 @test isequal(alpha, esn.alpha)
 @test isequal(beta, esn.beta)
 @test isequal(radius, esn.radius)
+@test isequal(activation, esn.activation)
 @test isequal(nonlin_alg, esn.nonlin_alg)
 @test size(esn.W) == (esn.res_size, esn.res_size)
 @test size(esn.W_in) == (esn.res_size, esn.in_size)
@@ -62,15 +65,17 @@ nla = ["T1", "T2", "T3"]
 for t in nla
     nonlin_alg = t
     esn = ESN(approx_res_size,
-      in_size,
-      out_size,
-      train,
-      degree,
-      sigma,
-      alpha,
-      beta,
-      radius,
-      nonlin_alg)
+        in_size,
+        out_size,
+        train,
+        degree,
+        radius,
+        activation,
+        sigma,
+        alpha,
+        beta,
+        nonlin_alg)
+        
     W_out = ESNtrain(esn)
     @test size(W_out) == (out_size, esn.res_size)
     output = ESNpredict(esn, predict_len, W_out)

@@ -45,6 +45,7 @@ approx_res_size = 300
 N = 3
 radius = 1.2
 degree = 6
+activation = tanh
 sigma = 0.1
 in_size = N
 out_size = N
@@ -60,10 +61,11 @@ esn = ESN(approx_res_size,
     out_size,
     train,
     degree,
+    radius,
+    activation,
     sigma,
     alpha,
     beta,
-    radius,
     nonlin_alg)
 ```
 The echo state network can now be trained and tested:

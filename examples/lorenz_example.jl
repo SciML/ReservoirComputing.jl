@@ -26,6 +26,7 @@ shift = 300
 approx_res_size = 300
 N = 3
 radius = 1.2
+activation = atan
 degree = 6
 sigma = 0.1
 in_size = N
@@ -46,10 +47,11 @@ esn = ESN(approx_res_size,
     out_size,
     train,
     degree,
+    radius,
+    activation,
     sigma,
     alpha,
     beta,
-    radius,
     nonlin_alg)
 
 #training and prediction
