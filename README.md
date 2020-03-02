@@ -42,13 +42,10 @@ test = data[:, train_len:train_len+predict_len-1]
 Now that we have the data we can initialize the parameters for the echo state network
 ```julia
 approx_res_size = 300
-N = 3
 radius = 1.2
 degree = 6
 activation = tanh
 sigma = 0.1
-in_size = N
-out_size = N
 beta = 0.0
 alpha = 1.0
 nonlin_alg = "T2"
@@ -57,8 +54,6 @@ Now it's time to initiate the echo state network
 ```julia
 using ReservoirComputing
 esn = ESN(approx_res_size,
-    in_size,
-    out_size,
     train,
     degree,
     radius,

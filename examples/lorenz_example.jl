@@ -24,13 +24,10 @@ data = Matrix(hcat(v...))
 #model parameters
 shift = 300
 approx_res_size = 300
-N = 3
 radius = 1.2
 activation = atan
 degree = 6
 sigma = 0.1
-in_size = N
-out_size = N
 train_len = 5000
 predict_len = 1250
 beta = 0.0
@@ -43,8 +40,6 @@ test = data[:, shift+train_len:shift+train_len+predict_len-1]
 
 #create echo state network  
 esn = ESN(approx_res_size,
-    in_size,
-    out_size,
     train,
     degree,
     radius,

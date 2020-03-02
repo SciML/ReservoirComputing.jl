@@ -15,8 +15,6 @@ struct ESN{T<:AbstractFloat}
     states::Matrix{T}
 
     function ESN(approx_res_size::Integer,
-            in_size::Integer,
-            out_size::Integer,
             train_data::Matrix{T},
             degree::Integer,
             radius::T,
@@ -26,6 +24,8 @@ struct ESN{T<:AbstractFloat}
             beta::T = 0.0,
             nonlin_alg::String = "None") where T<:AbstractFloat
 
+        in_size = size(train_data)[1]
+        out_size = size(train_data)[1] #needs to be different
         res_size = Integer(floor(approx_res_size/in_size)*in_size)
         W = init_reservoir(res_size, in_size, radius, degree)
         W_in = init_input_layer(res_size, in_size, sigma)

@@ -3,27 +3,25 @@ using ReservoirComputing
 #model parameters
 shift = 1
 approx_res_size = 30
-N = 3
 radius = 1.2
 activation = tanh
 degree = 6
 sigma = 0.1
-in_size = N
-out_size = N
 train_len = 50
 predict_len = 12
 beta = 0.0
 alpha = 1.0
 nonlin_alg = "None"
+in_size = 3
+out_size = 3
 
-data = ones(Float64, N, 100)
+
+data = ones(Float64, in_size, 100)
 train = data[:, shift:shift+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #constructor
 esn = ESN(approx_res_size,
-    in_size,
-    out_size,
     train,
     degree,
     radius,
@@ -35,8 +33,6 @@ esn = ESN(approx_res_size,
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
-@test isequal(in_size, esn.in_size)
-@test isequal(out_size, esn.out_size)
 @test isequal(train, esn.train_data)
 @test isequal(degree, esn.degree)
 @test isequal(sigma, esn.sigma)
@@ -65,8 +61,6 @@ nla = ["T1", "T2", "T3"]
 for t in nla
     nonlin_alg = t
     esn = ESN(approx_res_size,
-        in_size,
-        out_size,
         train,
         degree,
         radius,
