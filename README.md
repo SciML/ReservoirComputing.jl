@@ -61,7 +61,8 @@ esn = ESN(approx_res_size,
     sigma, #default = 0.1
     alpha, #default = 1.0
     beta, #default = 0.0
-    nonlin_alg #default = "None")
+    nonlin_alg #default = "None"
+    )
 ```
 The echo state network can now be trained and tested:
 ```julia

@@ -2,7 +2,7 @@ struct ESN{T<:AbstractFloat}
     res_size::Integer
     in_size::Integer
     out_size::Integer
-    train_data::Matrix{T}
+    train_data::Array{T}
     degree::Integer
     sigma::T
     alpha::T
@@ -15,7 +15,7 @@ struct ESN{T<:AbstractFloat}
     states::Matrix{T}
 
     function ESN(approx_res_size::Integer,
-            train_data::Matrix{T},
+            train_data::Array{T},
             degree::Integer,
             radius::T,
             activation::Function = tanh,
@@ -65,7 +65,7 @@ end
 
 function states_matrix(W::Matrix{Float64},
         W_in::Matrix{Float64},
-        train_data::Matrix{Float64},
+        train_data::Array{Float64},
         alpha::Float64,
         activation::Function)
 
