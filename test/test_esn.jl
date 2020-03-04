@@ -1,23 +1,21 @@
 using ReservoirComputing  
 
 #model parameters
-shift = 1
 approx_res_size = 30
 radius = 1.2
 activation = tanh
 degree = 6
 sigma = 0.1
-train_len = 50
-predict_len = 12
 beta = 0.0
 alpha = 1.0
 nonlin_alg = "None"
 in_size = 3
 out_size = 3
 
-
+train_len = 50
+predict_len = 12
 data = ones(Float64, in_size, 100)
-train = data[:, shift:shift+train_len-1]
+train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #constructor
