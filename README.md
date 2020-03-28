@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl.svg?branch=master)](https://travis-ci.com/MartinuzziFrancesco/ReservoirComputing.jl)
+[![Build Status](https://travis-ci.com/SciML/ReservoirComputing.jl.svg?branch=master)](https://travis-ci.com/github/SciML/ReservoirComputing.jl)
 [![codecov](https://codecov.io/gh/MartinuzziFrancesco/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/MartinuzziFrancesco/ReservoirComputing.jl)
 
 # ReservoirComputing.jl
