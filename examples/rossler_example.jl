@@ -1,6 +1,6 @@
 using ReservoirComputing
 using ParameterizedFunctions
-using DifferentialEquations
+using OrdinaryDiffEq
 using Plots 
 
 #rossler system parameters
@@ -32,7 +32,7 @@ train_len = 5000
 predict_len = 2500
 beta = 0.0
 alpha = 1.0
-nonlin_alg = "T2"
+nonlin_alg = NonLinAlgT2
 
 #get data
 train = data[:, shift:shift+train_len-1]

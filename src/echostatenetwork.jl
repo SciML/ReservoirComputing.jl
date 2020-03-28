@@ -1,32 +1,32 @@
 struct ESN{T<:AbstractFloat}
-    res_size::Integer
-    in_size::Integer
-    out_size::Integer
+    res_size::Int
+    in_size::Int
+    out_size::Int
     train_data::Array{T}
-    degree::Integer
+    degree::Int
     sigma::T
     alpha::T
     beta::T
     radius::T
-    nonlin_alg::String
-    activation::Function
+    nonlin_alg::Any
+    activation::Any
     W::Matrix{T}
     W_in::Matrix{T}
     states::Matrix{T}
 
-    function ESN(approx_res_size::Integer,
+    function ESN(approx_res_size::Int,
             train_data::Array{T},
-            degree::Integer,
+            degree::Int,
             radius::T,
             activation::Function = tanh,
             sigma::T = 0.1,
             alpha::T = 1.0,
             beta::T = 0.0,
-            nonlin_alg::String = "None") where T<:AbstractFloat
+            nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
 
         in_size = size(train_data)[1]
         out_size = size(train_data)[1] #needs to be different?
-        res_size = Integer(floor(approx_res_size/in_size)*in_size)
+        res_size = Int(floor(approx_res_size/in_size)*in_size)
         W = init_reservoir(res_size, in_size, radius, degree)
         W_in = init_input_layer(res_size, in_size, sigma)
         states = states_matrix(W, W_in, train_data, alpha, activation)
@@ -37,10 +37,10 @@ struct ESN{T<:AbstractFloat}
 end
 
 
-function init_reservoir(res_size::Integer,
-        in_size::Integer,
+function init_reservoir(res_size::Int,
+        in_size::Int,
         radius::Float64,
-        degree::Integer)
+        degree::Int)
 
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
@@ -51,12 +51,12 @@ function init_reservoir(res_size::Integer,
     return W
 end
 
-function init_input_layer(res_size::Integer,
-        in_size::Integer,
+function init_input_layer(res_size::Int,
+        in_size::Int,
         sigma::Float64)
 
     W_in = zeros(Float64, res_size, in_size)
-    q = Integer(res_size/in_size)
+    q = Int(res_size/in_size)
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
@@ -81,71 +81,31 @@ end
 function ESNtrain(esn::ESN)
 
     i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
-    states_new = copy(esn.states)
-    if esn.nonlin_alg == "None"
-        states_new = states_new
-    elseif esn.nonlin_alg == "T1"
-        for i=1:size(states_new, 1)
-            if mod(i, 2)!=0
-                states_new[i, :] = copy(esn.states[i,:].*esn.states[i,:])
-            end
-         end
-    elseif esn.nonlin_alg == "T2"
-        for i=2:size(states_new, 1)-1
-            if mod(i, 2)!=0
-                states_new[i, :] = copy(esn.states[i-1,:].*esn.states[i-2,:])
-            end
-         end
-    elseif esn.nonlin_alg == "T3"
-        for i=2:size(states_new, 1)-1
-            if mod(i, 2)!=0
-                states_new[i, :] = copy(esn.states[i-1,:].*esn.states[i+1,:])
-            end
-         end
-    end
+    states_new = esn.nonlin_alg(esn.states)
     W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
 
     return W_out
 end
 
 function ESNpredict(esn::ESN,
-    predict_len::Integer,
+    predict_len::Int,
     W_out::Matrix{Float64})
 
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
     for i=1:predict_len
-        x_new = copy(x)
-        if esn.nonlin_alg == "None"
-            x_new = x_new
-        elseif esn.nonlin_alg == "T1"
-            for j=1:size(x_new, 1)
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j]*x[j])
-                end
-            end
-        elseif esn.nonlin_alg == "T2"
-            for j=2:size(x_new, 1)-1
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j-1]*x[j-2])
-                end
-            end
-        elseif esn.nonlin_alg == "T3"
-            for j=2:size(x_new, 1)-1
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j-1]*x[j+1])
-                end
-            end
-        end
+        x_new = esn.nonlin_alg(x)
         out = (W_out*x_new)
         output[:, i] = out
         x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
     end
     return output
 end
-    
+
+
+#needs better implementation
 function ESNsingle_predict(esn::ESN,
-    predict_len::Integer,
+    predict_len::Int,
     partial::Array{Float64},
     test_data::Matrix{Float64},
     W_out::Matrix{Float64})
@@ -154,36 +114,7 @@ function ESNsingle_predict(esn::ESN,
     out_new = zeros(Float64, esn.out_size)
     x = esn.states[:, end]
     for i=1:predict_len
-        x_new = copy(x)
-        if esn.nonlin_alg == "None"
-            x_new = x_new
-        elseif esn.nonlin_alg == "T1"
-            for j=1:size(x_new, 1)
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j]*x[j])
-                end
-            end
-        elseif esn.nonlin_alg == "T2"
-            for j=2:size(x_new, 1)-1
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j-1]*x[j-2])
-                end
-            end
-        elseif esn.nonlin_alg == "T3"
-            for j=2:size(x_new, 1)-1
-                if mod(j, 2)!=0
-                    x_new[j] = copy(x[j-1]*x[j+1])
-                end
-            end
-        end
-        out = (W_out*x_new)
-        for j=1:esn.out_size
-            if test_data[j,:][i] == partial[i]
-                out_new = copy(test_data[:,i])
-                out_new[j] = out[j]
-                
-            end
-        end
+        x_new = esn.nonlin_alg(x)
         output[:, i] = out_new        
         x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out_new))
     end

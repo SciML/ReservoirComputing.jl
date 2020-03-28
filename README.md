@@ -16,7 +16,7 @@ To show how to use some of the functions contained in ReservoirComputing.jl we w
 First we have to define the Lorenz system and the parameters we are going to use
 ```julia
 using ParameterizedFunctions
-using DifferentialEquations
+using OrdinaryDiffEq
      
 #lorenz system parameters
 u0 = [1.0,0.0,0.0]                       
@@ -48,7 +48,7 @@ activation = tanh
 sigma = 0.1
 beta = 0.0
 alpha = 1.0
-nonlin_alg = "T2"
+nonlin_alg = NonLinAlgT2
 ```
 Now it's time to initiate the echo state network
 ```julia

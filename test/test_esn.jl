@@ -8,7 +8,7 @@ degree = 6
 sigma = 0.1
 beta = 0.0
 alpha = 1.0
-nonlin_alg = "None"
+nonlin_alg = NonLinAlgDefault
 in_size = 3
 out_size = 3
 
@@ -55,7 +55,7 @@ p_output = ESNsingle_predict(esn, predict_len, test[3,:], test, W_out)
 @test size(p_output) == (out_size, predict_len)
 
 #test non linear algos
-nla = ["T1", "T2", "T3"]
+nla = [NonLinAlgT1, NonLinAlgT2, NonLinAlgT3]
 for t in nla
     nonlin_alg = t
     esn = ESN(approx_res_size,
