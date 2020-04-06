@@ -3,6 +3,8 @@ module ReservoirComputing
 using SparseArrays
 using LinearAlgebra
 
+abstract type AbstractEchoStateNetwork end
+
 include("nonlinalg.jl")
 export NonLinAlgDefault, NonLinAlgT1, NonLinAlgT2, NonLinAlgT3
 include("echostatenetwork.jl")

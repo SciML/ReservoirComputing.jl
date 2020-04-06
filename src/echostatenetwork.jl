@@ -1,4 +1,6 @@
-struct ESN{T<:AbstractFloat}
+abstract type AbstractLeakyESN <: AbstractEchoStateNetwork end
+
+struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
     res_size::Int
     in_size::Int
     out_size::Int
@@ -78,7 +80,7 @@ function states_matrix(W::Matrix{Float64},
     return states
 end
 
-function ESNtrain(esn::ESN)
+function ESNtrain(esn::AbstractEchoStateNetwork)
 
     i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
     states_new = esn.nonlin_alg(esn.states)
@@ -87,7 +89,7 @@ function ESNtrain(esn::ESN)
     return W_out
 end
 
-function ESNpredict(esn::ESN,
+function ESNpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     W_out::Matrix{Float64})
 
@@ -104,7 +106,7 @@ end
 
 
 #needs better implementation
-function ESNsingle_predict(esn::ESN,
+function ESNsingle_predict(esn::AbstractLeakyESN,
     predict_len::Int,
     partial::Array{Float64},
     test_data::Matrix{Float64},

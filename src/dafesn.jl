@@ -1,4 +1,6 @@
-struct dafESN{T<:AbstractFloat}
+abstract type AbstractLeakyDAFESN <: AbstractLeakyESN end
+
+struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
     res_size::Int
     in_size::Int
     out_size::Int
@@ -62,16 +64,16 @@ function daf_states_matrix(W::Matrix{Float64},
     return states
 end
 
-function dafESNtrain(esn::dafESN)
+#function dafESNtrain(esn::dafESN)
 
-    i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
-    states_new = esn.nonlin_alg(esn.states)
-    W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
+#    i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
+#    states_new = esn.nonlin_alg(esn.states)
+#    W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
 
-    return W_out
-end
+#    return W_out
+#end
 
-function dafESNpredict(esn::dafESN,
+function dafESNpredict(esn::AbstractLeakyDAFESN,
     predict_len::Int,
     W_out::Matrix{Float64})
 

@@ -53,7 +53,7 @@ esn = dafESN(approx_res_size,
 @test size(esn.states) == (esn.res_size, train_len)
 
 #test train
-W_out = dafESNtrain(esn)
+W_out = ESNtrain(esn)
 @test size(W_out) == (out_size, esn.res_size)
 #test predict
 output = dafESNpredict(esn, predict_len, W_out)
@@ -76,7 +76,7 @@ for t in nla
             beta,
             nonlin_alg)
         
-    W_out = dafESNtrain(esn)
+    W_out = ESNtrain(esn)
     @test size(W_out) == (out_size, esn.res_size)
     output = dafESNpredict(esn, predict_len, W_out)
     @test size(output) == (out_size, predict_len)
