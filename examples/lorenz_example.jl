@@ -46,11 +46,10 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    beta,
     nonlin_alg)
 
 #training and prediction
-W_out = ESNtrain(esn)
+W_out = ESNtrain(esn, beta)
 output = ESNpredict(esn, predict_len, W_out)
 
 #plots and images

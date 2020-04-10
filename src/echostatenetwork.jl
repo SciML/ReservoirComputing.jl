@@ -5,39 +5,106 @@ struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
     in_size::Int
     out_size::Int
     train_data::Array{T}
-    degree::Int
-    sigma::T
+    #degree::Int
+    #sigma::T
     alpha::T
-    beta::T
-    radius::T
+    #radius::T
     nonlin_alg::Any
     activation::Any
     W::Matrix{T}
     W_in::Matrix{T}
     states::Matrix{T}
 
-    function ESN(approx_res_size::Int,
-            train_data::Array{T},
-            degree::Int,
-            radius::T,
-            activation::Function = tanh,
-            sigma::T = 0.1,
-            alpha::T = 1.0,
-            beta::T = 0.0,
-            nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
-
-        in_size = size(train_data)[1]
-        out_size = size(train_data)[1] #needs to be different?
-        res_size = Int(floor(approx_res_size/in_size)*in_size)
-        W = init_reservoir(res_size, in_size, radius, degree)
-        W_in = init_input_layer(res_size, in_size, sigma)
-        states = states_matrix(W, W_in, train_data, alpha, activation)
-
-        return new{T}(res_size, in_size, out_size, train_data,
-        degree, sigma, alpha, beta, radius, nonlin_alg, activation, W, W_in, states)
-    end
 end
 
+function ESN(approx_res_size::Int,
+        train_data::Array{T},
+        degree::Int,
+        radius::T,
+        activation::Any = tanh,
+        sigma::T = 0.1,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1) #needs to be different?
+    res_size = Int(floor(approx_res_size/in_size)*in_size)
+    W = init_reservoir(res_size, in_size, radius, degree)
+    W_in = init_input_layer(res_size, in_size, sigma)
+    states = states_matrix(W, W_in, train_data, alpha, activation)
+
+    return ESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, activation, W, W_in, states)
+end
+
+#reservoir matrix W given by the user
+function ESN(W::AbstractArray{T},
+        train_data::Array{T},
+        activation::Any = tanh,
+        sigma::T = 0.1,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1) 
+    res_size = size(W, 1)
+    W_in = init_input_layer(res_size, in_size, sigma)
+    states = states_matrix(W, W_in, train_data, alpha, activation)
+
+    return ESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, activation, W, W_in, states)
+end
+
+#input layer W_in given by the user
+function ESN(approx_res_size::Int,
+        train_data::Array{T},
+        degree::Int,
+        radius::T,
+        W_in::AbstractArray{T},
+        activation::Any = tanh,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1) #needs to be different?
+    res_size = Int(floor(approx_res_size/in_size)*in_size)
+    W = init_reservoir(res_size, in_size, radius, degree)
+    
+    if size(W_in, 1) != res_size
+        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+    elseif size(W_in, 2) != in_size
+        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+    end
+    
+    states = states_matrix(W, W_in, train_data, alpha, activation)
+
+    return ESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, activation, W, W_in, states)
+end
+
+#reservoir matrix W and input layer W_in given by the user
+function ESN(W::AbstractArray{T},
+        train_data::Array{T},
+        W_in::AbstractArray{T},
+        activation::Any = tanh,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1) 
+    res_size = size(W, 1)
+    
+    if size(W_in, 1) != res_size
+        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+    elseif size(W_in, 2) != in_size
+        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+    end    
+    
+    states = states_matrix(W, W_in, train_data, alpha, activation)
+
+    return ESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, activation, W, W_in, states)
+end
 
 function init_reservoir(res_size::Int,
         in_size::Int,
@@ -80,9 +147,9 @@ function states_matrix(W::Matrix{Float64},
     return states
 end
 
-function ESNtrain(esn::AbstractEchoStateNetwork)
+function ESNtrain(esn::AbstractEchoStateNetwork, beta::Float64)
 
-    i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
+    i_mat = beta.*Matrix(1.0I, esn.res_size, esn.res_size)
     states_new = esn.nonlin_alg(esn.states)
     W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
 

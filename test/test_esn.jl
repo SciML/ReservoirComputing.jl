@@ -11,6 +11,9 @@ alpha = 1.0
 nonlin_alg = NonLinAlgDefault
 in_size = 3
 out_size = 3
+W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
+W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
+
 
 train_len = 50
 predict_len = 12
@@ -18,7 +21,7 @@ data = ones(Float64, in_size, 100)
 train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
-#constructor
+#constructor 1
 esn = ESN(approx_res_size,
     train,
     degree,
@@ -26,17 +29,15 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    beta,
     nonlin_alg)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
 @test isequal(train, esn.train_data)
-@test isequal(degree, esn.degree)
-@test isequal(sigma, esn.sigma)
+#@test isequal(degree, esn.degree)
+#@test isequal(sigma, esn.sigma)
 @test isequal(alpha, esn.alpha)
-@test isequal(beta, esn.beta)
-@test isequal(radius, esn.radius)
+#@test isequal(radius, esn.radius)
 @test isequal(activation, esn.activation)
 @test isequal(nonlin_alg, esn.nonlin_alg)
 @test size(esn.W) == (esn.res_size, esn.res_size)
@@ -44,7 +45,7 @@ esn = ESN(approx_res_size,
 @test size(esn.states) == (esn.res_size, train_len)
 
 #test train
-W_out = ESNtrain(esn)
+W_out = ESNtrain(esn, beta)
 @test size(W_out) == (out_size, esn.res_size)
 #test predict
 output = ESNpredict(esn, predict_len, W_out)
@@ -53,6 +54,92 @@ output = ESNpredict(esn, predict_len, W_out)
 #test single predict
 p_output = ESNsingle_predict(esn, predict_len, test[3,:], test, W_out)
 @test size(p_output) == (out_size, predict_len)
+
+#constructor 2
+esn = ESN(W,
+    train,
+    activation,
+    sigma,
+    alpha,
+    nonlin_alg)
+    
+#test constructor
+@test isequal(approx_res_size, esn.res_size)
+@test isequal(train, esn.train_data)
+#@test isequal(degree, esn.degree)
+#@test isequal(sigma, esn.sigma)
+@test isequal(alpha, esn.alpha)
+#@test isequal(radius, esn.radius)
+@test isequal(activation, esn.activation)
+@test isequal(nonlin_alg, esn.nonlin_alg)
+@test size(esn.W) == (esn.res_size, esn.res_size)
+@test size(esn.W_in) == (esn.res_size, esn.in_size)
+@test size(esn.states) == (esn.res_size, train_len)
+
+#test train
+W_out = ESNtrain(esn, beta)
+@test size(W_out) == (out_size, esn.res_size)
+#test predict
+output = ESNpredict(esn, predict_len, W_out)
+@test size(output) == (out_size, predict_len)
+
+#constructor 3
+esn = ESN(approx_res_size,
+    train,
+    degree,
+    radius,
+    W_in,
+    activation,
+    alpha,
+    nonlin_alg)
+
+#test constructor
+@test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
+@test isequal(train, esn.train_data)
+#@test isequal(degree, esn.degree)
+#@test isequal(sigma, esn.sigma)
+@test isequal(alpha, esn.alpha)
+#@test isequal(radius, esn.radius)
+@test isequal(activation, esn.activation)
+@test isequal(nonlin_alg, esn.nonlin_alg)
+@test size(esn.W) == (esn.res_size, esn.res_size)
+@test size(esn.W_in) == (esn.res_size, esn.in_size)
+@test size(esn.states) == (esn.res_size, train_len)
+
+#test train
+W_out = ESNtrain(esn, beta)
+@test size(W_out) == (out_size, esn.res_size)
+#test predict
+output = ESNpredict(esn, predict_len, W_out)
+@test size(output) == (out_size, predict_len)
+
+#constructor 4
+esn = ESN(W,
+    train,
+    W_in,
+    activation,
+    alpha,
+    nonlin_alg)
+    
+#test constructor
+@test isequal(approx_res_size, esn.res_size)
+@test isequal(train, esn.train_data)
+#@test isequal(degree, esn.degree)
+#@test isequal(sigma, esn.sigma)
+@test isequal(alpha, esn.alpha)
+#@test isequal(radius, esn.radius)
+@test isequal(activation, esn.activation)
+@test isequal(nonlin_alg, esn.nonlin_alg)
+@test size(esn.W) == (esn.res_size, esn.res_size)
+@test size(esn.W_in) == (esn.res_size, esn.in_size)
+@test size(esn.states) == (esn.res_size, train_len)
+
+#test train
+W_out = ESNtrain(esn, beta)
+@test size(W_out) == (out_size, esn.res_size)
+#test predict
+output = ESNpredict(esn, predict_len, W_out)
+@test size(output) == (out_size, predict_len)
 
 #test non linear algos
 nla = [NonLinAlgT1, NonLinAlgT2, NonLinAlgT3]
@@ -65,10 +152,9 @@ for t in nla
         activation,
         sigma,
         alpha,
-        beta,
         nonlin_alg)
         
-    W_out = ESNtrain(esn)
+    W_out = ESNtrain(esn, beta)
     @test size(W_out) == (out_size, esn.res_size)
     output = ESNpredict(esn, predict_len, W_out)
     @test size(output) == (out_size, predict_len)

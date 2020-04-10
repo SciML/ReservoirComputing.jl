@@ -58,7 +58,6 @@ esn = ESN(approx_res_size,
     degree,
     radius,
     activation, #default = tanh
-    sigma, #default = 0.1
     alpha, #default = 1.0
     beta, #default = 0.0
     nonlin_alg #default = "None"
@@ -66,7 +65,8 @@ esn = ESN(approx_res_size,
 ```
 The echo state network can now be trained and tested:
 ```julia
-W_out = ESNtrain(esn)
+W_out = ESNtrain(esn, 
+                 sigma, #default = 0.1)
 output = ESNpredict(esn, predict_len, W_out)
 ```
 ouput is the matrix with the predicted trajectories that can be easily plotted 

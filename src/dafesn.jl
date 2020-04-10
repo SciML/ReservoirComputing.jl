@@ -5,11 +5,10 @@ struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
     in_size::Int
     out_size::Int
     train_data::Array{T}
-    degree::Int
-    sigma::T
+    #degree::Int
+    #sigma::T
     alpha::T
-    beta::T
-    radius::T
+    #radius::T
     nonlin_alg::Any
     first_activation::Any
     second_activation::Any
@@ -18,33 +17,116 @@ struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
     W::AbstractArray{T}
     W_in::AbstractArray{T}
     states::AbstractArray{T}
-
-    function dafESN(approx_res_size::Int,
-            train_data::Array{T},
-            degree::Int,
-            radius::T,
-            first_lambda::T,
-            second_lambda::T,
-            first_activation::Any = tanh,
-            second_activation::Any = tanh,
-            sigma::T = 0.1,
-            alpha::T = 1.0,
-            beta::T = 0.0,
-            nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
-
-        in_size = size(train_data)[1]
-        out_size = size(train_data)[1] #needs to be different
-        res_size = Int(floor(approx_res_size/in_size)*in_size)
-        W = init_reservoir(res_size, in_size, radius, degree)
-        W_in = init_input_layer(res_size, in_size, sigma)
-        states = daf_states_matrix(W, W_in, train_data, alpha, 
-        first_activation, second_activation, first_lambda, second_lambda)
-
-        return new{T}(res_size, in_size, out_size, train_data,
-        degree, sigma, alpha, beta, radius, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
-    end
 end
 
+
+function dafESN(approx_res_size::Int,
+        train_data::Array{T},
+        degree::Int,
+        radius::T,
+        first_lambda::T,
+        second_lambda::T,
+        first_activation::Any = tanh,
+        second_activation::Any = tanh,
+        sigma::T = 0.1,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    res_size = Int(floor(approx_res_size/in_size)*in_size)
+    
+    W = init_reservoir(res_size, in_size, radius, degree)
+    W_in = init_input_layer(res_size, in_size, sigma)
+    states = daf_states_matrix(W, W_in, train_data, alpha, 
+    first_activation, second_activation, first_lambda, second_lambda)
+
+    return dafESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+end
+
+#reservoir matrix W given by the user
+function dafESN(W::AbstractArray{T},
+        train_data::Array{T},
+        first_lambda::T,
+        second_lambda::T,
+        first_activation::Any = tanh,
+        second_activation::Any = tanh,
+        sigma::T = 0.1,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    res_size = size(W, 1)
+    
+    W_in = init_input_layer(res_size, in_size, sigma)
+    states = daf_states_matrix(W, W_in, train_data, alpha, 
+    first_activation, second_activation, first_lambda, second_lambda)
+
+    return dafESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+end
+
+
+#input layer W_in given by the user
+function dafESN(approx_res_size::Int,
+        train_data::Array{T},
+        degree::Int,
+        radius::T,
+        first_lambda::T,
+        second_lambda::T,
+        W_in::AbstractArray{T},
+        first_activation::Any = tanh,
+        second_activation::Any = tanh,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    res_size = Int(floor(approx_res_size/in_size)*in_size)
+    W = init_reservoir(res_size, in_size, radius, degree)
+    
+    if size(W_in, 1) != res_size
+        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+    elseif size(W_in, 2) != in_size
+        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+    end
+    
+    states = daf_states_matrix(W, W_in, train_data, alpha, 
+    first_activation, second_activation, first_lambda, second_lambda)
+
+    return dafESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+end
+
+#reservoir matrix W and input layer W_in given by the user
+function dafESN(W::AbstractArray{T},
+        train_data::Array{T},
+        first_lambda::T,
+        second_lambda::T,
+        W_in::AbstractArray{T},
+        first_activation::Any = tanh,
+        second_activation::Any = tanh,
+        alpha::T = 1.0,
+        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    res_size = size(W, 1)
+    
+    if size(W_in, 1) != res_size
+        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+    elseif size(W_in, 2) != in_size
+        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+    end
+    
+    states = daf_states_matrix(W, W_in, train_data, alpha, 
+    first_activation, second_activation, first_lambda, second_lambda)
+
+    return dafESN{T}(res_size, in_size, out_size, train_data,
+    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+end
 
 function daf_states_matrix(W::Matrix{Float64},
         W_in::Matrix{Float64},
@@ -64,14 +146,7 @@ function daf_states_matrix(W::Matrix{Float64},
     return states
 end
 
-#function dafESNtrain(esn::dafESN)
 
-#    i_mat = esn.beta.*Matrix(1.0I, esn.res_size, esn.res_size)
-#    states_new = esn.nonlin_alg(esn.states)
-#    W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
-
-#    return W_out
-#end
 
 function dafESNpredict(esn::AbstractLeakyDAFESN,
     predict_len::Int,
