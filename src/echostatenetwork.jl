@@ -4,21 +4,21 @@ struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
     res_size::Int
     in_size::Int
     out_size::Int
-    train_data::Array{T}
+    train_data::AbstractArray{T}
     #degree::Int
     #sigma::T
     alpha::T
     #radius::T
     nonlin_alg::Any
     activation::Any
-    W::Matrix{T}
-    W_in::Matrix{T}
-    states::Matrix{T}
+    W::AbstractArray{T}
+    W_in::AbstractArray{T}
+    states::AbstractArray{T}
 
 end
 
 function ESN(approx_res_size::Int,
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         degree::Int,
         radius::T,
         activation::Any = tanh,
@@ -57,7 +57,7 @@ end
 
 #input layer W_in given by the user
 function ESN(approx_res_size::Int,
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         degree::Int,
         radius::T,
         W_in::AbstractArray{T},
@@ -84,7 +84,7 @@ end
 
 #reservoir matrix W and input layer W_in given by the user
 function ESN(W::AbstractArray{T},
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         W_in::AbstractArray{T},
         activation::Any = tanh,
         alpha::T = 1.0,
@@ -132,9 +132,9 @@ function init_input_layer(res_size::Int,
     return W_in
 end
 
-function states_matrix(W::Matrix{Float64},
-        W_in::Matrix{Float64},
-        train_data::Array{Float64},
+function states_matrix(W::AbstractArray{Float64},
+        W_in::AbstractArray{Float64},
+        train_data::AbstractArray{Float64},
         alpha::Float64,
         activation::Function)
 
@@ -158,7 +158,7 @@ end
 
 function ESNpredict(esn::AbstractLeakyESN,
     predict_len::Int,
-    W_out::Matrix{Float64})
+    W_out::AbstractArray{Float64})
 
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
@@ -175,9 +175,9 @@ end
 #needs better implementation
 function ESNsingle_predict(esn::AbstractLeakyESN,
     predict_len::Int,
-    partial::Array{Float64},
-    test_data::Matrix{Float64},
-    W_out::Matrix{Float64})
+    partial::AbstractArray{Float64},
+    test_data::AbstractArray{Float64},
+    W_out::AbstractArray{Float64})
 
     output = zeros(Float64, esn.in_size, predict_len)
     out_new = zeros(Float64, esn.out_size)
