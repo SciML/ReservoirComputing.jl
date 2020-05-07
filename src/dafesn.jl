@@ -4,7 +4,7 @@ struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
     res_size::Int
     in_size::Int
     out_size::Int
-    train_data::Array{T}
+    train_data::AbstractArray{T}
     #degree::Int
     #sigma::T
     alpha::T
@@ -21,7 +21,7 @@ end
 
 
 function dafESN(approx_res_size::Int,
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         degree::Int,
         radius::T,
         first_lambda::T,
@@ -47,7 +47,7 @@ end
 
 #reservoir matrix W given by the user
 function dafESN(W::AbstractArray{T},
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         first_lambda::T,
         second_lambda::T,
         first_activation::Any = tanh,
@@ -71,7 +71,7 @@ end
 
 #input layer W_in given by the user
 function dafESN(approx_res_size::Int,
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         degree::Int,
         radius::T,
         first_lambda::T,
@@ -102,7 +102,7 @@ end
 
 #reservoir matrix W and input layer W_in given by the user
 function dafESN(W::AbstractArray{T},
-        train_data::Array{T},
+        train_data::AbstractArray{T},
         first_lambda::T,
         second_lambda::T,
         W_in::AbstractArray{T},
@@ -128,9 +128,9 @@ function dafESN(W::AbstractArray{T},
     alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
 end
 
-function daf_states_matrix(W::Matrix{Float64},
-        W_in::Matrix{Float64},
-        train_data::Array{Float64},
+function daf_states_matrix(W::AbstractArray{Float64},
+        W_in::AbstractArray{Float64},
+        train_data::AbstractArray{Float64},
         alpha::Float64,
         first_activation::Function,
         second_activation::Function,
@@ -150,7 +150,7 @@ end
 
 function dafESNpredict(esn::AbstractLeakyDAFESN,
     predict_len::Int,
-    W_out::Matrix{Float64})
+    W_out::AbstractArray{Float64})
 
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
