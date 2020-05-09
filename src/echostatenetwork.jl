@@ -9,7 +9,7 @@ struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
     #sigma::T
     alpha::T
     #radius::T
-    nonlin_alg::Any
+    nla_type::NonLinearAlgorithm
     activation::Any
     W::AbstractArray{T}
     W_in::AbstractArray{T}
@@ -24,7 +24,7 @@ function ESN(approx_res_size::Int,
         activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1) #needs to be different?
@@ -34,7 +34,7 @@ function ESN(approx_res_size::Int,
     states = states_matrix(W, W_in, train_data, alpha, activation)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, activation, W, W_in, states)
+    alpha, nla_type, activation, W, W_in, states)
 end
 
 #reservoir matrix W given by the user
@@ -43,7 +43,7 @@ function ESN(W::AbstractArray{T},
         activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1) 
@@ -52,7 +52,7 @@ function ESN(W::AbstractArray{T},
     states = states_matrix(W, W_in, train_data, alpha, activation)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, activation, W, W_in, states)
+    alpha, nla_type, activation, W, W_in, states)
 end
 
 #input layer W_in given by the user
@@ -63,7 +63,7 @@ function ESN(approx_res_size::Int,
         W_in::AbstractArray{T},
         activation::Any = tanh,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1) #needs to be different?
@@ -79,7 +79,7 @@ function ESN(approx_res_size::Int,
     states = states_matrix(W, W_in, train_data, alpha, activation)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, activation, W, W_in, states)
+    alpha, nla_type, activation, W, W_in, states)
 end
 
 #reservoir matrix W and input layer W_in given by the user
@@ -88,7 +88,7 @@ function ESN(W::AbstractArray{T},
         W_in::AbstractArray{T},
         activation::Any = tanh,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1) 
@@ -103,7 +103,7 @@ function ESN(W::AbstractArray{T},
     states = states_matrix(W, W_in, train_data, alpha, activation)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, activation, W, W_in, states)
+    alpha, nla_type, activation, W, W_in, states)
 end
 
 function init_reservoir(res_size::Int,
@@ -150,7 +150,7 @@ end
 function ESNtrain(esn::AbstractEchoStateNetwork, beta::Float64)
 
     i_mat = beta.*Matrix(1.0I, esn.res_size, esn.res_size)
-    states_new = esn.nonlin_alg(esn.states)
+    states_new = nla(esn.nla_type, esn.states)
     W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
 
     return W_out
@@ -163,7 +163,7 @@ function ESNpredict(esn::AbstractLeakyESN,
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
     for i=1:predict_len
-        x_new = esn.nonlin_alg(x)
+        x_new = nla(esn.nla_type, x)
         out = (W_out*x_new)
         output[:, i] = out
         x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
@@ -183,7 +183,7 @@ function ESNsingle_predict(esn::AbstractLeakyESN,
     out_new = zeros(Float64, esn.out_size)
     x = esn.states[:, end]
     for i=1:predict_len
-        x_new = esn.nonlin_alg(x)
+        x_new = nla(esn.nla_type, x)
         output[:, i] = out_new        
         x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out_new))
     end

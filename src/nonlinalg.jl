@@ -1,4 +1,4 @@
- function NonLinAlgDefault(x_old::AbstractArray{T}) where T<: AbstractFloat
+function NonLinAlgDefault(x_old::AbstractArray{T}) where T<: AbstractFloat
     x_new = copy(x_old)
     return x_new
 end

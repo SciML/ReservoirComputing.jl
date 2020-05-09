@@ -48,7 +48,7 @@ activation = tanh
 sigma = 0.1
 beta = 0.0
 alpha = 1.0
-nonlin_alg = NonLinAlgT2
+nla_type = NLAT2()
 ```
 Now it's time to initiate the echo state network
 ```julia
@@ -59,14 +59,13 @@ esn = ESN(approx_res_size,
     radius,
     activation, #default = tanh
     alpha, #default = 1.0
-    beta, #default = 0.0
-    nonlin_alg #default = "None"
+    sigma, #default = 0.1
+    nla_type #default = NLADefault()
     )
 ```
 The echo state network can now be trained and tested:
 ```julia
-W_out = ESNtrain(esn, 
-                 sigma, #default = 0.1)
+W_out = ESNtrain(esn, beta)
 output = ESNpredict(esn, predict_len, W_out)
 ```
 ouput is the matrix with the predicted trajectories that can be easily plotted 
@@ -75,14 +74,14 @@ using Plots
 plot(transpose(output),layout=(3,1), label="predicted")
 plot!(transpose(test),layout=(3,1), label="actual")
 ```
-![Lorenz](https://user-images.githubusercontent.com/10376688/72996946-dbaf3600-3dfb-11ea-8d5d-3a7356780b5e.png)
+![lorenz_coord](https://user-images.githubusercontent.com/10376688/81470264-42f5c800-91ea-11ea-98a2-a8a8d7d96155.png)
 
 One can also visualize the phase space of the attractor and the comparison with the actual one:
 ```julia
 plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
 plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
 ```
-![attractor](https://user-images.githubusercontent.com/10376688/72997095-1913c380-3dfc-11ea-9702-a9734a375b96.png)
+![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)
 
 The results are in line with the literature.
 
