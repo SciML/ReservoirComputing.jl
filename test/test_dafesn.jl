@@ -11,7 +11,7 @@ second_lambda = 0.3
 sigma = 0.3
 beta = 0.0
 alpha = 1.0
-nonlin_alg = NonLinAlgDefault
+nla_type = NLADefault()
 in_size = 3
 out_size = 3
 
@@ -35,7 +35,7 @@ esn = dafESN(approx_res_size,
             second_activation,
             sigma,
             alpha,
-            nonlin_alg)
+            nla_type)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -45,7 +45,7 @@ esn = dafESN(approx_res_size,
 @test isequal(second_activation, esn.second_activation)
 @test isequal(first_lambda, esn.first_lambda)
 @test isequal(second_lambda, esn.second_lambda)
-@test isequal(nonlin_alg, esn.nonlin_alg)
+@test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
 @test size(esn.W_in) == (esn.res_size, esn.in_size)
 @test size(esn.states) == (esn.res_size, train_len)
@@ -66,7 +66,7 @@ esn = dafESN(W,
             second_activation,
             sigma,
             alpha,
-            nonlin_alg)
+            nla_type)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -76,7 +76,7 @@ esn = dafESN(W,
 @test isequal(second_activation, esn.second_activation)
 @test isequal(first_lambda, esn.first_lambda)
 @test isequal(second_lambda, esn.second_lambda)
-@test isequal(nonlin_alg, esn.nonlin_alg)
+@test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
 @test size(esn.W_in) == (esn.res_size, esn.in_size)
 @test size(esn.states) == (esn.res_size, train_len)
@@ -99,7 +99,7 @@ esn = dafESN(approx_res_size,
             first_activation,
             second_activation,
             alpha,
-            nonlin_alg)
+            nla_type)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -109,7 +109,7 @@ esn = dafESN(approx_res_size,
 @test isequal(second_activation, esn.second_activation)
 @test isequal(first_lambda, esn.first_lambda)
 @test isequal(second_lambda, esn.second_lambda)
-@test isequal(nonlin_alg, esn.nonlin_alg)
+@test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
 @test size(esn.W_in) == (esn.res_size, esn.in_size)
 @test size(esn.states) == (esn.res_size, train_len)
@@ -130,7 +130,7 @@ esn = dafESN(W,
             first_activation,
             second_activation,
             alpha,
-            nonlin_alg)
+            nla_type)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -140,7 +140,7 @@ esn = dafESN(W,
 @test isequal(second_activation, esn.second_activation)
 @test isequal(first_lambda, esn.first_lambda)
 @test isequal(second_lambda, esn.second_lambda)
-@test isequal(nonlin_alg, esn.nonlin_alg)
+@test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
 @test size(esn.W_in) == (esn.res_size, esn.in_size)
 @test size(esn.states) == (esn.res_size, train_len)
@@ -153,9 +153,9 @@ output = dafESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
 
 #test non linear algos
-nla = [NonLinAlgT1, NonLinAlgT2, NonLinAlgT3]
+nla = [NLAT1(), NLAT2(), NLAT3()]
 for t in nla
-    nonlin_alg = t
+    nla_type = t
     esn = dafESN(approx_res_size,
             train,
             degree,
@@ -166,7 +166,7 @@ for t in nla
             second_activation,
             sigma,
             alpha,
-            nonlin_alg)
+            nla_type)
         
     W_out = ESNtrain(esn, beta)
     @test size(W_out) == (out_size, esn.res_size)

@@ -9,7 +9,7 @@ struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
     #sigma::T
     alpha::T
     #radius::T
-    nonlin_alg::Any
+    nla_type::NonLinearAlgorithm
     first_activation::Any
     second_activation::Any
     first_lambda::T
@@ -30,7 +30,7 @@ function dafESN(approx_res_size::Int,
         second_activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1)
@@ -42,7 +42,7 @@ function dafESN(approx_res_size::Int,
     first_activation, second_activation, first_lambda, second_lambda)
 
     return dafESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+    alpha, nla_type, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
 end
 
 #reservoir matrix W given by the user
@@ -54,7 +54,7 @@ function dafESN(W::AbstractArray{T},
         second_activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1)
@@ -65,7 +65,7 @@ function dafESN(W::AbstractArray{T},
     first_activation, second_activation, first_lambda, second_lambda)
 
     return dafESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+    alpha, nla_type, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
 end
 
 
@@ -80,7 +80,7 @@ function dafESN(approx_res_size::Int,
         first_activation::Any = tanh,
         second_activation::Any = tanh,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1)
@@ -97,7 +97,7 @@ function dafESN(approx_res_size::Int,
     first_activation, second_activation, first_lambda, second_lambda)
 
     return dafESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+    alpha, nla_type, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
 end
 
 #reservoir matrix W and input layer W_in given by the user
@@ -109,7 +109,7 @@ function dafESN(W::AbstractArray{T},
         first_activation::Any = tanh,
         second_activation::Any = tanh,
         alpha::T = 1.0,
-        nonlin_alg::Any = NonLinAlgDefault) where T<:AbstractFloat
+        nla_type::NonLinearAlgorithm = NLADefault()) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
     out_size = size(train_data, 1)
@@ -125,7 +125,7 @@ function dafESN(W::AbstractArray{T},
     first_activation, second_activation, first_lambda, second_lambda)
 
     return dafESN{T}(res_size, in_size, out_size, train_data,
-    alpha, nonlin_alg, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
+    alpha, nla_type, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states)
 end
 
 function daf_states_matrix(W::AbstractArray{Float64},
@@ -155,7 +155,7 @@ function dafESNpredict(esn::AbstractLeakyDAFESN,
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
     for i=1:predict_len
-        x_new = esn.nonlin_alg(x)
+        x_new = nla(esn.nla_type, x)
         out = (W_out*x_new)
         output[:, i] = out
         x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*out))+ esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*out))

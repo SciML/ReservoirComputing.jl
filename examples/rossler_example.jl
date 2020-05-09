@@ -32,7 +32,7 @@ train_len = 5000
 predict_len = 2500
 beta = 0.0
 alpha = 1.0
-nonlin_alg = NonLinAlgT2
+nla_type = NLADefault()
 
 #get data
 train = data[:, shift:shift+train_len-1]
@@ -46,7 +46,7 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    nonlin_alg)
+    nla_type)
 
 
 #training and prediction
