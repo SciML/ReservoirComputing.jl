@@ -147,14 +147,6 @@ function states_matrix(W::AbstractArray{Float64},
     return states
 end
 
-function ESNtrain(esn::AbstractEchoStateNetwork, beta::Float64)
-
-    i_mat = beta.*Matrix(1.0I, esn.res_size, esn.res_size)
-    states_new = nla(esn.nla_type, esn.states)
-    W_out = (esn.train_data*transpose(states_new))*inv(states_new*transpose(states_new)+i_mat)
-
-    return W_out
-end
 
 function ESNpredict(esn::AbstractLeakyESN,
     predict_len::Int,
