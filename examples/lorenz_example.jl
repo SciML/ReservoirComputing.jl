@@ -30,7 +30,7 @@ degree = 6
 sigma = 0.1
 train_len = 5000
 predict_len = 1250
-beta = 0.0
+beta = 0.1
 alpha = 1.0
 nla_type = NLAT1()
 
