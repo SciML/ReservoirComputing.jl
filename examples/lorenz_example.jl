@@ -30,9 +30,10 @@ degree = 6
 sigma = 0.1
 train_len = 5000
 predict_len = 1250
-beta = 0.1
+beta = 0.0
 alpha = 1.0
-nla_type = NLAT1()
+nla_type = NLAT2()
+extended_states = false
 
 #get data
 train = data[:, shift:shift+train_len-1]
@@ -46,7 +47,8 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
 
 #training and prediction
 W_out = ESNtrain(esn, beta)

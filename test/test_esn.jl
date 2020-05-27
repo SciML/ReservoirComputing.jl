@@ -13,6 +13,7 @@ in_size = 3
 out_size = 3
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
 W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
+extended_states = false
 
 
 train_len = 50
@@ -29,7 +30,8 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -61,7 +63,8 @@ esn = ESN(W,
     activation,
     sigma,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
     
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
@@ -91,7 +94,8 @@ esn = ESN(approx_res_size,
     W_in,
     activation,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -119,7 +123,8 @@ esn = ESN(W,
     W_in,
     activation,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
     
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
@@ -152,7 +157,8 @@ for t in nla
         activation,
         sigma,
         alpha,
-        nla_type)
+        nla_type,
+        extended_states)
         
     W_out = ESNtrain(esn, beta)
     @test size(W_out) == (out_size, esn.res_size)

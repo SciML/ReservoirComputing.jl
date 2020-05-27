@@ -33,6 +33,7 @@ predict_len = 2500
 beta = 0.0
 alpha = 1.0
 nla_type = NLADefault()
+extended_states = false
 
 #get data
 train = data[:, shift:shift+train_len-1]
@@ -46,7 +47,8 @@ esn = ESN(approx_res_size,
     activation,
     sigma,
     alpha,
-    nla_type)
+    nla_type,
+    extended_states)
 
 
 #training and prediction
