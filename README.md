@@ -49,6 +49,7 @@ sigma = 0.1
 beta = 0.0
 alpha = 1.0
 nla_type = NLAT2()
+extended_states = false
 ```
 Now it's time to initiate the echo state network
 ```julia
@@ -60,7 +61,8 @@ esn = ESN(approx_res_size,
     activation, #default = tanh
     alpha, #default = 1.0
     sigma, #default = 0.1
-    nla_type #default = NLADefault()
+    nla_type #default = NLADefault(),
+    extended_states #default = false
     )
 ```
 The echo state network can now be trained and tested:
