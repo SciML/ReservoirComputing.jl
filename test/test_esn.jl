@@ -1,4 +1,4 @@
-using ReservoirComputing  
+using ReservoirComputing
 
 #model parameters
 approx_res_size = 30
@@ -53,9 +53,7 @@ W_out = ESNtrain(esn, beta)
 output = ESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
 
-#test single predict
-p_output = ESNsingle_predict(esn, predict_len, test[3,:], test, W_out)
-@test size(p_output) == (out_size, predict_len)
+
 
 #constructor 2
 esn = ESN(W,
@@ -65,7 +63,7 @@ esn = ESN(W,
     alpha,
     nla_type,
     extended_states)
-    
+
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
 @test isequal(train, esn.train_data)
@@ -125,7 +123,7 @@ esn = ESN(W,
     alpha,
     nla_type,
     extended_states)
-    
+
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
 @test isequal(train, esn.train_data)
@@ -159,11 +157,9 @@ for t in nla
         alpha,
         nla_type,
         extended_states)
-        
+
     W_out = ESNtrain(esn, beta)
     @test size(W_out) == (out_size, esn.res_size)
     output = ESNpredict(esn, predict_len, W_out)
     @test size(output) == (out_size, predict_len)
-    p_output = ESNsingle_predict(esn, predict_len, test[3,:], test, W_out)
-    @test size(p_output) == (out_size, predict_len)
 end
