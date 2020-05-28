@@ -1,4 +1,4 @@
-using ReservoirComputing  
+using ReservoirComputing
 
 #model parameters
 approx_res_size = 30
@@ -14,6 +14,7 @@ alpha = 1.0
 nla_type = NLADefault()
 in_size = 3
 out_size = 3
+extended_states = false
 
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
 W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
@@ -35,7 +36,8 @@ esn = dafESN(approx_res_size,
             second_activation,
             sigma,
             alpha,
-            nla_type)
+            nla_type,
+            extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -66,7 +68,8 @@ esn = dafESN(W,
             second_activation,
             sigma,
             alpha,
-            nla_type)
+            nla_type,
+            extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -99,7 +102,8 @@ esn = dafESN(approx_res_size,
             first_activation,
             second_activation,
             alpha,
-            nla_type)
+            nla_type,
+            extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -130,7 +134,8 @@ esn = dafESN(W,
             first_activation,
             second_activation,
             alpha,
-            nla_type)
+            nla_type,
+            extended_states)
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
@@ -166,11 +171,11 @@ for t in nla
             second_activation,
             sigma,
             alpha,
-            nla_type)
-        
+            nla_type,
+            extended_states)
+
     W_out = ESNtrain(esn, beta)
     @test size(W_out) == (out_size, esn.res_size)
     output = dafESNpredict(esn, predict_len, W_out)
     @test size(output) == (out_size, predict_len)
 end
- 

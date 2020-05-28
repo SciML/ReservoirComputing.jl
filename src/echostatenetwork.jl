@@ -12,7 +12,6 @@ struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
     W_in::AbstractArray{T}
     states::AbstractArray{T}
     extended_states::Bool
-
 end
 
 function ESN(approx_res_size::Int,
@@ -26,7 +25,7 @@ function ESN(approx_res_size::Int,
         extended_states::Bool = false) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
-    out_size = size(train_data, 1) 
+    out_size = size(train_data, 1)
     res_size = Int(floor(approx_res_size/in_size)*in_size)
     W = init_reservoir(res_size, in_size, radius, degree)
     W_in = init_input_layer(res_size, in_size, sigma)
@@ -46,7 +45,7 @@ function ESN(W::AbstractArray{T},
         extended_states::Bool = false) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
-    out_size = size(train_data, 1) 
+    out_size = size(train_data, 1)
     res_size = size(W, 1)
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
@@ -70,13 +69,13 @@ function ESN(approx_res_size::Int,
     out_size = size(train_data, 1) #needs to be different?
     res_size = Int(floor(approx_res_size/in_size)*in_size)
     W = init_reservoir(res_size, in_size, radius, degree)
-    
+
     if size(W_in, 1) != res_size
         throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
     elseif size(W_in, 2) != in_size
         throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
     end
-    
+
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
@@ -93,15 +92,15 @@ function ESN(W::AbstractArray{T},
         extended_states::Bool = false) where T<:AbstractFloat
 
     in_size = size(train_data, 1)
-    out_size = size(train_data, 1) 
+    out_size = size(train_data, 1)
     res_size = size(W, 1)
-    
+
     if size(W_in, 1) != res_size
         throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
     elseif size(W_in, 2) != in_size
         throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
-    end    
-    
+    end
+
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
     return ESN{T}(res_size, in_size, out_size, train_data,
@@ -121,7 +120,7 @@ function init_reservoir(res_size::Int,
     W .*= radius/rho_w
     return W
 
-    
+
 end
 
 function init_input_layer(res_size::Int,
@@ -134,7 +133,7 @@ function init_input_layer(res_size::Int,
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
     return W_in
-    
+
 end
 
 function states_matrix(W::AbstractArray{Float64},
@@ -147,16 +146,16 @@ function states_matrix(W::AbstractArray{Float64},
     train_len = size(train_data, 2)
     res_size = size(W, 1)
     in_size = size(train_data, 1)
-        
+
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
         states[:, i+1] = (1-alpha).*states[:, i] + alpha*activation.((W*states[:, i])+(W_in*train_data[:, i]))
     end
-    
+
     if extended_states == true
         ext_states = vcat(states, hcat(zeros(Float64, in_size), train_data[:,1:end-1]))
         return ext_states
-    else 
+    else
         return states
     end
 end
@@ -168,13 +167,13 @@ function ESNpredict(esn::AbstractLeakyESN,
 
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
-    
+
     if esn.extended_states == false
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out)) #devi sistemare
+            x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
         end
     else
         for i=1:predict_len
@@ -186,23 +185,3 @@ function ESNpredict(esn::AbstractLeakyESN,
     end
     return output
 end
-
-
-#needs better implementation
-function ESNsingle_predict(esn::AbstractLeakyESN,
-    predict_len::Int,
-    partial::AbstractArray{Float64},
-    test_data::AbstractArray{Float64},
-    W_out::AbstractArray{Float64})
-
-    output = zeros(Float64, esn.in_size, predict_len)
-    out_new = zeros(Float64, esn.out_size)
-    x = esn.states[:, end]
-    for i=1:predict_len
-        x_new = nla(esn.nla_type, x)
-        output[:, i] = out_new        
-        x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out_new))
-    end
-    return output
-end
-
