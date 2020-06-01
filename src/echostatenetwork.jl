@@ -71,9 +71,9 @@ function ESN(approx_res_size::Int,
     W = init_reservoir(res_size, in_size, radius, degree)
 
     if size(W_in, 1) != res_size
-        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+        throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
     elseif size(W_in, 2) != in_size
-        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+        throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
     end
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
@@ -96,9 +96,9 @@ function ESN(W::AbstractArray{T},
     res_size = size(W, 1)
 
     if size(W_in, 1) != res_size
-        throw(DimensionMismatch(W_in, "size(W_in, 1) must be equal to size(W, 1)"))
+        throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
     elseif size(W_in, 2) != in_size
-        throw(DimensionMismatch(W_in, "size(W_in, 2) must be equal to in_size"))
+        throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
     end
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
@@ -185,3 +185,39 @@ function ESNpredict(esn::AbstractLeakyESN,
     end
     return output
 end
+
+function ESNpredict_h_steps(esn::AbstractLeakyESN,
+    predict_len::Int,
+    h_steps::Int,
+    test_data::AbstractArray{Float64},
+    W_out::AbstractArray{Float64})
+    
+    output = zeros(Float64, esn.in_size, predict_len)
+    x = esn.states[:, end]
+
+    if esn.extended_states == false
+        for i=1:predict_len
+            x_new = nla(esn.nla_type, x)
+            out = (W_out*x_new)
+            output[:, i] = out
+            if mod(i, h_steps) == 0
+                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*test_data[:,i]))
+            else
+                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
+            end
+        end
+    else
+        for i=1:predict_len
+            x_new = nla(esn.nla_type, x)
+            out = (W_out*x_new)
+            output[:, i] = out
+            if mod(i, h_steps) == 0
+                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+
+                        (esn.W_in*test_data[:,i])), test_data[:,i])
+            else
+                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+            end
+        end
+    end
+    return output
+end  

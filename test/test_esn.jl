@@ -14,6 +14,7 @@ out_size = 3
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
 W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
 extended_states = false
+h_steps = 2
 
 
 train_len = 50
@@ -144,6 +145,10 @@ W_out = ESNtrain(esn, beta)
 output = ESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
 
+#test h step ahead prediction
+output_h = ESNpredict_h_steps(esn, predict_len, h_steps, test, W_out)
+@test size(output_h) == (out_size, predict_len)
+
 #test non linear algos
 nla = [NLAT1(), NLAT2(), NLAT3()]
 for t in nla
@@ -162,4 +167,5 @@ for t in nla
     @test size(W_out) == (out_size, esn.res_size)
     output = ESNpredict(esn, predict_len, W_out)
     @test size(output) == (out_size, predict_len)
+
 end
