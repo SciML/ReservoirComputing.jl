@@ -13,7 +13,7 @@ include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
 
 include("echostatenetwork.jl")
-export ESN, ESNpredict, ESNsingle_predict
+export ESN, ESNpredict, ESNpredict_h_steps
 
 include("dafesn.jl")
 export dafESN, dafESNpredict
