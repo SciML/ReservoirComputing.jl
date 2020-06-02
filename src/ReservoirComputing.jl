@@ -12,6 +12,9 @@ export ESNtrain
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
 
+include("esn_input_layers.jl") 
+include("esn_reservoirs.jl")
+
 include("echostatenetwork.jl")
 export ESN, ESNpredict, ESNpredict_h_steps
 
