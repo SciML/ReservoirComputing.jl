@@ -17,7 +17,7 @@ out_size = 3
 extended_states = false
 
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
-W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
+W = ReservoirComputing.init_reservoir_givendeg(approx_res_size, in_size, radius, degree)
 
 train_len = 50
 predict_len = 12

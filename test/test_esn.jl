@@ -12,7 +12,7 @@ nla_type = NLADefault()
 in_size = 3
 out_size = 3
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
-W = ReservoirComputing.init_reservoir(approx_res_size, in_size, radius, degree)
+W = ReservoirComputing.init_reservoir_givendeg(approx_res_size, in_size, radius, degree)
 extended_states = false
 h_steps = 2
 
