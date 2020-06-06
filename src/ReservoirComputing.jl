@@ -8,7 +8,7 @@ abstract type AbstractEchoStateNetwork end
 abstract type NonLinearAlgorithm end
 
 include("ridge_train.jl")
-export ESNtrain, Ridge, Lasso, ElastNet
+export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber
 
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
