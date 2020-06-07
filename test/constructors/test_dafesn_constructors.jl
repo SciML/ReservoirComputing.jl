@@ -16,8 +16,8 @@ in_size = 3
 out_size = 3
 extended_states = false
 
-W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
-W = ReservoirComputing.init_reservoir_givendeg(approx_res_size, in_size, radius, degree)
+W_in = init_input_layer(approx_res_size, in_size, sigma)
+W = init_reservoir_givendeg(approx_res_size, radius, degree)
 
 train_len = 50
 predict_len = 12
@@ -156,26 +156,3 @@ W_out = ESNtrain(esn, beta)
 #test predict
 output = dafESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
-
-#test non linear algos
-nla = [NLAT1(), NLAT2(), NLAT3()]
-for t in nla
-    nla_type = t
-    esn = dafESN(approx_res_size,
-            train,
-            degree,
-            radius,
-            first_lambda,
-            second_lambda,
-            first_activation,
-            second_activation,
-            sigma,
-            alpha,
-            nla_type,
-            extended_states)
-
-    W_out = ESNtrain(esn, beta)
-    @test size(W_out) == (out_size, esn.res_size)
-    output = dafESNpredict(esn, predict_len, W_out)
-    @test size(output) == (out_size, predict_len)
-end

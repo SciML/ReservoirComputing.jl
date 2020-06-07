@@ -19,10 +19,10 @@ end
 
 #MLJ Ridge
 struct Ridge{T<: AbstractFloat} <: LinearModel
-    beta::T
+    lambda::T
     solver::MLJLinearModels.Solver
 end
-Ridge(beta) = Ridge{Float64}(beta)
+Ridge(lambda, solver) = Ridge{Float64}(lambda, solver)
 ESNtrain(ridge::Ridge{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _ridge(esn, ridge)
 
 function _ridge(esn::AbstractEchoStateNetwork, ridge::Ridge)
@@ -30,7 +30,7 @@ function _ridge(esn::AbstractEchoStateNetwork, ridge::Ridge)
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(esn.train_data, 1), size(states_new, 1))
     for i=1:size(esn.train_data, 1)
-        r = RidgeRegression(lambda = ridge.beta, fit_intercept = false)
+        r = RidgeRegression(lambda = ridge.lambda, fit_intercept = false)
         W_out[i,:] = MLJLinearModels.fit(r, states_new', esn.train_data[i,:], solver = ridge.solver)
     end
     
@@ -39,11 +39,10 @@ end
 
 #MLJ Lasso
 struct Lasso{T<: AbstractFloat} <: LinearModel
-    beta::T
-    max_iter::Int
+    lambda::T
     solver::MLJLinearModels.Solver
 end
-Lasso(beta, max_iter) = Lasso{Float64}(beta, max_iter)
+Lasso(lambda, solver) = Lasso{Float64}(lambda, solver)
 ESNtrain(lasso::Lasso{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _lasso(esn, lasso)
 
 function _lasso(esn::AbstractEchoStateNetwork, lasso::Lasso)
@@ -51,7 +50,7 @@ function _lasso(esn::AbstractEchoStateNetwork, lasso::Lasso)
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(esn.train_data, 1), size(states_new, 1))
     for i=1:size(esn.train_data, 1)
-        l = LassoRegression(lambda = lasso.beta, fit_intercept = false)
+        l = LassoRegression(lambda = lasso.lambda, fit_intercept = false)
         W_out[i,:] = MLJLinearModels.fit(l, states_new', esn.train_data[i,:], solver = lasso.solver)
     end
     
@@ -60,12 +59,11 @@ end
 
 #MLJ ElastNet 
 struct ElastNet{T<: AbstractFloat} <: LinearModel
-    beta::T
-    beta2::T
-    max_iter::Int
+    lambda::T
+    gamma::T
     solver::MLJLinearModels.Solver
 end
-ElastNet(beta, beta2, max_iter) = ElastNet{Float64}(beta, beta2, max_iter)
+ElastNet(lambda, gamma, solver) = ElastNet{Float64}(lambda, gamma, solver)
 ESNtrain(elastnet::ElastNet{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _elastnet(esn, elastnet)
 
 function _elastnet(esn::AbstractEchoStateNetwork, elastnet::ElastNet)
@@ -73,7 +71,7 @@ function _elastnet(esn::AbstractEchoStateNetwork, elastnet::ElastNet)
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(esn.train_data, 1), size(states_new, 1))
     for i=1:size(esn.train_data, 1)
-        en = ElasticNetRegression(lambda = elastnet.beta, gamma = elastnet.beta2, fit_intercept = false)
+        en = ElasticNetRegression(lambda = elastnet.lambda, gamma = elastnet.gamma, fit_intercept = false)
         W_out[i,:] = MLJLinearModels.fit(en, states_new', esn.train_data[i,:], solver = elastnet.solver)
     end
     

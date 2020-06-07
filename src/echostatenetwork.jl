@@ -27,7 +27,7 @@ function ESN(approx_res_size::Int,
     in_size = size(train_data, 1)
     out_size = size(train_data, 1)
     res_size = Int(floor(approx_res_size/in_size)*in_size)
-    W = init_reservoir_givendeg(res_size, in_size, radius, degree)
+    W = init_reservoir_givendeg(res_size, radius, degree)
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
@@ -68,7 +68,7 @@ function ESN(approx_res_size::Int,
     in_size = size(train_data, 1)
     out_size = size(train_data, 1) #needs to be different?
     res_size = Int(floor(approx_res_size/in_size)*in_size)
-    W = init_reservoir_givendeg(res_size, in_size, radius, degree)
+    W = init_reservoir_givendeg(res_size, radius, degree)
 
     if size(W_in, 1) != res_size
         throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
