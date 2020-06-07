@@ -1,6 +1,5 @@
  #given degree of connections between neurons
  function init_reservoir_givendeg(res_size::Int,
-        in_size::Int,
         radius::Float64,
         degree::Int)
 
@@ -15,7 +14,6 @@ end
 
 #given sparsity of connection between neurons
 function init_reservoir_givensp(res_size::Int,
-        in_size::Int,
         radius::Float64,
         sparsity::Float64)
 

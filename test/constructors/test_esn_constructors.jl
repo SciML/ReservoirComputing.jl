@@ -12,7 +12,7 @@ nla_type = NLADefault()
 in_size = 3
 out_size = 3
 W_in = ReservoirComputing.init_input_layer(approx_res_size, in_size, sigma)
-W = ReservoirComputing.init_reservoir_givendeg(approx_res_size, in_size, radius, degree)
+W = ReservoirComputing.init_reservoir_givendeg(approx_res_size, radius, degree)
 extended_states = false
 h_steps = 2
 
@@ -37,10 +37,7 @@ esn = ESN(approx_res_size,
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
 @test isequal(train, esn.train_data)
-#@test isequal(degree, esn.degree)
-#@test isequal(sigma, esn.sigma)
 @test isequal(alpha, esn.alpha)
-#@test isequal(radius, esn.radius)
 @test isequal(activation, esn.activation)
 @test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
@@ -53,7 +50,9 @@ W_out = ESNtrain(esn, beta)
 #test predict
 output = ESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
-
+#test h steps predict
+output = ESNpredict_h_steps(esn, predict_len, h_steps, test, W_out)
+@test size(output) == (out_size, predict_len)
 
 
 #constructor 2
@@ -68,10 +67,7 @@ esn = ESN(W,
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
 @test isequal(train, esn.train_data)
-#@test isequal(degree, esn.degree)
-#@test isequal(sigma, esn.sigma)
 @test isequal(alpha, esn.alpha)
-#@test isequal(radius, esn.radius)
 @test isequal(activation, esn.activation)
 @test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
@@ -99,10 +95,7 @@ esn = ESN(approx_res_size,
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), esn.res_size)
 @test isequal(train, esn.train_data)
-#@test isequal(degree, esn.degree)
-#@test isequal(sigma, esn.sigma)
 @test isequal(alpha, esn.alpha)
-#@test isequal(radius, esn.radius)
 @test isequal(activation, esn.activation)
 @test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
@@ -128,10 +121,7 @@ esn = ESN(W,
 #test constructor
 @test isequal(approx_res_size, esn.res_size)
 @test isequal(train, esn.train_data)
-#@test isequal(degree, esn.degree)
-#@test isequal(sigma, esn.sigma)
 @test isequal(alpha, esn.alpha)
-#@test isequal(radius, esn.radius)
 @test isequal(activation, esn.activation)
 @test isequal(nla_type, esn.nla_type)
 @test size(esn.W) == (esn.res_size, esn.res_size)
@@ -144,28 +134,3 @@ W_out = ESNtrain(esn, beta)
 #test predict
 output = ESNpredict(esn, predict_len, W_out)
 @test size(output) == (out_size, predict_len)
-
-#test h step ahead prediction
-output_h = ESNpredict_h_steps(esn, predict_len, h_steps, test, W_out)
-@test size(output_h) == (out_size, predict_len)
-
-#test non linear algos
-nla = [NLAT1(), NLAT2(), NLAT3()]
-for t in nla
-    nla_type = t
-    esn = ESN(approx_res_size,
-        train,
-        degree,
-        radius,
-        activation,
-        sigma,
-        alpha,
-        nla_type,
-        extended_states)
-
-    W_out = ESNtrain(esn, beta)
-    @test size(W_out) == (out_size, esn.res_size)
-    output = ESNpredict(esn, predict_len, W_out)
-    @test size(output) == (out_size, predict_len)
-
-end
