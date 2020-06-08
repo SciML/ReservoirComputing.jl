@@ -144,8 +144,9 @@ function daf_states_matrix(W::AbstractArray{Float64},
         second_lambda::Float64,
         extended_states::Bool)
 
-    train_len = size(train_data)[2]
-    res_size = size(W)[1]
+    train_len = size(train_data, 2)
+    res_size = size(W, 1)
+    in_size = size(train_data, 1)
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
         states[:, i+1] = (1-alpha).*states[:, i] + first_lambda*first_activation.((W*states[:, i])+(W_in*train_data[:, i])) + second_lambda*second_activation.((W*states[:, i])+(W_in*train_data[:, i]))
