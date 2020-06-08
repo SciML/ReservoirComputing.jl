@@ -6,4 +6,5 @@ using SafeTestsets
 @time @safetestset "ESN constructors" begin include("constructors/test_esn_constructors.jl") end
 @time @safetestset "DAFESN constructors" begin include("constructors/test_dafesn_constructors.jl") end
 @time @safetestset "Non Linear Algorithms" begin include("extras/test_nla.jl") end
+@time @safetestset "Extended states" begin include("extras/test_extended_states.jl") end
 @time @safetestset "MLJ Linear Models for ESN" begin include("training/test_mlj_lm.jl") end

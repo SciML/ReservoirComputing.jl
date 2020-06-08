@@ -33,17 +33,32 @@ esn = ESN(approx_res_size,
     extended_states)
 
 #test train Ridge
-W_out = ESNtrain(Ridge(beta, Analytical()), esn)
+t = Ridge(beta, Analytical())
+@test isequal(t.lambda, beta)
+@test isequal(t.solver, Analytical())
+W_out = ESNtrain(t, esn)
 @test size(W_out) == (out_size, esn.res_size)
 
 #test train Lasso
-W_out = ESNtrain(Lasso(beta, ProxGrad()), esn)
+t = Lasso(beta, ProxGrad())
+@test isequal(t.lambda, beta)
+@test isequal(t.solver, ProxGrad())
+W_out = ESNtrain(t, esn)
 @test size(W_out) == (out_size, esn.res_size)
 
 #test train ElastNet
-W_out = ESNtrain(ElastNet(beta, beta, ProxGrad()), esn)
+t = ElastNet(beta, beta, ProxGrad())
+@test isequal(t.lambda, beta)
+@test isequal(t.gamma, beta)
+@test isequal(t.solver, ProxGrad())
+W_out = ESNtrain(t, esn)
 @test size(W_out) == (out_size, esn.res_size)
 
 #test train RobustHuber
-W_out = ESNtrain(RobustHuber(delta, beta, 0.0, Newton()), esn)
+t = RobustHuber(delta, beta, 0.0, Newton())
+@test isequal(t.delta, delta)
+@test isequal(t.lambda, beta)
+@test isequal(t.gamma, 0.0)
+@test isequal(t.solver, Newton())
+W_out = ESNtrain(t, esn)
 @test size(W_out) == (out_size, esn.res_size)
