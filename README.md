@@ -17,7 +17,8 @@ First we have to define the Lorenz system and the parameters we are going to use
 ```julia
 using ParameterizedFunctions
 using OrdinaryDiffEq
-     
+using ReservoirComputing
+
 #lorenz system parameters
 u0 = [1.0,0.0,0.0]                       
 tspan = (0.0,200.0)                      
@@ -30,10 +31,10 @@ function lorenz(du,u,p,t)
 end
 #solve and take data
 prob = ODEProblem(lorenz, u0, tspan, p)  
-sol = solve(prob, AB4(), dt=0.02)   
+sol = solve(prob, ABM54(), dt=0.02)   
 v = sol.u
 data = Matrix(hcat(v...))
-shift = 1
+shift = 300
 train_len = 5000
 predict_len = 1250
 train = data[:, shift:shift+train_len-1]
@@ -53,7 +54,6 @@ extended_states = false
 ```
 Now it's time to initiate the echo state network
 ```julia
-using ReservoirComputing
 esn = ESN(approx_res_size,
     train,
     degree,
@@ -61,7 +61,7 @@ esn = ESN(approx_res_size,
     activation, #default = tanh
     alpha, #default = 1.0
     sigma, #default = 0.1
-    nla_type #default = NLADefault(),
+    nla_type, #default = NLADefault()
     extended_states #default = false
     )
 ```
