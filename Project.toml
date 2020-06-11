@@ -4,6 +4,7 @@ authors = ["Francesco Martinuzzi"]
 version = "0.5.0"
 
 [deps]
+LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
