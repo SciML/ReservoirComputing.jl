@@ -3,6 +3,7 @@ module ReservoirComputing
 using SparseArrays
 using LinearAlgebra
 using MLJLinearModels
+using LIBSVM
 
 abstract type AbstractEchoStateNetwork end
 abstract type NonLinearAlgorithm end
@@ -24,5 +25,7 @@ export ESN, ESNpredict, ESNpredict_h_steps
 include("dafesn.jl")
 export dafESN, dafESNpredict
 
+include("svesm.jl")
+export SVESMtrain, SVESM_direct_predict
 
 end #module
