@@ -10,6 +10,7 @@ MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
+LIBSVM = "0.4"
 MLJLinearModels = "0.4, 0.5"
 julia = "1"
 
