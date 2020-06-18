@@ -4,6 +4,8 @@ using SparseArrays
 using LinearAlgebra
 using MLJLinearModels
 using LIBSVM
+using GaussianProcesses
+using Optim
 
 abstract type AbstractEchoStateNetwork end
 abstract type NonLinearAlgorithm end
@@ -28,4 +30,6 @@ export dafESN, dafESNpredict
 include("svesm.jl")
 export SVESMtrain, SVESM_direct_predict
 
+include("esgp.jl")
+export ESGPtrain, ESGPpredict, ESGPpredict_h_steps
 end #module
