@@ -17,7 +17,7 @@ end
 function ESN(approx_res_size::Int,
         train_data::AbstractArray{T},
         degree::Int,
-        radius::T,
+        radius::T;
         activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
@@ -37,7 +37,7 @@ end
 
 #reservoir matrix W given by the user
 function ESN(W::AbstractArray{T},
-        train_data::Array{T},
+        train_data::Array{T};
         activation::Any = tanh,
         sigma::T = 0.1,
         alpha::T = 1.0,
@@ -59,7 +59,7 @@ function ESN(approx_res_size::Int,
         train_data::AbstractArray{T},
         degree::Int,
         radius::T,
-        W_in::AbstractArray{T},
+        W_in::AbstractArray{T};
         activation::Any = tanh,
         alpha::T = 1.0,
         nla_type::NonLinearAlgorithm = NLADefault(),
@@ -85,7 +85,7 @@ end
 #reservoir matrix W and input layer W_in given by the user
 function ESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
-        W_in::AbstractArray{T},
+        W_in::AbstractArray{T};
         activation::Any = tanh,
         alpha::T = 1.0,
         nla_type::NonLinearAlgorithm = NLADefault(),

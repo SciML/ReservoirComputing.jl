@@ -44,11 +44,11 @@ esn = ESN(approx_res_size,
     train,
     degree,
     radius,
-    activation,
-    sigma,
-    alpha,
-    nla_type,
-    extended_states)
+    activation = activation,
+    sigma = sigma,
+    alpha = alpha,
+    nla_type = nla_type,
+    extended_states = extended_states)
 
 
 #training and prediction

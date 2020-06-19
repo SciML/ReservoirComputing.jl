@@ -14,7 +14,7 @@ in_size = 3
 extended_states = false
 h_steps = 2
 
-W = ReservoirComputing.init_reservoir_givendeg(res_size, radius, degree)
+W = init_reservoir_givendeg(res_size, radius, degree)
 
 train_len = 50
 predict_len = 12
@@ -35,10 +35,10 @@ for t in input_layer
     esn = ESN(W,
         train,
         W_in,
-        activation,
-        alpha,
-        nla_type,
-        extended_states) 
+        activation = activation,
+        alpha = alpha,
+        nla_type = nla_type,
+        extended_states = extended_states) 
 
     @test size(W_in, 1) == res_size
     @test size(W_in, 2) == in_size
