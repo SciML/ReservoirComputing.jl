@@ -22,7 +22,7 @@ struct Ridge{T<: AbstractFloat} <: LinearModel
     lambda::T
     solver::MLJLinearModels.Solver
 end
-Ridge(lambda, solver) = Ridge{Float64}(lambda, solver)
+#Ridge(lambda, solver) = Ridge{Float64}(lambda, solver)
 ESNtrain(ridge::Ridge{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _ridge(esn, ridge)
 
 function _ridge(esn::AbstractEchoStateNetwork, ridge::Ridge)
@@ -42,7 +42,7 @@ struct Lasso{T<: AbstractFloat} <: LinearModel
     lambda::T
     solver::MLJLinearModels.Solver
 end
-Lasso(lambda, solver) = Lasso{Float64}(lambda, solver)
+#Lasso(lambda, solver) = Lasso{Float64}(lambda, solver)
 ESNtrain(lasso::Lasso{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _lasso(esn, lasso)
 
 function _lasso(esn::AbstractEchoStateNetwork, lasso::Lasso)
@@ -63,7 +63,7 @@ struct ElastNet{T<: AbstractFloat} <: LinearModel
     gamma::T
     solver::MLJLinearModels.Solver
 end
-ElastNet(lambda, gamma, solver) = ElastNet{Float64}(lambda, gamma, solver)
+#ElastNet(lambda, gamma, solver) = ElastNet{Float64}(lambda, gamma, solver)
 ESNtrain(elastnet::ElastNet{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _elastnet(esn, elastnet)
 
 function _elastnet(esn::AbstractEchoStateNetwork, elastnet::ElastNet)
@@ -85,7 +85,7 @@ struct RobustHuber{T<: AbstractFloat} <: LinearModel
     gamma::T
     solver::MLJLinearModels.Solver
 end
-RobustHuber(delta, lambda, gamma, solver) = RobustHuber{Float64}(delta, lambda, gamma, solver)
+#RobustHuber(delta, lambda, gamma, solver) = RobustHuber{Float64}(delta, lambda, gamma, solver)
 ESNtrain(huber::RobustHuber{T}, esn::AbstractEchoStateNetwork) where T<: AbstractFloat = _huber(esn, huber)
 
 function _huber(esn::AbstractEchoStateNetwork, huber::RobustHuber)

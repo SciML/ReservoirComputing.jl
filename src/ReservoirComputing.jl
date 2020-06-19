@@ -25,7 +25,7 @@ include("echostatenetwork.jl")
 export ESN, ESNpredict, ESNpredict_h_steps
 
 include("dafesn.jl")
-export dafESN, dafESNpredict
+export dafESN, dafESNpredict, dafESNpredict_h_steps
 
 include("svesm.jl")
 export SVESMtrain, SVESM_direct_predict
