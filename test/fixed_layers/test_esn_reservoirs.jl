@@ -35,10 +35,10 @@ for t in input_layer
     esn = ESN(W,
         train,
         W_in,
-        activation,
-        alpha,
-        nla_type,
-        extended_states) 
+        activation = activation,
+        alpha = alpha,
+        nla_type = nla_type,
+        extended_states = extended_states) 
 
     @test size(W, 1) == res_size
 end

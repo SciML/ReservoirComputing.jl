@@ -58,11 +58,11 @@ esn = ESN(approx_res_size,
     train,
     degree,
     radius,
-    activation, #default = tanh
-    alpha, #default = 1.0
-    sigma, #default = 0.1
-    nla_type, #default = NLADefault()
-    extended_states #default = false
+    activation = activation, #default = tanh
+    alpha = alpha, #default = 1.0
+    sigma = sigma, #default = 0.1
+    nla_type = nla_type, #default = NLADefault()
+    extended_states = extended_states #default = false
     )
 ```
 The echo state network can now be trained and tested:
