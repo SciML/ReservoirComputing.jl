@@ -15,6 +15,7 @@ nla_type = NLADefault()
 in_size = 3
 out_size = 3
 extended_states = false
+h_steps = 2
 
 W_in = init_input_layer(approx_res_size, in_size, sigma)
 W = init_reservoir_givendeg(approx_res_size, radius, degree)
@@ -155,4 +156,7 @@ W_out = ESNtrain(esn, beta)
 @test size(W_out) == (out_size, esn.res_size)
 #test predict
 output = dafESNpredict(esn, predict_len, W_out)
+@test size(output) == (out_size, predict_len)
+
+output = dafESNpredict_h_steps(esn, predict_len, h_steps, test, W_out)
 @test size(output) == (out_size, predict_len)

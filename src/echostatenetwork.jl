@@ -147,7 +147,7 @@ function ESNpredict(esn::AbstractLeakyESN,
             output[:, i] = out
             x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
         end
-    else
+    elseif esn.extended_states == true
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
@@ -178,7 +178,7 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
                 x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
             end
         end
-    else
+    elseif esn.extended_states == true
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)

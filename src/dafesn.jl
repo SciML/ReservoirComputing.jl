@@ -179,7 +179,7 @@ function dafESNpredict(esn::AbstractLeakyDAFESN,
             x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*out))+
             esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*out))
         end
-    else
+    elseif esn.extended_states == true
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
@@ -191,3 +191,42 @@ function dafESNpredict(esn::AbstractLeakyDAFESN,
 
     return output
 end
+
+function dafESNpredict_h_steps(esn::AbstractLeakyESN,
+    predict_len::Int,
+    h_steps::Int,
+    test_data::AbstractArray{Float64},
+    W_out::AbstractArray{Float64})
+    
+    output = zeros(Float64, esn.in_size, predict_len)
+    x = esn.states[:, end]
+
+    if esn.extended_states == false
+        for i=1:predict_len
+            x_new = nla(esn.nla_type, x)
+            out = (W_out*x_new)
+            output[:, i] = out
+            if mod(i, h_steps) == 0
+                x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*test_data[:,i]))+
+                esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*test_data[:,i]))
+            else
+                x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*out))+
+                esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*out))
+            end
+        end
+    elseif esn.extended_states == true
+        for i=1:predict_len
+            x_new = nla(esn.nla_type, x)
+            out = (W_out*x_new)
+            output[:, i] = out
+            if mod(i, h_steps) == 0
+                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.first_lambda*esn.first_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*test_data[:,i]))+
+                esn.second_lambda*esn.second_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*test_data[:,i])), test_data[:,i])
+            else
+                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.first_lambda*esn.first_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out))+
+                esn.second_lambda*esn.second_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+            end
+        end
+    end
+    return output
+end  
