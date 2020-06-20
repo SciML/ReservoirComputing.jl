@@ -149,7 +149,7 @@ function daf_states_matrix(W::AbstractArray{Float64},
     in_size = size(train_data, 1)
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
-        states[:, i+1] = (1-alpha).*states[:, i] + first_lambda*first_activation.((W*states[:, i])+(W_in*train_data[:, i])) + second_lambda*second_activation.((W*states[:, i])+(W_in*train_data[:, i]))
+        states[:, i+1] = double_leaky_fixed_rnn(alpha, first_activation, second_activation, first_lambda, second_lambda, W, W_in, states[:, i], train_data[:, i])
     end
 
     if extended_states == true
@@ -176,16 +176,14 @@ function dafESNpredict(esn::AbstractLeakyDAFESN,
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*out))+
-            esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*out))
+            x = double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x, out)
         end
     elseif esn.extended_states == true
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.first_lambda*esn.first_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out))+
-            esn.second_lambda*esn.second_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+            x = vcat(double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x[1:esn.res_size], out), out)
         end
     end
 
@@ -207,11 +205,9 @@ function dafESNpredict_h_steps(esn::AbstractLeakyESN,
             out = (W_out*x_new)
             output[:, i] = out
             if mod(i, h_steps) == 0
-                x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*test_data[:,i]))+
-                esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*test_data[:,i]))
+                x = double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x, test_data[:,i])
             else
-                x = (1-esn.alpha).*x + esn.first_lambda*esn.first_activation.((esn.W*x)+(esn.W_in*out))+
-                esn.second_lambda*esn.second_activation.((esn.W*x)+(esn.W_in*out))
+                x = double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x, out)
             end
         end
     elseif esn.extended_states == true
@@ -220,11 +216,9 @@ function dafESNpredict_h_steps(esn::AbstractLeakyESN,
             out = (W_out*x_new)
             output[:, i] = out
             if mod(i, h_steps) == 0
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.first_lambda*esn.first_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*test_data[:,i]))+
-                esn.second_lambda*esn.second_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*test_data[:,i])), test_data[:,i])
+                x = vcat(double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x[1:esn.res_size], test_data[:,i]), test_data[:,i])
             else
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.first_lambda*esn.first_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out))+
-                esn.second_lambda*esn.second_activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+                x = vcat(double_leaky_fixed_rnn(esn.alpha, esn.first_activation, esn.second_activation, esn.first_lambda, esn.second_lambda, esn.W, esn.W_in, x[1:esn.res_size], out), out)
             end
         end
     end

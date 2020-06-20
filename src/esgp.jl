@@ -3,10 +3,11 @@ function ESGPtrain(esn::AbstractLeakyESN,
     kernel::GaussianProcesses.Kernel; 
     lognoise::Float64 = -2.0, 
     optimize::Bool = false,
-    optimizer::Optim.AbstractOptimizer = Optim.LBFGS())
+    optimizer::Optim.AbstractOptimizer = Optim.LBFGS(),
+    train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
-    gp = GP(states_new, vec(esn.train_data), mean, kernel, lognoise)
+    gp = GP(states_new, vec(train_data), mean, kernel, lognoise)
     
     if optimize == true
         optimize!(gp; method=optimizer)
@@ -28,7 +29,7 @@ function ESGPpredict(esn::AbstractLeakyESN,
             out, sigma = GaussianProcesses.predict_y(gp, x_new)
             output[:, i] = out
             sigmas[:,i] = sigma
-            x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
+            x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
         end
     else
         for i=1:predict_len
@@ -36,7 +37,7 @@ function ESGPpredict(esn::AbstractLeakyESN,
             out, sigma = GaussianProcesses.predict_y(gp, x_new)
             output[:, i] = out
             sigmas[:,i] = sigma
-            x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
         end
     end
     return output, sigmas
@@ -59,9 +60,9 @@ function ESGPpredict_h_steps(esn::AbstractLeakyESN,
             output[:, i] = out
             sigmas[:,i] = sigma
             if mod(i, h_steps) == 0
-                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*test_data[:,i]))
+                x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, test_data[:,i])
             else
-                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
+                x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
             end
         end
     else
@@ -71,10 +72,9 @@ function ESGPpredict_h_steps(esn::AbstractLeakyESN,
             output[:, i] = out
             sigmas[:,i] = sigma
             if mod(i, h_steps) == 0
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+
-                        (esn.W_in*test_data[:,i])), test_data[:,i])
+                x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], test_data[:,i]), test_data[:,i])
             else
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+                x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out)
             end
         end
     end
