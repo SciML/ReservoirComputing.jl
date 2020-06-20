@@ -121,7 +121,8 @@ function states_matrix(W::AbstractArray{Float64},
 
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
-        states[:, i+1] = (1-alpha).*states[:, i] + alpha*activation.((W*states[:, i])+(W_in*train_data[:, i]))
+        states[:, i+1] = leaky_fixed_rnn(activation, alpha, W, W_in, states[:, i], train_data[:, i])
+        
     end
 
     if extended_states == true
@@ -145,14 +146,14 @@ function ESNpredict(esn::AbstractLeakyESN,
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
+            x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
         end
     elseif esn.extended_states == true
         for i=1:predict_len
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
         end
     end
     return output
@@ -173,9 +174,9 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
             out = (W_out*x_new)
             output[:, i] = out
             if mod(i, h_steps) == 0
-                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*test_data[:,i]))
+                x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, test_data[:,i])
             else
-                x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*out))
+                x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
             end
         end
     elseif esn.extended_states == true
@@ -184,10 +185,9 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
             out = (W_out*x_new)
             output[:, i] = out
             if mod(i, h_steps) == 0
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+
-                        (esn.W_in*test_data[:,i])), test_data[:,i])
+                x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], test_data[:,i]), test_data[:,i])
             else
-                x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*out)), out)
+                x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out)
             end
         end
     end

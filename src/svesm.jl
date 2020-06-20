@@ -17,14 +17,13 @@ function SVESM_direct_predict(esn::AbstractLeakyESN,
     if esn.extended_states == false
         for i=1:size(test_in, 2)
             x_new = nla(esn.nla_type, x)
-            x = (1-esn.alpha).*x + esn.alpha*esn.activation.((esn.W*x)+(esn.W_in*test_in[:,i]))
+            x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, test_in[:,i])
             prediction_states[:, i] = x
         end
     else
         for i=1:size(test_in, 2)
             x_new = nla(esn.nla_type, x)
-            x = vcat((1-esn.alpha).*x[1:esn.res_size] + esn.alpha*esn.activation.((esn.W*x[1:esn.res_size])+(esn.W_in*test_in[:, i])), 
-                test_in[:, i]) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], test_in[:,i])test_in[:, i]) 
             prediction_states[:,i] = x
         end
     end

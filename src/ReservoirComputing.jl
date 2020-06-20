@@ -10,6 +10,7 @@ using Optim
 abstract type AbstractEchoStateNetwork end
 abstract type NonLinearAlgorithm end
 
+include("leaky_fixed_rnn.jl")
 include("ridge_train.jl")
 export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber
 
