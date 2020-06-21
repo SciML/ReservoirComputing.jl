@@ -29,7 +29,7 @@ include("dafesn.jl")
 export dafESN, dafESNpredict, dafESNpredict_h_steps
 
 include("svesm.jl")
-export SVESMtrain, SVESM_direct_predict
+export SVESMtrain, SVESM_direct_predict, SVESMpredict, SVESMpredict_h_steps
 
 include("esgp.jl")
 export ESGPtrain, ESGPpredict, ESGPpredict_h_steps

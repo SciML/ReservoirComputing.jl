@@ -4,10 +4,10 @@ function ESGPtrain(esn::AbstractLeakyESN,
     lognoise::Float64 = -2.0, 
     optimize::Bool = false,
     optimizer::Optim.AbstractOptimizer = Optim.LBFGS(),
-    train_data::AbstractArray{Float64} = esn.train_data)
+    y_target::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
-    gp = GP(states_new, vec(train_data), mean, kernel, lognoise)
+    gp = GP(states_new, vec(y_target), mean, kernel, lognoise)
     
     if optimize == true
         optimize!(gp; method=optimizer)
