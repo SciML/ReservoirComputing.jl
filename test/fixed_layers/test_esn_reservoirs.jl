@@ -1,18 +1,19 @@
 using ReservoirComputing
 
 #model parameters
-res_size = 30
-radius = 1.2
-activation = tanh
-degree = 6
-sparsity = 0.5
-sigma = 0.1
-beta = 0.0
-alpha = 1.0
-nla_type = NLADefault()
-in_size = 3
-extended_states = false
-h_steps = 2
+const res_size = 30
+const radius = 1.2
+const activation = tanh
+const degree = 6
+const sparsity = 0.5
+const sigma = 0.1
+const beta = 0.0
+const alpha = 1.0
+const nla_type = NLADefault()
+const in_size = 3
+const extended_states = false
+const h_steps = 2
+const max_value = 0.8
 
 W_in = init_input_layer(res_size, in_size, sigma)
 
@@ -42,4 +43,6 @@ for t in input_layer
 
     @test size(W, 1) == res_size
 end
- 
+
+W = pseudoSVD(res_size, max_value, sparsity)
+@test size(W, 1) == res_size
