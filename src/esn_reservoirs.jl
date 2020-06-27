@@ -31,11 +31,11 @@ function pseudoSVD(dim::Int,
         sparsity::Float64)
     
     S = create_diag(dim, max_value)
-    sp = get_sparsity(S)
+    sp = get_sparsity(S, dim)
     
-    while sp < sparsity
+    while sp <= sparsity
         S *= create_qmatrix(dim, rand(1:dim), rand(1:dim), rand(Float64)*2-1)
-        sp = get_sparsity(S)
+        sp = get_sparsity(S, dim)
     end
     return S
 end
@@ -58,7 +58,10 @@ function create_qmatrix(dim::Int,
         coord_j::Int, 
         theta::Float64)
     
-    qmatrix = diagm(ones(Float64, dim))
+    qmatrix = zeros(Float64, dim, dim)
+    for i = 1:dim
+        qmatrix[i,i] = 1.0
+    end
     qmatrix[coord_i, coord_i] = cos(theta)
     qmatrix[coord_j, coord_j] = cos(theta)
     qmatrix[coord_i, coord_j] = -sin(theta)
@@ -67,6 +70,6 @@ function create_qmatrix(dim::Int,
     return qmatrix
 end
 
-function get_sparsity(M::AbstractArray{Float64})
-    return size(M[M .!= 0], 1)/(size(M, 1)*size(M, 1)-size(M[M .!= 0], 1)) #nonzero/zero elements
+function get_sparsity(M::AbstractArray{Float64}, dim::Int)
+    return size(M[M .!= 0], 1)/(dim*dim-size(M[M .!= 0], 1)) #nonzero/zero elements
 end
