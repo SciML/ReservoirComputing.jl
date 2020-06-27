@@ -51,7 +51,7 @@ function create_diag(dim::Int,
         diagonal_values = rand(Float64, dim).*max_value
     end
     
-    return diagm(diagonal_values)
+    return diagm(0 => diagonal_values)
 end
 
 function create_qmatrix(dim::Int, 
