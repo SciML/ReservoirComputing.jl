@@ -57,8 +57,6 @@ function create_diag(dim::Int,
     else
         diagonal_values = rand(Float64, dim).*max_value
     end
-            
-    diagonal_values[end] = max_value
     
     for i=1:dim
         diagonal_matrix[i, i] = diagonal_values[i]
