@@ -28,9 +28,11 @@ end
 
 function pseudoSVD(dim::Int, 
         max_value::Float64, 
-        sparsity::Float64)
+        sparsity::Float64;
+        sorted::Bool = true,
+        reverse_sort::Bool = false)
     
-    S = create_diag(dim, max_value)
+    S = create_diag(dim, max_value, sorted = sorted, reverse_sort = reverse_sort)
     sp = get_sparsity(S, dim)
     
     while sp <= sparsity
