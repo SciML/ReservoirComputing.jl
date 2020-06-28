@@ -41,10 +41,23 @@ function pseudoSVD(dim::Int,
 end
 
 function create_diag(dim::Int, 
-        max_value::Float64)
+        max_value::Float64;
+        sorted::Bool = true,
+        reverse_sort::Bool = false)
     
     diagonal_matrix = zeros(Float64, dim, dim)
-    diagonal_values = sort(rand(Float64, dim).*max_value)
+    if sorted == true
+        if reverse_sort == true
+            diagonal_values = sort(rand(Float64, dim).*max_value, rev = true)
+            diagonal_values[1] = max_value
+        else
+            diagonal_values = sort(rand(Float64, dim).*max_value)
+            diagonal_values[end] = max_value
+        end
+    else
+        diagonal_values = rand(Float64, dim).*max_value
+    end
+            
     diagonal_values[end] = max_value
     
     for i=1:dim
