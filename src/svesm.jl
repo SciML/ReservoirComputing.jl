@@ -1,4 +1,4 @@
-function SVESMtrain2(svr::LIBSVM.AbstractSVR,
+function SVESMtrain(svr::LIBSVM.AbstractSVR,
     esn::AbstractLeakyESN; 
     y_target::AbstractArray{Float64} = esn.train_data)
     
@@ -38,7 +38,7 @@ function SVESM_direct_predict(esn::AbstractLeakyESN,
     return output
 end 
 
-#predict if one onevariable timeseries is provided
+#predict if one one variable timeseries is provided
 function SVESMpredict(esn::AbstractLeakyESN, 
     predict_len::Int, 
     fitted_svr::LIBSVM.AbstractSVR)
@@ -64,7 +64,7 @@ function SVESMpredict(esn::AbstractLeakyESN,
 end
 
 #predict for multidimensional timeseries
-function SVESMpredict2(esn::AbstractLeakyESN, 
+function SVESMpredict(esn::AbstractLeakyESN, 
     predict_len::Int, 
     fitted_svr::AbstractArray{Any})
     
