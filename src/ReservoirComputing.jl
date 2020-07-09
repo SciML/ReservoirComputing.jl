@@ -6,6 +6,7 @@ using MLJLinearModels
 using LIBSVM
 using GaussianProcesses
 using Optim
+using Distributions
 
 abstract type AbstractEchoStateNetwork end
 abstract type NonLinearAlgorithm end

@@ -32,3 +32,21 @@ function init_sparse_input_layer(res_size::Int,
     W_in = sigma .*W_in
     return W_in
 end
+
+#from "minimum complexity echo state network" Rodan 
+function min_complex_input(in_size::Int, 
+        res_size::Int, 
+        weight::Float64)
+    
+    W_in = Array{Float64}(undef, res_size, in_size)
+    for i=1:res_size
+        for j=1:in_size
+            if rand(Bernoulli()) == true
+                W_in[i, j] = weight
+            else
+                W_in[i, j] = -weight
+            end
+        end
+    end
+    return W_in
+end 
