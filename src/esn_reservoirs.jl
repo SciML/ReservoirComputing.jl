@@ -25,7 +25,7 @@ function init_reservoir_givensp(res_size::Int,
     return W
 end
 
-
+#SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
 function pseudoSVD(dim::Int, 
         max_value::Float64, 
         sparsity::Float64;
@@ -85,4 +85,43 @@ end
 
 function get_sparsity(M::AbstractArray{Float64}, dim::Int)
     return size(M[M .!= 0], 1)/(dim*dim-size(M[M .!= 0], 1)) #nonzero/zero elements
+end
+
+#from "minimum complexity echo state network" Rodan 
+# Delay Line Reservoir
+function DLR(res_size::Int, 
+        weight::Float64)
+    
+    W = zeros(Float64, res_size, res_size)
+    for i=1:res_size-1
+        W[i+1,i] = weight
+    end
+    return W
+end
+
+#from "minimum complexity echo state network" Rodan 
+# Delay Line Reservoir with backward connections
+function DLRB(res_size::Int, 
+        weight::Float64, 
+        fb_weight::Float64)
+    
+    W = zeros(Float64, res_size, res_size)
+    for i=1:res_size-1
+        W[i+1,i] = weight
+        W[i,i+1] = fb_weight
+    end
+    return W
+end
+
+#from "minimum complexity echo state network" Rodan 
+# Simple cycle reservoir
+function SCR(res_size::Int, 
+        weight::Float64)
+    
+    W = zeros(Float64, res_size, res_size)
+    for i=1:res_size-1
+        W[i+1,i] = weight
+    end
+    W[1, res_size] = weight
+    return W
 end
