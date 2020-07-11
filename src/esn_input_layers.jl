@@ -34,8 +34,8 @@ function init_sparse_input_layer(res_size::Int,
 end
 
 #from "minimum complexity echo state network" Rodan 
-function min_complex_input(in_size::Int, 
-        res_size::Int, 
+function min_complex_input(res_size::Int,
+        in_size::Int,
         weight::Float64)
     
     W_in = Array{Float64}(undef, res_size, in_size)
