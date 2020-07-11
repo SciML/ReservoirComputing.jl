@@ -15,6 +15,9 @@ const extended_states = false
 const h_steps = 2
 const max_value = 0.8
 
+weight = 0.8
+fb_weight = 0.05
+
 W_in = init_input_layer(res_size, in_size, sigma)
 
 train_len = 50
@@ -24,14 +27,18 @@ train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #test input layers functions
-input_layer = [init_reservoir_givendeg, init_reservoir_givensp]
+input_layer = [init_reservoir_givendeg, init_reservoir_givensp, DLR, DLRB, SCR]
 
 for t in input_layer
 
     if t == init_reservoir_givendeg
         W = t(res_size, radius, degree)
-    else
+    elseif t == init_reservoir_givensp
         W = t(res_size, radius, sparsity)
+    elseif t == DLRB
+        W = t(res_size, weight, fb_weight)
+    else
+        W = t(res_size, weight)
     end
     esn = ESN(W,
         train,
