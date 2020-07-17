@@ -3,7 +3,7 @@ function init_input_layer(res_size::Int,
         sigma::Float64)
 
     W_in = zeros(Float64, res_size, in_size)
-    q = Int(res_size/in_size)
+    q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
