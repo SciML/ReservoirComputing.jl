@@ -1,7 +1,7 @@
 abstract type LinearModel end
 
 #temp standard ridge
-function ESNtrain(esn::AbstractEchoStateNetwork, beta::Float64; train_data::AbstractArray{Float64} = esn.train_data)
+function ESNtrain(esn::AbstractReservoirComputer, beta::Float64; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
     W_out = (train_data*states_new')*inv(add_reg(states_new*states_new', beta))
@@ -23,9 +23,9 @@ struct Ridge{T<: AbstractFloat} <: LinearModel
     solver::MLJLinearModels.Solver
 end
 #Ridge(lambda, solver) = Ridge{Float64}(lambda, solver)
-ESNtrain(ridge::Ridge{T}, esn::AbstractEchoStateNetwork; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _ridge(esn, ridge; train_data = esn.train_data)
+ESNtrain(ridge::Ridge{T}, esn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _ridge(esn, ridge; train_data = esn.train_data)
 
-function _ridge(esn::AbstractEchoStateNetwork, ridge::Ridge; train_data::AbstractArray{Float64} = esn.train_data)
+function _ridge(esn::AbstractReservoirComputer, ridge::Ridge; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))
@@ -43,9 +43,9 @@ struct Lasso{T<: AbstractFloat} <: LinearModel
     solver::MLJLinearModels.Solver
 end
 #Lasso(lambda, solver) = Lasso{Float64}(lambda, solver)
-ESNtrain(lasso::Lasso{T}, esn::AbstractEchoStateNetwork; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _lasso(esn, lasso; train_data = esn.train_data)
+ESNtrain(lasso::Lasso{T}, esn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _lasso(esn, lasso; train_data = esn.train_data)
 
-function _lasso(esn::AbstractEchoStateNetwork, lasso::Lasso; train_data::AbstractArray{Float64} = esn.train_data)
+function _lasso(esn::AbstractReservoirComputer, lasso::Lasso; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))
@@ -64,9 +64,9 @@ struct ElastNet{T<: AbstractFloat} <: LinearModel
     solver::MLJLinearModels.Solver
 end
 #ElastNet(lambda, gamma, solver) = ElastNet{Float64}(lambda, gamma, solver)
-ESNtrain(elastnet::ElastNet{T}, esn::AbstractEchoStateNetwork; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _elastnet(esn, elastnet; train_data = esn.train_data)
+ESNtrain(elastnet::ElastNet{T}, esn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _elastnet(esn, elastnet; train_data = esn.train_data)
 
-function _elastnet(esn::AbstractEchoStateNetwork, elastnet::ElastNet; train_data::AbstractArray{Float64} = esn.train_data)
+function _elastnet(esn::AbstractReservoirComputer, elastnet::ElastNet; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))
@@ -86,9 +86,9 @@ struct RobustHuber{T<: AbstractFloat} <: LinearModel
     solver::MLJLinearModels.Solver
 end
 #RobustHuber(delta, lambda, gamma, solver) = RobustHuber{Float64}(delta, lambda, gamma, solver)
-ESNtrain(huber::RobustHuber{T}, esn::AbstractEchoStateNetwork; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _huber(esn, huber; train_data = esn.train_data)
+ESNtrain(huber::RobustHuber{T}, esn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _huber(esn, huber; train_data = esn.train_data)
 
-function _huber(esn::AbstractEchoStateNetwork, huber::RobustHuber; train_data::AbstractArray{Float64} = esn.train_data)
+function _huber(esn::AbstractReservoirComputer, huber::RobustHuber; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))

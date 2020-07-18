@@ -8,7 +8,8 @@ using GaussianProcesses
 using Optim
 using Distributions
 
-abstract type AbstractEchoStateNetwork end
+abstract type AbstractReservoirComputer end
+abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
 abstract type NonLinearAlgorithm end
 
 include("leaky_fixed_rnn.jl")
@@ -37,5 +38,7 @@ export ESGPtrain, ESGPpredict, ESGPpredict_h_steps
 
 include("ECA.jl")
 export ECA
+include("reca.jl")
+export RECA
 
 end #module
