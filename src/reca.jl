@@ -1,5 +1,6 @@
 abstract type AbstractReca <: AbstractEchoStateNetwork end
 
+#cont values TO DO FURTHER TESTS
 struct RECA{T<:AbstractFloat} <: AbstractReca
     res_size::Int
     in_size::Int
