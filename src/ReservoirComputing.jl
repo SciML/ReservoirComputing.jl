@@ -42,5 +42,7 @@ include("reca.jl")
 export RECA, reca_predict
 include("reca_discrete.jl")
 export RECA_discrete, RECAdirect_predict_discrete
+include("gameoflife.jl")
+export GameOfLife
 
 end #module
