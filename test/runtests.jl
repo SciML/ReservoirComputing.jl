@@ -10,3 +10,5 @@ using SafeTestsets
 @time @safetestset "Extended states" begin include("extras/test_extended_states.jl") end
 @time @safetestset "MLJ Linear Models for ESN" begin include("training/test_mlj_lm.jl") end
 @time @safetestset "ESGP" begin include("training/test_esgp.jl") end
+@time @safetestset "RECA_discrete constructors" begin include("constructors/test_recadiscrete_constructors.jl") end
+@time @safetestset "reca discrete predict" begin include("training/test_recadiscrete.jl") end
