@@ -1,3 +1,5 @@
+abstract type AbstractReca <: AbstractEchoStateNetwork end
+
 struct RECA_discrete <: AbstractReca
     res_size::Int
     in_size::Int
