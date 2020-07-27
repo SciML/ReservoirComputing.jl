@@ -1,16 +1,4 @@
 
-function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type = NLADefault())
-    
-    in_size = size(train_data, 1)
-    out_size = size(train_data, 1)
-    
-    initial_state = zeros(Bool, res_size, res_size)
-    maps = single_mapping(in_size, res_size, permutations)
-    states = harvest_states_standard(train_data, initial_state, generations, permutations, maps)
-    train_data = convert(AbstractArray{Float64}, train_data)
-    
-    return RECA_TwoDim(res_size, in_size, out_size, generations, permutations, train_data, nla_type, states, maps)
-end
 
 struct RECA_TwoDim <: AbstractReca
     res_size::Int
@@ -22,6 +10,19 @@ struct RECA_TwoDim <: AbstractReca
     nla_type::ReservoirComputing.NonLinearAlgorithm
     states::AbstractArray{Float64}
     maps::AbstractArray{Int}
+end
+
+function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type = NLADefault())
+    
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    
+    initial_state = zeros(Bool, res_size, res_size)
+    maps = single_mapping(in_size, res_size, permutations)
+    states = harvest_states_standard(train_data, initial_state, generations, permutations, maps)
+    train_data = convert(AbstractArray{Float64}, train_data)
+    
+    return RECA_TwoDim(res_size, in_size, out_size, generations, permutations, train_data, nla_type, states, maps)
 end
 
 function RECATD_predict_discrete(reca, 
