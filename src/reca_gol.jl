@@ -1,16 +1,4 @@
 
-function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type = NLADefault())
-    
-    in_size = size(train_data, 1)
-    out_size = size(train_data, 1)
-    
-    initial_state = zeros(Bool, res_size, res_size)
-    maps = single_mapping(in_size, res_size, permutations)
-    states = harvest_states_standard(train_data, initial_state, generations, permutations, maps)
-    train_data = convert(AbstractArray{Float64}, train_data)
-    
-    return RECA_TwoDim(res_size, in_size, out_size, generations, permutations, train_data, nla_type, states, maps)
-end
 
 struct RECA_TwoDim <: AbstractReca
     res_size::Int
@@ -22,6 +10,19 @@ struct RECA_TwoDim <: AbstractReca
     nla_type::ReservoirComputing.NonLinearAlgorithm
     states::AbstractArray{Float64}
     maps::AbstractArray{Int}
+end
+
+function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type = NLADefault())
+    
+    in_size = size(train_data, 1)
+    out_size = size(train_data, 1)
+    
+    initial_state = zeros(Bool, res_size, res_size)
+    maps = single_mapping(in_size, res_size, permutations)
+    states = harvest_states_standard(train_data, initial_state, generations, permutations, maps)
+    train_data = convert(AbstractArray{Float64}, train_data)
+    
+    return RECA_TwoDim(res_size, in_size, out_size, generations, permutations, train_data, nla_type, states, maps)
 end
 
 function RECATD_predict_discrete(reca, 
@@ -44,6 +45,27 @@ function RECATD_predict_discrete(reca,
     return output
 end
 
+function RECATDdirect_predict_discrete(reca::AbstractReca, 
+    W_out::AbstractArray{Float64}, 
+    test_data::AbstractArray{Int})
+    
+    predict_len = size(test_data, 2)
+    output = Array{Int}(undef, size(W_out, 1), predict_len)
+    last_state = zeros(Bool, reca.res_size, reca.res_size)
+    
+    for i=1:predict_len
+        
+        last_state = single_encoding(test_data[:,i], last_state, reca.maps)
+        gol = GameOfLife(last_state, reca.generations)
+        x = reshape(gol.all_runs, reca.res_size*reca.res_size*reca.generations)
+        out = W_out*x
+        output[:,i] = convert(AbstractArray{Int}, out .> 0.5)
+         last_state = gol.all_runs[:, :, end]
+        
+    end
+    return output
+end
+
 function harvest_states_standard(input_data::AbstractArray{Int}, 
     initial_state::AbstractArray{T},
     generations::Int,
@@ -57,11 +79,11 @@ function harvest_states_standard(input_data::AbstractArray{Int},
     states = zeros(T, res_size*res_size*generations , train_time)
     #single_map = single_mapping(input_size, res_size, permutations)#outside
     
-    for i=1:train_time-1
+    for i=1:train_time
         initial_state = single_encoding(input_data[:,i], initial_state, single_map)
         gol = GameOfLife(initial_state, generations)#+1
         gol_states = copy(gol.all_runs)#2:end
-        states[:, i+1] = reshape(gol_states, res_size*res_size*generations)
+        states[:, i] = reshape(gol_states, res_size*res_size*generations)
         initial_state = gol.all_runs[:, :, end]
     end
     return states
