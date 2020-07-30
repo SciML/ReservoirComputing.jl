@@ -125,3 +125,23 @@ function SCR(res_size::Int,
     W[1, res_size] = weight
     return W
 end
+
+#from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
+#Cycle Reservoir with Jumps
+function CRJ(res_size::Int, 
+        cycle_weight::Float64,
+        jump_weight::Float64,
+        jump_size::Int)
+    
+    W = zeros(Float64, res_size, res_size)
+    for i=1:res_size-1
+        W[i+1,i] = cycle_weight
+    end
+    W[1, res_size] = cycle_weight
+    
+    for i=1:jump_size:res_size-jump_size
+        W[i, (i+jump_size)%res_size] = jump_weight
+        W[(i+jump_size)%res_size, i] = jump_weight
+    end
+    return W
+end
