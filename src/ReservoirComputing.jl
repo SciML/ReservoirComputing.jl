@@ -22,7 +22,7 @@ export nla, NLADefault, NLAT1, NLAT2, NLAT3
 include("esn_input_layers.jl") 
 export init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input, irrational_sign_input
 include("esn_reservoirs.jl")
-export init_reservoir_givendeg, init_reservoir_givensp, pseudoSVD, DLR, DLRB, SCR
+export init_reservoir_givendeg, init_reservoir_givensp, pseudoSVD, DLR, DLRB, SCR, CRJ
 
 include("echostatenetwork.jl")
 export ESN, ESNpredict, ESNpredict_h_steps
