@@ -23,7 +23,7 @@ train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #test input layers functions
-input_layer = [init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input]
+input_layer = [init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input, irrational_sign_input]
 
 for t in input_layer
 

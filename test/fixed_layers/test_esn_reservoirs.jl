@@ -15,8 +15,9 @@ const extended_states = false
 const h_steps = 2
 const max_value = 0.8
 
-weight = 0.8
-fb_weight = 0.05
+const weight = 0.8
+const fb_weight = 0.05
+const jumps = 2
 
 W_in = init_input_layer(res_size, in_size, sigma)
 
@@ -27,7 +28,7 @@ train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #test input layers functions
-input_layer = [init_reservoir_givendeg, init_reservoir_givensp, DLR, DLRB, SCR]
+input_layer = [init_reservoir_givendeg, init_reservoir_givensp, DLR, DLRB, SCR, CRJ]
 
 for t in input_layer
 
@@ -37,6 +38,8 @@ for t in input_layer
         W = t(res_size, radius, sparsity)
     elseif t == DLRB
         W = t(res_size, weight, fb_weight)
+    elseif t == CRJ
+        W = t(res_size, weight, fb_weight, jumps)
     else
         W = t(res_size, weight)
     end
