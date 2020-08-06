@@ -1,17 +1,17 @@
 abstract type AbstractLeakyESN <: AbstractEchoStateNetwork end
 
-struct ESN{T<:AbstractFloat} <: AbstractLeakyESN
-    res_size::Int
-    in_size::Int
-    out_size::Int
-    train_data::AbstractArray{T}
+struct ESN{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractLeakyESN
+    res_size::I
+    in_size::I
+    out_size::I
+    train_data::S
     alpha::T
-    nla_type::NonLinearAlgorithm
-    activation::Any
-    W::AbstractArray{T}
-    W_in::AbstractArray{T}
-    states::AbstractArray{T}
-    extended_states::Bool
+    nla_type::N
+    activation::F
+    W::S
+    W_in::S
+    states::S
+    extended_states::B
 end
 
 function ESN(approx_res_size::Int,
@@ -31,7 +31,11 @@ function ESN(approx_res_size::Int,
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T}(res_size, in_size, out_size, train_data,
+    return ESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(activation), 
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 
@@ -50,7 +54,11 @@ function ESN(W::AbstractArray{T},
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T}(res_size, in_size, out_size, train_data,
+    return ESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(activation), 
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 
@@ -78,7 +86,11 @@ function ESN(approx_res_size::Int,
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T}(res_size, in_size, out_size, train_data,
+    return ESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(activation), 
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 
@@ -103,7 +115,11 @@ function ESN(W::AbstractArray{T},
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T}(res_size, in_size, out_size, train_data,
+    return ESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(activation), 
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 

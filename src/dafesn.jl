@@ -1,20 +1,20 @@
 abstract type AbstractLeakyDAFESN <: AbstractLeakyESN end
 
-struct dafESN{T<:AbstractFloat} <: AbstractLeakyDAFESN
-    res_size::Int
-    in_size::Int
-    out_size::Int
-    train_data::AbstractArray{T}
+struct dafESN{T, S<:AbstractArray{T}, I, B, F1, F2, N} <: AbstractLeakyDAFESN
+    res_size::I
+    in_size::I
+    out_size::I
+    train_data::S
     alpha::T
-    nla_type::NonLinearAlgorithm
-    first_activation::Any
-    second_activation::Any
+    nla_type::N
+    first_activation::F1
+    second_activation::F2
     first_lambda::T
     second_lambda::T
-    W::AbstractArray{T}
-    W_in::AbstractArray{T}
-    states::AbstractArray{T}
-    extended_states::Bool
+    W::S
+    W_in::S
+    states::S
+    extended_states::B
 end
 
 
@@ -40,7 +40,12 @@ function dafESN(approx_res_size::Int,
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T}(res_size, in_size, out_size, train_data,
+    return dafESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(first_activation), 
+        typeof(second_activation),
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
     second_lambda, W, W_in, states, extended_states)
 end
@@ -65,7 +70,12 @@ function dafESN(W::AbstractArray{T},
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T}(res_size, in_size, out_size, train_data,
+    return dafESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(first_activation), 
+        typeof(second_activation),
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
     second_lambda, W, W_in, states, extended_states)
 end
@@ -99,7 +109,12 @@ function dafESN(approx_res_size::Int,
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T}(res_size, in_size, out_size, train_data,
+    return dafESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(first_activation), 
+        typeof(second_activation),
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
     second_lambda, W, W_in, states, extended_states)
 end
@@ -129,7 +144,12 @@ function dafESN(W::AbstractArray{T},
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T}(res_size, in_size, out_size, train_data,
+    return dafESN{T, typeof(train_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(first_activation), 
+        typeof(second_activation),
+        typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
     second_lambda, W, W_in, states, extended_states)
 end
