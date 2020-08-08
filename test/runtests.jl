@@ -13,3 +13,4 @@ using SafeTestsets
 @time @safetestset "RECA_discrete constructors" begin include("constructors/test_recadiscrete_constructors.jl") end
 @time @safetestset "RECA gol constructors" begin include("constructors/test_recagol_constructors.jl") end
 @time @safetestset "reca discrete predict" begin include("training/test_recadiscrete.jl") end
+@time @safetestset "reca gol predict" begin include("training/test_recagol.jl") end
