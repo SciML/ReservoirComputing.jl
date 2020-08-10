@@ -140,8 +140,14 @@ function CRJ(res_size::Int,
     W[1, res_size] = cycle_weight
     
     for i=1:jump_size:res_size-jump_size
-        W[i, (i+jump_size)%res_size] = jump_weight
-        W[(i+jump_size)%res_size, i] = jump_weight
+        tmp = (i+jump_size)%res_size
+        
+        if tmp == 0
+            tmp = res_size
+        end
+        
+        W[i, tmp] = jump_weight
+        W[tmp, i] = jump_weight
     end
     return W
 end
