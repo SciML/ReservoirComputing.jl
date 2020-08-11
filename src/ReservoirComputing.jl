@@ -7,6 +7,7 @@ using LIBSVM
 using GaussianProcesses
 using Optim
 using Distributions
+using Statistics
 
 abstract type AbstractReservoirComputer end
 abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
