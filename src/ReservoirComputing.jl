@@ -48,4 +48,7 @@ export GameOfLife
 include("reca_gol.jl")
 export RECA_TwoDim, RECATDdirect_predict_discrete, RECATD_predict_discrete
 
+include("rmm.jl")
+export RMM, RMMdirect_predict
+
 end #module
