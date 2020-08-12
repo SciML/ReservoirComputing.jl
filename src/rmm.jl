@@ -1,6 +1,6 @@
 abstract type AbstractReservoirMemoryMachine <: ReservoirComputing.AbstractEchoStateNetwork end
 
-struct RMM{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractReservoirMemoryMachine
+mutable struct RMM{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractReservoirMemoryMachine
     res_size::I
     in_size::I
     out_size::I
@@ -12,9 +12,44 @@ struct RMM{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractReservoirMemoryMachine
     W_in::S
     states::S
     extended_states::B
+    W_out::S
     memory_size::I
     write_matrix::S
     read_matrix::S
+end
+
+function RMM(W::AbstractArray{T},
+        in_data::AbstractArray{T},
+        out_data::AbstractArray{T},
+        W_in::AbstractArray{T},
+        memory_size::Int;
+        activation::Any = tanh,
+        alpha::T = 1.0,
+        nla_type::ReservoirComputing.NonLinearAlgorithm = NLADefault(),
+        extended_states::Bool = false) where T<:AbstractFloat
+
+    in_size = size(in_data, 2)
+    out_size = size(out_data, 2)
+    res_size = size(W, 1)
+
+    if size(W_in, 1) != res_size
+        throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
+    elseif size(W_in, 2) != in_size
+        throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
+    end
+
+    states = states_matrix_inplace(W, W_in, collect(in_data'), alpha, activation, extended_states)
+    write_matrix, read_matrix = identity_init(in_data, out_data, memory_size, states, beta)#forward_init(states, beta) #identity_init(input, output, memory_size, states, beta)
+    memory_states = apply_write(in_data, states, write_matrix, memory_size)
+    reads = apply_read(in_data, states, write_matrix, read_matrix, memory_size)
+    wout = RMMtrain(in_data, out_data, states, write_matrix, read_matrix, memory_states, memory_size)
+    
+    return RMM{T, typeof(in_data), 
+        typeof(res_size), 
+        typeof(extended_states), 
+        typeof(activation), 
+        typeof(nla_type)}(res_size, in_size, out_size, in_data,
+    alpha, nla_type, activation, W, W_in, states, extended_states, wout, memory_size, write_matrix, read_matrix)
 end
 
 function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_states, memory_size)
@@ -25,8 +60,8 @@ function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_
     
     for epoch=1:30
         reads = apply_read(input, states, write_matrix, read_matrix, memory_size)
-        wout = (output'*reads)*inv(ReservoirComputing.add_reg(reads'*reads, beta))
-        loss = sqrt(mean(sum(sqrt.(output - reads*wout'))))
+        wout = (output'*reads)*inv(add_reg(reads'*reads, beta))
+        loss = sqrt(mean(sum((output - reads*wout').^2, dims=2)))
         
         if loss < last_loss - 1*10^(-3)
             last_loss = loss
@@ -46,11 +81,55 @@ function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_
     
     read = apply_read(input, states, write_matrix, read_matrix, memory_size)
     hr = hcat(esn.states', read)
-    wout = (output'*hr)*inv(ReservoirComputing.add_reg(hr'*hr, beta))
+    wout = (output'*hr)*inv(add_reg(hr'*hr, beta))
     return wout
     
 end
 
+function RMMdirect_predict(rmm, input)
+    
+    predict_len = size(input, 1)
+    predict_states = zeros(Float64, predict_len, rmm.res_size)
+    #compute first state
+    predict_states[1, :] = rmm.activation.(rmm.W_in*input[1, :])
+
+    if rmm.extended_states == false
+        for i=2:predict_len
+            predict_states[i, :] = ReservoirComputing.leaky_fixed_rnn(rmm.activation, rmm.alpha, rmm.W, rmm.W_in, predict_states[i-1, :], input[i,:])
+        end
+    end
+    
+    reads = apply_read(input, predict_states, rmm.write_matrix, rmm.read_matrix, rmm.memory_size)
+    predict_states = hcat(predict_states, reads)
+    output = predict_states*rmm.W_out'
+    return output
+end
+
+function states_matrix_inplace(W::AbstractArray{Float64},
+        W_in::AbstractArray{Float64},
+        train_data::AbstractArray{Float64},
+        alpha::Float64,
+        activation::Function,
+        extended_states::Bool)
+
+    train_len = size(train_data, 2)
+    res_size = size(W, 1)
+    in_size = size(train_data, 1)
+
+    states = zeros(Float64, train_len, res_size)
+    states[1, :] = esn.activation.(W_in*train_data[:, 1])
+    
+    for i=2:train_len
+        states[i, :] = ReservoirComputing.leaky_fixed_rnn(activation, alpha, W, W_in, states[i-1, :], train_data[:, i])
+    end
+
+    if extended_states == true
+        ext_states = vcat(states, hcat(zeros(Float64, in_size), train_data[:,1:end-1]))
+        return ext_states
+    else
+        return states
+    end
+end
 
 function apply_write(input, states, write_matrix, memory_size)
     
@@ -188,7 +267,7 @@ function align_read(memory_states, output, memory_size, wout)
             else
                 push!(actions, [0, 0, 1])
             end
-            k = 0
+            k = 1
         else
             println("error")
         end
