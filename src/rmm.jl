@@ -25,7 +25,7 @@ function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_
     
     for epoch=1:30
         reads = apply_read(input, states, write_matrix, read_matrix, memory_size)
-        wout = (output'*reads)*inv(ReservoirComputing.add_reg(reads'*reads, beta))
+        wout = (output'*reads)*inv(add_reg(reads'*reads, beta))
         loss = sqrt(mean(sum(sqrt.(output - reads*wout'))))
         
         if loss < last_loss - 1*10^(-3)
@@ -46,11 +46,30 @@ function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_
     
     read = apply_read(input, states, write_matrix, read_matrix, memory_size)
     hr = hcat(esn.states', read)
-    wout = (output'*hr)*inv(ReservoirComputing.add_reg(hr'*hr, beta))
+    wout = (output'*hr)*inv(add_reg(hr'*hr, beta))
     return wout
     
 end
 
+function RMMdirect_predict(esn, input, W_out, write_matrix, read_matrix, memory_size)
+    
+    predict_len = size(input, 1)
+    predict_states = zeros(Float64, predict_len, esn.res_size)
+    #compute first state
+    predict_states[1, :] = esn.activation.(esn.W_in*input[1, :])
+    
+    #need some adjusting
+    if esn.extended_states == false
+        for i=2:predict_len
+            predict_states[i, :] = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, predict_states[i, :], input[i,:])
+        end
+    end
+    
+    reads = apply_read(input, predict_states, write_matrix, read_matrix, memory_size)
+    predict_states = hcat(predict_states, reads)
+    output = predict_states*W_out'
+    return output
+end
 
 function apply_write(input, states, write_matrix, memory_size)
     
