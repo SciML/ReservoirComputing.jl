@@ -22,7 +22,8 @@ function RMM(W::AbstractArray{T},
         in_data::AbstractArray{T},
         out_data::AbstractArray{T},
         W_in::AbstractArray{T},
-        memory_size::Int;
+        memory_size::Int,
+        beta::Float64;
         activation::Any = tanh,
         alpha::T = 1.0,
         nla_type::ReservoirComputing.NonLinearAlgorithm = NLADefault(),
@@ -42,7 +43,7 @@ function RMM(W::AbstractArray{T},
     write_matrix, read_matrix = identity_init(in_data, out_data, memory_size, states, beta)#forward_init(states, beta) #identity_init(input, output, memory_size, states, beta)
     memory_states = apply_write(in_data, states, write_matrix, memory_size)
     reads = apply_read(in_data, states, write_matrix, read_matrix, memory_size)
-    wout = RMMtrain(in_data, out_data, states, write_matrix, read_matrix, memory_states, memory_size)
+    wout = RMMtrain(in_data, out_data, states, write_matrix, read_matrix, memory_states, memory_size, beta)
     
     return RMM{T, typeof(in_data), 
         typeof(res_size), 
@@ -52,7 +53,7 @@ function RMM(W::AbstractArray{T},
     alpha, nla_type, activation, W, W_in, states, extended_states, wout, memory_size, write_matrix, read_matrix)
 end
 
-function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_states, memory_size)
+function RMMtrain(input, output, states, write_matrix, read_matrix, memory_states, memory_size, beta)
     
     states_pinv = (states*inv(states'*states+beta*Matrix(1.0I, size(states, 2), size(states, 2))))
     last_loss = Inf 
@@ -80,7 +81,7 @@ function RMMtrain(esn, input, output, states, write_matrix, read_matrix, memory_
     end
     
     read = apply_read(input, states, write_matrix, read_matrix, memory_size)
-    hr = hcat(esn.states', read)
+    hr = hcat(states, read)
     wout = (output'*hr)*inv(add_reg(hr'*hr, beta))
     return wout
     
@@ -95,7 +96,7 @@ function RMMdirect_predict(rmm, input)
 
     if rmm.extended_states == false
         for i=2:predict_len
-            predict_states[i, :] = ReservoirComputing.leaky_fixed_rnn(rmm.activation, rmm.alpha, rmm.W, rmm.W_in, predict_states[i-1, :], input[i,:])
+            predict_states[i, :] = leaky_fixed_rnn(rmm.activation, rmm.alpha, rmm.W, rmm.W_in, predict_states[i-1, :], input[i,:])
         end
     end
     
@@ -117,10 +118,10 @@ function states_matrix_inplace(W::AbstractArray{Float64},
     in_size = size(train_data, 1)
 
     states = zeros(Float64, train_len, res_size)
-    states[1, :] = esn.activation.(W_in*train_data[:, 1])
+    states[1, :] = activation.(W_in*train_data[:, 1])
     
     for i=2:train_len
-        states[i, :] = ReservoirComputing.leaky_fixed_rnn(activation, alpha, W, W_in, states[i-1, :], train_data[:, i])
+        states[i, :] = leaky_fixed_rnn(activation, alpha, W, W_in, states[i-1, :], train_data[:, i])
     end
 
     if extended_states == true

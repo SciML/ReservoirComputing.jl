@@ -8,6 +8,8 @@ using GaussianProcesses
 using Optim
 using Distributions
 using Statistics
+using Distances
+
 
 abstract type AbstractReservoirComputer end
 abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
