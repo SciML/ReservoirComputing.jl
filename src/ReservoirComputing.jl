@@ -53,4 +53,7 @@ export RECA_TwoDim, RECATDdirect_predict_discrete, RECATD_predict_discrete
 include("rmm.jl")
 export RMM, RMMdirect_predict
 
+include("gruesn.jl")
+export GRUESN, GRUESNpredict
+
 end #module
