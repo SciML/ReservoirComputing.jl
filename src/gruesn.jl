@@ -119,7 +119,7 @@ function gru_states(W::AbstractArray{Float64},
     states = zeros(Float64, res_size, train_len)
     
     for i=1:train_len-1
-        states[:, i+1] = gru(gates, activation, W_in, W, states[:, i], train_data[:, i])
+        states[:, i+1] = gru(gates, activation, W, W_in, states[:, i], train_data[:, i])
     end
 
     if extended_states == true
