@@ -56,9 +56,10 @@ end
 function irrational_sign_input(res_size::Int,
         in_size::Int,
         weight::Float64;
+        start::Int = 1,
         irrational::Irrational = pi)
     
-    setprecision(BigFloat, Int(ceil(log2(10)*(res_size*in_size+1))))
+    setprecision(BigFloat, Int(ceil(log2(10)*(res_size*in_size+start+1))))
     ir_string = string(BigFloat(irrational)) |> collect
     deleteat!(ir_string, findall(x->x=='.', ir_string))
     ir_array = Array{Int}(undef, length(ir_string))
@@ -68,17 +69,16 @@ function irrational_sign_input(res_size::Int,
         ir_array[i] = parse(Int, ir_string[i])
     end    
     
-    counter = 0
+    counter = start
     
     for i=1:res_size
         for j=1:in_size
-            counter += 1
-            println
             if ir_array[counter] < 5
                 W_in[i, j] = -weight
             else
                 W_in[i, j] = weight
             end
+            counter += 1
         end
     end
     return W_in
