@@ -1,18 +1,18 @@
 using ReservoirComputing
 
-approx_res_size = 12
-alpha = 1.0
-beta = 1*10^(-5)
+const approx_res_size = 12
+const alpha = 1.0
+const beta = 1*10^(-5)
 const extended_states = false
 const nla_type = NLADefault()
 const activation = tanh
 
-input_weight = 0.1
-cyrcle_weight = 0.99
-jump_weight = 0.1
-jumps = 12
+const input_weight = 0.1
+const cyrcle_weight = 0.99
+const jump_weight = 0.1
+const jumps = 12
 
-memory_size = 16
+const memory_size = 16
 
 input = ones(Float64, 10, 2)
 output = ones(Float64, 10, 2)
