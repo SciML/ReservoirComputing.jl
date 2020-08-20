@@ -1,3 +1,12 @@
+
+
+"""
+    init_input_layer(res_size::Int, in_size::Int, sigma::Float64)
+    
+Return a weighted input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$, as described in [1].
+
+[1] Lu, Zhixin, et al. "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems." Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
+"""
 function init_input_layer(res_size::Int,
         in_size::Int,
         sigma::Float64)
@@ -11,6 +20,11 @@ function init_input_layer(res_size::Int,
 
 end 
 
+"""
+    init_dense_input_layer(res_size::Int, in_size::Int, sigma::Float64)
+    
+Return a fully connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$.
+"""
 function init_dense_input_layer(res_size::Int,
         in_size::Int,
         sigma::Float64)
@@ -21,6 +35,11 @@ function init_dense_input_layer(res_size::Int,
     return W_in
 end
 
+"""
+    init_sparse_input_layer(res_size::Int, in_size::Int, sigma::Float64, sparsity::Float64)
+    
+Return a sparsely connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$ and given sparsity.
+"""
 function init_sparse_input_layer(res_size::Int,
         in_size::Int,
         sigma::Float64,
@@ -34,6 +53,13 @@ function init_sparse_input_layer(res_size::Int,
 end
 
 #from "minimum complexity echo state network" Rodan 
+"""
+    min_complex_input(res_size::Int, in_size::Int, weight::Float64)
+    
+Return a fully connected input layer matrix with same weights and sign drawn from a Bernoulli distribution, as described in [1].
+
+[1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
 function min_complex_input(res_size::Int,
         in_size::Int,
         weight::Float64)
@@ -53,6 +79,15 @@ end
 
 #from "minimum complexity echo state network" Rodan 
 #and "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
+
+"""
+    irrational_sign_input(res_size::Int, in_size::Int , weight::Float64 [, start::Int, irrational::Irrational])
+        
+Return a fully connected input layer matrix with same weights and sign decided by the values of an irrational number, as described in [1] and [2].
+
+[1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+[2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+"""
 function irrational_sign_input(res_size::Int,
         in_size::Int,
         weight::Float64;

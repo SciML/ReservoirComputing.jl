@@ -1,3 +1,11 @@
+"""
+    SVESMtrain(svr::LIBSVM.AbstractSVR, esn::AbstractLeakyESN [, y_target::AbstractArray{Float64}])
+    
+Train the ESN using SVM regression, as described in [1].
+
+[1] Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
+"""
+
 function SVESMtrain(svr::LIBSVM.AbstractSVR,
     esn::AbstractLeakyESN; 
     y_target::AbstractArray{Float64} = esn.train_data)
@@ -15,9 +23,18 @@ function SVESMtrain(svr::LIBSVM.AbstractSVR,
     return fitted_svr
 end
 
+"""
+    SVESM_direct_predict(esn::AbstractLeakyESN, test_in::AbstractArray{Float64}, fitted_svr::LIBSVM.AbstractSVR)
+    
+Given the input data return the corresponding predicted output, as described in [1].
+
+[1] Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
+
+"""
 function SVESM_direct_predict(esn::AbstractLeakyESN, 
     test_in::AbstractArray{Float64}, 
     fitted_svr::LIBSVM.AbstractSVR)
+    
     x = esn.states[:, end]
     prediction_states = zeros(Float64, size(esn.states, 1), size(test_in, 2))
     
@@ -64,6 +81,11 @@ function SVESMpredict(esn::AbstractLeakyESN,
 end
 
 #predict for multidimensional timeseries
+"""
+    SVESMpredict(esn::AbstractLeakyESN, predict_len::Int, fitted_svr::AbstractArray{Any})
+    
+Return the prediction for a given lenght of the constructed ESN struct using SVMs.
+"""
 function SVESMpredict(esn::AbstractLeakyESN, 
     predict_len::Int, 
     fitted_svr::AbstractArray{Any})
@@ -94,6 +116,13 @@ function SVESMpredict(esn::AbstractLeakyESN,
     end
     return output
 end
+
+
+"""
+    SVESMpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, test_data::AbstractArray{Float64}, fitted_svr::LIBSVM.AbstractSVR)
+    
+Return the prediction for h steps ahead of the constructed ESN struct using SVMs.
+"""
 
 function SVESMpredict_h_steps(esn::AbstractLeakyESN, 
     predict_len::Int,  

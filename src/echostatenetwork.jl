@@ -95,6 +95,11 @@ function ESN(approx_res_size::Int,
 end
 
 #reservoir matrix W and input layer W_in given by the user
+"""
+    ESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} [, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
+    
+Build a ESN struct given the input and reservoir matrices.
+"""
 function ESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
         W_in::AbstractArray{T};
@@ -149,7 +154,11 @@ function states_matrix(W::AbstractArray{Float64},
     end
 end
 
-
+"""
+    ESNpredict(esn::AbstractLeakyESN, predict_len::Int, W_out::AbstractArray{Float64})
+    
+Return the prediction for a given lenght of the constructed ESN struct.
+"""
 function ESNpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     W_out::AbstractArray{Float64})
@@ -174,6 +183,12 @@ function ESNpredict(esn::AbstractLeakyESN,
     end
     return output
 end
+
+"""
+    ESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, test_data::AbstractArray{Float64}, W_out::AbstractArray{Float64})
+    
+Return the prediction for h steps ahead of the constructed ESN struct.
+"""
 
 function ESNpredict_h_steps(esn::AbstractLeakyESN,
     predict_len::Int,

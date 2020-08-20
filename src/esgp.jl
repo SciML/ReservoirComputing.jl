@@ -1,3 +1,11 @@
+"""
+    ESGPtrain(esn::AbstractLeakyESN, mean::GaussianProcesses.Mean, kernel::GaussianProcesses.Kernel [, lognoise::Float64, optimize::Bool, optimizer::Optim.AbstractOptimizer, y_target::AbstractArray{Float64})
+
+Train the ESN using Gaussian Processes, as described in [1]
+
+[1] Chatzis, Sotirios P., and Yiannis Demiris. "Echo state Gaussian process." IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.
+"""
+
 function ESGPtrain(esn::AbstractLeakyESN,
     mean::GaussianProcesses.Mean, 
     kernel::GaussianProcesses.Kernel; 
@@ -54,6 +62,14 @@ function ESGPpredict(esn::AbstractLeakyESN,
 end
 
 #multidimensional timestep prediction
+
+"""
+    ESGPpredict(esn::AbstractLeakyESN, predict_len::Int, gp::AbstractArray{Any})
+    
+Return the prediction for a given lenght of the constructed ESN struct using GPs.
+
+"""
+
 function ESGPpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     gp::AbstractArray{Any})
@@ -92,6 +108,12 @@ function ESGPpredict(esn::AbstractLeakyESN,
     return output, sigmas
 end
 
+
+"""
+    ESGPpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, test_data::AbstractArray{Float64}, gp::GaussianProcesses.GPE)
+
+Return the prediction for h steps ahead of the constructed ESN struct using GPs.
+"""
 function ESGPpredict_h_steps(esn::AbstractLeakyESN,
     predict_len::Int,
     h_steps::Int,

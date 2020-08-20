@@ -6,7 +6,13 @@ struct GameOfLife{T<:Bool} <: AbstractGameOfLife
     all_runs::AbstractArray{T}
 end
 
+"""
+    function GameOfLife(initial_state::AbstractArray{T}, generations::Int)
+    
+Given a starting matrix return the evolution for given generations of Coway's Game of Life, as described in [1]
 
+[1] Gardner, Martin. “Mathematical games: The fantastic combinations of John Conway’s new solitaire game “life”.” Scientific American 223.4 (1970): 120-123.
+"""
 function GameOfLife(initial_state::AbstractArray{T},
         generations::Int) where T<: Bool
     

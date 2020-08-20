@@ -1,4 +1,9 @@
  #given degree of connections between neurons
+ """
+     init_reservoir_givendeg(res_size::Int, radius::Float64, degree::Int)
+     
+Return a reservoir matrix scaled by the radius value and with a given degree of connection.
+ """
  function init_reservoir_givendeg(res_size::Int,
         radius::Float64,
         degree::Int)
@@ -13,6 +18,11 @@
 end
 
 #given sparsity of connection between neurons
+ """
+     init_reservoir_givensp(res_size::Int, radius::Float64, sparsity::Float64)
+     
+Return a reservoir matrix scaled by the radius value and with a given sparsity.
+ """
 function init_reservoir_givensp(res_size::Int,
         radius::Float64,
         sparsity::Float64)
@@ -26,6 +36,14 @@ function init_reservoir_givensp(res_size::Int,
 end
 
 #SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
+
+"""
+    pseudoSVD(dim::Int,  max_value::Float64, sparsity::Float64 [, sorted::Bool, reverse_sort::Bool])
+    
+Return a reservoir matrix created using SVD as describrd in [1]
+
+[1] Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction." Neurocomputing 290 (2018): 148-160.
+"""
 function pseudoSVD(dim::Int, 
         max_value::Float64, 
         sparsity::Float64;
@@ -89,6 +107,13 @@ end
 
 #from "minimum complexity echo state network" Rodan 
 # Delay Line Reservoir
+"""
+    DLR(res_size::Int, weight::Float64)
+    
+Return a Delay Line Reservoir matrix as described in [2]
+
+[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
 function DLR(res_size::Int, 
         weight::Float64)
     
@@ -101,6 +126,14 @@ end
 
 #from "minimum complexity echo state network" Rodan 
 # Delay Line Reservoir with backward connections
+
+"""
+    DLRB(res_size::Int, weight::Float64, fb_weight::Float64)
+    
+Return a Delay Line Reservoir matrix with Backward connections as described in [2]
+
+[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
 function DLRB(res_size::Int, 
         weight::Float64, 
         fb_weight::Float64)
@@ -115,6 +148,13 @@ end
 
 #from "minimum complexity echo state network" Rodan 
 # Simple cycle reservoir
+"""
+    SCR(res_size::Int, weight::Float64)
+    
+Return a Simple Cycle Reservoir Reservoir matrix as described in [2]
+
+[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
 function SCR(res_size::Int, 
         weight::Float64)
     
@@ -128,6 +168,14 @@ end
 
 #from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
 #Cycle Reservoir with Jumps
+
+"""
+    CRJ(res_size::Int, cycle_weight::Float64, jump_weight::Float64, jump_size::Int)
+    
+Return a Cycle Reservoir with Jumps matrix as described in [3]
+
+[2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+"""
 function CRJ(res_size::Int, 
         cycle_weight::Float64,
         jump_weight::Float64,
