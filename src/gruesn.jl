@@ -16,6 +16,13 @@ struct GRUESN{T, S<:AbstractArray{T}, I, B, F, N, G} <: AbstractGRUESN
     extended_states::B
 end
 
+"""
+    GRUESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} [, gates_weight::T, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
+    
+Return a Gated Recurrent Unit [1] ESN struct
+
+[1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
+"""
 function GRUESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
         W_in::AbstractArray{T};
@@ -48,6 +55,12 @@ function GRUESN(W::AbstractArray{T},
     alpha, nla_type, activation, W, W_in, gates, states, extended_states)
 end
 
+
+"""
+    GRUESNpredict(esn::AbstractGRUESN, predict_len::Int, W_out::AbstractArray{Float64})
+
+Return the prediction for a given lenght of the constructed GRUESN
+"""
 function GRUESNpredict(esn::AbstractGRUESN,
     predict_len::Int,
     W_out::AbstractArray{Float64})

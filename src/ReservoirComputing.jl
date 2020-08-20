@@ -16,7 +16,7 @@ abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
 abstract type NonLinearAlgorithm end
 
 include("leaky_fixed_rnn.jl")
-include("ridge_train.jl")
+include("train.jl")
 export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber
 
 include("nla.jl")

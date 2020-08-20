@@ -12,6 +12,13 @@ struct RECA_TwoDim <: AbstractReca
     maps::AbstractArray{Int}
 end
 
+"""
+    RECA_TwoDim(train_data, res_size, generations, permutations [, nla_type])
+
+Create the RECA_TwoDim struct for two dimensional Cellular Automata Reservoir Computing as described in [1]
+
+[1] Yilmaz, Ozgur. “Reservoir computing using cellular automata.” arXiv preprint arXiv:1410.0162 (2014).
+"""
 function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type = NLADefault())
     
     in_size = size(train_data, 1)
@@ -25,6 +32,11 @@ function RECA_TwoDim(train_data, res_size, generations, permutations; nla_type =
     return RECA_TwoDim(res_size, in_size, out_size, generations, permutations, train_data, nla_type, states, maps)
 end
 
+"""
+    RECATD_predict_discrete(reca, predict_len::Int, W_out::AbstractArray{Float64})
+    
+Return the prediction for a given lenght of the constructed RECA_TwoDim struct.
+"""
 function RECATD_predict_discrete(reca, 
     predict_len::Int, 
     W_out::AbstractArray{Float64})
@@ -45,6 +57,13 @@ function RECATD_predict_discrete(reca,
     return output
 end
 
+"""
+    RECATDdirect_predict_discrete(reca::AbstractReca, W_out::AbstractArray{Float64}, test_data::AbstractArray{Int})
+
+Given the input data return the corresponding predicted output, as described in [1].
+
+[1] Yilmaz, Ozgur. “Reservoir computing using cellular automata.” arXiv preprint arXiv:1410.0162 (2014).
+"""
 function RECATDdirect_predict_discrete(reca::AbstractReca, 
     W_out::AbstractArray{Float64}, 
     test_data::AbstractArray{Int})

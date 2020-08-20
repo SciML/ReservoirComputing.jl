@@ -1,6 +1,10 @@
 abstract type LinearModel end
 
-#temp standard ridge
+"""
+    ESNtrain(esn::AbstractReservoirComputer, beta::Float64[, train_data])
+    
+Return the trained output layer using Ridge Regression.
+"""
 function ESNtrain(esn::AbstractReservoirComputer, beta::Float64; train_data::AbstractArray{Float64} = esn.train_data)
     
     states_new = nla(esn.nla_type, esn.states)
@@ -18,11 +22,21 @@ function add_reg(X::AbstractArray{Float64}, beta::Float64)
 end 
 
 #MLJ Ridge
+"""
+    Ridge(lambda, solver::MLJLinearModels.Solver)
+    
+Return a LinearModel object for the training of the model using Ridge Regression with a MLJLinearModels method.
+"""
 struct Ridge{T<: AbstractFloat} <: LinearModel
     lambda::T
     solver::MLJLinearModels.Solver
 end
 #Ridge(lambda, solver) = Ridge{Float64}(lambda, solver)
+"""
+    ESNtrain(lm::LinearModel, esn::AbstractReservoirComputer[, train_data])
+    
+Return the trained output layer using an MLJLinearModels method built into a LinearSolver struct.
+"""
 ESNtrain(ridge::Ridge{T}, esn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = esn.train_data) where T<: AbstractFloat = _ridge(esn, ridge; train_data = esn.train_data)
 
 function _ridge(esn::AbstractReservoirComputer, ridge::Ridge; train_data::AbstractArray{Float64} = esn.train_data)
@@ -38,6 +52,11 @@ function _ridge(esn::AbstractReservoirComputer, ridge::Ridge; train_data::Abstra
 end
 
 #MLJ Lasso
+"""
+    Lasso(lambda, solver::MLJLinearModels.Solver)
+    
+Return a LinearModel object for the training of the model using Lasso with a MLJLinearModels method.
+"""
 struct Lasso{T<: AbstractFloat} <: LinearModel
     lambda::T
     solver::MLJLinearModels.Solver
@@ -58,6 +77,11 @@ function _lasso(esn::AbstractReservoirComputer, lasso::Lasso; train_data::Abstra
 end
 
 #MLJ ElastNet 
+"""
+    ElastNet(lambda, gamma, solver::MLJLinearModels.Solver)
+    
+Return a LinearModel object for the training of the model using Elastic Net with a MLJLinearModels method.
+"""
 struct ElastNet{T<: AbstractFloat} <: LinearModel
     lambda::T
     gamma::T
@@ -79,6 +103,11 @@ function _elastnet(esn::AbstractReservoirComputer, elastnet::ElastNet; train_dat
 end
 
 #MLJ Huber -> RobustHuber avoids conflict
+"""
+    ElastNet(delta, lambda, gamma, solver::MLJLinearModels.Solver)
+    
+Return a LinearModel object for the training of the model using the Huber function with a MLJLinearModels method.
+"""
 struct RobustHuber{T<: AbstractFloat} <: LinearModel
     delta::T
     lambda::T

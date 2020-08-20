@@ -14,6 +14,15 @@ struct RECA_discrete <: AbstractReca
     maps::AbstractArray{Int}
 end
 
+"""
+    RECA_discrete(train_data::AbstractArray{Int}, rule::Int, generations::Int, expansion_size::Int, permutations::Int [, nla_type]) 
+
+Create a RECA struct as described in [1] and [2].
+
+[1] Yilmaz, Ozgur. “Reservoir computing using cellular automata.” arXiv preprint arXiv:1410.0162 (2014).
+[2] Nichele, Stefano, and Andreas Molund. “Deep reservoir computing using cellular automata.” arXiv preprint arXiv:1703.02806 (2017).
+
+"""
 function RECA_discrete(train_data::AbstractArray{Int},
     rule::Int,
     generations::Int,
@@ -32,7 +41,13 @@ function RECA_discrete(train_data::AbstractArray{Int},
     return RECA_discrete(res_size, in_size, out_size, rule, generations, expansion_size, permutations, train_data, nla_type, states, maps)
 end
 
+"""
+    RECAdirect_predict_discrete(reca::AbstractReca, W_out::AbstractArray{Float64}, test_data::AbstractArray{Int})
 
+Given the input data return the corresponding predicted output, as described in [1].
+
+[1] Yilmaz, Ozgur. “Reservoir computing using cellular automata.” arXiv preprint arXiv:1410.0162 (2014).
+"""
 function RECAdirect_predict_discrete(reca::AbstractReca, 
     W_out::AbstractArray{Float64}, 
     test_data::AbstractArray{Int})

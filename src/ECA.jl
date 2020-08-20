@@ -2,19 +2,26 @@ mutable struct ECA
     rule::Int
     ruleset::AbstractArray{Int}
     cells::AbstractArray{Int}
-    
-    function ECA(rule::Int, 
-            starting_val::AbstractArray{Int}, 
-            generations::Int = 100)
+end
+
+"""
+    ECA(rule::Int, starting_val::AbstractArray{Int} [, generations::Int])
+
+Creates an Elementary Cellular Automata [1] struct given the rule and a starting vector.
+
+[1] Wolfram, Stephen. A new kind of science. Vol. 5. Champaign, IL: Wolfram media, 2002.
+"""
+function ECA(rule::Int, 
+        starting_val::AbstractArray{Int}, 
+        generations::Int = 100)
         
-        ncells = length(starting_val)
-        cells = zeros(Int, generations, ncells)
-        cells[1,:] = starting_val
-        ruleset = conversion(rule, 2, 1)
-        cells = next_gen!(cells, generations, ruleset)
+    ncells = length(starting_val)
+    cells = zeros(Int, generations, ncells)
+    cells[1,:] = starting_val
+    ruleset = conversion(rule, 2, 1)
+    cells = next_gen!(cells, generations, ruleset)
         
-        new(rule, ruleset, cells)
-    end
+    return ECA(rule, ruleset, cells)
 end
 
 function conversion(bin::Int, 

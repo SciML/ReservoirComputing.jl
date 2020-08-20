@@ -120,6 +120,13 @@ function dafESN(approx_res_size::Int,
 end
 
 #reservoir matrix W and input layer W_in given by the user
+"""
+    ESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} [, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
+    
+Build a double activation function ESN struct given the input and reservoir matrices, as described in [1].
+
+[1Lun, Shu-Xian, et al. "A novel model of leaky integrator echo state network for time-series prediction." Neurocomputing 159 (2015): 58-66.]
+"""
 function dafESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
         first_lambda::T,
@@ -183,7 +190,11 @@ function daf_states_matrix(W::AbstractArray{Float64},
 end
 
 
-
+"""
+    dafESNpredict(esn::AbstractLeakyESN, predict_len::Int, W_out::AbstractArray{Float64})
+    
+Return the prediction for a given lenght of the constructed dafESN struct.
+"""
 function dafESNpredict(esn::AbstractLeakyDAFESN,
     predict_len::Int,
     W_out::AbstractArray{Float64})
@@ -210,6 +221,12 @@ function dafESNpredict(esn::AbstractLeakyDAFESN,
     return output
 end
 
+
+"""
+    dafESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, test_data::AbstractArray{Float64}, W_out::AbstractArray{Float64})
+    
+Return the prediction for h steps ahead of the constructed ESN struct.
+"""
 function dafESNpredict_h_steps(esn::AbstractLeakyESN,
     predict_len::Int,
     h_steps::Int,
