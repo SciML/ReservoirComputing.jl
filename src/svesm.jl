@@ -4,8 +4,8 @@
 Train the ESN using SVM regression, as described in [1].
 
 [1] Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
-"""
 
+"""
 function SVESMtrain(svr::LIBSVM.AbstractSVR,
     esn::AbstractLeakyESN; 
     y_target::AbstractArray{Float64} = esn.train_data)
@@ -123,7 +123,6 @@ end
     
 Return the prediction for h steps ahead of the constructed ESN struct using SVMs.
 """
-
 function SVESMpredict_h_steps(esn::AbstractLeakyESN, 
     predict_len::Int,  
     h_steps::Int, 

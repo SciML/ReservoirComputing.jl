@@ -1,11 +1,11 @@
 """
-    ESGPtrain(esn::AbstractLeakyESN, mean::GaussianProcesses.Mean, kernel::GaussianProcesses.Kernel [, lognoise::Float64, optimize::Bool, optimizer::Optim.AbstractOptimizer, y_target::AbstractArray{Float64})
+    ESGPtrain(esn::AbstractLeakyESN, mean::GaussianProcesses.Mean, kernel::GaussianProcesses.Kernel 
+    [, lognoise::Float64, optimize::Bool, optimizer::Optim.AbstractOptimizer, y_target::AbstractArray{Float64})
 
 Train the ESN using Gaussian Processes, as described in [1]
 
 [1] Chatzis, Sotirios P., and Yiannis Demiris. "Echo state Gaussian process." IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.
 """
-
 function ESGPtrain(esn::AbstractLeakyESN,
     mean::GaussianProcesses.Mean, 
     kernel::GaussianProcesses.Kernel; 
@@ -69,7 +69,6 @@ end
 Return the prediction for a given lenght of the constructed ESN struct using GPs.
 
 """
-
 function ESGPpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     gp::AbstractArray{Any})

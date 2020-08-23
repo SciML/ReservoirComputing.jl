@@ -15,7 +15,8 @@ struct RECA_discrete <: AbstractReca
 end
 
 """
-    RECA_discrete(train_data::AbstractArray{Int}, rule::Int, generations::Int, expansion_size::Int, permutations::Int [, nla_type]) 
+    RECA_discrete(train_data::AbstractArray{Int}, rule::Int, generations::Int, 
+    expansion_size::Int, permutations::Int [, nla_type]) 
 
 Create a RECA struct as described in [1] and [2].
 
