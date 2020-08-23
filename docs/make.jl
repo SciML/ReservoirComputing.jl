@@ -2,6 +2,7 @@ using Documenter, ReservoirComputing
 
 makedocs(
     modules=[ReservoirComputing],
+    clean=true,doctest=false,
     sitename = "ReservoirComputing.jl",
     pages = [
         "ReservoirComputing.jl" => "index.md",
@@ -23,3 +24,8 @@ makedocs(
             ]
         ]
     )
+
+deploydocs(
+   repo = "github.com/SciML/ReservoirComputing.jl.git";
+   push_preview = true
+)
