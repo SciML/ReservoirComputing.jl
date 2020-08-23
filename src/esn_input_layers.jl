@@ -3,7 +3,7 @@
 """
     init_input_layer(res_size::Int, in_size::Int, sigma::Float64)
     
-Return a weighted input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$, as described in [1].
+Return a weighted input layer matrix, with random non-zero elements drawn from \$ [-\\text{sigma}, \\text{sigma}] \$, as described in [1].
 
 [1] Lu, Zhixin, et al. "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems." Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """

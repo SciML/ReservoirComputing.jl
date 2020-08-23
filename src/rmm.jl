@@ -19,9 +19,10 @@ mutable struct RMM{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractReservoirMemor
 end
 
 """
-    RMM(W::AbstractArray{T}, in_data::AbstractArray{T}, out_data::AbstractArray{T}, W_in::AbstractArray{T}, memory_size::Int, beta::Float64 [, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
+    RMM(W::AbstractArray{T}, in_data::AbstractArray{T}, out_data::AbstractArray{T}, W_in::AbstractArray{T}, 
+    memory_size::Int, beta::Float64 [, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
     
-Create a Rservoir Memory Machine struct, as described in [1]
+Create a Reservoir Memory Machine struct, as described in [1]
 
 [1] Paaßen, Benjamin, and Alexander Schulz. "Reservoir memory machines." arXiv preprint arXiv:2003.04793 (2020).
 """
@@ -95,13 +96,13 @@ function RMMtrain(input, output, states, write_matrix, read_matrix, memory_state
 end
 
 """
-RMMdirect_predict(rmm, input)
+    RMMdirect_predict(rmm::AbstractReservoirMemoryMachine, input)
 
 Given the input data return the corresponding predicted output, as described in [1].
 
 [1] Paaßen, Benjamin, and Alexander Schulz. "Reservoir memory machines." arXiv preprint arXiv:2003.04793 (2020).
 """
-function RMMdirect_predict(rmm, input)
+function RMMdirect_predict(rmm::AbstractReservoirMemoryMachine, input)
     
     predict_len = size(input, 1)
     predict_states = zeros(Float64, predict_len, rmm.res_size)
