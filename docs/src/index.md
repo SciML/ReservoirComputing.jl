@@ -1,9 +1,9 @@
 # Overview
 
-Reservoir Computing is an umbrella term used to sdescribe a family of models such as Echo State Networks (ESNs) and Liquid State Machines (LSMs). The key concept is to expand the input data into an higher dimension and use regression in order to train the model; in some ways Reservoir Computers can be considered similar to kernel methods. 
+Reservoir Computing is an umbrella term used to describe a family of models such as Echo State Networks (ESNs) and Liquid State Machines (LSMs). The key concept is to expand the input data into an higher dimension and use regression in order to train the model; in some ways Reservoir Computers can be considered similar to kernel methods. 
 
 !!! info "Introductory material"
-    This library assumes some basic knowledge of Reservoir Computing. For a good introduction the we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in depth review papers that should cover all the needed information.
+    This library assumes some basic knowledge of Reservoir Computing. For a good introduction we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in depth review papers that should cover all the needed information.
     
     * Jaeger, Herbert: The “echo state” approach to analysing and training recurrent neural networks-with an erratum note.
     * Maass W, Natschläger T, Markram H: Real-time computing without stable states: a new framework for neural computation based on perturbations.
