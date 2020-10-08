@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 authors = ["Francesco Martinuzzi"]
-version = "0.6.0"
+version = "0.6.1"
 
 [deps]
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
