@@ -13,9 +13,9 @@ julia> Pkg.add("ReservoirComputing")
 ```
 ## Echo State Network example
 
-This example and others are contained in the examples folder, that will be updated anytime I find new examples.
-To show how to use some of the functions contained in ReservoirComputing.jl we will illustrate an example also shown in literature: reproducing the Lorenz attractor.
-First we have to define the Lorenz system and the parameters we are going to use
+This example and others are contained in the examples folder, which will be updated whenever I find new examples.
+To show how to use some of the functions contained in ReservoirComputing.jl, we will illustrate it by means of an example also shown in the literature: reproducing the Lorenz attractor.
+First, we have to define the Lorenz system and the parameters we are going to use:
 ```julia
 using ParameterizedFunctions
 using OrdinaryDiffEq
@@ -25,7 +25,7 @@ using ReservoirComputing
 u0 = [1.0,0.0,0.0]                       
 tspan = (0.0,200.0)                      
 p = [10.0,28.0,8/3]
-#define lorenz system 
+#define lorenz system
 function lorenz(du,u,p,t)
     du[1] = p[1]*(u[2]-u[1])
     du[2] = u[1]*(p[2]-u[3]) - u[2]
@@ -42,7 +42,7 @@ predict_len = 1250
 train = data[:, shift:shift+train_len-1]
 test = data[:, shift+train_len:shift+train_len+predict_len-1]
 ```
-Now that we have the data we can initialize the parameters for the echo state network
+Now that we have the datam we can initialize the parameters for the echo state network:
 ```julia
 approx_res_size = 300
 radius = 1.2
@@ -54,7 +54,7 @@ alpha = 1.0
 nla_type = NLAT2()
 extended_states = false
 ```
-Now it's time to initiate the echo state network
+Now it's time to initiate the echo state network:
 ```julia
 esn = ESN(approx_res_size,
     train,
@@ -72,7 +72,7 @@ The echo state network can now be trained and tested:
 W_out = ESNtrain(esn, beta)
 output = ESNpredict(esn, predict_len, W_out)
 ```
-ouput is the matrix with the predicted trajectories that can be easily plotted 
+ouput is the matrix with the predicted trajectories that can be easily plotted
 ```julia
 using Plots
 plot(transpose(output),layout=(3,1), label="predicted")
@@ -89,7 +89,7 @@ plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="a
 
 The results are in line with the literature.
 
-The code is partly based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non linear transformation algorithms T1, T2 and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
+The code is partly based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non-linear transformation algorithms T1, T2, and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
 
 
 ## To do list

@@ -31,10 +31,10 @@ function ESN(approx_res_size::Int,
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(activation), 
+    return ESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
@@ -54,10 +54,10 @@ function ESN(W::AbstractArray{T},
     W_in = init_input_layer(res_size, in_size, sigma)
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(activation), 
+    return ESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
@@ -86,20 +86,20 @@ function ESN(approx_res_size::Int,
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(activation), 
+    return ESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 
 #reservoir matrix W and input layer W_in given by the user
 """
-    ESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} 
+    ESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T}
     [, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
-    
-Build a ESN struct given the input and reservoir matrices.
+
+Build an ESN struct given the input and reservoir matrices.
 """
 function ESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
@@ -121,10 +121,10 @@ function ESN(W::AbstractArray{T},
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 
-    return ESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(activation), 
+    return ESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, states, extended_states)
 end
@@ -144,7 +144,7 @@ function states_matrix(W::AbstractArray{Float64},
     states = zeros(Float64, res_size, train_len)
     for i=1:train_len-1
         states[:, i+1] = leaky_fixed_rnn(activation, alpha, W, W_in, states[:, i], train_data[:, i])
-        
+
     end
 
     if extended_states == true
@@ -157,8 +157,8 @@ end
 
 """
     ESNpredict(esn::AbstractLeakyESN, predict_len::Int, W_out::AbstractArray{Float64})
-    
-Return the prediction for a given lenght of the constructed ESN struct.
+
+Return the prediction for a given length of the constructed ESN struct.
 """
 function ESNpredict(esn::AbstractLeakyESN,
     predict_len::Int,
@@ -179,16 +179,16 @@ function ESNpredict(esn::AbstractLeakyESN,
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out)
         end
     end
     return output
 end
 
 """
-    ESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, 
+    ESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int,
     test_data::AbstractArray{Float64}, W_out::AbstractArray{Float64})
-    
+
 Return the prediction for h steps ahead of the constructed ESN struct.
 """
 function ESNpredict_h_steps(esn::AbstractLeakyESN,
@@ -196,7 +196,7 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
     h_steps::Int,
     test_data::AbstractArray{Float64},
     W_out::AbstractArray{Float64})
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
 
@@ -224,4 +224,4 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
         end
     end
     return output
-end  
+end

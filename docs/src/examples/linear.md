@@ -1,8 +1,8 @@
-# Using different linear methods 
+# Using different linear methods
 
-The standard implementation of ```ESNtrain``` uses Ridge Regression as the method of choice for the training of the ESN but there are other linear methods available. Leveraging [MLJLinearModels](https://alan-turing-institute.github.io/MLJLinearModels.jl/stable/) ReservoirComputing gives the possibility to train ESNs using a vast range of linear models. Using the same task as before, predictiong the Lorenz system, we will illustrate how to use ```ESNtrain``` with Lasso, Elastic Net and regression with Huber loss function.
+The standard implementation of ```ESNtrain``` uses Ridge Regression as the method of choice for the training of the ESN but there are other linear methods available. Leveraging [MLJLinearModels](https://alan-turing-institute.github.io/MLJLinearModels.jl/stable/) ReservoirComputing gives the possibility to train ESNs using a vast range of linear models. Using the same task as before, predicting the Lorenz system, we will illustrate how to use ```ESNtrain``` with Lasso, Elastic Net, and regression with Huber loss function.
 
-First we obtain the data in the usual way:
+First, we obtain the data in the usual way:
 
 ```julia
 using ParameterizedFunctions, OrdinaryDiffEq
@@ -12,7 +12,7 @@ u0 = [1.0,0.0,0.0]
 tspan = (0.0,1000.0)                      
 p = [10.0,28.0,8/3]
 
-#define lorenz system 
+#define lorenz system
 function lorenz(du,u,p,t)
     du[1] = p[1]*(u[2]-u[1])
     du[2] = u[1]*(p[2]-u[3]) - u[2]
@@ -25,7 +25,7 @@ sol = solve(prob, ABM54(), dt=0.02)
 v = sol.u
 data = Matrix(hcat(v...))
 
-shift = 300 
+shift = 300
 train_len = 5000
 predict_len = 1250
 
@@ -34,19 +34,19 @@ train = data[:, shift:shift+train_len-1]
 test = data[:, shift+train_len:shift+train_len+predict_len-1]
 ```
 
-And we can also use the same parameters 
+And we can also use the same parameters:
 
 ```julia
 using ReservoirComputing
 #model parameters
-approx_res_size = 300 
-radius = 1.2 
-activation = tanh 
-degree = 6 
-sigma = 0.1 
-alpha = 1.0 
-nla_type = NLAT2() 
-extended_states = false 
+approx_res_size = 300
+radius = 1.2
+activation = tanh
+degree = 6
+sigma = 0.1
+alpha = 1.0
+nla_type = NLAT2()
+extended_states = false
 
 #create echo state network  
 esn = ESN(approx_res_size,
@@ -60,7 +60,7 @@ esn = ESN(approx_res_size,
     extended_states = extended_states)
 ```
 
-To obtain ```W_out``` we can define a ```linear_model``` struct using one of the implemented constructors:
+To obtain ```W_out```, we can define a ```linear_model``` struct using one of the implemented constructors:
 - ```Ridge()```
 - ```Lasso()```
 - ```ElastNet()```
@@ -94,7 +94,7 @@ plot!(transpose(test),layout=(3,1), label="actual")
 ```
 ![esnLassofixedseed](https://user-images.githubusercontent.com/10376688/90960194-4747a780-e4a0-11ea-9e81-37f12624c503.png)
 
-Since in the linear model struct we used a MLJLinearModels.Solver we can specify any parameter necessary, like in this case the ```max_iter```.
+Since in the linear model struct we used a MLJLinearModels.Solver, we can specify any parameter necessary, like in this case the ```max_iter```.
 
 Using ElastNet():
 

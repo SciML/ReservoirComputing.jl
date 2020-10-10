@@ -1,5 +1,5 @@
 """
-    ESGPtrain(esn::AbstractLeakyESN, mean::GaussianProcesses.Mean, kernel::GaussianProcesses.Kernel 
+    ESGPtrain(esn::AbstractLeakyESN, mean::GaussianProcesses.Mean, kernel::GaussianProcesses.Kernel
     [, lognoise::Float64, optimize::Bool, optimizer::Optim.AbstractOptimizer, y_target::AbstractArray{Float64})
 
 Train the ESN using Gaussian Processes, as described in [1]
@@ -7,13 +7,13 @@ Train the ESN using Gaussian Processes, as described in [1]
 [1] Chatzis, Sotirios P., and Yiannis Demiris. "Echo state Gaussian process." IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.
 """
 function ESGPtrain(esn::AbstractLeakyESN,
-    mean::GaussianProcesses.Mean, 
-    kernel::GaussianProcesses.Kernel; 
-    lognoise::Float64 = -2.0, 
+    mean::GaussianProcesses.Mean,
+    kernel::GaussianProcesses.Kernel;
+    lognoise::Float64 = -2.0,
     optimize::Bool = false,
     optimizer::Optim.AbstractOptimizer = Optim.LBFGS(),
     y_target::AbstractArray{Float64} = esn.train_data)
-    
+
     states_new = nla(esn.nla_type, esn.states)
     if size(y_target, 1) == 1
         gp = GP(states_new, vec(y_target), mean, kernel, lognoise)
@@ -36,7 +36,7 @@ end
 function ESGPpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     gp::GaussianProcesses.GPE)
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     sigmas = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
@@ -55,7 +55,7 @@ function ESGPpredict(esn::AbstractLeakyESN,
             out, sigma = GaussianProcesses.predict_y(gp, x_new)
             output[:, i] = out
             sigmas[:,i] = sigma
-            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out)
         end
     end
     return output, sigmas
@@ -65,14 +65,14 @@ end
 
 """
     ESGPpredict(esn::AbstractLeakyESN, predict_len::Int, gp::AbstractArray{Any})
-    
-Return the prediction for a given lenght of the constructed ESN struct using GPs.
+
+Return the prediction for a given length of the constructed ESN struct using GPs.
 
 """
 function ESGPpredict(esn::AbstractLeakyESN,
     predict_len::Int,
     gp::AbstractArray{Any})
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     sigmas = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
@@ -101,7 +101,7 @@ function ESGPpredict(esn::AbstractLeakyESN,
             end
             output[:, i] = out
             sigmas[:,i] = sigma
-            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x[1:esn.res_size], out), out)
         end
     end
     return output, sigmas
@@ -118,7 +118,7 @@ function ESGPpredict_h_steps(esn::AbstractLeakyESN,
     h_steps::Int,
     test_data::AbstractArray{Float64},
     gp::GaussianProcesses.GPE)
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     sigmas = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
@@ -149,4 +149,4 @@ function ESGPpredict_h_steps(esn::AbstractLeakyESN,
         end
     end
     return output, sigmas
-end  
+end

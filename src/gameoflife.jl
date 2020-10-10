@@ -8,43 +8,43 @@ end
 
 """
     function GameOfLife(initial_state::AbstractArray{T}, generations::Int)
-    
-Given a starting matrix return the evolution for given generations of Coway's Game of Life, as described in [1]
+
+Given a starting matrix return the evolution for given generations of Conway's Game of Life, as described in [1].
 
 [1] Gardner, Martin. “Mathematical games: The fantastic combinations of John Conway’s new solitaire game “life”.” Scientific American 223.4 (1970): 120-123.
 """
 function GameOfLife(initial_state::AbstractArray{T},
         generations::Int) where T<: Bool
-    
+
     height, width = size(initial_state)
-    
+
     all_runs = Array{T}(undef, height, width, generations)
     all_runs[:, :, 1] = initial_state
-        
+
     for g = 2:generations
         for i = 1:height, j = 1:width
             live_neighbours = 0
-            
+
             for ud = (i-1):(i+1), lr = (j-1):(j+1)
                 #pbc
                 if ud < 1; ud = height-ud; end
                 if ud > height; ud = ud-height; end
                 if lr < 1; lr = width-lr; end
                 if lr > width; lr = lr-width; end
-                
+
                 if all_runs[ud, lr, g-1] == 1; live_neighbours+=1; end
             end
-            
+
             all_runs[i, j, g] = apply_standard_rules(all_runs[i, j, g-1], live_neighbours)
         end
     end
     return GameOfLife{T}(generations, all_runs)
 end
 
-function apply_standard_rules(state::T, 
+function apply_standard_rules(state::T,
         live_neighbours::Int) where T <: Bool
-    
-    if state == 1 
+
+    if state == 1
         if live_neighbours == 3 || live_neighbours == 4
             return 1
         else
@@ -57,4 +57,4 @@ function apply_standard_rules(state::T,
             return 0
         end
     end
-end 
+end
