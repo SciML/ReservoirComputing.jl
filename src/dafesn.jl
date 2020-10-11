@@ -40,10 +40,10 @@ function dafESN(approx_res_size::Int,
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(first_activation), 
+    return dafESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(first_activation),
         typeof(second_activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
@@ -70,10 +70,10 @@ function dafESN(W::AbstractArray{T},
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(first_activation), 
+    return dafESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(first_activation),
         typeof(second_activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
@@ -109,10 +109,10 @@ function dafESN(approx_res_size::Int,
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(first_activation), 
+    return dafESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(first_activation),
         typeof(second_activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
@@ -121,10 +121,10 @@ end
 
 #reservoir matrix W and input layer W_in given by the user
 """
-    dafESN(W::AbstractArray{T}, train_data::AbstractArray{T}, first_lambda::T, 
-    second_lambda::T, W_in::AbstractArray{T} [, first_activation::Any, 
+    dafESN(W::AbstractArray{T}, train_data::AbstractArray{T}, first_lambda::T,
+    second_lambda::T, W_in::AbstractArray{T} [, first_activation::Any,
     second_activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
-    
+
 Build a double activation function ESN struct given the input and reservoir matrices, as described in [1].
 
 [1]: Lun, Shu-Xian, et al. "A novel model of leaky integrator echo state network for time-series prediction." Neurocomputing 159 (2015): 58-66.
@@ -153,10 +153,10 @@ function dafESN(W::AbstractArray{T},
     states = daf_states_matrix(W, W_in, train_data, alpha,
     first_activation, second_activation, first_lambda, second_lambda, extended_states)
 
-    return dafESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(first_activation), 
+    return dafESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(first_activation),
         typeof(second_activation),
         typeof(nla_type)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, first_activation, second_activation, first_lambda,
@@ -194,8 +194,8 @@ end
 
 """
     dafESNpredict(esn::AbstractLeakyESN, predict_len::Int, W_out::AbstractArray{Float64})
-    
-Return the prediction for a given lenght of the constructed dafESN struct.
+
+Return the prediction for a given length of the constructed dafESN struct.
 """
 function dafESNpredict(esn::AbstractLeakyDAFESN,
     predict_len::Int,
@@ -225,9 +225,9 @@ end
 
 
 """
-    dafESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, 
+    dafESNpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int,
     test_data::AbstractArray{Float64}, W_out::AbstractArray{Float64})
-    
+
 Return the prediction for h steps ahead of the constructed ESN struct.
 """
 function dafESNpredict_h_steps(esn::AbstractLeakyESN,
@@ -235,7 +235,7 @@ function dafESNpredict_h_steps(esn::AbstractLeakyESN,
     h_steps::Int,
     test_data::AbstractArray{Float64},
     W_out::AbstractArray{Float64})
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
 
@@ -263,4 +263,4 @@ function dafESNpredict_h_steps(esn::AbstractLeakyESN,
         end
     end
     return output
-end  
+end

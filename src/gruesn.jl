@@ -1,4 +1,4 @@
- 
+
 abstract type AbstractGRUESN <: AbstractEchoStateNetwork end
 
 struct GRUESN{T, S<:AbstractArray{T}, I, B, F, N, G} <: AbstractGRUESN
@@ -18,15 +18,15 @@ end
 
 """
     GRUESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} [, gates_weight::T, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
-    
-Return a Gated Recurrent Unit [1] ESN struct
+
+Return a Gated Recurrent Unit [1] ESN struct.
 
 [1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
 """
 function GRUESN(W::AbstractArray{T},
         train_data::AbstractArray{T},
         W_in::AbstractArray{T};
-        gates_weight::T = 0.9, 
+        gates_weight::T = 0.9,
         activation::Any = tanh,
         alpha::T = 1.0,
         nla_type::NonLinearAlgorithm = NLADefault(),
@@ -41,16 +41,16 @@ function GRUESN(W::AbstractArray{T},
     elseif size(W_in, 2) != in_size
         throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
     end
-    
-    
+
+
     gates = GRUGates(res_size, in_size, gates_weight)
     states = gru_states(W, W_in, train_data, alpha, activation, extended_states, gates_weight, gates)
 
-    return GRUESN{T, typeof(train_data), 
-        typeof(res_size), 
-        typeof(extended_states), 
-        typeof(activation), 
-        typeof(nla_type), 
+    return GRUESN{T, typeof(train_data),
+        typeof(res_size),
+        typeof(extended_states),
+        typeof(activation),
+        typeof(nla_type),
         typeof(gates)}(res_size, in_size, out_size, train_data,
     alpha, nla_type, activation, W, W_in, gates, states, extended_states)
 end
@@ -59,7 +59,7 @@ end
 """
     GRUESNpredict(esn::AbstractGRUESN, predict_len::Int, W_out::AbstractArray{Float64})
 
-Return the prediction for a given lenght of the constructed GRUESN
+Return the prediction for a given length of the constructed GRUESN.
 """
 function GRUESNpredict(esn::AbstractGRUESN,
     predict_len::Int,
@@ -80,7 +80,7 @@ function GRUESNpredict(esn::AbstractGRUESN,
             x_new = nla(esn.nla_type, x)
             out = (W_out*x_new)
             output[:, i] = out
-            x = vcat(gru(esn.gates, esn.activation, esn.W, esn.W_in, x[1:esn.res_size], out), out) 
+            x = vcat(gru(esn.gates, esn.activation, esn.W, esn.W_in, x[1:esn.res_size], out), out)
         end
     end
     return output
@@ -104,7 +104,7 @@ function GRUGates(res_size, in_size, gates_weight)
     U_z = irrational_sign_input(res_size, in_size, gates_weight, start = res_size*(2*in_size+res_size+1))
     W_z = irrational_sign_input(res_size, res_size, gates_weight, start = res_size*(3*in_size+res_size+1))
     b_z = irrational_sign_input(res_size, 1, gates_weight, start = res_size*(2*in_size+2*res_size+1))
-    
+
     return GRUGates{typeof(gates_weight), typeof(U_r)}(U_r, W_r, b_r, U_z, W_z, b_z)
 end
 
@@ -122,15 +122,15 @@ function gru_states(W::AbstractArray{Float64},
         train_data::AbstractArray{Float64},
         alpha::Float64,
         activation::Function,
-        extended_states::Bool, 
-        gates_weight::Float64, 
+        extended_states::Bool,
+        gates_weight::Float64,
         gates::AbstractGates)
 
     train_len = size(train_data, 2)
     res_size = size(W, 1)
     in_size = size(train_data, 1)
     states = zeros(Float64, res_size, train_len)
-    
+
     for i=1:train_len-1
         states[:, i+1] = gru(gates, activation, W, W_in, states[:, i], train_data[:, i])
     end

@@ -7,27 +7,27 @@ end
 """
     ECA(rule::Int, starting_val::AbstractArray{Int} [, generations::Int])
 
-Creates an Elementary Cellular Automata [1] struct given the rule and a starting vector.
+Creates an Elementary Cellular Automaton [1] struct given the rule and a starting vector.
 
 [1] Wolfram, Stephen. A new kind of science. Vol. 5. Champaign, IL: Wolfram media, 2002.
 """
-function ECA(rule::Int, 
-        starting_val::AbstractArray{Int}, 
+function ECA(rule::Int,
+        starting_val::AbstractArray{Int},
         generations::Int = 100)
-        
+
     ncells = length(starting_val)
     cells = zeros(Int, generations, ncells)
     cells[1,:] = starting_val
     ruleset = conversion(rule, 2, 1)
     cells = next_gen!(cells, generations, ruleset)
-        
+
     return ECA(rule, ruleset, cells)
 end
 
-function conversion(bin::Int, 
-        states::Int = 2, 
+function conversion(bin::Int,
+        states::Int = 2,
         radius::Int = 1)
-    
+
     if states == 2
         bin_array = zeros(Int, states^(2*radius+1))
         for i=states^(2*radius+1):-1:1
@@ -44,22 +44,22 @@ function conversion(bin::Int,
     return bin_array
 end
 
-function rules(ruleset::Array{Int}, 
-        left::Int, 
+function rules(ruleset::Array{Int},
+        left::Int,
         middle::Int,
         right::Int)
-    
+
     lng = length(ruleset)
     return ruleset[mod1(lng-(4*left + 2*middle + right), lng)]
 end
 
-function next_gen!(cells::AbstractArray{Int}, 
+function next_gen!(cells::AbstractArray{Int},
         generations::Int,
         ruleset::AbstractArray{Int})
-     
+
     l = size(cells, 2)
     nextgen = zeros(Int, l)
-    
+
     for j = 1:generations-1
         for i = 1:l
             left   = cells[j, mod1(i - 1, l)]
@@ -67,7 +67,7 @@ function next_gen!(cells::AbstractArray{Int},
             right  = cells[j, mod1(i + 1, l)]
             nextgen[i] = rules(ruleset, left, middle, right)
         end
-        
+
     cells[j+1,:] = nextgen
     end
     return cells

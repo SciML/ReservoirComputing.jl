@@ -1,17 +1,17 @@
 """
     SVESMtrain(svr::LIBSVM.AbstractSVR, esn::AbstractLeakyESN [, y_target::AbstractArray{Float64}])
-    
+
 Train the ESN using SVM regression, as described in [1].
 
 [1] Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
 
 """
 function SVESMtrain(svr::LIBSVM.AbstractSVR,
-    esn::AbstractLeakyESN; 
+    esn::AbstractLeakyESN;
     y_target::AbstractArray{Float64} = esn.train_data)
-    
+
     states_new = nla(esn.nla_type, esn.states)
-    
+
     if size(y_target, 1) == 1
         fitted_svr = LIBSVM.fit!(svr, states_new', vec(y_target))
     else
@@ -25,19 +25,19 @@ end
 
 """
     SVESM_direct_predict(esn::AbstractLeakyESN, test_in::AbstractArray{Float64}, fitted_svr::LIBSVM.AbstractSVR)
-    
+
 Given the input data return the corresponding predicted output, as described in [1].
 
 [1] Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
 
 """
-function SVESM_direct_predict(esn::AbstractLeakyESN, 
-    test_in::AbstractArray{Float64}, 
+function SVESM_direct_predict(esn::AbstractLeakyESN,
+    test_in::AbstractArray{Float64},
     fitted_svr::LIBSVM.AbstractSVR)
-    
+
     x = esn.states[:, end]
     prediction_states = zeros(Float64, size(esn.states, 1), size(test_in, 2))
-    
+
     if esn.extended_states == false
         for i=1:size(test_in, 2)
             x_new = nla(esn.nla_type, x)
@@ -47,19 +47,19 @@ function SVESM_direct_predict(esn::AbstractLeakyESN,
     else
         for i=1:size(test_in, 2)
             x_new = nla(esn.nla_type, x)
-            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x_new[1:esn.res_size], test_in[:,i]), test_in[:, i]) 
+            x = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x_new[1:esn.res_size], test_in[:,i]), test_in[:, i])
             prediction_states[:,i] = x
         end
     end
     output = LIBSVM.predict(fitted_svr, prediction_states')
     return output
-end 
+end
 
-#predict if one one variable timeseries is provided
-function SVESMpredict(esn::AbstractLeakyESN, 
-    predict_len::Int, 
+#predict if one-variable timeseries is provided
+function SVESMpredict(esn::AbstractLeakyESN,
+    predict_len::Int,
     fitted_svr::LIBSVM.AbstractSVR)
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
     if esn.extended_states == false
@@ -83,16 +83,16 @@ end
 #predict for multidimensional timeseries
 """
     SVESMpredict(esn::AbstractLeakyESN, predict_len::Int, fitted_svr::AbstractArray{Any})
-    
-Return the prediction for a given lenght of the constructed ESN struct using SVMs.
+
+Return the prediction for a given length of the constructed ESN struct using SVMs.
 """
-function SVESMpredict(esn::AbstractLeakyESN, 
-    predict_len::Int, 
+function SVESMpredict(esn::AbstractLeakyESN,
+    predict_len::Int,
     fitted_svr::AbstractArray{Any})
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
-    
+
     if esn.extended_states == false
         for i=1:predict_len
             x_new = hcat(nla(esn.nla_type, x)...)
@@ -120,15 +120,15 @@ end
 
 """
     SVESMpredict_h_steps(esn::AbstractLeakyESN, predict_len::Int, h_steps::Int, test_data::AbstractArray{Float64}, fitted_svr::LIBSVM.AbstractSVR)
-    
+
 Return the prediction for h steps ahead of the constructed ESN struct using SVMs.
 """
-function SVESMpredict_h_steps(esn::AbstractLeakyESN, 
-    predict_len::Int,  
-    h_steps::Int, 
-    test_data::AbstractArray{Float64}, 
+function SVESMpredict_h_steps(esn::AbstractLeakyESN,
+    predict_len::Int,
+    h_steps::Int,
+    test_data::AbstractArray{Float64},
     fitted_svr::LIBSVM.AbstractSVR)
-    
+
     output = zeros(Float64, esn.in_size, predict_len)
     x = esn.states[:, end]
     if esn.extended_states == false

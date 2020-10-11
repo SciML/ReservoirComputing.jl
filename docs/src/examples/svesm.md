@@ -1,6 +1,6 @@
 # SVESM
 
-Leveraging the similarities between kernel methods and Reservoir Computing the paper \[1\] introduced the concept of Support Vector Echo State Machines (SVESMs). Using the package [LIBSVM](https://github.com/JuliaML/LIBSVM.jl) the SVESMs are implemented in ReservoirComputing.jl. We will give an example of usage introducing the direct predict function as well. The goal is again the prediction of the Lorenz system.
+Leveraging the similarities between kernel methods and Reservoir Computing, the paper \[1\] introduced the concept of Support Vector Echo State Machines (SVESMs). Using the package [LIBSVM](https://github.com/JuliaML/LIBSVM.jl) the SVESMs are implemented in ReservoirComputing.jl. We will give an example of usage introducing the direct predict function as well. The goal is again the prediction of the Lorenz system.
 
 ```julia
 using ParameterizedFunctions, OrdinaryDiffEq
@@ -10,7 +10,7 @@ u0 = [1.0,0.0,0.0]
 tspan = (0.0,1000.0)                      
 p = [10.0,28.0,8/3]
 
-#define lorenz system 
+#define lorenz system
 function lorenz(du,u,p,t)
     du[1] = p[1]*(u[2]-u[1])
     du[2] = u[1]*(p[2]-u[3]) - u[2]
@@ -23,7 +23,7 @@ sol = solve(prob, ABM54(), dt=0.02)
 v = sol.u
 data = Matrix(hcat(v...))
 
-shift = 300 
+shift = 300
 train_len = 5000
 predict_len = 1250
 
