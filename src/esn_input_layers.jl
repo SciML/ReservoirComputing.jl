@@ -133,7 +133,26 @@ function physics_informed_input(res_size::Int,
         γ::Float64,
         model_in_size::Int)
 
+    state_size = in_size - model_in_size
     W_in = zeros(Float64, res_size, in_size)
+    #Num of res nodes available for raw states
+    num_for_state = floor(Int, res_size*γ)
+    #Num of res nodes available for prior model input
+    num_for_model = floor(Int, (res_size*(1-γ)))
+    #Num of nodes per raw state input
+    q_state = floor(Int, num_for_state/state_size)
+    #Num of nodes per prior model input
+    q_model = floor(Int, num_for_model/model_in_size)
+    start_idx = 1
+    for i in 1:in_size
 
+        if i <= in_size-model_in_size
+            W_in[start_idx:start_idx-1+q_state, i] = (2*sigma).*(rand(Float64, 1, q_state).-0.5)
+            start_idx = start_idx+q_state
+        else
+            W_in[start_idx:start_idx-1+q_model, i] = (2*sigma).*(rand(Float64, 1, q_model).-0.5)
+            start_idx = start_idx+q_model
+        end
+    end
     return W_in
 end

@@ -50,3 +50,16 @@ for t in input_layer
     @test size(W_in, 1) == res_size
     @test size(W_in, 2) == in_size
 end
+
+
+#test physics informed input layer function
+W_in = physics_informed_input(res_size, in_size, sigma, γ, model_in_size)
+
+#Test num weights have been alotted correctly for state 1 according to the gamma chosen
+@test sum(x->x!=0, W_in[:, 1]) == floor(Int, (res_size*γ)/(in_size - model_in_size))
+#Test num weights have been alotted correctly for state 2 according to the gamma chosen
+@test sum(x->x!=0, W_in[:, 2]) == floor(Int, (res_size*γ)/(in_size - model_in_size))
+#Test num weights have been alotted correctly for model input 1 according to the gamma chosen
+@test sum(x->x!=0, W_in[:, 3]) == floor(Int, (res_size*(1-γ))/(model_in_size))
+#Test every reservoir node is connected exclusively to one state
+@test sum(x->x=1, [sum(x->x!=0, W_in[i, :]) for i in 1:res_size]) == res_size
