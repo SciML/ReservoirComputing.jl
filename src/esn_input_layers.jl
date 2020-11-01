@@ -118,3 +118,22 @@ function irrational_sign_input(res_size::Int,
     end
     return W_in
 end
+
+"""
+physics_informed_input(res_size::Int, in_size::Int, sigma::Float64, γ::Float64)
+
+Return a weighted input layer matrix, with random non-zero elements drawn from \$ [-\\text{sigma}, \\text{sigma}] \$, where some γ
+of reservoir nodes are connected exclusively to the raw inputs, and the rest to the outputs of the prior knowledge model , as described in [1].
+
+[1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018)
+"""
+function physics_informed_input(res_size::Int,
+        in_size::Int,
+        sigma::Float64,
+        γ::Float64,
+        model_in_size::Int)
+
+    W_in = zeros(Float64, res_size, in_size)
+
+    return W_in
+end
