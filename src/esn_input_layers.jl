@@ -135,24 +135,25 @@ function physics_informed_input(res_size::Int,
 
     state_size = in_size - model_in_size
     W_in = zeros(Float64, res_size, in_size)
-    #Num of res nodes available for raw states
+    #Vector used to find res nodes not yet connected
+    zero_connections = zeros(in_size)
+    #Num of res nodes allotted for raw states
     num_for_state = floor(Int, res_size*γ)
-    #Num of res nodes available for prior model input
+    #Num of res nodes allotted for prior model input
     num_for_model = floor(Int, (res_size*(1-γ)))
-    #Num of nodes per raw state input
-    q_state = floor(Int, num_for_state/state_size)
-    #Num of nodes per prior model input
-    q_model = floor(Int, num_for_model/model_in_size)
-    start_idx = 1
-    for i in 1:in_size
+    for i in 1:num_for_state
+        #find res nodes with no connections
+        idxs = findall(Bool[zero_connections[1:state_size] == W_in[i,1:state_size] for i=1:size(W_in,1)])
+        random_row_idx = idxs[rand(1:end)]
+        random_clm_idx = range(1, state_size, step = 1)[rand(1:end)]
+        W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))
+    end
 
-        if i <= in_size-model_in_size
-            W_in[start_idx:start_idx-1+q_state, i] = (2*sigma).*(rand(Float64, 1, q_state).-0.5)
-            start_idx = start_idx+q_state
-        else
-            W_in[start_idx:start_idx-1+q_model, i] = (2*sigma).*(rand(Float64, 1, q_model).-0.5)
-            start_idx = start_idx+q_model
-        end
+    for i in 1:num_for_model
+        idxs = findall(Bool[zero_connections[1:model_in_size] == W_in[i,state_size+1:end] for i=1:size(W_in,1)])
+        random_row_idx = idxs[rand(1:end)]
+        random_clm_idx = range(state_size+1, in_size, step = 1)[rand(1:end)]
+        W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))
     end
     return W_in
 end
