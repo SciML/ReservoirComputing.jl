@@ -143,14 +143,14 @@ function physics_informed_input(res_size::Int,
     num_for_model = floor(Int, (res_size*(1-γ)))
     for i in 1:num_for_state
         #find res nodes with no connections
-        idxs = findall(Bool[zero_connections[1:state_size] == W_in[i,1:state_size] for i=1:size(W_in,1)])
+        idxs = findall(Bool[zero_connections == W_in[i,:] for i=1:size(W_in,1)])
         random_row_idx = idxs[rand(1:end)]
         random_clm_idx = range(1, state_size, step = 1)[rand(1:end)]
         W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))
     end
 
     for i in 1:num_for_model
-        idxs = findall(Bool[zero_connections[1:model_in_size] == W_in[i,state_size+1:end] for i=1:size(W_in,1)])
+        idxs = findall(Bool[zero_connections == W_in[i,:] for i=1:size(W_in,1)])
         random_row_idx = idxs[rand(1:end)]
         random_clm_idx = range(state_size+1, in_size, step = 1)[rand(1:end)]
         W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))

@@ -59,4 +59,4 @@ W_in = physics_informed_input(res_size, in_size, sigma, γ, model_in_size)
 #Test num weights have been alotted correctly for model input according to the gamma chosen
 @test sum(x->x!=0, W_in[:, 3]) == floor(Int, res_size*(1-γ))
 #Test every reservoir node is connected exclusively to one state
-@test sum(x->x=1, [sum(x->x!=0, W_in[i, :]) for i in 1:res_size]) == res_size
+@test length(findall(x->x>1, [sum(x->x!=0, W_in[i, :]) for i in 1:res_size])) == 0
