@@ -5,6 +5,7 @@ struct HESN{T, S<:AbstractArray{T}, I, B, F, N, M} <: AbstractHESN
     in_size::I
     out_size::I
     train_data::S
+    physics_model_data::S
     prior_model::M
     alpha::T
     nla_type::N
@@ -27,8 +28,14 @@ function HESN(W::AbstractArray{T},
         nla_type::NonLinearAlgorithm = NLADefault(),
         extended_states::Bool = false) where T<:AbstractFloat
 
-    physics_data = prior_model(u0, tspan, datasize)
-    physics_informed_data = vcat(train_data, physics_data)
+    #Create physics data with one extra step ahead extra
+    trange = collect(range(tspan[1], tspan[2], length = datasize))
+    dt = tspan[2]-trange[1]
+    tsteps = push!(trange, dt + trange[end])
+    tspan = (tspan[1], dt+tspan[2])
+    physics_model_data = prior_model(u0, tspan, tsteps)
+    physics_informed_data = vcat(train_data, physics_model_data[:, 1:end-1])
+
     in_size = size(physics_informed_data, 1)
     out_size = size(train_data, 1)
     res_size = size(W, 1)
@@ -46,6 +53,6 @@ function HESN(W::AbstractArray{T},
         typeof(extended_states),
         typeof(activation),
         typeof(nla_type),
-        typeof(prior_model)}(res_size, in_size, out_size, train_data, prior_model,
-    alpha, nla_type, activation, W, W_in, states, extended_states)
+        typeof(prior_model)}(res_size, in_size, out_size, train_data, physics_model_data,
+        prior_model, alpha, nla_type, activation, W, W_in, states, extended_states)
 end
