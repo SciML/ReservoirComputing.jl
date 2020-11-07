@@ -39,7 +39,6 @@ function prior_model(u0, tspan, datasize, model = lorenz)
     sol = ones(length(u0), length(tsteps))
     return sol
 end
-concat_train = vcat(train, prior_model(u0, tspan, datasize))
 #constructor 1
 hesn = HESN(W,
     train,
@@ -56,7 +55,7 @@ hesn = HESN(W,
 
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
-@test isequal(concat_train, hesn.train_data)
+@test isequal(train, hesn.train_data)
 @test isequal(alpha, hesn.alpha)
 @test isequal(activation, hesn.activation)
 @test isequal(nla_type, hesn.nla_type)
