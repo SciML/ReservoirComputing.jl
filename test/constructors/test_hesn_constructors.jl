@@ -1,5 +1,6 @@
 using ReservoirComputing
 
+
 #model parameters
 const approx_res_size = 30
 const radius = 1.2
@@ -24,8 +25,9 @@ const h_steps = 2
 
 const train_len = 50
 const predict_len = 12
-data = ones(Float64, in_size-out_size, 100)
+data = ones(Float64, in_size-out_size, 100).+γ
 train = data[:, 1:1+train_len-1]
+
 #test = data[:, train_len:train_len+predict_len-1]
 
 
@@ -34,11 +36,17 @@ function lorenz()
 end
 
 #physics data generator for training and prediction
-function prior_model(u0, tspan, datasize, model = lorenz)
-    tsteps = range(tspan[1], tspan[2], length = datasize)
-    sol = ones(length(u0), length(tsteps))
+trange = collect(range(tspan[1], tspan[2], length = train_len))
+dt = tspan[2]-trange[1]
+tsteps = push!(trange, dt + trange[end])
+tspan1 = (tspan[1], dt+tspan[2])
+
+function prior_model(u0, tspan1, tsteps, model = lorenz)
+    sol = ones(length(u0), length(tsteps)).*γ
     return sol
 end
+physics_model_data = prior_model(u0, tspan1, tsteps)
+
 #constructor 1
 hesn = HESN(W,
     train,
@@ -52,10 +60,11 @@ hesn = HESN(W,
     nla_type = nla_type,
     extended_states = extended_states)
 
-
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
 @test isequal(train, hesn.train_data)
+@test isequal(prior_model(u0, tspan1, tsteps), hesn.physics_model_data)
+@test isequal(vcat(train, physics_model_data[:, 1:end-1]), vcat(hesn.train_data, hesn.physics_model_data[:,1:end-1]))
 @test isequal(alpha, hesn.alpha)
 @test isequal(activation, hesn.activation)
 @test isequal(nla_type, hesn.nla_type)
