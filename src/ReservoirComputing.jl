@@ -56,4 +56,7 @@ export RMM, RMMdirect_predict
 include("gruesn.jl")
 export GRUESN, GRUESNpredict
 
+include("hesn.jl")
+export HESN
+
 end #module
