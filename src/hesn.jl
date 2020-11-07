@@ -28,8 +28,8 @@ function HESN(W::AbstractArray{T},
         extended_states::Bool = false) where T<:AbstractFloat
 
     physics_data = prior_model(u0, tspan, datasize)
-    train_data = vcat(train_data, physics_data)
-    in_size = size(train_data, 1)
+    physics_informed_data = vcat(train_data, physics_data)
+    in_size = size(physics_informed_data, 1)
     out_size = size(train_data, 1)
     res_size = size(W, 1)
 
@@ -39,7 +39,7 @@ function HESN(W::AbstractArray{T},
         throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
     end
 
-    states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
+    states = states_matrix(W, W_in, physics_informed_data, alpha, activation, extended_states)
 
     return HESN{T, typeof(train_data),
         typeof(res_size),
