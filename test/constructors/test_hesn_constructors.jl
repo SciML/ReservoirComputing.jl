@@ -26,7 +26,7 @@ const h_steps = 2
 const train_len = 50
 const predict_len = 12
 data = ones(Float64, in_size-out_size, 100).+γ
-train = data[:, 1:1+train_len-1]
+train = data[:, 1:train_len]
 
 #test = data[:, train_len:train_len+predict_len-1]
 
