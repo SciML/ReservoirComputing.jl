@@ -37,15 +37,15 @@ end
 
 #physics data generator for training and prediction
 trange = collect(range(tspan[1], tspan[2], length = train_len))
-dt = tspan[2]-trange[1]
+dt = trange[2]-trange[1]
 tsteps = push!(trange, dt + trange[end])
-tspan1 = (tspan[1], dt+tspan[2])
+tspan_new = (tspan[1], dt+tspan[2])
 
-function prior_model(u0, tspan1, tsteps, model = lorenz)
+function prior_model(u0, tspan_new, tsteps, model = lorenz)
     sol = ones(length(u0), length(tsteps)).*γ
     return sol
 end
-physics_model_data = prior_model(u0, tspan1, tsteps)
+physics_model_data = prior_model(u0, tspan_new, tsteps)
 
 #constructor 1
 hesn = HESN(W,
@@ -63,12 +63,16 @@ hesn = HESN(W,
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
 @test isequal(train, hesn.train_data)
-@test isequal(prior_model(u0, tspan1, tsteps), hesn.physics_model_data)
+@test isequal(prior_model(u0, tspan_new, tsteps), hesn.physics_model_data)
 @test isequal(vcat(train, physics_model_data[:, 1:end-1]), vcat(hesn.train_data, hesn.physics_model_data[:,1:end-1]))
 @test isequal(alpha, hesn.alpha)
 @test isequal(activation, hesn.activation)
 @test isequal(nla_type, hesn.nla_type)
 @test isequal(prior_model, hesn.prior_model)
+@test isequal(datasize, hesn.datasize)
+@test isequal(u0, hesn.u0)
+@test isequal(tspan, hesn.tspan)
+@test isequal(dt, hesn.dt)
 @test size(hesn.W) == (hesn.res_size, hesn.res_size)
 @test size(hesn.W_in) == (hesn.res_size, hesn.in_size)
 @test size(hesn.states) == (hesn.res_size, train_len)
