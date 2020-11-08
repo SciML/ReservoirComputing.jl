@@ -60,3 +60,6 @@ W_in = physics_informed_input(res_size, in_size, sigma, γ, model_in_size)
 @test sum(x->x!=0, W_in[:, 3]) == floor(Int, res_size*(1-γ))
 #Test every reservoir node is connected exclusively to one state
 @test length(findall(x->x>1, [sum(x->x!=0, W_in[i, :]) for i in 1:res_size])) == 0
+#Test in_size to always be greater than model output size
+bad_model_out_size = 10
+@test_throws DimensionMismatch physics_informed_input(res_size, in_size, sigma, γ, bad_model_out_size)
