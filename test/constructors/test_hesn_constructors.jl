@@ -26,7 +26,7 @@ const h_steps = 2
 const train_len = 50
 const predict_len = 12
 data = ones(Float64, in_size-out_size, 100).+γ
-train = data[:, 1:1+train_len-1]
+train = data[:, 1:train_len]
 
 #test = data[:, train_len:train_len+predict_len-1]
 
@@ -60,6 +60,7 @@ hesn = HESN(W,
     nla_type = nla_type,
     extended_states = extended_states)
 
+
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
 @test isequal(train, hesn.train_data)
@@ -76,3 +77,13 @@ hesn = HESN(W,
 @test size(hesn.W) == (hesn.res_size, hesn.res_size)
 @test size(hesn.W_in) == (hesn.res_size, hesn.in_size)
 @test size(hesn.states) == (hesn.res_size, train_len)
+
+
+#test dimension mismatch of hesn constructor
+bad_in_size = 4
+W_in = ReservoirComputing.physics_informed_input(approx_res_size, bad_in_size, sigma, γ, prior_model_size)
+@test_throws DimensionMismatch hesn2 = HESN(W, train, prior_model, u0, tspan, datasize, W_in, activation = activation, alpha = alpha, nla_type = nla_type, extended_states = extended_states)
+
+bad_res_size = approx_res_size-1
+W_in = ReservoirComputing.physics_informed_input(bad_res_size, in_size, sigma, γ, prior_model_size)
+@test_throws DimensionMismatch hesn2 = HESN(W, train, prior_model, u0, tspan, datasize, W_in, activation = activation, alpha = alpha, nla_type = nla_type, extended_states = extended_states)
