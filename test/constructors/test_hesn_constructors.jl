@@ -76,6 +76,7 @@ hesn = HESN(W,
 @test size(hesn.W_in) == (hesn.res_size, hesn.in_size)
 @test size(hesn.states) == (hesn.res_size, train_len)
 
+
 #test dimension mismatch of hesn constructor
 bad_in_size = 4
 W_in = ReservoirComputing.physics_informed_input(approx_res_size, bad_in_size, sigma, γ, prior_model_size)
