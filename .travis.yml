@@ -2,15 +2,15 @@
 language: julia
 os:
   - linux
-  - windows
-  - osx
+#  - windows
+#  - osx
 julia:
-  - 1.0
-  - nightly
-matrix:
-  allow_failures:
-    - julia: nightly
-  fast_finish: true
+  - 1
+#  - nightly
+#matrix:
+#  allow_failures:
+#    - julia: nightly
+#  fast_finish: true
 notifications:
   email: false
 after_success:
