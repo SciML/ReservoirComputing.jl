@@ -57,6 +57,6 @@ include("gruesn.jl")
 export GRUESN, GRUESNpredict
 
 include("hesn.jl")
-export HESN
+export HESN, HESNpredict
 
 end #module

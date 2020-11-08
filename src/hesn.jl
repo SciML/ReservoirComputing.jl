@@ -61,3 +61,28 @@ function HESN(W::AbstractArray{T},
         typeof(u0)}(res_size, in_size, out_size, train_data, physics_model_data,
         prior_model, u0, tspan, datasize, dt, alpha, nla_type, activation, W, W_in, states, extended_states)
 end
+
+
+"""
+    HESNpredict(esn::AbstractLeakyESN, predict_len::Int, prior_data::AbstractArray{Float64}, model_size::Int, W_out::AbstractArray{Float64})
+
+Return prediction the a starting after the training time using HESN model.
+"""
+
+function HESNpredict(hesn::AbstractLeakyESN,
+    predict_len::Int,
+    W_out::AbstractArray{Float64})
+
+    output = zeros(Float64, hesn.out_size, predict_len)
+    x = hesn.states[:, end]
+
+    for i=1:predict_len
+        x_new = nla(esn.nla_type, x)
+        x_new = vcat(x_new, prior_data[:, i]) #<-- append states of prior model at current tstep
+        out = (W_out*x_new) #<-- prediction w/ reservoir state & prior model values given solved W_out
+        output[:, i] = out
+        out = vcat(out, prior_data[:, i]) #<-- append states of prior model for input of next prediction
+        x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
+    end
+    return output
+end

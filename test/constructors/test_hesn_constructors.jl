@@ -12,7 +12,7 @@ const alpha = 1.0
 const nla_type = NLADefault()
 const in_size = 6
 const out_size = 3
-const γ = rand()
+const γ = 0.5
 const prior_model_size = 3
 const u0 = [1.0,0.0,0.0]
 const tspan = (0.0,1000.0)
@@ -26,7 +26,13 @@ const h_steps = 2
 const train_len = 50
 const predict_len = 12
 data = ones(Float64, in_size-out_size, 100).+γ
+
 train = data[:, 1:train_len]
+
+train = data[:, 1:1+train_len-1]
+test = data[:, train_len:train_len+predict_len-1]
+
+
 
 
 #user physics function
@@ -90,3 +96,8 @@ W_in = ReservoirComputing.physics_informed_input(bad_res_size, in_size, sigma, �
 linear_model = Ridge(beta, Analytical())
 W_out = HESNtrain(linear_model, hesn)
 @test size(W_out) == (out_size, hesn.res_size+size(hesn.physics_model_data,1))
+
+
+#test predict
+output = HESNpredict(hesn, predict_len, W_out)
+@test size(output) == (out_size, predict_len)
