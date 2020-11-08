@@ -60,7 +60,10 @@ hesn = HESN(W,
     nla_type = nla_type,
     extended_states = extended_states)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> HESN-Constructor
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
 @test isequal(train, hesn.train_data)
@@ -77,6 +80,7 @@ hesn = HESN(W,
 @test size(hesn.W) == (hesn.res_size, hesn.res_size)
 @test size(hesn.W_in) == (hesn.res_size, hesn.in_size)
 @test size(hesn.states) == (hesn.res_size, train_len)
+<<<<<<< HEAD
 
 
 #test dimension mismatch of hesn constructor
@@ -87,3 +91,5 @@ W_in = ReservoirComputing.physics_informed_input(approx_res_size, bad_in_size, s
 bad_res_size = approx_res_size-1
 W_in = ReservoirComputing.physics_informed_input(bad_res_size, in_size, sigma, γ, prior_model_size)
 @test_throws DimensionMismatch hesn2 = HESN(W, train, prior_model, u0, tspan, datasize, W_in, activation = activation, alpha = alpha, nla_type = nla_type, extended_states = extended_states)
+=======
+>>>>>>> HESN-Constructor
