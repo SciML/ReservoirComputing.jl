@@ -75,11 +75,11 @@ function HESNpredict(hesn::AbstractHESN,
 
     output = zeros(Float64, hesn.out_size, predict_len)
     x = hesn.states[:, end]
-    predict_tsteps = [hesn.tspan[1]+hesn.dt]
+    predict_tsteps = [hesn.tspan[2]+hesn.dt]
     [append!(predict_tsteps, predict_tsteps[end]+hesn.dt) for i in 1:predict_len]
-    tspan_new = (hesn.tspan[1]+hesn.dt, predict_tsteps[end])
+    tspan_new = (hesn.tspan[2]+hesn.dt, predict_tsteps[end])
     u0 = hesn.physics_model_data[:, end]
-    physics_prediction_data = hesn.prior_model(u0, tspan_new, predict_tsteps)
+    physics_prediction_data = hesn.prior_model(u0, tspan_new, predict_tsteps)[:, 2:end]
 
     for i=1:predict_len
         x_new = nla(hesn.nla_type, x)
