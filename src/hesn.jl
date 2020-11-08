@@ -69,20 +69,25 @@ end
 Return prediction the a starting after the training time using HESN model.
 """
 
-function HESNpredict(hesn::AbstractLeakyESN,
+function HESNpredict(hesn::AbstractHESN,
     predict_len::Int,
     W_out::AbstractArray{Float64})
 
     output = zeros(Float64, hesn.out_size, predict_len)
     x = hesn.states[:, end]
+    predict_tsteps = [hesn.tspan[1]+hesn.dt]
+    [append!(predict_tsteps, predict_tsteps[end]+hesn.dt) for i in 1:predict_len]
+    tspan_new = (hesn.tspan[1]+hesn.dt, predict_tsteps[end])
+    u0 = hesn.physics_model_data[:, end]
+    physics_prediction_data = hesn.prior_model(u0, tspan_new, predict_tsteps)
 
     for i=1:predict_len
-        x_new = nla(esn.nla_type, x)
-        x_new = vcat(x_new, prior_data[:, i]) #<-- append states of prior model at current tstep
+        x_new = nla(hesn.nla_type, x)
+        x_new = vcat(x_new, physics_prediction_data[:, i]) #<-- append states of prior model at current tstep
         out = (W_out*x_new) #<-- prediction w/ reservoir state & prior model values given solved W_out
         output[:, i] = out
-        out = vcat(out, prior_data[:, i]) #<-- append states of prior model for input of next prediction
-        x = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, x, out)
+        out = vcat(out, physics_prediction_data[:, i]) #<-- append states of prior model for input of next prediction
+        x = leaky_fixed_rnn(hesn.activation, hesn.alpha, hesn.W, hesn.W_in, x, out)
     end
     return output
 end
