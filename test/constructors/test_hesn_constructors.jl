@@ -1,4 +1,4 @@
-using ReservoirComputing
+using ReservoirComputing, MLJLinearModels
 
 
 #model parameters
@@ -60,6 +60,7 @@ hesn = HESN(W,
     nla_type = nla_type,
     extended_states = extended_states)
 
+
 #test constructor
 @test isequal(Integer(floor(approx_res_size/in_size)*in_size), hesn.res_size)
 @test isequal(train, hesn.train_data)
@@ -72,3 +73,9 @@ hesn = HESN(W,
 @test size(hesn.W) == (hesn.res_size, hesn.res_size)
 @test size(hesn.W_in) == (hesn.res_size, hesn.in_size)
 @test size(hesn.states) == (hesn.res_size, train_len)
+
+
+#test train
+linear_model = Ridge(beta, Analytical())
+W_out = HESNtrain(linear_model, hesn)
+@test size(W_out) == (out_size, hesn.res_size+size(hesn.physics_model_data,1))
