@@ -1,4 +1,4 @@
-using ReservoirComputing
+using ReservoirComputing, MLJLinearModels
 
 
 #model parameters
@@ -77,6 +77,7 @@ hesn = HESN(W,
 @test size(hesn.states) == (hesn.res_size, train_len)
 
 
+<<<<<<< HESN-Constructor
 
 #test dimension mismatch of hesn constructor
 bad_in_size = 4
@@ -86,3 +87,9 @@ W_in = ReservoirComputing.physics_informed_input(approx_res_size, bad_in_size, s
 bad_res_size = approx_res_size-1
 W_in = ReservoirComputing.physics_informed_input(bad_res_size, in_size, sigma, γ, prior_model_size)
 @test_throws DimensionMismatch hesn2 = HESN(W, train, prior_model, u0, tspan, datasize, W_in, activation = activation, alpha = alpha, nla_type = nla_type, extended_states = extended_states)
+=======
+#test train
+linear_model = Ridge(beta, Analytical())
+W_out = HESNtrain(linear_model, hesn)
+@test size(W_out) == (out_size, hesn.res_size+size(hesn.physics_model_data,1))
+>>>>>>> init commit for HESN training + tests
