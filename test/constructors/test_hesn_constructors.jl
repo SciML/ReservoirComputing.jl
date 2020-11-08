@@ -85,6 +85,11 @@ bad_res_size = approx_res_size-1
 W_in = ReservoirComputing.physics_informed_input(bad_res_size, in_size, sigma, γ, prior_model_size)
 @test_throws DimensionMismatch hesn2 = HESN(W, train, prior_model, u0, tspan, datasize, W_in, activation = activation, alpha = alpha, nla_type = nla_type, extended_states = extended_states)
 
+
+
+
+
+
 #test train
 linear_model = Ridge(beta, Analytical())
 W_out = HESNtrain(linear_model, hesn)
