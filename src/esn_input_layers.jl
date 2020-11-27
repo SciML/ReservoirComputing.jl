@@ -118,3 +118,42 @@ function irrational_sign_input(res_size::Int,
     end
     return W_in
 end
+
+"""
+physics_informed_input(res_size::Int, in_size::Int, sigma::Float64, γ::Float64)
+
+Return a weighted input layer matrix, with random non-zero elements drawn from \$ [-\\text{sigma}, \\text{sigma}] \$, where some γ
+of reservoir nodes are connected exclusively to the raw inputs, and the rest to the outputs of the prior knowledge model , as described in [1].
+
+[1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018)
+"""
+function physics_informed_input(res_size::Int,
+        in_size::Int,
+        sigma::Float64,
+        γ::Float64,
+        model_in_size::Int)
+
+    state_size = in_size - model_in_size
+    W_in = zeros(Float64, res_size, in_size)
+    #Vector used to find res nodes not yet connected
+    zero_connections = zeros(in_size)
+    #Num of res nodes allotted for raw states
+    num_for_state = floor(Int, res_size*γ)
+    #Num of res nodes allotted for prior model input
+    num_for_model = floor(Int, (res_size*(1-γ)))
+    for i in 1:num_for_state
+        #find res nodes with no connections
+        idxs = findall(Bool[zero_connections == W_in[i,:] for i=1:size(W_in,1)])
+        random_row_idx = idxs[rand(1:end)]
+        random_clm_idx = range(1, state_size, step = 1)[rand(1:end)]
+        W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))
+    end
+
+    for i in 1:num_for_model
+        idxs = findall(Bool[zero_connections == W_in[i,:] for i=1:size(W_in,1)])
+        random_row_idx = idxs[rand(1:end)]
+        random_clm_idx = range(state_size+1, in_size, step = 1)[rand(1:end)]
+        W_in[random_row_idx,random_clm_idx] = rand(Uniform(-sigma, sigma))
+    end
+    return W_in
+end

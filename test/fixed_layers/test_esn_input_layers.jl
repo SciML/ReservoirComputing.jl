@@ -13,6 +13,9 @@ nla_type = NLADefault()
 in_size = 3
 extended_states = false
 h_steps = 2
+#Let gamma be any number between 0 and 1
+γ = rand()
+model_in_size = 1
 
 W = init_reservoir_givendeg(res_size, radius, degree)
 
@@ -23,12 +26,16 @@ train = data[:, 1:1+train_len-1]
 test = data[:, train_len:train_len+predict_len-1]
 
 #test input layers functions
-input_layer = [init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input, irrational_sign_input]
+input_layer = [init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input, irrational_sign_input, physics_informed_input]
 
 for t in input_layer
 
     if t == init_sparse_input_layer
         W_in = t(res_size, in_size, sigma, sparsity)
+
+    elseif t == physics_informed_input
+        W_in = t(res_size, in_size, sigma, γ, model_in_size)
+
     else
         W_in = t(res_size, in_size, sigma)
     end
@@ -38,8 +45,21 @@ for t in input_layer
         activation = activation,
         alpha = alpha,
         nla_type = nla_type,
-        extended_states = extended_states) 
+        extended_states = extended_states)
 
     @test size(W_in, 1) == res_size
     @test size(W_in, 2) == in_size
 end
+
+
+#test physics informed input layer function
+W_in = physics_informed_input(res_size, in_size, sigma, γ, model_in_size)
+#Test num weights have been alotted correctly for raw states according to the gamma chosen
+@test sum(x->x!=0, W_in[:, 1:2]) == floor(Int, res_size*γ)
+#Test num weights have been alotted correctly for model input according to the gamma chosen
+@test sum(x->x!=0, W_in[:, 3]) == floor(Int, res_size*(1-γ))
+#Test every reservoir node is connected exclusively to one state
+@test length(findall(x->x>1, [sum(x->x!=0, W_in[i, :]) for i in 1:res_size])) == 0
+#Test in_size to always be greater than model output size
+bad_model_out_size = 10
+@test_throws DimensionMismatch physics_informed_input(res_size, in_size, sigma, γ, bad_model_out_size)
