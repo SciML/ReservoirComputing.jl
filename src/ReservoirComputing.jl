@@ -17,7 +17,7 @@ abstract type NonLinearAlgorithm end
 
 include("leaky_fixed_rnn.jl")
 include("train.jl")
-export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber
+export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber, HESNtrain
 
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3

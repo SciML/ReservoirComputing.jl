@@ -122,11 +122,32 @@ function _huber(esn::AbstractReservoirComputer, huber::RobustHuber; train_data::
     states_new = nla(esn.nla_type, esn.states)
     W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))
     for i=1:size(train_data, 1)
-        h = HuberRegression(delta = huber.delta, 
+        h = HuberRegression(delta = huber.delta,
             lambda = huber.lambda,
             gamma = huber.gamma,
             fit_intercept = false)
         W_out[i,:] = MLJLinearModels.fit(h, states_new', train_data[i,:], solver = huber.solver)
+    end
+
+    return W_out
+end
+
+
+"""
+    HESNtrain(ridge::Ridge{T}, hesn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = hesn.train_data)
+
+Return the trained HESN output layer using an MLJLinearModels method built into a LinearSolver struct.
+"""
+HESNtrain(ridge::Ridge{T}, hesn::AbstractReservoirComputer; train_data::AbstractArray{Float64} = hesn.train_data) where T<: AbstractFloat = _PIridge(hesn, ridge; train_data = hesn.train_data)
+
+function _PIridge(hesn::AbstractReservoirComputer, ridge::Ridge; train_data::AbstractArray{Float64} = hesn.train_data)
+
+    states_new = nla(hesn.nla_type, hesn.states)
+    states_new = vcat(states_new, hesn.physics_model_data[:, 2:end])
+    W_out = zeros(Float64, size(train_data, 1), size(states_new, 1))
+    for i=1:size(train_data, 1)
+        r = RidgeRegression(lambda = ridge.lambda, fit_intercept = false)
+        W_out[i,:] = MLJLinearModels.fit(r, states_new', train_data[i,:], solver = ridge.solver)
     end
 
     return W_out
