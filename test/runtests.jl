@@ -3,6 +3,7 @@ using SafeTestsets
 
 
 @time @safetestset "ESN constructors" begin include("constructors/test_esn_constructors.jl") end
+@time @safetestset "HESN constructors" begin include("constructors/test_hesn_constructors.jl") end
 @time @safetestset "DAFESN constructors" begin include("constructors/test_dafesn_constructors.jl") end
 @time @safetestset "ESN input layers" begin include("fixed_layers/test_esn_input_layers.jl") end
 @time @safetestset "ESN reservoirs" begin include("fixed_layers/test_esn_reservoirs.jl") end

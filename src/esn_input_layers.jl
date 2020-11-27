@@ -134,6 +134,9 @@ function physics_informed_input(res_size::Int,
         model_in_size::Int)
 
     state_size = in_size - model_in_size
+    if state_size <= 0
+        throw(DimensionMismatch("in_size must be greater than model_in_size"))
+    end
     W_in = zeros(Float64, res_size, in_size)
     #Vector used to find res nodes not yet connected
     zero_connections = zeros(in_size)
