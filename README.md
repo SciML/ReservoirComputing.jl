@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/SciML/ReservoirComputing.jl.svg?branch=master)](https://travis-ci.com/github/SciML/ReservoirComputing.jl)
+[![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](http://reservoir.sciml.ai/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/)
