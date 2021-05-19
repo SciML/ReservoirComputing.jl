@@ -41,6 +41,13 @@ output = ESNpredict(esn, predict_len, W_out)
 output = ESNpredict_h_steps(esn, predict_len, h_steps, test, W_out)
 @test size(output) == (out_size, predict_len)
 
+#test esnfitted
+fit1 = ESNfitted(esn, W_out; autonomous=false)
+@test size(fit1) == size(train)
+
+fit2 = ESNfitted(esn, W_out; autonomous=true)
+@test size(fit1) == size(train)
+
 #test esgp
 mean = MeanZero()
 kernel = Lin(1.0)
