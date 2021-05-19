@@ -225,3 +225,63 @@ function ESNpredict_h_steps(esn::AbstractLeakyESN,
     end
     return output
 end
+
+"""
+    ESNfitted(esn::AbstractLeakyESN, W_out::Matrix; autonomous=false)
+
+Return the prediction for the training data using the trained output layer. The autonomous trigger can be used to have have it return an autonomous prediction starting from the first point if true, or a point by point prediction if false.
+"""
+
+function ESNfitted(esn::AbstractLeakyESN, W_out::Matrix; autonomous=false)
+    train_len = size(esn.train_data, 2)
+    output = zeros(Float64, esn.in_size, train_len)
+    x = zeros(esn.res_size)
+    
+    if autonomous
+        out = esn.train_data[:,1]
+        return _fitted!(output, esn, x, out)
+    else
+        return _fitted!(output, esn, x, esn.train_data)
+    end
+end
+
+function _fitted!(output, esn, state, vector::Vector)
+    if esn.extended_states == false
+        for i=1:train_len
+            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
+            x_new = nla(esn.nla_type, state)
+            vector = (W_out*x_new)
+            output[:, i] = vector
+        end
+    elseif esn.extended_states == true
+        for i=1:train_len
+            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
+            x_new = nla(esn.nla_type, state)
+            vector = (W_out*x_new)
+            output[:, i] = vector
+        end
+    end
+    return output
+end
+
+function _fitted!(output, esn, state, vector::Matrix)
+    if esn.extended_states == false
+        for i=1:train_len
+            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
+            x_new = nla(esn.nla_type, state)
+            out = (W_out*x_new)
+            output[:, i] = out
+        end
+    elseif esn.extended_states == true
+        for i=1:train_len
+            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
+            x_new = nla(esn.nla_type, state)
+            out = (W_out*x_new)
+            output[:, i] = out
+        end
+    end
+    return output
+end
+
+
+
