@@ -239,13 +239,13 @@ function ESNfitted(esn::AbstractLeakyESN, W_out::Matrix; autonomous=false)
     
     if autonomous
         out = esn.train_data[:,1]
-        return _fitted!(output, esn, x, out)
+        return _fitted!(output, esn, x, train_len, W_out, out)
     else
-        return _fitted!(output, esn, x, esn.train_data)
+        return _fitted!(output, esn, x, train_len, W_out, esn.train_data)
     end
 end
 
-function _fitted!(output, esn, state, vector::Vector)
+function _fitted!(output, esn, state, train_len, W_out, vector::Vector)
     if esn.extended_states == false
         for i=1:train_len
             state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
@@ -264,7 +264,7 @@ function _fitted!(output, esn, state, vector::Vector)
     return output
 end
 
-function _fitted!(output, esn, state, vector::Matrix)
+function _fitted!(output, esn, state, train_len, W_out, vector::Matrix)
     if esn.extended_states == false
         for i=1:train_len
             state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
