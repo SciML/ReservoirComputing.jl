@@ -248,14 +248,14 @@ end
 function _fitted!(output, esn, state, vector::Vector)
     if esn.extended_states == false
         for i=1:train_len
-            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
+            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
             x_new = nla(esn.nla_type, state)
             vector = (W_out*x_new)
             output[:, i] = vector
         end
     elseif esn.extended_states == true
         for i=1:train_len
-            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
+            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
             x_new = nla(esn.nla_type, state)
             vector = (W_out*x_new)
             output[:, i] = vector
@@ -267,14 +267,14 @@ end
 function _fitted!(output, esn, state, vector::Matrix)
     if esn.extended_states == false
         for i=1:train_len
-            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
+            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
             x_new = nla(esn.nla_type, state)
             out = (W_out*x_new)
             output[:, i] = out
         end
     elseif esn.extended_states == true
         for i=1:train_len
-            state = ReservoirComputing.leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
+            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
             x_new = nla(esn.nla_type, state)
             out = (W_out*x_new)
             output[:, i] = out
