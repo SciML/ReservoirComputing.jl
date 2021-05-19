@@ -235,7 +235,7 @@ Return the prediction for the training data using the trained output layer. The 
 function ESNfitted(esn::AbstractLeakyESN, W_out::Matrix; autonomous=false)
     train_len = size(esn.train_data, 2)
     output = zeros(Float64, esn.in_size, train_len)
-    x = zeros(esn.res_size)
+    x = zeros(size(esn.states, 1))
     
     if autonomous
         out = esn.train_data[:,1]
@@ -255,7 +255,7 @@ function _fitted!(output, esn, state, train_len, W_out, vector::Vector)
         end
     elseif esn.extended_states == true
         for i=1:train_len
-            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector)
+            state = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state[1:esn.res_size], vector), vector)
             x_new = nla(esn.nla_type, state)
             vector = (W_out*x_new)
             output[:, i] = vector
@@ -274,7 +274,7 @@ function _fitted!(output, esn, state, train_len, W_out, vector::Matrix)
         end
     elseif esn.extended_states == true
         for i=1:train_len
-            state = leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state, vector[:,i])
+            state = vcat(leaky_fixed_rnn(esn.activation, esn.alpha, esn.W, esn.W_in, state[1:esn.res_size], vector[:,i]), vector[:,i])
             x_new = nla(esn.nla_type, state)
             out = (W_out*x_new)
             output[:, i] = out
