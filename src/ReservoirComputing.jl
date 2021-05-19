@@ -28,7 +28,7 @@ include("esn_reservoirs.jl")
 export init_reservoir_givendeg, init_reservoir_givensp, pseudoSVD, DLR, DLRB, SCR, CRJ
 
 include("echostatenetwork.jl")
-export ESN, ESNpredict, ESNpredict_h_steps
+export ESN, ESNpredict, ESNpredict_h_steps, ESNfitted
 
 include("dafesn.jl")
 export dafESN, dafESNpredict, dafESNpredict_h_steps

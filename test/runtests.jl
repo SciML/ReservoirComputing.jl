@@ -17,3 +17,4 @@ using SafeTestsets
 @time @safetestset "reca gol predict" begin include("training/test_recagol.jl") end
 @time @safetestset "RMM constructors" begin include("constructors/test_rmm_constructors.jl") end
 @time @safetestset "GRUESN constructors" begin include("constructors/test_gruesn_constructors.jl") end
+@time @safetestset "ESN fitted" begin include("training/test_esnfitted.jl") end
