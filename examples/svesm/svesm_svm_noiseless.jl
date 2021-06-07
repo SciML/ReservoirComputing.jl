@@ -17,7 +17,7 @@ end
 
 function data_prep(data, shift, train_len, test_len, h)
     
-    new_d = Matrix(embed(Dataset(data), 4, 6))'
+    new_d = Matrix(embed(data, 4, 6))'
     y_target = data[h:end]
     train_in, train_out = new_d[:, shift:shift+train_len-1], y_target[shift:shift+train_len-1]
     test_in, test_out = new_d[:, shift+train_len:shift+train_len+test_len-1], y_target[shift+train_len:shift+train_len+test_len-1]
@@ -39,8 +39,7 @@ end
 
 prob = DDEProblem(f_mackey_glass, h_mackey_glass, (0.0, 700.0); constant_lags = [17])
 sol = solve(prob, RK4(), adaptive=false,dt=0.1)
-v = sol.u
-data = Matrix(hcat(v...)')
+data = sol.u
 
 #data parameters
 const shift = 200
@@ -67,10 +66,10 @@ println("Training and testing on noiseless data...")
 #create echo state network  
 W = init_reservoir_givensp(approx_res_size, radius, sparsity)
 W_in = init_dense_input_layer(approx_res_size, size(train_in, 1), sigma)
-esn = ESN(W, train_in, W_in, activation, alpha, nla_type, extended_states)
+esn = ESN(W, train_in, W_in, activation=activation, alpha=alpha, nla_type=nla_type, extended_states=extended_states)
 
 #train and predict using svesm
-m = SVESMtrain(EpsilonSVR(kernel = Kernel.Linear), esn, train_out)
+m = SVESMtrain(EpsilonSVR(kernel = Kernel.Linear), esn; y_target=train_out')
 output = SVESM_direct_predict(esn, test_in, m)
 #computing nrmse normalized on the variance of the original time series
 sig = var(data)
@@ -80,10 +79,10 @@ svesm_nn = plot!(test_out, label="actual")
 savefig(svesm_nn, "svesm_noiseless_comparison")
 
 #svm training
-m1 = fit!(EpsilonSVR(kernel = Kernel.Polynomial), train_in', train_out)
+m1 = fit!(EpsilonSVR(kernel = Kernel.Polynomial), train_in', train_out[:])
 t1 = predict(m1, test_in')
 
-m2 = fit!(EpsilonSVR(kernel = Kernel.RadialBasis), train_in', train_out)
+m2 = fit!(EpsilonSVR(kernel = Kernel.RadialBasis), train_in', train_out[:])
 t2 = predict(m2, test_in')
 
 println("SVM Poly kernel nmrse for the noiseless test: ", nrmse(test_out, t1, sig))
