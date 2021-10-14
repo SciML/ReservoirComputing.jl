@@ -1,12 +1,10 @@
  #given degree of connections between neurons
  """
-     init_reservoir_givendeg(res_size::Int, radius::Float64, degree::Int)
+     RandReservoir(res_size; radius, degree::Int)
 
 Return a reservoir matrix scaled by the radius value and with a given degree of connection.
  """
- function init_reservoir_givendeg(res_size::Int,
-        radius::Float64,
-        degree::Int)
+ function RandReservoir(res_size; radius, degree::Int)
 
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
@@ -14,25 +12,23 @@ Return a reservoir matrix scaled by the radius value and with a given degree of 
     replace!(W, -1.0=>0.0)
     rho_w = maximum(abs.(eigvals(W)))
     W .*= radius/rho_w
-    return W
+    W
 end
 
 #given sparsity of connection between neurons
  """
-     init_reservoir_givensp(res_size::Int, radius::Float64, sparsity::Float64)
+     RandReservoir(res_size; radius, sparsity::Float64)
 
 Return a reservoir matrix scaled by the radius value and with a given sparsity.
  """
-function init_reservoir_givensp(res_size::Int,
-        radius::Float64,
-        sparsity::Float64)
+function RandReservoir(res_size; radius, sparsity::Float64)
 
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
     W = 2.0 .*(W.-0.5)
     replace!(W, -1.0=>0.0)
     rho_w = maximum(abs.(eigvals(W)))
     W .*= radius/rho_w
-    return W
+    W
 end
 
 #SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
@@ -44,26 +40,19 @@ Return a reservoir matrix created using SVD as described in [1].
 
 [1] Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction." Neurocomputing 290 (2018): 148-160.
 """
-function pseudoSVD(dim::Int,
-        max_value::Float64,
-        sparsity::Float64;
-        sorted::Bool = true,
-        reverse_sort::Bool = false)
+function PseudoSVD(res_size; max_value, sparsity, sorted = true, reverse_sort = false)
 
-    S = create_diag(dim, max_value, sorted = sorted, reverse_sort = reverse_sort)
-    sp = get_sparsity(S, dim)
+    S = create_diag(res_size, max_value, sorted = sorted, reverse_sort = reverse_sort)
+    sp = get_sparsity(S, res_size)
 
     while sp <= sparsity
-        S *= create_qmatrix(dim, rand(1:dim), rand(1:dim), rand(Float64)*2-1)
-        sp = get_sparsity(S, dim)
+        S *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size), rand(Float64)*2-1)
+        sp = get_sparsity(S, res_size)
     end
-    return S
+    S
 end
 
-function create_diag(dim::Int,
-        max_value::Float64;
-        sorted::Bool = true,
-        reverse_sort::Bool = false)
+function create_diag(dim, max_value; sorted = true, reverse_sort = false)
 
     diagonal_matrix = zeros(Float64, dim, dim)
     if sorted == true
@@ -81,13 +70,10 @@ function create_diag(dim::Int,
     for i=1:dim
         diagonal_matrix[i, i] = diagonal_values[i]
     end
-    return diagonal_matrix
+    diagonal_matrix
 end
 
-function create_qmatrix(dim::Int,
-        coord_i::Int,
-        coord_j::Int,
-        theta::Float64)
+function create_qmatrix(dim, coord_i, coord_j, theta)
 
     qmatrix = zeros(Float64, dim, dim)
     for i = 1:dim
@@ -98,11 +84,11 @@ function create_qmatrix(dim::Int,
     qmatrix[coord_i, coord_j] = -sin(theta)
     qmatrix[coord_j, coord_i] = sin(theta)
 
-    return qmatrix
+    qmatrix
 end
 
-function get_sparsity(M::AbstractArray{Float64}, dim::Int)
-    return size(M[M .!= 0], 1)/(dim*dim-size(M[M .!= 0], 1)) #nonzero/zero elements
+function get_sparsity(M, dim)
+    size(M[M .!= 0], 1)/(dim*dim-size(M[M .!= 0], 1)) #nonzero/zero elements
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -114,14 +100,13 @@ Return a Delay Line Reservoir matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DLR(res_size::Int,
-        weight::Float64)
+function DLR(res_size; weight=0.1)
 
     W = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
         W[i+1,i] = weight
     end
-    return W
+    W
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -134,16 +119,14 @@ Return a Delay Line Reservoir matrix with Backward connections as described in [
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DLRB(res_size::Int,
-        weight::Float64,
-        fb_weight::Float64)
+function DLRB(res_size; weight=0.1, fb_weight=0.2)
 
     W = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
         W[i+1,i] = weight
         W[i,i+1] = fb_weight
     end
-    return W
+    W
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -155,15 +138,14 @@ Return a Simple Cycle Reservoir Reservoir matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function SCR(res_size::Int,
-        weight::Float64)
+function SCR(res_size; weight=0.1)
 
     W = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
         W[i+1,i] = weight
     end
     W[1, res_size] = weight
-    return W
+    W
 end
 
 #from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
@@ -176,10 +158,7 @@ Return a Cycle Reservoir with Jumps matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
-function CRJ(res_size::Int,
-        cycle_weight::Float64,
-        jump_weight::Float64,
-        jump_size::Int)
+function CRJ(res_size; cycle_weight=0.1, jump_weight=0.1, jump_size=2)
 
     W = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
@@ -197,5 +176,5 @@ function CRJ(res_size::Int,
         W[i, tmp] = jump_weight
         W[tmp, i] = jump_weight
     end
-    return W
+    W
 end

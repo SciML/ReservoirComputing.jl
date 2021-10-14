@@ -7,16 +7,14 @@ Return a weighted input layer matrix, with random non-zero elements drawn from \
 
 [1] Lu, Zhixin, et al. "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems." Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
-function init_input_layer(res_size::Int,
-        in_size::Int,
-        sigma::Float64)
+function WeightedInput(res_size, in_size; sigma=0.1)
 
     W_in = zeros(Float64, res_size, in_size)
     q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor
     for i=1:in_size
         W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
     end
-    return W_in
+    W_in
 
 end
 
@@ -25,14 +23,12 @@ end
 
 Return a fully connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$.
 """
-function init_dense_input_layer(res_size::Int,
-        in_size::Int,
-        sigma::Float64)
+function DenseInput(res_size, in_size; sigma=0.1)
 
     W_in = rand(Float64, res_size, in_size)
     W_in = 2.0 .*(W_in.-0.5)
     W_in = sigma .*W_in
-    return W_in
+    W_in
 end
 
 """
@@ -40,16 +36,13 @@ end
 
 Return a sparsely connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$ and given sparsity.
 """
-function init_sparse_input_layer(res_size::Int,
-        in_size::Int,
-        sigma::Float64,
-        sparsity::Float64)
+function SparseInput(res_size, in_size,; sigma0.1, sparsity=0.1)
 
     W_in = Matrix(sprand(Float64, res_size, in_size, sparsity))
     W_in = 2.0 .*(W_in.-0.5)
     replace!(W_in, -1.0=>0.0)
     W_in = sigma .*W_in
-    return W_in
+    W_in
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -60,9 +53,7 @@ Return a fully connected input layer matrix with the same weights and sign drawn
 
 [1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function min_complex_input(res_size::Int,
-        in_size::Int,
-        weight::Float64)
+function MinimumInput(res_size, in_sizel; weight=0.1)
 
     W_in = Array{Float64}(undef, res_size, in_size)
     for i=1:res_size
@@ -88,11 +79,7 @@ Return a fully connected input layer matrix with the same weights and sign decid
 [1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 [2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
-function irrational_sign_input(res_size::Int,
-        in_size::Int,
-        weight::Float64;
-        start::Int = 1,
-        irrational::Irrational = pi)
+function irrational_sign_input(res_size, in_size; weight=0.1; start = 1, irrational::Irrational = pi) #to fix
 
     setprecision(BigFloat, Int(ceil(log2(10)*(res_size*in_size+start+1))))
     ir_string = string(BigFloat(irrational)) |> collect
@@ -127,11 +114,7 @@ of reservoir nodes are connected exclusively to the raw inputs, and the rest to 
 
 [1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018)
 """
-function physics_informed_input(res_size::Int,
-        in_size::Int,
-        sigma::Float64,
-        γ::Float64,
-        model_in_size::Int)
+function PhyInfInput(res_size, in_size; sigma=0.1, γ=0.1, model_in_size=in_size) #to check
 
     state_size = in_size - model_in_size
     if state_size <= 0
