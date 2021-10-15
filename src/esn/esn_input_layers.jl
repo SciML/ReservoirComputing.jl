@@ -1,3 +1,4 @@
+abstract type AbstractInputLayer end
 
 
 """
@@ -7,14 +8,23 @@ Return a weighted input layer matrix, with random non-zero elements drawn from \
 
 [1] Lu, Zhixin, et al. "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems." Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
-function WeightedInput(res_size, in_size; sigma=0.1)
 
-    W_in = zeros(Float64, res_size, in_size)
+struct WeightedInput{T} <: AbstractInputLayer
+    scaling::T
+end
+
+function WeightedInput(; scaling=0.1)
+    WeightedInput(scaling)
+end
+
+function create_input_layer(res_size, in_size, input_layer::WeightedInput)
+
+    input_matrix = zeros(Float64, res_size, in_size)
     q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor
     for i=1:in_size
-        W_in[(i-1)*q+1 : (i)*q, i] = (2*sigma).*(rand(Float64, 1, q).-0.5)
+        input_matrix[(i-1)*q+1 : (i)*q, i] = (2*input_layer.scaling).*(rand(1, q).-0.5)
     end
-    W_in
+    input_matrix
 
 end
 
@@ -23,12 +33,21 @@ end
 
 Return a fully connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$.
 """
-function DenseInput(res_size, in_size; sigma=0.1)
 
-    W_in = rand(Float64, res_size, in_size)
-    W_in = 2.0 .*(W_in.-0.5)
-    W_in = sigma .*W_in
-    W_in
+struct DenseInput{T} <: AbstractInputLayer
+    scaling::T
+end
+
+function DenseInput(; scaling=0.1)
+    DenseInput(scaling)
+end
+
+function create_input_layer(res_size, in_size, input_layer::DenseInput)
+
+    input_matrix = rand(Float64, res_size, in_size)
+    input_matrix = 2.0 .*(input_matrix.-0.5)
+    input_matrix = input_layer.scaling .*input_matrix
+    input_matrix
 end
 
 """
@@ -36,13 +55,23 @@ end
 
 Return a sparsely connected input layer matrix, with random non-zero elements drawn from \$ [-sigma, sigma] \$ and given sparsity.
 """
-function SparseInput(res_size, in_size,; sigma0.1, sparsity=0.1)
 
-    W_in = Matrix(sprand(Float64, res_size, in_size, sparsity))
-    W_in = 2.0 .*(W_in.-0.5)
-    replace!(W_in, -1.0=>0.0)
-    W_in = sigma .*W_in
-    W_in
+struct SparseInput{T} <: AbstractInputLayer
+    scaling::T
+    sparsity::T
+end
+
+function SparseInput(; scaling=0.1, sparsity=0.1)
+    SparseInput(scaling, sparsity)
+end
+
+function SparseInput(res_size, in_size, input_layer::SparseInput)
+
+    input_matrix = Matrix(sprand(Float64, res_size, in_size, input_layer.sparsity))
+    input_matrix = 2.0 .*(input_matrix.-0.5)
+    replace!(input_matrix, -1.0=>0.0)
+    input_matrix = input_layer.scaling .*input_matrix
+    input_matrix
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -53,24 +82,33 @@ Return a fully connected input layer matrix with the same weights and sign drawn
 
 [1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function MinimumInput(res_size, in_sizel; weight=0.1)
 
-    W_in = Array{Float64}(undef, res_size, in_size)
+struct MinimumInput{T} <: AbstractInputLayer
+    weight::T
+end
+
+function MinimumInput(; weight=0.1)
+    MinimumInput(weight)
+end
+
+function MinimumInput(res_size, in_size, input_layer::MinimumInput)
+
+    input_matrix = Array{Float64}(undef, res_size, in_size)
     for i=1:res_size
         for j=1:in_size
             if rand(Bernoulli()) == true
-                W_in[i, j] = weight
+                input_matrix[i, j] = input_layer.weight
             else
-                W_in[i, j] = -weight
+                input_matrix[i, j] = -input_layer.weight
             end
         end
     end
-    return W_in
+    input_matrix
 end
 
 #from "minimum complexity echo state network" Rodan
 #and "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
-
+#=
 """
     irrational_sign_input(res_size::Int, in_size::Int , weight::Float64 [, start::Int, irrational::Irrational])
 
@@ -105,6 +143,7 @@ function irrational_sign_input(res_size, in_size; weight=0.1; start = 1, irratio
     end
     return W_in
 end
+=#
 
 """
 physics_informed_input(res_size::Int, in_size::Int, sigma::Float64, γ::Float64)

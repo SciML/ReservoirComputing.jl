@@ -1,6 +1,6 @@
 abstract type AbstractLeakyESN <: AbstractEchoStateNetwork end
 
-struct ESN{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractLeakyESN
+struct ESN{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractLeakyESN #fix struct
     res_size::I
     in_size::I
     out_size::I
@@ -8,90 +8,10 @@ struct ESN{T, S<:AbstractArray{T}, I, B, F, N} <: AbstractLeakyESN
     alpha::T
     nla_type::N
     activation::F
-    W::S
-    W_in::S
+    reservoir_init::S
+    input_layer_init::S
     states::S
     extended_states::B
-end
-
-function ESN(approx_res_size::Int,
-        train_data::AbstractArray{T},
-        degree::Int,
-        radius::T;
-        activation::Any = tanh,
-        sigma::T = 0.1,
-        alpha::T = 1.0,
-        nla_type::NonLinearAlgorithm = NLADefault(),
-        extended_states::Bool = false) where T<:AbstractFloat
-
-    in_size = size(train_data, 1)
-    out_size = size(train_data, 1)
-    res_size = Int(floor(approx_res_size/in_size)*in_size)
-    W = init_reservoir_givendeg(res_size, radius, degree)
-    W_in = init_input_layer(res_size, in_size, sigma)
-    states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
-
-    return ESN{T, typeof(train_data),
-        typeof(res_size),
-        typeof(extended_states),
-        typeof(activation),
-        typeof(nla_type)}(res_size, in_size, out_size, train_data,
-    alpha, nla_type, activation, W, W_in, states, extended_states)
-end
-
-#reservoir matrix W given by the user
-function ESN(W::AbstractArray{T},
-        train_data::Array{T};
-        activation::Any = tanh,
-        sigma::T = 0.1,
-        alpha::T = 1.0,
-        nla_type::NonLinearAlgorithm = NLADefault(),
-        extended_states::Bool = false) where T<:AbstractFloat
-
-    in_size = size(train_data, 1)
-    out_size = size(train_data, 1)
-    res_size = size(W, 1)
-    W_in = init_input_layer(res_size, in_size, sigma)
-    states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
-
-    return ESN{T, typeof(train_data),
-        typeof(res_size),
-        typeof(extended_states),
-        typeof(activation),
-        typeof(nla_type)}(res_size, in_size, out_size, train_data,
-    alpha, nla_type, activation, W, W_in, states, extended_states)
-end
-
-#input layer W_in given by the user
-function ESN(approx_res_size::Int,
-        train_data::AbstractArray{T},
-        degree::Int,
-        radius::T,
-        W_in::AbstractArray{T};
-        activation::Any = tanh,
-        alpha::T = 1.0,
-        nla_type::NonLinearAlgorithm = NLADefault(),
-        extended_states::Bool = false) where T<:AbstractFloat
-
-    in_size = size(train_data, 1)
-    out_size = size(train_data, 1) #needs to be different?
-    res_size = Int(floor(approx_res_size/in_size)*in_size)
-    W = init_reservoir_givendeg(res_size, radius, degree)
-
-    if size(W_in, 1) != res_size
-        throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
-    elseif size(W_in, 2) != in_size
-        throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
-    end
-
-    states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
-
-    return ESN{T, typeof(train_data),
-        typeof(res_size),
-        typeof(extended_states),
-        typeof(activation),
-        typeof(nla_type)}(res_size, in_size, out_size, train_data,
-    alpha, nla_type, activation, W, W_in, states, extended_states)
 end
 
 #reservoir matrix W and input layer W_in given by the user
@@ -101,23 +21,17 @@ end
 
 Build an ESN struct given the input and reservoir matrices.
 """
-function ESN(W::AbstractArray{T},
-        train_data::AbstractArray{T},
-        W_in::AbstractArray{T};
-        activation::Any = tanh,
-        alpha::T = 1.0,
-        nla_type::NonLinearAlgorithm = NLADefault(),
-        extended_states::Bool = false) where T<:AbstractFloat
+function ESN(res_size, train_data;
+             activation = tanh,
+             reservoir_init = RandReservoir
+             input_layer_init = WeightedInput
+             alpha = 1.0,
+             nla_type = NLADefault(),
+             extended_states = false)
 
     in_size = size(train_data, 1)
-    out_size = size(train_data, 1)
-    res_size = size(W, 1)
-
-    if size(W_in, 1) != res_size
-        throw(DimensionMismatch("size(W_in, 1) must be equal to size(W, 1)"))
-    elseif size(W_in, 2) != in_size
-        throw(DimensionMismatch("size(W_in, 2) must be equal to in_size"))
-    end
+    reservoir = reservoir_init(res_size; kwargs...)#fix kwargs
+    input_layer = input_layer_init(res_size, in_size; kwargs...)#fix kwargs
 
     states = states_matrix(W, W_in, train_data, alpha, activation, extended_states)
 

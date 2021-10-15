@@ -1,11 +1,25 @@
- #given degree of connections between neurons
- """
-     RandReservoir(res_size; radius, degree::Int)
+abstract type AbstractReservoir end
 
-Return a reservoir matrix scaled by the radius value and with a given degree of connection.
- """
- function RandReservoir(res_size; radius, degree::Int)
+struct RandSparseReservoir{T,C} <: AbstractReservoir
+    radius::T
+    sparsity::C
+end
 
+function RandSparseReservoir(;radius=1.0, sparsity::Float64=0.1)
+    RandSparseReservoir(radius, sparsity)
+end
+
+function create_reservoir(res_size, reservoir::RandSparseReservoir)
+    reservoir_matrix = Matrix(sprand(Float64, res_size, res_size, reservoir.sparsity))
+    reservoir_matrix = 2.0 .*(reservoir_matrix.-0.5)
+    replace!(reservoir_matrix, -1.0=>0.0)
+    rho_w = maximum(abs.(eigvals(W)))
+    reservoir_matrix .*= reservoir.radius/rho_w
+    reservoir_matrix
+end
+
+#=
+function create_reservoir(res_size, reservoir::RandReservoir)
     sparsity = degree/res_size
     W = Matrix(sprand(Float64, res_size, res_size, sparsity))
     W = 2.0 .*(W.-0.5)
@@ -14,22 +28,8 @@ Return a reservoir matrix scaled by the radius value and with a given degree of 
     W .*= radius/rho_w
     W
 end
+=#    
 
-#given sparsity of connection between neurons
- """
-     RandReservoir(res_size; radius, sparsity::Float64)
-
-Return a reservoir matrix scaled by the radius value and with a given sparsity.
- """
-function RandReservoir(res_size; radius, sparsity::Float64)
-
-    W = Matrix(sprand(Float64, res_size, res_size, sparsity))
-    W = 2.0 .*(W.-0.5)
-    replace!(W, -1.0=>0.0)
-    rho_w = maximum(abs.(eigvals(W)))
-    W .*= radius/rho_w
-    W
-end
 
 #SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
 
@@ -40,16 +40,27 @@ Return a reservoir matrix created using SVD as described in [1].
 
 [1] Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction." Neurocomputing 290 (2018): 148-160.
 """
-function PseudoSVD(res_size; max_value, sparsity, sorted = true, reverse_sort = false)
 
-    S = create_diag(res_size, max_value, sorted = sorted, reverse_sort = reverse_sort)
-    sp = get_sparsity(S, res_size)
+struct PseudoSVDReservoir{T,C} <: AbstractReservoir
+    max_value::T
+    sparsity::C
+    sorted::Bool
+    reverse_sort::Bool
+end
 
-    while sp <= sparsity
-        S *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size), rand(Float64)*2-1)
-        sp = get_sparsity(S, res_size)
+function PseudoSVDReservoir(;max_value=1.0, sparsity=0.1, sorted=true, reverse_sort=false)
+    PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
+end
+
+function create_reservoir(res_size, reservoir::PseudoSVDReservoir)
+    reservoir_matrix = create_diag(res_size, reservoir.max_value, sorted = reservoir.sorted, reverse_sort = reservoir.reverse_sort)
+    tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
+
+    while tmp_sparsity <= sparsity
+        reservoir_matrix *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size), rand()*2-1)
+        tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
     end
-    S
+    reservoir_matrix
 end
 
 function create_diag(dim, max_value; sorted = true, reverse_sort = false)
@@ -100,13 +111,22 @@ Return a Delay Line Reservoir matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DLR(res_size; weight=0.1)
 
-    W = zeros(Float64, res_size, res_size)
+struct DelayLineReservoir{T} <: AbstractReservoir
+    weight::T
+end
+
+function DelayLineReservoir(;weight=0.1)
+    DelayLineReservoir(weight)
+end
+
+function create_reservoir(res_size, reservoir::DelayLineReservoir)
+
+    reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
-        W[i+1,i] = weight
+        reservoir_matrix[i+1,i] = reservoir.weight
     end
-    W
+    reservoir_matrix
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -119,14 +139,24 @@ Return a Delay Line Reservoir matrix with Backward connections as described in [
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DLRB(res_size; weight=0.1, fb_weight=0.2)
 
-    W = zeros(Float64, res_size, res_size)
+struct DelayLineBackwardReservoir{T} <: AbstractReservoir
+    weight::T
+    fb_weight::T
+end
+
+function DelayLineBackwardReservoir(;weight=0.1, fb_weight=0.2)
+    DelayLineBackwardReservoir(weight, fb_weight)
+end
+
+function create_reservoir(res_size, reservoir::DelayLineBackwardReservoir)
+
+    reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
-        W[i+1,i] = weight
-        W[i,i+1] = fb_weight
+        reservoir_matrix[i+1,i] = reservoir.weight
+        reservoir_matrix[i,i+1] = reservoir.fb_weight
     end
-    W
+    reservoir_matrix
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -138,14 +168,23 @@ Return a Simple Cycle Reservoir Reservoir matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function SCR(res_size; weight=0.1)
 
-    W = zeros(Float64, res_size, res_size)
+struct SimpleCycleReservoir{T} <: AbstractReservoir
+    weight::T
+end
+
+function SimpleCycleReservoir(;weight=0.1)
+    SimpleCycleReservoir(weight)
+end
+
+function create_reservoir(res_size, reservoir::SimpleCycleReservoir)
+
+    reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
-        W[i+1,i] = weight
+        reservoir_matrix[i+1,i] = reservoir.weight
     end
-    W[1, res_size] = weight
-    W
+    reservoir_matrix[1, res_size] = reservoir.weight
+    reservoir_matrix
 end
 
 #from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
@@ -158,23 +197,34 @@ Return a Cycle Reservoir with Jumps matrix as described in [2].
 
 [2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
-function CRJ(res_size; cycle_weight=0.1, jump_weight=0.1, jump_size=2)
 
-    W = zeros(Float64, res_size, res_size)
+struct CycleJumpsReservoir{T,C} <: AbstractReservoir
+    cycle_weight::T
+    jump_weight::T
+    jump_size::C
+end
+
+function CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1,jump_size=3)
+    CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)
+end
+
+function create_reservoir(res_size, reservoir::CycleJumpsReservoir)
+
+    reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
-        W[i+1,i] = cycle_weight
+        reservoir_matrix[i+1,i] = reservoir.cycle_weight
     end
-    W[1, res_size] = cycle_weight
+    reservoir_matrix[1, res_size] = reservoir.cycle_weight
 
-    for i=1:jump_size:res_size-jump_size
-        tmp = (i+jump_size)%res_size
+    for i=1:reservoir.jump_size:res_size-reservoir.jump_size
+        tmp = (i+reservoir.jump_size)%res_size
 
         if tmp == 0
             tmp = res_size
         end
 
-        W[i, tmp] = jump_weight
-        W[tmp, i] = jump_weight
+        reservoir_matrix[i, tmp] = reservoir.jump_weight
+        reservoir_matrix[tmp, i] = reservoir.jump_weight
     end
-    W
+    reservoir_matrix
 end
