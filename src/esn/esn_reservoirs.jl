@@ -1,4 +1,3 @@
-abstract type AbstractReservoir end
 
 struct RandSparseReservoir{T,C} <: AbstractReservoir
     radius::T

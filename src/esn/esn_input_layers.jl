@@ -1,4 +1,3 @@
-abstract type AbstractInputLayer end
 
 
 """
@@ -65,7 +64,7 @@ function SparseInput(; scaling=0.1, sparsity=0.1)
     SparseInput(scaling, sparsity)
 end
 
-function SparseInput(res_size, in_size, input_layer::SparseInput)
+function create_input_layer(res_size, in_size, input_layer::SparseInput)
 
     input_matrix = Matrix(sprand(Float64, res_size, in_size, input_layer.sparsity))
     input_matrix = 2.0 .*(input_matrix.-0.5)
@@ -91,7 +90,7 @@ function MinimumInput(; weight=0.1)
     MinimumInput(weight)
 end
 
-function MinimumInput(res_size, in_size, input_layer::MinimumInput)
+function create_input_layer(res_size, in_size, input_layer::MinimumInput)
 
     input_matrix = Array{Float64}(undef, res_size, in_size)
     for i=1:res_size
@@ -143,7 +142,7 @@ function irrational_sign_input(res_size, in_size; weight=0.1; start = 1, irratio
     end
     return W_in
 end
-=#
+
 
 """
 physics_informed_input(res_size::Int, in_size::Int, sigma::Float64, γ::Float64)
@@ -182,3 +181,4 @@ function PhyInfInput(res_size, in_size; sigma=0.1, γ=0.1, model_in_size=in_size
     end
     return W_in
 end
+=#
