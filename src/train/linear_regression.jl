@@ -9,12 +9,13 @@ struct StandardRidge{T} <: LinearModel
     regularization_coeff::T
 end
 
-function StandardRidge(reg_coeff; regularization_coeff=reg_coeff)
+function StandardRidge(;regularization_coeff=reg_coeff)
     StandardRidge(regularization_coeff)
 end
 
-function train!(esn, sr::StandardRidge; train_data = esn.train_data)
-    esn.output_layer = (train_data*esn.states')*inv(add_reg(esn.states*esn.states', sr.regularization_coeff))    
+function train!(esn::AbstractReservoirComputer, sr::StandardRidge; train_data = esn.train_data)
+    states_new = nla(esn.nla_type, esn.states)
+    esn.output_layer = (train_data*states_new')*inv(add_reg(states_new*states_new', sr.regularization_coeff))    
 end
 
 function add_reg(X, beta)
@@ -46,12 +47,13 @@ function Ridge(lambda_arg;
     Ridge(lambda, solver, ridge_kwargs)
 end
 
-function train!(esn, ridge::Ridge; train_data = esn.train_data)
+function train!(esn::AbstractReservoirComputer, ridge::Ridge; train_data = esn.train_data)
 
-    esn.output_layer = zeros(size(train_data, 1), size(esn.states, 1))
+    states_new = nla(esn.nla_type, esn.states)
+    esn.output_layer = zeros(size(train_data, 1), size(states_new, 1))
     for i=1:size(train_data, 1)
         r = RidgeRegression(ridge.lambda; ridge.ridge_kwargs...)
-        esn.output_layer[i,:] = MLJLinearModels.fit(r, esn.states', train_data[i,:], solver = ridge.solver)
+        esn.output_layer[i,:] = MLJLinearModels.fit(r, states_new', train_data[i,:], solver = ridge.solver)
     end
 end
 
@@ -74,12 +76,13 @@ function Lasso(lambda_arg;
     Lasso(lambda, solver, lasso_kwargs)
 end
 
-function train!(esn, lasso::Lasso; train_data = esn.train_data)
+function train!(esn::AbstractReservoirComputer, lasso::Lasso; train_data = esn.train_data)
 
-    esn.output_layer = zeros(size(train_data, 1), size(esn.states, 1))
+    states_new = nla(esn.nla_type, esn.states)
+    esn.output_layer = zeros(size(train_data, 1), size(states_new, 1))
     for i=1:size(train_data, 1)
         l = LassoRegression(lasso.lambda; lasso.lasso_kwargs...)
-        esn.output_layer[i,:] = MLJLinearModels.fit(l, esn.states', train_data[i,:], solver = lasso.solver)
+        esn.output_layer[i,:] = MLJLinearModels.fit(l, states_new', train_data[i,:], solver = lasso.solver)
     end
 end
 
@@ -104,12 +107,13 @@ function ElastNet(lambda_arg, gamma_arg;
     ElastNet(lambda, gamma, solver, elastnet_kwargs)
 end
 
-function train!(esn, elastnet::ElastNet; train_data = esn.train_data)
+function train!(esn::AbstractReservoirComputer, elastnet::ElastNet; train_data = esn.train_data)
 
-    esn.output_layer = zeros(size(train_data, 1), size(esn.states, 1))
+    states_new = nla(esn.nla_type, esn.states)
+    esn.output_layer = zeros(size(train_data, 1), size(states_new, 1))
     for i=1:size(train_data, 1)
         en = ElasticNetRegression(elastnet.lambda,  elastnet.gamma; elastnet.elastnet_kwargs...)
-        esn.output_layer[i,:] = MLJLinearModels.fit(en, esn.states', train_data[i,:], solver = elastnet.solver)
+        esn.output_layer[i,:] = MLJLinearModels.fit(en, states_new', train_data[i,:], solver = elastnet.solver)
     end
 end
 
@@ -127,19 +131,22 @@ struct RobustHuber{T,I} <: LinearModel
     huber_kwargs::I
 end
 
-RobustHuber(delta_arg, lambda_arg, gamma_arg;
+function RobustHuber(delta_arg, lambda_arg, gamma_arg;
             delta=delta_arg,
             lambda=lambda_arg,
             gamma=gamma_arg,
-            solver=LBFGS(),
+            solver=MLJLinearModels.LBFGS(),
             huber_kwargs=(fit_intercept = false))
+    RobustHuber(delta, lambda, gamma, solver, huber_kwargs)
+end
 
-function _huber(esn::AbstractReservoirComputer, huber::RobustHuber; train_data::AbstractArray{Float64} = esn.train_data)
+function train!(esn::AbstractReservoirComputer, huber::RobustHuber; train_data::AbstractArray{Float64} = esn.train_data)
 
-    esn.output_layer = zeros(Float64, size(train_data, 1), size(esn.states, 1))
+    states_new = nla(esn.nla_type, esn.states)
+    esn.output_layer = zeros(Float64, size(train_data, 1), size(states_new, 1))
     for i=1:size(train_data, 1)
         h = HuberRegression(huber.delta, huber.lambda, huber.gamma; huber.huber_kwargs...)
-        esn.output_layer[i,:] = MLJLinearModels.fit(h, esn.states', train_data[i,:], solver = huber.solver)
+        esn.output_layer[i,:] = MLJLinearModels.fit(h, states_new', train_data[i,:], solver = huber.solver)
     end
 end
 

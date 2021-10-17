@@ -12,7 +12,7 @@ function create_reservoir(res_size, reservoir::RandSparseReservoir)
     reservoir_matrix = Matrix(sprand(Float64, res_size, res_size, reservoir.sparsity))
     reservoir_matrix = 2.0 .*(reservoir_matrix.-0.5)
     replace!(reservoir_matrix, -1.0=>0.0)
-    rho_w = maximum(abs.(eigvals(W)))
+    rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= reservoir.radius/rho_w
     reservoir_matrix
 end

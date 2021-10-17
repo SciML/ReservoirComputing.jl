@@ -28,13 +28,13 @@ export nla, NLADefault, NLAT1, NLAT2, NLAT3
 include("esn/esn_input_layers.jl")
 export create_input_layer, WeightedInput, DenseInput, SparseInput, MinimumInput
 include("esn/esn_reservoir_drivers.jl")
-export leaky_fixed_rnn, create_states, RNN
+export next_state, create_states, RNN
 include("esn/esn_reservoirs.jl")
 export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
 DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
 
-include("train/liner_regression.jl")
-export train, Ridge, Lasso, ElastNet, RobustHuber
+include("train/linear_regression.jl")
+export train!, StandardRidge, Ridge, Lasso, ElastNet, RobustHuber
 
 
 
