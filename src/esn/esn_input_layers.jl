@@ -16,8 +16,9 @@ function WeightedInput(; scaling=0.1)
     WeightedInput(scaling)
 end
 
-function create_input_layer(res_size, in_size, input_layer::WeightedInput)
+function create_input_layer(approx_res_size, in_size, input_layer::WeightedInput)
 
+    res_size = Int(floor(approx_res_size/in_size)*in_size)
     input_matrix = zeros(Float64, res_size, in_size)
     q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor
     for i=1:in_size
@@ -61,6 +62,10 @@ struct SparseInput{T} <: AbstractInputLayer
 end
 
 function SparseInput(; scaling=0.1, sparsity=0.1)
+    SparseInput(scaling, sparsity)
+end
+
+function SparseInput(scaling_arg; scaling=scaling_arg, sparsity=0.1)
     SparseInput(scaling, sparsity)
 end
 

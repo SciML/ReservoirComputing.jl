@@ -51,11 +51,15 @@ function PseudoSVDReservoir(;max_value=1.0, sparsity=0.1, sorted=true, reverse_s
     PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
 end
 
+function PseudoSVDReservoir(max_value, sparsity; sorted=true, reverse_sort=false)
+    PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
+end
+
 function create_reservoir(res_size, reservoir::PseudoSVDReservoir)
     reservoir_matrix = create_diag(res_size, reservoir.max_value, sorted = reservoir.sorted, reverse_sort = reservoir.reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
 
-    while tmp_sparsity <= sparsity
+    while tmp_sparsity <= reservoir.sparsity
         reservoir_matrix *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size), rand()*2-1)
         tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
     end
@@ -203,7 +207,7 @@ struct CycleJumpsReservoir{T,C} <: AbstractReservoir
     jump_size::C
 end
 
-function CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1,jump_size=3)
+function CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1, jump_size=3)
     CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)
 end
 

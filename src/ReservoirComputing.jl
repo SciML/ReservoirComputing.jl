@@ -12,7 +12,7 @@ using Distances
 
 
 abstract type AbstractReservoirComputer end
-abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
+abstract type AbstractPrediction end
 abstract type NonLinearAlgorithm end
 abstract type AbstractInputLayer end
 abstract type AbstractReservoirDriver end
@@ -22,7 +22,7 @@ abstract type LinearModel end
 
 
 include("esn/echostatenetwork.jl")
-export ESN
+export ESN, Autonomous, Direct
 include("esn/nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
 include("esn/esn_input_layers.jl")

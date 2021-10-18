@@ -1,5 +1,5 @@
 
-mutable struct ESN{I,S,N,IL,T,O,R,M,IS,B,OL} <: AbstractEchoStateNetwork
+mutable struct ESN{I,S,N,IL,T,O,R,M,IS,B,OL} <: AbstractReservoirComputer
     res_size::I
     train_data::S
     nla_type::N
@@ -29,12 +29,24 @@ function ESN(res_size, train_data;
     in_size = size(train_data, 1)
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
     input_matrix = create_input_layer(res_size, in_size, input_init)
-    states = create_states(reservoir_matrix, input_matrix, train_data, 
-                           extended_states, reservoir_driver)
+    states = create_states(reservoir_driver, reservoir_matrix, input_matrix, train_data, 
+                           extended_states)
     output_layer = zeros(in_size, res_size)
 
     ESN(res_size, train_data, nla_type, input_init, input_matrix, reservoir_driver, 
         reservoir_init, reservoir_matrix, states, extended_states, output_layer)
+end
+
+struct Autonomous{T} <: AbstractPrediction
+    prediction_len::T
+end
+
+function Autonomous(;prediction_len=100)
+    Autonomous(prediction_len)
+end
+
+struct Direct{T} <: AbstractPrediction
+    prediction_data::T
 end
 
 """
@@ -42,20 +54,20 @@ end
 
 Return the prediction for a given length of the constructed ESN struct.
 """
-function (esn::ESN)(predict_len)
+function (esn::ESN)(aut::Autonomous)
 
-    output = zeros(Float64, size(esn.output_layer, 1), predict_len)
+    output = zeros(Float64, size(esn.output_layer, 1), aut.prediction_len)
     x = esn.states[:, end]
 
     if esn.extended_states == false
-        for i=1:predict_len
+        for i=1:aut.prediction_len
             x_new = nla(esn.nla_type, x)
             out = (esn.output_layer*x_new)
             output[:, i] = out
             x = next_state(esn.reservoir_driver, esn.reservoir_matrix, esn.input_matrix, x, out)
         end
     elseif esn.extended_states == true
-        for i=1:predict_len
+        for i=1:aut.prediction_len
             x_new = nla(esn.nla_type, x)
             out = (esn.output_layer*x_new)
             output[:, i] = out
@@ -63,5 +75,6 @@ function (esn::ESN)(predict_len)
                                 x[1:esn.res_size], out), out)
         end
     end
-    return output
+    output
 end
+
