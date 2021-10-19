@@ -12,27 +12,22 @@ function RNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=le
     RNN(activation_function, leaky_coefficient, scaling_factor)
 end
 
-function create_states(rnn::RNN, reservoir_matrix, input_matrix, train_data, extended_states)
+function create_states(rnn::RNN, train_data, extended_states, reservoir_matrix, input_matrix)
 
     train_len = size(train_data, 2)
     res_size = size(reservoir_matrix, 1)
     in_size = size(train_data, 1)
-    states = zeros(Float64, res_size, train_len+1) 
+    states = zeros(res_size, train_len+1) 
 
     for i=1:train_len-1
-        states[:, i+1] = next_state(rnn::RNN, reservoir_matrix, input_matrix, states[:, i], train_data[:, i])
-
+        states[:, i+1] = next_state(rnn::RNN, states[:, i], train_data[:, i], reservoir_matrix, input_matrix)
     end
 
-    if extended_states == true
-        ext_states = vcat(states, hcat(zeros(Float64, in_size), train_data[:,1:end-1]))
-        return ext_states[:,2:end]
-    else
-        return states[:,2:end]
-    end
+    return extended_states ? vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end] : states[:,2:end]
+
 end
 
-function next_state(rnn::RNN, W, W_in, x, y)
+function next_state(rnn::RNN, x, y, W, W_in)
     rnn_next_state = (1-rnn.leaky_coefficient).*x
     if length(rnn.scaling_factor) > 1
         for i in rnn.scaling_factor
