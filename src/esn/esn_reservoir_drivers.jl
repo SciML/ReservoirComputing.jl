@@ -1,3 +1,15 @@
+function create_states(reservoir_driver::AbstractReservoirDriver, train_data, extended_states, reservoir_matrix, input_matrix)
+
+    train_len = size(train_data, 2)
+    res_size = size(reservoir_matrix, 1)
+    in_size = size(train_data, 1)
+    states = zeros(res_size, train_len+1) 
+
+    for i=1:train_len
+        states[:, i+1] = next_state(reservoir_driver, states[:, i], train_data[:, i], reservoir_matrix, input_matrix)
+    end
+    extended_states ? vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end] : states[:,2:end]
+end
 
 struct RNN{F,T,R} <: AbstractReservoirDriver
     activation_function::F
@@ -10,21 +22,6 @@ function RNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=le
         @assert length(activation_function) == length(scaling_factor)
     end
     RNN(activation_function, leaky_coefficient, scaling_factor)
-end
-
-function create_states(rnn::RNN, train_data, extended_states, reservoir_matrix, input_matrix)
-
-    train_len = size(train_data, 2)
-    res_size = size(reservoir_matrix, 1)
-    in_size = size(train_data, 1)
-    states = zeros(res_size, train_len+1) 
-
-    for i=1:train_len-1
-        states[:, i+1] = next_state(rnn::RNN, states[:, i], train_data[:, i], reservoir_matrix, input_matrix)
-    end
-
-    return extended_states ? vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end] : states[:,2:end]
-
 end
 
 function next_state(rnn::RNN, x, y, W, W_in)

@@ -19,7 +19,7 @@ end
 
 Build an ESN struct given the input and reservoir matrices.
 """
-function ESN(res_size, train_data;
+function ESN(input_res_size, train_data;
              input_init = WeightedInput(),
              reservoir_init = RandReservoir(),
              reservoir_driver = RNN(),
@@ -27,10 +27,10 @@ function ESN(res_size, train_data;
              extended_states = false)
 
     in_size = size(train_data, 1)
+    input_matrix = create_layer(input_res_size, in_size, input_init)
+    res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
-    input_matrix = create_input_layer(res_size, in_size, input_init)
-    states = create_states(reservoir_driver, reservoir_matrix, input_matrix, train_data, 
-                           extended_states)
+    states = create_states(reservoir_driver, train_data, extended_states, reservoir_matrix, input_matrix)
     output_layer = zeros(in_size, res_size)
 
     ESN(res_size, train_data, nla_type, input_init, input_matrix, reservoir_driver, 
@@ -51,7 +51,7 @@ end
 
 function (esn::ESN)(aut::Autonomous)
 
-    output = zeros(size(esn.output_layer, 1), aut.prediction_len)
+    output = zeros(size(esn.output_layer, 1), aut.prediction_len) #better way to check size output?
     x = esn.states[:, end] 
 
     for i=1:aut.prediction_len
@@ -68,12 +68,12 @@ function (esn::ESN)(direct::Direct)
 
     prediction_len = size(direct.prediction_data, 2)
     output = zeros(size(esn.output_layer, 1), prediction_len)
-    x = zeros(size(esn.states,2))
+    x = esn.states[:, end] #x = zeros(size(esn.states,2))
 
     for i=1:prediction_len
         esn.extended_states ? x = vcat(next_state(esn.reservoir_driver, x[1:esn.res_size], direct.prediction_data[:,i], 
-        esn.reservoir_matrix, esn.input_matrix), direct.prediction_data[:,i]) : x = next_state(esn.reservoir_driver, 
-        x, direct.prediction_data[:,i], esn.reservoir_matrix, esn.input_matrix)
+        esn.reservoir_matrix, esn.input_matrix), direct.prediction_data[:,i]) : x = next_state(esn.reservoir_driver, x, 
+        direct.prediction_data[:,i], esn.reservoir_matrix, esn.input_matrix)
         x_new = nla(esn.nla_type, x)
         out = (esn.output_layer*x_new)
         output[:, i] = out    
