@@ -42,7 +42,7 @@ end
 function Ridge(lambda_arg; 
                lambda=lambda_arg, 
                solver=Analytical(), 
-               ridge_kwargs=(fit_intercept = false))
+               ridge_kwargs=(;fit_intercept = false))
     
     Ridge(lambda, solver, ridge_kwargs)
 end
@@ -72,7 +72,7 @@ end
 function Lasso(lambda_arg; 
                lambda=lambda_arg, 
                solver=ProxGrad(), 
-               lasso_kwargs=(fit_intercept = false))
+               lasso_kwargs=(;fit_intercept = false))
     Lasso(lambda, solver, lasso_kwargs)
 end
 
@@ -103,7 +103,7 @@ function ElastNet(lambda_arg, gamma_arg;
                   lambda=lambda_arg,
                   gamma=gamma_arg,
                   solver=ProxGrad(),
-                  elastnet_kwargs=(fit_intercept = false))
+                  elastnet_kwargs=(;fit_intercept = false))
     ElastNet(lambda, gamma, solver, elastnet_kwargs)
 end
 
@@ -136,7 +136,7 @@ function RobustHuber(delta_arg, lambda_arg, gamma_arg;
             lambda=lambda_arg,
             gamma=gamma_arg,
             solver=MLJLinearModels.LBFGS(),
-            huber_kwargs=(fit_intercept = false))
+            huber_kwargs=(;fit_intercept = false))
     RobustHuber(delta, lambda, gamma, solver, huber_kwargs)
 end
 
