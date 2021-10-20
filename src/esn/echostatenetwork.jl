@@ -1,15 +1,13 @@
 
-mutable struct ESN{I,S,N,IL,T,O,R,M,IS,B,OL} <: AbstractReservoirComputer
+mutable struct ESN{I,S,N,T,O,M,IS,OL} <: AbstractReservoirComputer
     res_size::I
     train_data::S
     nla_type::N
-    input_init::IL
     input_matrix::T
     reservoir_driver::O 
-    reservoir_init::R
     reservoir_matrix::M
     states::IS
-    extended_states::B
+    extended_states::Bool
     output_layer::OL
 end
 
@@ -33,8 +31,8 @@ function ESN(input_res_size, train_data;
     states = create_states(reservoir_driver, train_data, extended_states, reservoir_matrix, input_matrix)
     output_layer = zeros(in_size, res_size)
 
-    ESN(res_size, train_data, nla_type, input_init, input_matrix, reservoir_driver, 
-        reservoir_init, reservoir_matrix, states, extended_states, output_layer)
+    ESN(res_size, train_data, nla_type, input_matrix, reservoir_driver, 
+        reservoir_matrix, states, extended_states, output_layer)
 end
 
 struct Autonomous{T} <: AbstractPrediction

@@ -13,7 +13,9 @@ function StandardRidge(;regularization_coeff=reg_coeff)
     StandardRidge(regularization_coeff)
 end
 
-function train!(esn::AbstractReservoirComputer, target_data, sr::StandardRidge)
+#default training - OLS
+
+function train!(esn::AbstractReservoirComputer, target_data, sr::StandardRidge=StandardRidge(0.0))
     states_new = nla(esn.nla_type, esn.states)
     esn.output_layer = (target_data*states_new')*inv(add_reg(states_new*states_new', sr.regularization_coeff))    
 end
@@ -135,7 +137,7 @@ function RobustHuber(delta_arg, lambda_arg, gamma_arg;
             delta=delta_arg,
             lambda=lambda_arg,
             gamma=gamma_arg,
-            solver=MLJLinearModels.LBFGS(),
+            solver=MLJLinearModels.Newton(),
             huber_kwargs=(;fit_intercept = false))
     RobustHuber(delta, lambda, gamma, solver, huber_kwargs)
 end

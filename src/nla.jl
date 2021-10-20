@@ -23,7 +23,7 @@ function nla(::NLAT1, x_old)
     x_new = copy(x_old)
     for i =1:size(x_new, 1)
         if mod(i, 2)!=0
-            x_new[i, :] = copy(x_old[i,:].*x_old[i,:])
+            x_new[i,:] = copy(x_old[i,:].*x_old[i,:])
         end
     end
     x_new
@@ -41,7 +41,7 @@ function nla(::NLAT2, x_old)
     x_new = copy(x_old)
     for i =2:size(x_new, 1)-1
         if mod(i, 2)!=0
-            x_new[i, :] = copy(x_old[i-1,:].*x_old[i-2,:])
+            x_new[i,:] = copy(x_old[i-1,:].*x_old[i-2,:])
         end
     end
     x_new
@@ -59,7 +59,7 @@ function nla(::NLAT3, x_old)
     x_new = copy(x_old)
     for i =2:size(x_new, 1)-1
         if mod(i, 2)!=0
-            x_new[i, :] = copy(x_old[i-1,:].*x_old[i+1,:])
+            x_new[i,:] = copy(x_old[i-1,:].*x_old[i+1,:])
         end
     end
     x_new
