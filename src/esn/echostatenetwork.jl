@@ -33,18 +33,6 @@ function ESN(input_res_size, train_data;
         reservoir_matrix, states, extended_states)
 end
 
-struct Autonomous{T} <: AbstractPrediction
-    prediction_len::T
-end
-
-function Autonomous(;prediction_len=100)
-    Autonomous(prediction_len)
-end
-
-struct Direct{T} <: AbstractPrediction
-    prediction_data::T
-end
-
 function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)
 
     output = obtain_autonomous_prediction(esn, output_layer, aut.prediction_len, 
