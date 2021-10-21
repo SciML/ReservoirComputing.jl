@@ -17,8 +17,15 @@ abstract type NonLinearAlgorithm end
 abstract type AbstractInputLayer end
 abstract type AbstractReservoirDriver end
 abstract type AbstractReservoir end
+abstract type AbstractOutputLayer end
 abstract type AbstractLinearModel end
 abstract type AbstractGaussianProcess end
+
+struct OutputLayer{T,I,S} <: AbstractOutputLayer
+    training_method::T
+    output_matrix::I
+    out_size::S
+end
 
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
@@ -32,9 +39,11 @@ export next_state, create_states, RNN
 include("esn/esn_reservoirs.jl")
 export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
 DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
+include("esn/esn_predict.jl")
+export obtain_autonomous_prediction, obtain_direct_prediction
 
 include("train/linear_regression.jl")
-export train, StandardRidge, LinearModel
+export train, StandardRidge, LinearModel, OutputLayer
 include("train/gaussian_regression.jl")
 export train, GaussianProcess
 

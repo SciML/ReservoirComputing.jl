@@ -13,18 +13,19 @@ function GaussianProcess(mean, kernel;
                             GaussianProcess(mean, kernel, lognoise, optimize, optimizer)
 end
 
-function train!(rc::AbstractReservoirComputer, target_data, gp::GaussianProcess)
+function train(rc::AbstractReservoirComputer, target_data, gp::GaussianProcess)
 
     states_new = nla(rc.nla_type, rc.states)
-    if size(target_data, 1) == 1
-        output_layer = GP(states_new, vec(target_data), gp.mean, gp.kernel, gp.lognoise)
-        gp.optimize ? optimize!(output_layer; method=gp.optimizer) : nothing
+    out_size = size(target_data, 1)
+    if out_size == 1
+        output_matrix = GP(states_new, vec(target_data), gp.mean, gp.kernel, gp.lognoise)
+        gp.optimize ? optimize!(output_matrix; method=gp.optimizer) : nothing
     else
-        output_layer = []
-        for i=1:size(target_data, 1)
-            push!(output_layer, GP(states_new, target_data[i,:], gp.mean, gp.kernel, gp.lognoise))
-            gp.optimize ? optimize!(output_layer[i]; method=gp.optimizer) : nothing
+        output_matrix = []
+        for i=1:out_size
+            push!(output_matrix, GP(states_new, target_data[i,:], gp.mean, gp.kernel, gp.lognoise))
+            gp.optimize ? optimize!(output_matrix[i]; method=gp.optimizer) : nothing
         end
     end
-    output_layer
+    OutputLayer(gp, output_matrix, out_size)
 end

@@ -33,49 +33,28 @@ function ESN(input_res_size, train_data;
         reservoir_matrix, states, extended_states)
 end
 
-struct Autonomous{O,T} <: AbstractPrediction
-    output_layer::O
+struct Autonomous{T} <: AbstractPrediction
     prediction_len::T
 end
 
-function Autonomous(output_layer; prediction_len=100)
-    Autonomous(output_layer, prediction_len)
+function Autonomous(;prediction_len=100)
+    Autonomous(prediction_len)
 end
 
-struct Direct{O,T} <: AbstractPrediction
-    output_layer::O
+struct Direct{T} <: AbstractPrediction
     prediction_data::T
 end
 
-function (esn::ESN)(aut::Autonomous)
+function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)
 
-    output = zeros(size(aut.output_layer, 1), aut.prediction_len) #better way to check size output?
-    x = esn.states[:, end] 
-
-    for i=1:aut.prediction_len
-        x_new = nla(esn.nla_type, x)
-        out = (aut.output_layer*x_new)
-        output[:, i] = out
-        esn.extended_states ? x = vcat(next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, 
-        esn.input_matrix), out) : x = next_state(esn.reservoir_driver, x, out, esn.reservoir_matrix, esn.input_matrix)
-    end
+    output = obtain_autonomous_prediction(esn, output_layer, aut.prediction_len, 
+                                          output_layer.training_method)
     output
 end
 
-function (esn::ESN)(direct::Direct)
+function (esn::ESN)(direct::Direct, output_layer::AbstractOutputLayer)
 
-    prediction_len = size(direct.prediction_data, 2)
-    output = zeros(size(direct.output_layer, 1), prediction_len)
-    x = esn.states[:, end] #x = zeros(size(esn.states,2))
-
-    for i=1:prediction_len
-        esn.extended_states ? x = vcat(next_state(esn.reservoir_driver, x[1:esn.res_size], direct.prediction_data[:,i], 
-        esn.reservoir_matrix, esn.input_matrix), direct.prediction_data[:,i]) : x = next_state(esn.reservoir_driver, x, 
-        direct.prediction_data[:,i], esn.reservoir_matrix, esn.input_matrix)
-        x_new = nla(esn.nla_type, x)
-        out = (direct.output_layer*x_new)
-        output[:, i] = out    
-    end
+    output = obtain_direct_prediction(esn, output_layer, direct.prediction_data, 
+                                      output_layer.training_method)
     output
 end
-

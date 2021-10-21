@@ -15,8 +15,10 @@ end
 
 #default training - OLS
 function train(rc::AbstractReservoirComputer, target_data, sr::StandardRidge=StandardRidge(0.0))
+    out_size = size(target_data, 1)
     states_new = nla(rc.nla_type, rc.states)
-    (target_data*states_new')*inv(add_reg(states_new*states_new', sr.regularization_coeff))    
+    output_layer = (target_data*states_new')*inv(add_reg(states_new*states_new', sr.regularization_coeff))
+    OutputLayer(linear, output_layer, out_size)
 end
 
 function add_reg(X, beta)
@@ -42,6 +44,7 @@ end
 
 function train(rc::AbstractReservoirComputer, target_data, linear::LinearModel)
 
+    out_size = size(target_data, 1)
     states_new = nla(rc.nla_type, rc.states)
     output_layer = zeros(size(target_data, 1), size(states_new, 1))
     for i=1:size(target_data, 1)
@@ -49,5 +52,5 @@ function train(rc::AbstractReservoirComputer, target_data, linear::LinearModel)
         output_layer[i,:] = MLJLinearModels.fit(regressor, states_new', 
         target_data[i,:], solver = linear.solver)
     end
-    output_layer
+    OutputLayer(linear, output_layer, out_size)
 end
