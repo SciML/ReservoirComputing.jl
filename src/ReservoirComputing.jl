@@ -20,6 +20,7 @@ abstract type AbstractReservoir end
 abstract type AbstractOutputLayer end
 abstract type AbstractLinearModel end
 abstract type AbstractGaussianProcess end
+abstract type AbstractSupportVector end
 
 #general output layer struct
 struct OutputLayer{T,I,S} <: AbstractOutputLayer
@@ -62,6 +63,8 @@ include("train/linear_regression.jl")
 export train, StandardRidge, LinearModel
 include("train/gaussian_regression.jl")
 export train, GaussianProcess
+include("train/supportvector_regression.jl")
+export train
 
 export Autonomous, Direct, OutputLayer#, Fitted
 
