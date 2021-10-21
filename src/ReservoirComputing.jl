@@ -17,8 +17,8 @@ abstract type NonLinearAlgorithm end
 abstract type AbstractInputLayer end
 abstract type AbstractReservoirDriver end
 abstract type AbstractReservoir end
-abstract type LinearModel end
-abstract type GaussianModel end
+abstract type AbstractLinearModel end
+abstract type AbstractGaussianProcess end
 
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
@@ -34,7 +34,10 @@ export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReser
 DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
 
 include("train/linear_regression.jl")
-export train!, StandardRidge, Ridge, Lasso, ElastNet, RobustHuber
+export train, StandardRidge, LinearModel
+include("train/gaussian_regression.jl")
+export train, GaussianProcess
+
 
 
 
