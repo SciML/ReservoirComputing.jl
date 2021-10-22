@@ -50,7 +50,8 @@ export nla, NLADefault, NLAT1, NLAT2, NLAT3
 include("esn/echostatenetwork.jl")
 export ESN
 include("esn/esn_input_layers.jl")
-export create_layer, WeightedInput, DenseInput, SparseInput, MinimumInput
+export create_layer, WeightedInput, DenseInput, SparseInput, MinimumInput, InformedInput
+BernoulliSample, IrrationalSample
 include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN
 include("esn/esn_reservoirs.jl")
