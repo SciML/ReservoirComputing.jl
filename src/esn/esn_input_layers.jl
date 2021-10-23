@@ -20,9 +20,9 @@ function create_layer(approx_res_size, in_size, input_layer::WeightedInput)
 
     res_size = Int(floor(approx_res_size/in_size)*in_size)
     input_matrix = zeros(res_size, in_size)
-    q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor
+    q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor #should be fine now
     for i=1:in_size
-        input_matrix[(i-1)*q+1 : (i)*q, i] = (2*input_layer.scaling).*(rand(1, q).-0.5)
+        input_matrix[(i-1)*q+1 : (i)*q, i] = rand(Uniform(-input_layer.scaling, input_layer.scaling), 1, q)
     end
     input_matrix
 
@@ -44,10 +44,7 @@ end
 
 function create_layer(res_size, in_size, input_layer::DenseInput)
 
-    input_matrix = rand(res_size, in_size)
-    input_matrix = 2.0 .*(input_matrix.-0.5)
-    input_matrix = input_layer.scaling .*input_matrix
-    input_matrix
+    rand(Uniform(-input_layer.scaling, input_layer.scaling), res_size, in_size)
 end
 
 """

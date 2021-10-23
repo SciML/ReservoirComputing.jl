@@ -34,13 +34,25 @@ struct Autonomous{T} <: AbstractPrediction
     prediction_len::T
 end
 
+function Autonomous(prediction_len=nothing)
+    Autonomous(prediction_len)
+end
+
 struct Direct{T} <: AbstractPrediction
     prediction_data::T
 end
 
-#struct Fitted{T} <: AbstractPrediction
-#    type::T #Autonomous or Direct
-#end
+function Direct(;prediction_data=nothing)
+    Direct(prediction_data)
+end
+
+struct Fitted{T} <: AbstractPrediction
+    type::T #Autonomous or Direct
+end
+
+function Fitted(;type=Direct())
+    Fitted(type)
+end
 
 
 #import/export
@@ -67,7 +79,7 @@ export train, GaussianProcess
 include("train/supportvector_regression.jl")
 export train
 
-export Autonomous, Direct, OutputLayer#, Fitted
+export Autonomous, Direct, OutputLayer, Fitted
 
 
 end #module

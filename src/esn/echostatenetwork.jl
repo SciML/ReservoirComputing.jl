@@ -36,13 +36,25 @@ end
 function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)
 
     output = obtain_autonomous_prediction(esn, output_layer, aut.prediction_len, 
-                                          output_layer.training_method)
+                                          output_layer.training_method) #dispatch on prediction type -> just obtain_prediction()
     output
 end
 
 function (esn::ESN)(direct::Direct, output_layer::AbstractOutputLayer)
 
     output = obtain_direct_prediction(esn, output_layer, direct.prediction_data, 
-                                      output_layer.training_method)
+                                      output_layer.training_method) 
+    output
+end
+
+function (esn::ESN)(fitted::Fitted, output_layer::AbstractOutputLayer)
+    if fitted.type == Direct
+        output = obtain_direct_prediction(esn, output_layer, esn.train_data, 
+                                          output_layer.training_method)
+    elseif fitted.type == Autonomous #need to change actual starting state I think
+        prediction_len = size(esn.states, 2)
+        output = obtain_autonomous_prediction(esn, output_layer, prediction_len, 
+                                              output_layer.training_method)
+    end
     output
 end
