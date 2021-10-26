@@ -1,13 +1,31 @@
 
-mutable struct ESN{I,S,N,T,O,M,IS} <: AbstractReservoirComputer
+struct ESN{I,S,N,T,O,M,IS} <: AbstractReservoirComputer
     res_size::I
     train_data::S
     nla_type::N
     input_matrix::T
     reservoir_driver::O 
     reservoir_matrix::M
+    states_type::E
     states::IS
-    extended_states::Bool
+end
+
+struct StandardStates <: AbstractStates end
+struct ExtendedStates <: AbstractStates end
+struct HybridStates{T,K,O,S,D} <: AbstractStates
+    prior_model::T
+    u0::K
+    tspan::O
+    datasize::S
+    model_data::D
+end
+
+function Hybrid(prior_model, u0, tspan, datasize)
+    trange = collect(range(tspan[1], tspan[2], length = datasize))
+    dt = trange[2]-trange[1]
+    tsteps = push!(trange, dt + trange[end])
+    tspan_new = (tspan[1], dt+tspan[2])
+    model_data = prior_model(u0, tspan_new, tsteps)
 end
 
 """
@@ -21,16 +39,17 @@ function ESN(input_res_size, train_data;
              reservoir_init = RandReservoir(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
-             extended_states = false)
+             states_type = StandardStates())
 
+    states_type == Hybrid ? train_data = vcat(train_data, states_type.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
     input_matrix = create_layer(input_res_size, in_size, input_init)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
-    states = create_states(reservoir_driver, train_data, extended_states, reservoir_matrix, input_matrix)
+    states = create_states(reservoir_driver, train_data, states_type, reservoir_matrix, input_matrix)
 
-    ESN(res_size, train_data, nla_type, input_matrix, reservoir_driver, 
-        reservoir_matrix, states, extended_states)
+    ESN(res_size, train_data, nla_type, esn_type, input_matrix, reservoir_driver, 
+        reservoir_matrix, states_type, states)
 end
 
 function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)

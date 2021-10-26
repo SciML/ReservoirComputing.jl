@@ -14,6 +14,7 @@ using Distances
 abstract type AbstractReservoirComputer end
 abstract type AbstractPrediction end
 abstract type NonLinearAlgorithm end
+abstract type AbstractStates end
 abstract type AbstractInputLayer end
 abstract type AbstractReservoirDriver end
 abstract type AbstractReservoir end
@@ -60,7 +61,7 @@ include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
 
 include("esn/echostatenetwork.jl")
-export ESN
+export ESN, StandardStates, ExtendedStates, HybridStates
 include("esn/esn_input_layers.jl")
 export create_layer, WeightedInput, DenseInput, SparseInput, MinimumInput, InformedInput
 BernoulliSample, IrrationalSample
