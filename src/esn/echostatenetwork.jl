@@ -47,7 +47,7 @@ function ESN(input_res_size, train_data;
     input_matrix = create_layer(input_res_size, in_size, input_init)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
-    states = create_states(reservoir_driver, train_data, extended_states, reservoir_matrix, input_matrix)
+    states = create_states(reservoir_driver, variation, train_data, extended_states, reservoir_matrix, input_matrix)
 
     ESN(res_size, train_data, variation, nla_type, esn_type, input_matrix, reservoir_driver, 
         reservoir_matrix, extended_states, states)

@@ -15,7 +15,7 @@ abstract type AbstractReservoirComputer end
 abstract type AbstractPrediction end
 abstract type NonLinearAlgorithm end
 abstract type AbstractVariation end
-abstract type AbstractInputLayer end
+abstract type AbstractLayer end
 abstract type AbstractReservoirDriver end
 abstract type AbstractReservoir end
 abstract type AbstractOutputLayer end
@@ -63,7 +63,7 @@ export nla, NLADefault, NLAT1, NLAT2, NLAT3
 include("esn/echostatenetwork.jl")
 export ESN, Standard, Hybrid
 include("esn/esn_input_layers.jl")
-export create_layer, WeightedInput, DenseInput, SparseInput, MinimumInput, InformedInput
+export create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer
 BernoulliSample, IrrationalSample
 include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN

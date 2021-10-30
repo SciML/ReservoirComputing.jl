@@ -1,4 +1,4 @@
-function create_states(reservoir_driver::AbstractReservoirDriver, train_data, extended_states, reservoir_matrix, input_matrix)
+function create_states(reservoir_driver::AbstractReservoirDriver, variation, train_data, extended_states, reservoir_matrix, input_matrix)
 
     train_len = size(train_data, 2)
     res_size = size(reservoir_matrix, 1)
@@ -8,6 +8,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, ex
     for i=1:train_len
         states[:, i+1] = next_state(reservoir_driver, states[:, i], train_data[:, i], reservoir_matrix, input_matrix)
     end
+    variation == Hybrid ? vcat(states, variation.model_data[:, 2:end]) : nothing
     extended_states ? vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end] : states[:,2:end]
 end
 
