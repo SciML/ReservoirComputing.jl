@@ -39,7 +39,7 @@ end
 function LinearModel(;regression=LinearRegression, 
                  solver=Analytical(), 
                  regression_kwargs=(;))
-                 LinearModel(regression, solver, regression_kwargs)
+    LinearModel(regression, solver, regression_kwargs)
 end
 
 function train(rc::AbstractReservoirComputer, target_data, linear::LinearModel)

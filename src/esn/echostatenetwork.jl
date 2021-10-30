@@ -1,18 +1,18 @@
 
-struct ESN{I,S,N,T,O,M,IS} <: AbstractReservoirComputer
+struct ESN{I,S,V,N,T,O,M,IS} <: AbstractReservoirComputer
     res_size::I
     train_data::S
+    variation::V
     nla_type::N
     input_matrix::T
     reservoir_driver::O 
     reservoir_matrix::M
-    states_type::E
+    extended_states::Bool
     states::IS
 end
 
-struct StandardStates <: AbstractStates end
-struct ExtendedStates <: AbstractStates end
-struct HybridStates{T,K,O,S,D} <: AbstractStates
+struct Default <: AbstractVariation end
+struct Hybrid{T,K,O,S,D} <: AbstractVariation
     prior_model::T
     u0::K
     tspan::O
@@ -35,21 +35,22 @@ end
 Build an ESN struct given the input and reservoir matrices.
 """
 function ESN(input_res_size, train_data;
+             variation = Default(),
              input_init = WeightedInput(),
-             reservoir_init = RandReservoir(),
+             reservoir_init = RandSparseReservoir(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
-             states_type = StandardStates())
+             extended_states = Bool)
 
-    states_type == Hybrid ? train_data = vcat(train_data, states_type.model_data[:, 1:end-1]) : nothing
+    variation == Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
     input_matrix = create_layer(input_res_size, in_size, input_init)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
-    states = create_states(reservoir_driver, train_data, states_type, reservoir_matrix, input_matrix)
+    states = create_states(reservoir_driver, train_data, extended_states, reservoir_matrix, input_matrix)
 
-    ESN(res_size, train_data, nla_type, esn_type, input_matrix, reservoir_driver, 
-        reservoir_matrix, states_type, states)
+    ESN(res_size, train_data, variation, nla_type, esn_type, input_matrix, reservoir_driver, 
+        reservoir_matrix, extended_states, states)
 end
 
 function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)

@@ -1,4 +1,4 @@
-function create_states(reservoir_driver::AbstractReservoirDriver, train_data, states_type, reservoir_matrix, input_matrix)
+function create_states(reservoir_driver::AbstractReservoirDriver, train_data, extended_states, reservoir_matrix, input_matrix)
 
     train_len = size(train_data, 2)
     res_size = size(reservoir_matrix, 1)
@@ -8,7 +8,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, st
     for i=1:train_len
         states[:, i+1] = next_state(reservoir_driver, states[:, i], train_data[:, i], reservoir_matrix, input_matrix)
     end
-    concatenate_states(states_type, states, train_data)
+    extended_states ? vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end] : states[:,2:end]
 end
 
 struct RNN{F,T,R} <: AbstractReservoirDriver
@@ -34,16 +34,4 @@ function next_state(rnn::RNN, x, y, W, W_in)
         rnn_next_state += rnn.scaling_factor*rnn.activation_function.((W*x)+(W_in*y))
     end
     rnn_next_state
-end
-
-function concatenate_states(states_type::StandardStates, states, args...)
-    states[:,2:end]
-end
-
-function concatenate_states(states_type::ExtendedStates, states, train_data)
-    vcat(states, hcat(zeros(in_size), train_data[:,1:end]))[:,2:end]
-end
-
-function concatenate_states(states_type::HybridStates, states, args...)
-    vcat(states, states_type.model_data[:, 2:end])
 end

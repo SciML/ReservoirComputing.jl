@@ -10,7 +10,7 @@ function GaussianProcess(mean, kernel;
                             lognoise=-2, 
                             optimize=false,
                             optimizer=Optim.LBFGS())
-                            GaussianProcess(mean, kernel, lognoise, optimize, optimizer)
+    GaussianProcess(mean, kernel, lognoise, optimize, optimizer)
 end
 
 function train(rc::AbstractReservoirComputer, target_data, gp::GaussianProcess)
