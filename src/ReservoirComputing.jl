@@ -35,10 +35,6 @@ struct Autonomous{T} <: AbstractPrediction
     prediction_len::T
 end
 
-function Autonomous(prediction_len=nothing)
-    Autonomous(prediction_len)
-end
-
 struct Direct{T} <: AbstractPrediction
     prediction_data::T
 end

@@ -36,11 +36,11 @@ Build an ESN struct given the input and reservoir matrices.
 """
 function ESN(input_res_size, train_data;
              variation = Default(),
-             input_init = WeightedInput(),
+             input_init = WeightedLayer(),
              reservoir_init = RandSparseReservoir(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
-             extended_states = Bool)
+             extended_states = false)
 
     variation == Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
@@ -49,7 +49,7 @@ function ESN(input_res_size, train_data;
     reservoir_matrix = create_reservoir(res_size, reservoir_init)
     states = create_states(reservoir_driver, variation, train_data, extended_states, reservoir_matrix, input_matrix)
 
-    ESN(res_size, train_data, variation, nla_type, esn_type, input_matrix, reservoir_driver, 
+    ESN(res_size, train_data, variation, nla_type, input_matrix, reservoir_driver, 
         reservoir_matrix, extended_states, states)
 end
 

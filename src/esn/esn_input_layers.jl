@@ -107,6 +107,8 @@ struct BernoulliSample{T}
 end
 
 function BernoulliSample(;p=0.5)
+    BernoulliSample(p)
+end
 
 """
 
