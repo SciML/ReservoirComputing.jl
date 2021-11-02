@@ -14,11 +14,10 @@ function StandardRidge(;regularization_coeff=reg_coeff)
 end
 
 #default training - OLS
-function train(rc::AbstractReservoirComputer, target_data, sr::StandardRidge=StandardRidge(0.0))
+function _train(states, target_data, sr::StandardRidge=StandardRidge(0.0))
     out_size = size(target_data, 1)
-    states_new = nla(rc.nla_type, rc.states)
-    output_layer = (target_data*states_new')*inv(add_reg(states_new*states_new', sr.regularization_coeff))
-    OutputLayer(linear, output_layer, out_size)
+    output_layer = (target_data*states')*inv(add_reg(states*states', sr.regularization_coeff))
+    OutputLayer(sr, output_layer, out_size)
 end
 
 function add_reg(X, beta)
@@ -42,14 +41,13 @@ function LinearModel(;regression=LinearRegression,
     LinearModel(regression, solver, regression_kwargs)
 end
 
-function train(rc::AbstractReservoirComputer, target_data, linear::LinearModel)
+function _train(states, target_data, linear::LinearModel)
 
     out_size = size(target_data, 1)
-    states_new = nla(rc.nla_type, rc.states)
-    output_layer = zeros(size(target_data, 1), size(states_new, 1))
+    output_layer = zeros(size(target_data, 1), size(states, 1))
     for i=1:size(target_data, 1)
         regressor = linear.regression(; fit_intercept = false, linear.regression_kwargs...)
-        output_layer[i,:] = MLJLinearModels.fit(regressor, states_new', 
+        output_layer[i,:] = MLJLinearModels.fit(regressor, states', 
         target_data[i,:], solver = linear.solver)
     end
     OutputLayer(linear, output_layer, out_size)

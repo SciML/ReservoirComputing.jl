@@ -66,15 +66,17 @@ export next_state, create_states, RNN
 include("esn/esn_reservoirs.jl")
 export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
 DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
+include("esn/esn_train.jl")
+export train
 include("esn/esn_predict.jl")
 export obtain_autonomous_prediction, obtain_direct_prediction
 
 include("train/linear_regression.jl")
-export train, StandardRidge, LinearModel
+export _train, StandardRidge, LinearModel
 include("train/gaussian_regression.jl")
-export train, GaussianProcess
+export _train, GaussianProcess
 include("train/supportvector_regression.jl")
-export train
+export _train
 
 export Autonomous, Direct, OutputLayer, Fitted
 

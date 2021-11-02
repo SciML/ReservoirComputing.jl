@@ -111,7 +111,6 @@ function BernoulliSample(;p=0.5)
 end
 
 """
-
     IrrationalSample(irrational, start)
     IrrationalSample(;irrational=pi, start=1)
 
@@ -190,10 +189,6 @@ function create_minimum_input(res_size, in_size, weight, sampling::IrrationalSam
     end
     input_matrix
 end
-
-
-
-
 
 """
 physics_informed_input(res_size::Int, in_size::Int, sigma::Float64, γ::Float64)
