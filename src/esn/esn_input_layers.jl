@@ -238,3 +238,9 @@ function create_layer(res_size, in_size, input_layer::InformedLayer)
     end
     input_matrix
 end
+
+struct NullLayer <: AbstractLayer end
+
+function create_layer(res_size, in_size, input_layer::NullLayer)
+    zeros(res_size, in_size)
+end

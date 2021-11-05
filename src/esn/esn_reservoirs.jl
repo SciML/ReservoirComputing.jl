@@ -213,7 +213,7 @@ end
 
 function create_reservoir(res_size, reservoir::CycleJumpsReservoir)
 
-    reservoir_matrix = zeros(Float64, res_size, res_size)
+    reservoir_matrix = zeros(res_size, res_size)
     for i=1:res_size-1
         reservoir_matrix[i+1,i] = reservoir.cycle_weight
     end
@@ -230,4 +230,10 @@ function create_reservoir(res_size, reservoir::CycleJumpsReservoir)
         reservoir_matrix[tmp, i] = reservoir.jump_weight
     end
     reservoir_matrix
+end
+
+struct NullReservoir <: AbstractReservoir end
+
+function create_reservoir(res_size, reservoir::NullReservoir)
+    zeros(res_size, res_size)
 end

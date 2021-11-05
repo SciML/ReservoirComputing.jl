@@ -62,12 +62,12 @@ include("esn/echostatenetwork.jl")
 export ESN, Standard, Hybrid
 include("esn/esn_input_layers.jl")
 export create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer
-BernoulliSample, IrrationalSample
+BernoulliSample, IrrationalSample, NullLayer
 include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN, GRU, GRUParams, Variant1, Variant2, Variant3, Minimal
 include("esn/esn_reservoirs.jl")
 export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
-DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
+DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
 include("esn/esn_train.jl")
 export train
 include("esn/esn_predict.jl")

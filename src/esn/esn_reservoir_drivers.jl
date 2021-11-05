@@ -43,41 +43,114 @@ function next_state(rnn::RNN, x, y, W, W_in)
 end
 
 #GRU-based driver
-struct GRU{F,L,V,G}
+struct GRU{F,L,R,V} #not an abstractreservoirdriver
     activation_function::F
     layer_init::L
+    reservoir_init::R
     variant::V
 end
 
+#https://arxiv.org/abs/1701.05923# variations of gru
+struct FullyGated <: AbstractGRUVariant end
+struct Variant1 <: AbstractGRUVariant end
+struct Variant2 <: AbstractGRUVariant end
+struct Variant3 <: AbstractGRUVariant end
+struct Minimal <: AbstractGRUVariant end
+
 #layer_init and activation_function must be vectors
-function GRU(;activation_function=[sigmoid, sigmoid, tanh], 
-              layer_init = fill(DenseLayer(), 6), 
+"""
+    GRU(])
+
+Return a Gated Recurrent Unit [1] reservoir driver.
+
+[1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
+"""
+function GRU(;activation_function=[sigmoid, sigmoid, tanh], #has to be a voctor of size 3
+              layer_init = fill(DenseLayer(), 5), #has to be a vector of size 5
+              reservoir_init = fill(RandSparseReservoir(), 2) #has to be a vector of size 2
               variant = FullyGated())
 
     GRU(activation_function, layer_init, variant)
 end
 
 #the actual params are only available inside ESN(), so a different driver is needed
-struct GRUParams{S} <: AbstractReservoirDriver
+struct GRUParams{F,V,S,I,N,T} <: AbstractReservoirDriver
     activation_function::F
     variant::V
-    U_r::S
-    W_r::S
-    b_r::S
-    U_z::S
-    W_z::S
-    b_z::S
+    Wz_in::S
+    Wz::I
+    bz::N
+    Wr_in::S
+    Wr::I
+    br::N
+    bh::T
 end
 
+#vreation of the actual driver
 function reservoir_driver_params(gru::GRU, res_size, in_size)
-    U_r = create_layer(res_size, in_size, layer_init[1])
-    W_r = create_layer(res_size, res_size, layer_init[2])
-    b_r = create_layer(res_size, 1, layer_init[3])
-    U_z = create_layer(res_size, in_size, layer_init[4])
-    W_z = create_layer(res_size, res_size, layer_init[5])
-    b_z = create_layer(res_size, 1, layer_init[6])
+    gru_params = create_gru_layers(gru, gru.variant, res_size, in_size)
+    gru_params
+end
 
-    GRUParams(activation_function, variant, U_r, W_r, b_r, U_z, W_z, b_z)
+#dispatch on the differenct gru variations
+function create_gru_layers(gru, variant::FullyGated, res_size, in_size)
+
+    Wz_in = create_layer(res_size, in_size, gru.layer_init[1])
+    Wz = create_reservoir(res_size, gru.reservoir_init[1])
+    bz = create_layer(res_size, 1, gru.layer_init[2])
+
+    Wr_in = create_layer(res_size, in_size, gru.layer_init[3])
+    Wr = create_reservoir(res_size, gru.reservoir_init[2])
+    br = create_layer(res_size, 1, gru.layer_init[4])
+
+    bh = create_layer(res_size, 1, gru.layer_init[5])
+
+    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+end
+
+function create_gru_layers(gru, variant::Variant1, res_size, in_size)
+
+    Wz_in = nothing
+    Wz = create_reservoir(res_size, gru.reservoir_init[1])
+    bz = create_layer(res_size, 1, gru.layer_init[2])
+
+    Wr_in = nothing
+    Wr = create_reservoir(res_size, gru.reservoir_init[2])
+    br = create_layer(res_size, 1, gru.layer_init[2])
+
+    bh = create_layer(res_size, 1, gru.layer_init[3])
+
+    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+end
+
+function create_gru_layers(gru, variant::Variant2, res_size, in_size)
+
+    Wz_in = nothing
+    Wz = create_reservoir(res_size, gru.reservoir_init[1])
+    bz = nothing
+
+    Wr_in = nothing
+    Wr = create_reservoir(res_size, gru.reservoir_init[2])
+    br = nothing
+
+    bh = create_layer(res_size, 1, gru.layer_init[1])
+
+    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+end
+
+function create_gru_layers(gru, variant::Variant3, res_size, in_size)
+
+    Wz_in = nothing
+    Wz = nothing
+    bz = create_layer(res_size, 1, gru.layer_init[1])
+
+    Wr_in = nothing
+    Wr = nothing
+    br = create_layer(res_size, 1, gru.layer_init[2])
+
+    bh = create_layer(res_size, 1, gru.layer_init[3])
+
+    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 #in case the user wants to use this driver
@@ -85,32 +158,63 @@ function reservoir_driver_params(gru::GRUParams, args...)
     gru
 end
 
-#https://arxiv.org/abs/1701.05923# variations of gru
-
-struct FullyGated <: AbstractGRUVariant end
-struct Variant1 <: AbstractGRUVariant end
-struct Variant2 <: AbstractGRUVariant end
-struct Variant3 <: AbstractGRUVariant end
-struct Minimal <: AbstractGRUVariant end
-
-
-"""
-    GRUESN(W::AbstractArray{T}, train_data::AbstractArray{T}, W_in::AbstractArray{T} [, gates_weight::T, activation::Any, alpha::T, nla_type::NonLinearAlgorithm, extended_states::Bool])
-
-Return a Gated Recurrent Unit [1] ESN struct.
-
-[1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
-"""
-
+#dispatch on the important function: next_state
 function next_state(gru::GRUParams,x , y, W, W_in)
 
-    gru_next_state = obtain_gru_state(gru.variant, gru::GRUParams, x, y, W, W_in)
+    gru_next_state = obtain_gru_state(gru.variant, gru, x, y, W, W_in)
+    gru_next_state
 end
 
-#dispatch on fully gated gru #check input and output vector
-function obtain_gru_state(variant::FullyGated, gru::GRUParams, x, y, W, W_in)
-    update_gate = gru.activation_function[3].(gru.U_z*y + gru.W_z*x + gru.b_z)
-    reset_gate = gru.activation_function[1].(gru.U_r*y + gru.W_r*x+gru.b_r)
-    update = gru.activation_function[2].(W_in*y+W*(reset_gate.*x))
-    update_gate.*update + (1 .- update_gate) .*x
+#W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. (left our notation)
+#fully gated gru
+function obtain_gru_state(variant::FullyGated, gru, x, y, W, W_in)
+
+    update_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
+    reset_gate = gru.activation_function[2].(gru.Wr_in*y + gru.Wr*x+gru.br)
+
+    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x)+gru.bh)
+    (1 .- update_gate) .*x + update_gate.*update
 end
+
+#variant 1
+function obtain_gru_state(variant::Variant1, gru, x, y, W, W_in)
+
+    update_gate = gru.activation_function[1].(gru.Wz*x + gru.bz)
+    reset_gate = gru.activation_function[2].(gru.Wr*x+gru.br)
+
+    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x)+gru.bh)
+    (1 .- update_gate) .*x + update_gate.*update
+end
+
+#variant2
+function obtain_gru_state(variant::Variant2, gru, x, y, W, W_in)
+
+    update_gate = gru.activation_function[1].(gru.Wz*x)
+    reset_gate = gru.activation_function[2].(gru.Wr*x)
+
+    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x)+gru.bh)
+    (1 .- update_gate) .*x + update_gate.*update
+end
+
+#variant 3
+function obtain_gru_state(variant::Variant3, gru, x, y, W, W_in)
+
+    update_gate = gru.activation_function[1].(gru.bz)
+    reset_gate = gru.activation_function[2].(gru.br)
+
+    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x)+gru.bh)
+    (1 .- update_gate) .*x + update_gate.*update
+end
+
+#=
+#TODO minimal
+function obtain_gru_state(variant::Minimal, gru, x, y, W, W_in)
+
+    forget_gate = gru.activation_function[1].()
+    update_gate = gru.activation_function[1].(gru.Wz*x + gru.bz)
+    reset_gate = gru.activation_function[2].(gru.Wr*x+gru.br)
+
+    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x))
+    (1 .- update_gate) .*x + update_gate.*update
+end
+=#
