@@ -22,6 +22,8 @@ abstract type AbstractOutputLayer end
 abstract type AbstractLinearModel end
 abstract type AbstractGaussianProcess end
 abstract type AbstractSupportVector end
+abstract type AbstractGRUVariant end
+
 
 #general output layer struct
 struct OutputLayer{T,I,S} <: AbstractOutputLayer
@@ -62,7 +64,7 @@ include("esn/esn_input_layers.jl")
 export create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer
 BernoulliSample, IrrationalSample
 include("esn/esn_reservoir_drivers.jl")
-export next_state, create_states, RNN
+export next_state, create_states, RNN, GRU, GRUParams, Variant1, Variant2, Variant3, Minimal
 include("esn/esn_reservoirs.jl")
 export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
 DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
