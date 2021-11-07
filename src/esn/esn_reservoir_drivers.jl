@@ -26,7 +26,7 @@ function RNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=le
     RNN(activation_function, leaky_coefficient, scaling_factor)
 end
 
-function reservoir_driver_params(rnn::RNN, args..)
+function reservoir_driver_params(rnn::RNN, args...)
     rnn
 end
 
@@ -65,24 +65,24 @@ Return a Gated Recurrent Unit [1] reservoir driver.
 
 [1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
 """
-function GRU(;activation_function=[sigmoid, sigmoid, tanh], #has to be a voctor of size 3
+function GRU(;activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh], #has to be a voctor of size 3
               layer_init = fill(DenseLayer(), 5), #has to be a vector of size 5
-              reservoir_init = fill(RandSparseReservoir(), 2) #has to be a vector of size 2
+              reservoir_init = fill(RandSparseReservoir(), 2), #has to be a vector of size 2
               variant = FullyGated())
 
-    GRU(activation_function, layer_init, variant)
+    GRU(activation_function, layer_init, reservoir_init, variant)
 end
 
 #the actual params are only available inside ESN(), so a different driver is needed
-struct GRUParams{F,V,S,I,N,T} <: AbstractReservoirDriver
+struct GRUParams{F,V,S,I,N,SF,IF,NF,T} <: AbstractReservoirDriver
     activation_function::F
     variant::V
     Wz_in::S
     Wz::I
     bz::N
-    Wr_in::S
-    Wr::I
-    br::N
+    Wr_in::SF
+    Wr::IF
+    br::NF
     bh::T
 end
 
@@ -105,7 +105,7 @@ function create_gru_layers(gru, variant::FullyGated, res_size, in_size)
 
     bh = create_layer(res_size, 1, gru.layer_init[5])
 
-    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+    GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 function create_gru_layers(gru, variant::Variant1, res_size, in_size)
@@ -147,6 +147,22 @@ function create_gru_layers(gru, variant::Variant3, res_size, in_size)
     Wr_in = nothing
     Wr = nothing
     br = create_layer(res_size, 1, gru.layer_init[2])
+
+    bh = create_layer(res_size, 1, gru.layer_init[3])
+
+    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+end
+
+#check this one, not sure
+function create_gru_layers(gru, variant::Minimal, res_size, in_size)
+
+    Wz_in = create_layer(res_size, in_size, gru.layer_init[1])
+    Wz = create_reservoir(res_size, gru.reservoir_init[1])
+    bz = create_layer(res_size, 1, gru.layer_init[2])
+
+    Wr_in = nothing
+    Wr = nothing
+    br = nothing
 
     bh = create_layer(res_size, 1, gru.layer_init[3])
 
@@ -211,8 +227,6 @@ end
 function obtain_gru_state(variant::Minimal, gru, x, y, W, W_in)
 
     forget_gate = gru.activation_function[1].()
-    update_gate = gru.activation_function[1].(gru.Wz*x + gru.bz)
-    reset_gate = gru.activation_function[2].(gru.Wr*x+gru.br)
 
     update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x))
     (1 .- update_gate) .*x + update_gate.*update

@@ -9,6 +9,7 @@ using Optim
 using Distributions
 using Statistics
 using Distances
+using NNlib
 
 #define global types
 abstract type AbstractReservoirComputer end
