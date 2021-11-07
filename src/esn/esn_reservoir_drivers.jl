@@ -120,7 +120,7 @@ function create_gru_layers(gru, variant::Variant1, res_size, in_size)
 
     bh = create_layer(res_size, 1, gru.layer_init[3])
 
-    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+    GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 function create_gru_layers(gru, variant::Variant2, res_size, in_size)
@@ -135,7 +135,7 @@ function create_gru_layers(gru, variant::Variant2, res_size, in_size)
 
     bh = create_layer(res_size, 1, gru.layer_init[1])
 
-    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+    GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 function create_gru_layers(gru, variant::Variant3, res_size, in_size)
@@ -150,7 +150,7 @@ function create_gru_layers(gru, variant::Variant3, res_size, in_size)
 
     bh = create_layer(res_size, 1, gru.layer_init[3])
 
-    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+    GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 #check this one, not sure
@@ -166,7 +166,7 @@ function create_gru_layers(gru, variant::Minimal, res_size, in_size)
 
     bh = create_layer(res_size, 1, gru.layer_init[3])
 
-    GRUParams(activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
+    GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
 
 #in case the user wants to use this driver
@@ -222,13 +222,12 @@ function obtain_gru_state(variant::Variant3, gru, x, y, W, W_in)
     (1 .- update_gate) .*x + update_gate.*update
 end
 
-#=
-#TODO minimal
+
+#minimal
 function obtain_gru_state(variant::Minimal, gru, x, y, W, W_in)
 
-    forget_gate = gru.activation_function[1].()
+    forget_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
 
-    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x))
-    (1 .- update_gate) .*x + update_gate.*update
+    update = gru.activation_function[2].(W_in*y+W*(forget_gate.*x)+gru.bh)
+    (1 .- forget_gate) .*x + forget_gate.*update
 end
-=#
