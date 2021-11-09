@@ -10,11 +10,13 @@ using Distributions
 using Statistics
 using Distances
 using NNlib
+using CellularAutomata
 
 #define global types
 abstract type AbstractReservoirComputer end
 abstract type AbstractPrediction end
 abstract type NonLinearAlgorithm end
+#should probably move some of these
 abstract type AbstractVariation end
 abstract type AbstractLayer end
 abstract type AbstractReservoirDriver end
@@ -56,9 +58,19 @@ end
 
 
 #import/export
+#general
 include("nla.jl")
 export nla, NLADefault, NLAT1, NLAT2, NLAT3
 
+#general training
+include("train/linear_regression.jl")
+export _train, StandardRidge, LinearModel
+include("train/gaussian_regression.jl")
+export _train, GaussianProcess
+include("train/supportvector_regression.jl")
+export _train
+
+#esn
 include("esn/echostatenetwork.jl")
 export ESN, Standard, Hybrid
 include("esn/esn_input_layers.jl")
@@ -74,12 +86,15 @@ export train
 include("esn/esn_predict.jl")
 export obtain_autonomous_prediction, obtain_direct_prediction
 
-include("train/linear_regression.jl")
-export _train, StandardRidge, LinearModel
-include("train/gaussian_regression.jl")
-export _train, GaussianProcess
-include("train/supportvector_regression.jl")
-export _train
+#reca
+include("reca/reca.jl")
+export RECA
+include("reca/reca_input_encodings.jl")
+export 
+include("reca/reca_train.jl")
+export train
+
+
 
 export Autonomous, Direct, OutputLayer, Fitted
 

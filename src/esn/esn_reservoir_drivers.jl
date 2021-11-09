@@ -1,4 +1,4 @@
-function create_states(reservoir_driver::AbstractReservoirDriver, variation, train_data, reservoir_matrix, input_matrix)
+function create_states(reservoir_driver::AbstractReservoirDriver, train_data, reservoir_matrix, input_matrix)
 
     train_len = size(train_data, 2)
     res_size = size(reservoir_matrix, 1)
