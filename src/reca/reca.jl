@@ -17,12 +17,13 @@ end
 """
 function RECA(train_data,
     automata;
+    generations = 8,
     input_encoding=RandomMapping(),
-    nla_type = NLADefault()) 
+    nla_type = NLADefault())
     
     in_size = size(train_data, 1)
     res_size = obtain_res_size(input_encoding, generations)
-    states = create_states(input_encoding, automata, generations, input_data)
+    states = create_states(input_encoding, automata, generations, train_data)
     
     RECA(res_size, train_data, automata, input_encoding, nla_type, states)
 end

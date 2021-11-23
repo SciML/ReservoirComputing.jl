@@ -15,7 +15,7 @@ end
 
 function create_states(rm::RandomMapping, automata, generations, input_data)
     
-    input_size = size(input_data, 1)
+    in_size = size(input_data, 1)
     train_time = size(input_data, 2)
     
     maps = init_maps(in_size, rm.permutations, rm.expansion_size)
@@ -25,9 +25,9 @@ function create_states(rm::RandomMapping, automata, generations, input_data)
     for i=1:train_time
         init_ca = encoding(rm, input_data[:,i], init_ca, maps)
         ca = CellularAutomaton(automata, init_ca, generations+1)
-        ca_states = ca.cells[2:end ,:]
-        states[:,i] = reshape(transpose(ca_states), generations*expansion_size*permutations)
-        init_ca = ca.cells[end, :]
+        ca_states = ca.evolution[2:end ,:]
+        states[:,i] = reshape(transpose(ca_states), generations*rm.expansion_size*rm.permutations)
+        init_ca = ca.evolution[end, :]
     end
     states
 end

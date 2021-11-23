@@ -90,7 +90,7 @@ export obtain_autonomous_prediction, obtain_direct_prediction
 include("reca/reca.jl")
 export RECA
 include("reca/reca_input_encodings.jl")
-export 
+export RandomMapping
 include("reca/reca_train.jl")
 export train
 
