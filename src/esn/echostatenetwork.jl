@@ -1,6 +1,5 @@
-
 abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
-struct ESN{I,S,V,N,T,O,M,IS} <: AbstractEchoStateNetwork
+struct ESN{I,S,V,N,T,O,M,ST,IS} <: AbstractEchoStateNetwork
     res_size::I
     train_data::S
     variation::V
@@ -8,9 +7,10 @@ struct ESN{I,S,V,N,T,O,M,IS} <: AbstractEchoStateNetwork
     input_matrix::T
     reservoir_driver::O 
     reservoir_matrix::M
-    extended_states::Bool
+    states_type::ST
     states::IS
 end
+
 
 """
     Default()
@@ -53,7 +53,7 @@ function ESN(input_res_size, train_data;
              reservoir_init = RandSparseReservoir(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
-             extended_states = false)
+             states_type = StandardStates())
 
     variation isa Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
@@ -64,31 +64,53 @@ function ESN(input_res_size, train_data;
     states = create_states(inner_reservoir_driver, train_data, reservoir_matrix, input_matrix)
 
     ESN(res_size, train_data, variation, nla_type, input_matrix, inner_reservoir_driver, 
-        reservoir_matrix, extended_states, states)
+        reservoir_matrix, states_type, states)
 end
 
-function (esn::ESN)(aut::Autonomous, output_layer::AbstractOutputLayer)
 
-    output = obtain_autonomous_prediction(esn, output_layer, aut.prediction_len, 
-                                          output_layer.training_method, esn.variation) #dispatch on prediction type -> just obtain_prediction()
-    output
-end
+function (esn::ESN)(prediction,
+    output_layer::AbstractOutputLayer;
+    initial_conditions=output_layer.last_value,
+    last_state=esn.states[:, end])
 
-function (esn::ESN)(direct::Direct, output_layer::AbstractOutputLayer)
+    variation = esn.variation
 
-    output = obtain_direct_prediction(esn, output_layer, direct.prediction_data, 
-                                      output_layer.training_method, esn.variation) 
-    output
-end
-
-function (esn::ESN)(fitted::Fitted, output_layer::AbstractOutputLayer)
-    if fitted.type == Direct
-        output = obtain_direct_prediction(esn, output_layer, esn.train_data, 
-                                          output_layer.training_method, esn.variation)
-    elseif fitted.type == Autonomous #need to change actual starting state I think
-        prediction_len = size(esn.states, 2)
-        output = obtain_autonomous_prediction(esn, output_layer, prediction_len, 
-                                              output_layer.training_method, esn.variation)
+    if variation isa Hybrid
+        predict_tsteps = [variation.tspan[2]+variation.dt]
+        [append!(predict_tsteps, predict_tsteps[end]+variation.dt) for i in 1:prediction.prediction_len]
+        tspan_new = (variation.tspan[2]+variation.dt, predict_tsteps[end])
+        u0 = variation.model_data[:, end]
+        model_prediction_data = variation.prior_model(u0, tspan_new, predict_tsteps)[:, 2:end]
+        return obtain_prediction(esn, prediction, last_state, output_layer, model_prediction_data; initial_conditions=initial_conditions)
+    else 
+        return obtain_prediction(esn, prediction, last_state, output_layer; initial_conditions=initial_conditions)
     end
-    output
+end
+
+#training dispatch on esn
+function train(esn::AbstractEchoStateNetwork, target_data, training_method=StandardRidge(0.0))
+
+    esn.variation isa Hybrid ? states = vcat(esn.states, esn.variation.model_data[:, 2:end]) : states=esn.states
+    states_new = esn.states_type(esn.nla_type, states, esn.train_data[:,1:end])
+
+    _train(states_new, target_data, training_method)
+end
+
+#prediction dispatch on esn 
+function next_state_prediction!(esn::ESN, x, out, i, args...)
+    _variation_prediction!(esn.variation, esn, x, out, i, args...)
+end
+
+#dispatch the prediction on the esn variation
+function _variation_prediction!(variation, esn, x, out, i, args...)
+    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, esn.input_matrix)
+    x_new = esn.states_type(esn.nla_type, x, out)
+    x, x_new
+end
+
+function _variation_prediction!(variation::Hybrid, esn, x, out, i, model_prediction_data)
+    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, esn.input_matrix)
+    x_tmp = vcat(x, model_prediction_data[:,i])
+    x_new = esn.states_type(esn.nla_type, x_tmp, out)
+    x, x_new
 end

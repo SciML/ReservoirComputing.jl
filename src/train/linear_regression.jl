@@ -17,7 +17,7 @@ end
 function _train(states, target_data, sr::StandardRidge=StandardRidge(0.0))
     out_size = size(target_data, 1)
     output_layer = (target_data*states')*inv(add_reg(states*states', sr.regularization_coeff))
-    OutputLayer(sr, output_layer, out_size)
+    OutputLayer(sr, output_layer, out_size, target_data[:,end])
 end
 
 function add_reg(X, beta)
@@ -50,5 +50,5 @@ function _train(states, target_data, linear::LinearModel)
         output_layer[i,:] = MLJLinearModels.fit(regressor, states', 
         target_data[i,:], solver = linear.solver)
     end
-    OutputLayer(linear, output_layer, out_size)
+    OutputLayer(linear, output_layer, out_size, target_data[:,end])
 end

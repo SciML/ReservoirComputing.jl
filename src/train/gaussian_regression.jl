@@ -22,5 +22,5 @@ function _train(states, target_data, gp::GaussianProcess)
         push!(output_matrix, GP(states, target, gp.mean, gp.kernel, gp.lognoise))
         gp.optimize ? optimize!(output_matrix[i]; method=gp.optimizer) : nothing
     end
-    OutputLayer(gp, output_matrix, out_size)
+    OutputLayer(gp, output_matrix, out_size, target_data[:,end])
 end
