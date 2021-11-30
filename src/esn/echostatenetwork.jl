@@ -109,8 +109,9 @@ function _variation_prediction!(variation, esn, x, out, i, args...)
 end
 
 function _variation_prediction!(variation::Hybrid, esn, x, out, i, model_prediction_data)
-    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, esn.input_matrix)
+    out_tmp = vcat(out, model_prediction_data[:,i])
+    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out_tmp, esn.reservoir_matrix, esn.input_matrix)
     x_tmp = vcat(x, model_prediction_data[:,i])
-    x_new = esn.states_type(esn.nla_type, x_tmp, out)
+    x_new = esn.states_type(esn.nla_type, x_tmp, out_tmp)
     x, x_new
 end
