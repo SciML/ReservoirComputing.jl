@@ -121,11 +121,9 @@ DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReser
 
 #reca
 include("reca/reca.jl")
-export RECA
+export RECA, train, next_state_prediction
 include("reca/reca_input_encodings.jl")
-export RandomMapping
-include("reca/reca_train.jl")
-export train
+export RandomMapping, RandomMaps
 
 
 
