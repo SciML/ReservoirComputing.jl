@@ -20,12 +20,14 @@ struct RandomMaps{T,E,G,M,S} <: AbstractEncodingData
     generations::G
     maps::M
     states_size::S
+    ca_size::S
 end
 
 function create_encoding(rm::RandomMapping, input_data, generations)
     maps = init_maps(size(input_data, 1), rm.permutations, rm.expansion_size)
     states_size = generations*rm.expansion_size*rm.permutations
-    RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size)
+    ca_size = rm.expansion_size*rm.permutations
+    RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size, ca_size)
 end
 
 
@@ -41,7 +43,7 @@ function reca_create_states(rm::RandomMaps, automata, input_data)
         init_ca = encoding(rm, input_data[:,i], init_ca)
         ca = CellularAutomaton(automata, init_ca, rm.generations+1)
         ca_states = ca.evolution[2:end ,:]
-        states[:,i] = reshape(transpose(ca_states), rm.generations*rm.expansion_size*rm.permutations)
+        states[:,i] = reshape(transpose(ca_states), rm.states_size)
         init_ca = ca.evolution[end, :]
     end
     states
