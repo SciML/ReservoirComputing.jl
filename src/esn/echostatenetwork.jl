@@ -57,9 +57,9 @@ function ESN(input_res_size, train_data;
 
     variation isa Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
-    input_matrix = create_layer(input_res_size, in_size, input_init)
+    input_matrix = create_layer(input_init, input_res_size, in_size)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
-    reservoir_matrix = create_reservoir(res_size, reservoir_init)
+    reservoir_matrix = create_reservoir(reservoir_init, res_size)
     inner_reservoir_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_reservoir_driver, train_data, reservoir_matrix, input_matrix)
 

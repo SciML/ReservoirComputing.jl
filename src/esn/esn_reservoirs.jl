@@ -8,7 +8,7 @@ function RandSparseReservoir(;radius=1.0, sparsity::Float64=0.1)
     RandSparseReservoir(radius, sparsity)
 end
 
-function create_reservoir(res_size, reservoir::RandSparseReservoir)
+function create_reservoir(reservoir::RandSparseReservoir, res_size)
     reservoir_matrix = Matrix(sprand(Float64, res_size, res_size, reservoir.sparsity))
     reservoir_matrix = 2.0 .*(reservoir_matrix.-0.5)
     replace!(reservoir_matrix, -1.0=>0.0)
@@ -55,7 +55,7 @@ function PseudoSVDReservoir(max_value, sparsity; sorted=true, reverse_sort=false
     PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
 end
 
-function create_reservoir(res_size, reservoir::PseudoSVDReservoir)
+function create_reservoir(reservoir::PseudoSVDReservoir, res_size)
     reservoir_matrix = create_diag(res_size, reservoir.max_value, sorted = reservoir.sorted, reverse_sort = reservoir.reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
 
@@ -123,7 +123,7 @@ function DelayLineReservoir(;weight=0.1)
     DelayLineReservoir(weight)
 end
 
-function create_reservoir(res_size, reservoir::DelayLineReservoir)
+function create_reservoir(reservoir::DelayLineReservoir, res_size)
 
     reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
@@ -152,7 +152,7 @@ function DelayLineBackwardReservoir(;weight=0.1, fb_weight=0.2)
     DelayLineBackwardReservoir(weight, fb_weight)
 end
 
-function create_reservoir(res_size, reservoir::DelayLineBackwardReservoir)
+function create_reservoir(reservoir::DelayLineBackwardReservoir, res_size)
 
     reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
@@ -180,7 +180,7 @@ function SimpleCycleReservoir(;weight=0.1)
     SimpleCycleReservoir(weight)
 end
 
-function create_reservoir(res_size, reservoir::SimpleCycleReservoir)
+function create_reservoir(reservoir::SimpleCycleReservoir, res_size)
 
     reservoir_matrix = zeros(Float64, res_size, res_size)
     for i=1:res_size-1
@@ -211,7 +211,7 @@ function CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1, jump_size=3)
     CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)
 end
 
-function create_reservoir(res_size, reservoir::CycleJumpsReservoir)
+function create_reservoir(reservoir::CycleJumpsReservoir, res_size)
 
     reservoir_matrix = zeros(res_size, res_size)
     for i=1:res_size-1
@@ -230,10 +230,4 @@ function create_reservoir(res_size, reservoir::CycleJumpsReservoir)
         reservoir_matrix[tmp, i] = reservoir.jump_weight
     end
     reservoir_matrix
-end
-
-struct NullReservoir <: AbstractReservoir end
-
-function create_reservoir(res_size, reservoir::NullReservoir)
-    zeros(res_size, res_size)
 end

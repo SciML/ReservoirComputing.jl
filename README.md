@@ -5,21 +5,21 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/)
 
 
-![rc_full_logo_large_white](https://user-images.githubusercontent.com/10376688/144241447-1b21d638-8568-4579-8e65-cb493b59e073.png)
+![rc_full_logo_large_white_cropped](https://user-images.githubusercontent.com/10376688/144242116-8243f58a-5ac6-4e0e-88d5-3409f00e20b4.png)
 
-ReservoirComputing.jl provides and easy, efficient and modular implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) to take a look at at not yet released features.
+ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) to take a look at at not yet released features.
 
 ## Quick Example
 
-For a quick example we will showcase how it is possible to train an ESN to learn the dynamics of the Lorenz system:
+To illustrate the workflow of this library we will showcase how it is possible to train an ESN to learn the dynamics of the Lorenz system. As a first step we will need to gather the data. For the `Generative` prediction we need the target data to be one step ahead of the training data:
 ```julia
-using OrdinaryDiffEq
-using ReservoirComputing
+using ReservoirComputing, OrdinaryDiffEq
 
 #lorenz system parameters
 u0 = [1.0,0.0,0.0]                       
 tspan = (0.0,200.0)                      
 p = [10.0,28.0,8/3]
+
 #define lorenz system
 function lorenz(du,u,p,t)
     du[1] = p[1]*(u[2]-u[1])
@@ -33,11 +33,13 @@ data = solve(prob, ABM54(), dt=0.02)
 shift = 300
 train_len = 5000
 predict_len = 1250
+
+#one step ahead for generative prediction
 input_data = data[:, shift:shift+train_len-1]
 target_data = data[:, shift+1:shift+train_len]
 
 ```
-Now that we have the data we can initialize the ESN with the chosen parameters:
+Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
 ```julia
 res_size = 300
 esn = ESN(res_size, input_data; 
@@ -46,13 +48,13 @@ esn = ESN(res_size, input_data;
           nla_type = NLAT2())
 ```
 
-The echo state network can now be trained and tested:
+The echo state network can now be trained and tested. If not specified, the training will always be Ordinary Least Squares regression. The full range of training methods is detailed in the documentation.
 ```julia
 output_layer = train(esn, target_data)
 output = esn(Generative(predict_len), output_layer)
 ```
 
-where `ouput` is the matrix with the predicted trajectories that can be easily plotted:
+The data is returned as a matrix, `ouput` in the code above, that contains the predicted trajectories. The results can now be easily plotted:
 ```julia
 using Plots
 plot(transpose(output),layout=(3,1), label="predicted")

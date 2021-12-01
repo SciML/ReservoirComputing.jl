@@ -20,7 +20,7 @@ function WeightedLayer(; scaling=0.1)
     WeightedLayer(scaling)
 end
 
-function create_layer(approx_res_size, in_size, input_layer::WeightedLayer)
+function create_layer(input_layer::WeightedLayer, approx_res_size, in_size)
 
     res_size = Int(floor(approx_res_size/in_size)*in_size)
     input_matrix = zeros(res_size, in_size)
@@ -55,7 +55,7 @@ end
 Returns a res_size times in_size input layer, constructed accordingly to the ```input_layer``` 
 constructor
 """
-function create_layer(res_size, in_size, input_layer::DenseLayer)
+function create_layer(input_layer::DenseLayer, res_size, in_size)
 
     rand(Uniform(-input_layer.scaling, input_layer.scaling), res_size, in_size)
 end
@@ -83,7 +83,7 @@ function SparseLayer(scaling_arg; scaling=scaling_arg, sparsity=0.1)
     SparseLayer(scaling, sparsity)
 end
 
-function create_layer(res_size, in_size, input_layer::SparseLayer)
+function create_layer(input_layer::SparseLayer, res_size, in_size)
 
     input_matrix = Matrix(sprand(res_size, in_size, input_layer.sparsity))
     input_matrix = 2.0 .*(input_matrix.-0.5)
@@ -152,12 +152,12 @@ function MinimumLayer(; weight=0.1, sampling=BernoulliSample(0.5))
     MinimumLayer(weight, sampling)
 end
 
-function create_layer(res_size, in_size, input_layer::MinimumLayer)
+function create_layer(input_layer::MinimumLayer, res_size, in_size)
 
-    input_matrix = create_minimum_input(res_size, in_size, input_layer.weight, input_layer.sampling)
+    input_matrix = create_minimum_input(input_layer.sampling, res_size, in_size, input_layer.weight)
 end
 
-function create_minimum_input(res_size, in_size, weight, sampling::BernoulliSample)
+function create_minimum_input(sampling::BernoulliSample, res_size, in_size, weight)
     input_matrix = zeros(res_size, in_size)
     for i=1:res_size
         for j=1:in_size
@@ -167,7 +167,7 @@ function create_minimum_input(res_size, in_size, weight, sampling::BernoulliSamp
     input_matrix
 end
 
-function create_minimum_input(res_size, in_size, weight, sampling::IrrationalSample)
+function create_minimum_input(sampling::IrrationalSample, res_size, in_size, weight)
 
     setprecision(BigFloat, Int(ceil(log2(10)*(res_size*in_size+sampling.start+1))))
     ir_string = string(BigFloat(sampling.irrational)) |> collect
@@ -209,7 +209,7 @@ function InformedLayer(model_in_size; scaling=0.1, gamma=0.5)
     InformedLayer(scaling, gamma, model_in_size)
 end
 
-function create_layer(res_size, in_size, input_layer::InformedLayer)
+function create_layer(input_layer::InformedLayer, res_size, in_size)
 
     state_size = in_size - input_layer.model_in_size
     if state_size <= 0
@@ -239,8 +239,3 @@ function create_layer(res_size, in_size, input_layer::InformedLayer)
     input_matrix
 end
 
-struct NullLayer <: AbstractLayer end
-
-function create_layer(res_size, in_size, input_layer::NullLayer)
-    zeros(res_size, in_size)
-end

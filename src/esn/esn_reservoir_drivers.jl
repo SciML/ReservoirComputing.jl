@@ -59,7 +59,7 @@ struct Minimal <: AbstractGRUVariant end
 
 #layer_init and activation_function must be vectors
 """
-    GRU(])
+    GRU()
 
 Return a Gated Recurrent Unit [1] reservoir driver.
 
