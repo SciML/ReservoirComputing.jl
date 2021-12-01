@@ -5,9 +5,9 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/)
 
 
-![rc_full_logo_large](https://user-images.githubusercontent.com/10376688/144238720-af14a409-7dc0-4407-be31-a931a206db19.png)
+![rc_full_logo_large_white](https://user-images.githubusercontent.com/10376688/144241447-1b21d638-8568-4579-8e65-cb493b59e073.png)
 
-ReservoirComputing.jl provides and easy, efficient and modular implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) for looking at not yet released features.
+ReservoirComputing.jl provides and easy, efficient and modular implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) to take a look at at not yet released features.
 
 ## Quick Example
 
@@ -48,7 +48,7 @@ esn = ESN(res_size, input_data;
 
 The echo state network can now be trained and tested:
 ```julia
-output_layer = train(esn, target_data
+output_layer = train(esn, target_data)
 output = esn(Generative(predict_len), output_layer)
 ```
 
