@@ -49,7 +49,7 @@ end
 """
 function ESN(input_res_size, train_data;
              variation = Default(),
-             input_init = WeightedLayer(),
+             input_init = DenseLayer(),
              reservoir_init = RandSparseReservoir(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),

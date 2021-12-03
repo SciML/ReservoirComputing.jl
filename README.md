@@ -38,6 +38,8 @@ predict_len = 1250
 input_data = data[:, shift:shift+train_len-1]
 target_data = data[:, shift+1:shift+train_len]
 
+test = data[:,shift+train_len:shift+train_len+predict_len-1]
+
 ```
 Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
 ```julia
@@ -58,13 +60,13 @@ The data is returned as a matrix, `ouput` in the code above, that contains the p
 ```julia
 using Plots
 plot(transpose(output),layout=(3,1), label="predicted")
-plot!(transpose(target_data),layout=(3,1), label="actual")
+plot!(transpose(test),layout=(3,1), label="actual")
 ```
 ![lorenz_coord](https://user-images.githubusercontent.com/10376688/81470264-42f5c800-91ea-11ea-98a2-a8a8d7d96155.png)
 
 One can also visualize the phase space of the attractor and the comparison with the actual one:
 ```julia
 plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], label="predicted")
-plot!(transpose(target_data)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
+plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
 ```
 ![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)
