@@ -12,8 +12,8 @@ function obtain_prediction(rc::AbstractReservoirComputer,
 
     for i=1:prediction_len
         x, x_new = next_state_prediction!(rc, x, out, i, args...)
-        out = get_prediction(output_layer.training_method, output_layer, x_new)
-        store_results!(output_layer.training_method, out, output, i)
+        out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
+        out = store_results!(output_layer.training_method, out_tmp, output, i)
     end
     output
 end
@@ -31,8 +31,8 @@ function obtain_prediction(rc::AbstractReservoirComputer,
 
     for i=1:prediction_len
         x, x_new = next_state_prediction!(rc, x, prediction.prediction_data[:,i], i, args...)
-        out = get_prediction(output_layer.training_method, output_layer, x_new)
-        store_results!(output_layer.training_method, out, output, i)
+        out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
+        out = store_results!(output_layer.training_method, out_tmp, output, i)
     end
     output
 end
@@ -47,11 +47,12 @@ function get_prediction(training_method::AbstractGaussianProcess, output_layer, 
     out, sigma = zeros(output_layer.out_size), zeros(output_layer.out_size)
 
     for j=1:output_layer.out_size
+        x_new = reshape(x, length(x), 1)
         gr = GaussianProcesses.predict_y(output_layer.output_matrix[j], x_new)
         out[j] = gr[1][1]
         sigma[j] = gr[2][1]
     end
-    out, sigma
+    (out, sigma)
 end
 
 #support vector regression
@@ -59,6 +60,7 @@ function get_prediction(training_method::LIBSVM.AbstractSVR, output_layer, x)
     out = zeros(output_layer.out_size)
 
     for i=1:output_layer.out_size
+        x_new = reshape(x, 1, length(x))
         out[i] = LIBSVM.predict(output_layer.output_matrix[i], x_new)[1]
     end
     out
@@ -78,9 +80,11 @@ end
 function store_results!(training_method::AbstractGaussianProcess, out, output, i)
     output[1][:, i] = out[1]
     output[2][:, i] = out[2]
+    out[1]
 end
 
 #general storing -> single matrix
 function store_results!(training_method, out, output, i)
     output[:, i] = out
+    out
 end

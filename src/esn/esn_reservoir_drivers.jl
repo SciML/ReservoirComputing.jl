@@ -95,15 +95,15 @@ end
 #dispatch on the differenct gru variations
 function create_gru_layers(gru, variant::FullyGated, res_size, in_size)
 
-    Wz_in = create_layer(res_size, in_size, gru.layer_init[1])
-    Wz = create_reservoir(res_size, gru.reservoir_init[1])
-    bz = create_layer(res_size, 1, gru.layer_init[2])
+    Wz_in = create_layer(gru.layer_init[1], res_size, in_size)
+    Wz = create_reservoir(gru.reservoir_init[1], res_size)
+    bz = create_layer(gru.layer_init[2], res_size, 1)
 
-    Wr_in = create_layer(res_size, in_size, gru.layer_init[3])
-    Wr = create_reservoir(res_size, gru.reservoir_init[2])
-    br = create_layer(res_size, 1, gru.layer_init[4])
+    Wr_in = create_layer(gru.layer_init[3], res_size, in_size)
+    Wr = create_reservoir(gru.reservoir_init[2], res_size)
+    br = create_layer(gru.layer_init[4], res_size, 1)
 
-    bh = create_layer(res_size, 1, gru.layer_init[5])
+    bh = create_layer(gru.layer_init[5], res_size, 1)
 
     GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
@@ -111,14 +111,14 @@ end
 function create_gru_layers(gru, variant::Variant1, res_size, in_size)
 
     Wz_in = nothing
-    Wz = create_reservoir(res_size, gru.reservoir_init[1])
-    bz = create_layer(res_size, 1, gru.layer_init[2])
+    Wz = create_reservoir(gru.reservoir_init[1], res_size)
+    bz = create_layer(gru.layer_init[2], res_size, 1)
 
     Wr_in = nothing
-    Wr = create_reservoir(res_size, gru.reservoir_init[2])
-    br = create_layer(res_size, 1, gru.layer_init[2])
+    Wr = create_reservoir(gru.reservoir_init[2], res_size)
+    br = create_layer(gru.layer_init[2], res_size, 1)
 
-    bh = create_layer(res_size, 1, gru.layer_init[3])
+    bh = create_layer(gru.layer_init[3], res_size, 1)
 
     GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
@@ -126,14 +126,14 @@ end
 function create_gru_layers(gru, variant::Variant2, res_size, in_size)
 
     Wz_in = nothing
-    Wz = create_reservoir(res_size, gru.reservoir_init[1])
+    Wz = create_reservoir(gru.reservoir_init[1], res_size)
     bz = nothing
 
     Wr_in = nothing
-    Wr = create_reservoir(res_size, gru.reservoir_init[2])
+    Wr = create_reservoir(gru.reservoir_init[2], res_size)
     br = nothing
 
-    bh = create_layer(res_size, 1, gru.layer_init[1])
+    bh = create_layer(gru.layer_init[1], res_size, 1)
 
     GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
@@ -142,13 +142,13 @@ function create_gru_layers(gru, variant::Variant3, res_size, in_size)
 
     Wz_in = nothing
     Wz = nothing
-    bz = create_layer(res_size, 1, gru.layer_init[1])
+    bz = create_layer(gru.layer_init[1], res_size, 1)
 
     Wr_in = nothing
     Wr = nothing
-    br = create_layer(res_size, 1, gru.layer_init[2])
+    br = create_layer(gru.layer_init[2], res_size, 1)
 
-    bh = create_layer(res_size, 1, gru.layer_init[3])
+    bh = create_layer(gru.layer_init[3], res_size, 1)
 
     GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
@@ -156,15 +156,15 @@ end
 #check this one, not sure
 function create_gru_layers(gru, variant::Minimal, res_size, in_size)
 
-    Wz_in = create_layer(res_size, in_size, gru.layer_init[1])
-    Wz = create_reservoir(res_size, gru.reservoir_init[1])
-    bz = create_layer(res_size, 1, gru.layer_init[2])
+    Wz_in = create_layer(gru.layer_init[1], res_size, in_size)
+    Wz = create_reservoir(gru.reservoir_init[1], res_size)
+    bz = create_layer(gru.layer_init[2], res_size, 1)
 
     Wr_in = nothing
     Wr = nothing
     br = nothing
 
-    bh = create_layer(res_size, 1, gru.layer_init[3])
+    bh = create_layer(gru.layer_init[3], res_size, 1)
 
     GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br, bh)
 end
