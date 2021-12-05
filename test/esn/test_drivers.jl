@@ -1,4 +1,4 @@
-using ReservoirComputing, Random, Statistics
+using ReservoirComputing, Random, Statistics, NNlib
 
 const res_size=20
 const ts = 0.:0.1:50.0
@@ -9,6 +9,7 @@ const target_data = reduce(hcat, data[2:train_len])
 const predict_len = 100
 const test = reduce(hcat, data[train_len+1:train_len+predict_len])
 
+#gru variations
 variants = [FullyGated(), Variant1(), Variant2(), Variant3(), Minimal()]
 for v in variants
     Random.seed!(77)
@@ -20,3 +21,12 @@ for v in variants
     output = esn(Predictive(target_data), output_layer, initial_conditions=target_data[1])
     @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.11
 end
+
+#multiple rnn
+Random.seed!(77)
+esn = ESN(res_size, input_data; 
+        reservoir_init=RandSparseReservoir(1.2, 0.1),
+        reservoir_driver = MRNN(activation_function=(tanh, sigmoid), scaling_factor=(0.8, 0.1)))
+output_layer = train(esn, target_data)
+output = esn(Predictive(target_data), output_layer, initial_conditions=target_data[1])
+@test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.11

@@ -6,6 +6,9 @@ using SafeTestsets
     @safetestset "ESN Reservoirs" begin include("esn/test_reservoirs.jl") end
     @safetestset "ESN States" begin include("esn/test_states.jl") end
     @safetestset "ESN Train and Predict" begin include("esn/test_train.jl") end
-    @safetestset "ESN GRU" begin include("esn/test_gru.jl") end
+    @safetestset "ESN Drivers" begin include("esn/test_drivers.jl") end
+end
 
+@testset "Reservoir Computing with Cellular Automata tests" begin
+    @safetestset "RECA" begin include("reca/test_predictive.jl") end
 end

@@ -13,17 +13,13 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, re
 end
 
 #standard RNN driver
-struct RNN{F,T,R} <: AbstractReservoirDriver
+struct RNN{F,T} <: AbstractReservoirDriver
     activation_function::F
     leaky_coefficient::T
-    scaling_factor::R
 end
 
-function RNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
-    if length(scaling_factor) > 1
-        @assert length(activation_function) == length(scaling_factor)
-    end
-    RNN(activation_function, leaky_coefficient, scaling_factor)
+function RNN(;activation_function=tanh, leaky_coefficient=1.0)
+    RNN(activation_function, leaky_coefficient)
 end
 
 function reservoir_driver_params(rnn::RNN, args...)
@@ -32,15 +28,34 @@ end
 
 function next_state(rnn::RNN, x, y, W, W_in)
     rnn_next_state = (1-rnn.leaky_coefficient).*x
-    if length(rnn.scaling_factor) > 1
-        for i in rnn.scaling_factor
-            rnn_next_state += rnn.scaling_factor[i]*rnn.activation_function[i].((W*x)+(W_in*y))
-        end
-    else
-        rnn_next_state += rnn.scaling_factor*rnn.activation_function.((W*x)+(W_in*y))
+    rnn_next_state += rnn.leaky_coefficient*rnn.activation_function.((W*x)+(W_in*y))
+    rnn_next_state
+end
+
+#multiple RNN driver
+struct MRNN{F,T,R} <: AbstractReservoirDriver
+    activation_function::F
+    leaky_coefficient::T
+    scaling_factor::R
+end
+
+function MRNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
+    @assert length(activation_function) == length(scaling_factor)
+    MRNN(activation_function, leaky_coefficient, scaling_factor)
+end
+
+function reservoir_driver_params(mrnn::MRNN, args...)
+    mrnn
+end
+
+function next_state(mrnn::MRNN, x, y, W, W_in)
+    rnn_next_state = (1-mrnn.leaky_coefficient).*x
+    for i=1:length(mrnn.scaling_factor)
+        rnn_next_state += mrnn.scaling_factor[i]*mrnn.activation_function[i].((W*x)+(W_in*y))
     end
     rnn_next_state
 end
+
 
 #GRU-based driver
 struct GRU{F,L,R,V} #not an abstractreservoirdriver
