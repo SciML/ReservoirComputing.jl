@@ -7,6 +7,7 @@ using SafeTestsets
     @safetestset "ESN States" begin include("esn/test_states.jl") end
     @safetestset "ESN Train and Predict" begin include("esn/test_train.jl") end
     @safetestset "ESN Drivers" begin include("esn/test_drivers.jl") end
+    @safetestset "ESN Non Linear Algos" begin include("esn/test_nla.jl") end
 end
 
 @testset "Reservoir Computing with Cellular Automata tests" begin

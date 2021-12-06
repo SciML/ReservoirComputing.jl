@@ -1,4 +1,8 @@
+abstract type AbstractLayer end
 
+struct WeightedLayer{T} <: AbstractLayer
+    scaling::T
+end
 
 """
     WeightedInput(scaling)
@@ -12,10 +16,6 @@ given as arg or kwarg.
 [1] Lu, Zhixin, et al. "Reservoir observers: Model-free inference of unmeasured variables in chaotic 
 systems." Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
-struct WeightedLayer{T} <: AbstractLayer
-    scaling::T
-end
-
 function WeightedLayer(; scaling=0.1)
     WeightedLayer(scaling)
 end

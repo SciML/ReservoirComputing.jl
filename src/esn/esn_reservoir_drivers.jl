@@ -18,6 +18,9 @@ struct RNN{F,T} <: AbstractReservoirDriver
     leaky_coefficient::T
 end
 
+"""
+    RNN(;activation_function=tanh, leaky_coefficient=1.0)
+"""
 function RNN(;activation_function=tanh, leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
 end
@@ -39,6 +42,9 @@ struct MRNN{F,T,R} <: AbstractReservoirDriver
     scaling_factor::R
 end
 
+"""
+    MRNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
+"""
 function MRNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
     @assert length(activation_function) == length(scaling_factor)
     MRNN(activation_function, leaky_coefficient, scaling_factor)
@@ -66,15 +72,37 @@ struct GRU{F,L,R,V} #not an abstractreservoirdriver
 end
 
 #https://arxiv.org/abs/1701.05923# variations of gru
+"""
+    FullyGated()
+"""
 struct FullyGated <: AbstractGRUVariant end
+
+"""
+    Variant1()
+"""
 struct Variant1 <: AbstractGRUVariant end
+
+"""
+    Variant2()
+"""
 struct Variant2 <: AbstractGRUVariant end
+
+"""
+    Variant3()
+"""
 struct Variant3 <: AbstractGRUVariant end
+
+"""
+    Minimal()
+"""
 struct Minimal <: AbstractGRUVariant end
 
 #layer_init and activation_function must be vectors
 """
-    GRU()
+    GRU(;activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh],
+        layer_init = fill(DenseLayer(), 5),
+        reservoir_init = fill(RandSparseReservoir(), 2),
+        variant = FullyGated())
 
 Return a Gated Recurrent Unit [1] reservoir driver.
 

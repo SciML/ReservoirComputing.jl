@@ -19,9 +19,7 @@ abstract type NonLinearAlgorithm end
 abstract type AbstractStates end
 #should probably move some of these
 abstract type AbstractVariation end
-abstract type AbstractLayer end
 abstract type AbstractReservoirDriver end
-abstract type AbstractReservoir end
 abstract type AbstractOutputLayer end
 abstract type AbstractLinearModel end
 abstract type AbstractGaussianProcess end
