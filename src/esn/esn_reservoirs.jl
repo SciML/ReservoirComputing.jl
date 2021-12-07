@@ -6,15 +6,21 @@ struct RandSparseReservoir{T,C} <: AbstractReservoir
 end
 
 """
-    RandSparseReservoir(;radius=1.0, sparsity=0.1)
     RandSparseReservoir(radius, sparsity)
+    RandSparseReservoir(;radius=1.0, sparsity=0.1)
 
-Returns a random sparse reservoir matrix with given `sparsity` and spectral radius scaled according to `radius`.
+Returns a random sparse reservoir initializer, that will return a matrix with given `sparsity` and 
+scaled spectral radius according to `radius`. This is the default choice in the ```ESN``` construction.
 """
 function RandSparseReservoir(;radius=1.0, sparsity::Float64=0.1)
     RandSparseReservoir(radius, sparsity)
 end
 
+"""
+    create_reservoir(reservoir::AbstractReservoir, res_size)
+
+Given an ```AbstractReservoir` constructor and the reservoir size it returns the corresponding matrix.
+"""
 function create_reservoir(reservoir::RandSparseReservoir, res_size)
     reservoir_matrix = Matrix(sprand(Float64, res_size, res_size, reservoir.sparsity))
     reservoir_matrix = 2.0 .*(reservoir_matrix.-0.5)
@@ -36,7 +42,6 @@ function create_reservoir(res_size, reservoir::RandReservoir)
 end
 =#    
 
-
 #SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
 struct PseudoSVDReservoir{T,C} <: AbstractReservoir
     max_value::T
@@ -50,11 +55,12 @@ function PseudoSVDReservoir(;max_value=1.0, sparsity=0.1, sorted=true, reverse_s
 end
 
 """
+    PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
     PseudoSVDReservoir(max_value, sparsity; sorted=true, reverse_sort=false)
 
-Return a reservoir matrix created using SVD as described in [1].
+Returns an initializer to build a sparse reservoir matrix, with given ```sparsity``` created using SVD as described in [1]. 
 
-[1] Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction." Neurocomputing 290 (2018): 148-160.
+[1] Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
 """
 function PseudoSVDReservoir(max_value, sparsity; sorted=true, reverse_sort=false)
     PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)
@@ -119,12 +125,13 @@ struct DelayLineReservoir{T} <: AbstractReservoir
 end
 
 """
-    DelayLineReservoir(;weight=0.1)
     DelayLineReservoir(weight)
+    DelayLineReservoir(;weight=0.1)
 
-Return a Delay Line Reservoir matrix as described in [2].
+Returns a Delay Line Reservoir matrix constructor to obtain a deterministi reservoir as described in [1]. The 
+```weight``` can be passed as arg or kwarg and it determines the absolute value of all the connections in the reservoir.
 
-[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+[1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._" IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function DelayLineReservoir(;weight=0.1)
     DelayLineReservoir(weight)
@@ -147,12 +154,14 @@ struct DelayLineBackwardReservoir{T} <: AbstractReservoir
 end
 
 """
-    DelayLineBackwardReservoir(;weight=0.1, fb_weight=0.2)
     DelayLineBackwardReservoir(weight, fb_weight)
+    DelayLineBackwardReservoir(;weight=0.1, fb_weight=0.2)
 
-Return a Delay Line Reservoir matrix with Backward connections as described in [2].
+Returns a Delay Line Reservoir constructor to create a matrix with Backward connections as described in [1]. The 
+```weight``` and ```fb_weight``` can be passed as either args or kwargs, and they determine the only absolute values
+of the connections in the reservoir.
 
-[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+[1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._" IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function DelayLineBackwardReservoir(;weight=0.1, fb_weight=0.2)
     DelayLineBackwardReservoir(weight, fb_weight)
@@ -175,12 +184,13 @@ struct SimpleCycleReservoir{T} <: AbstractReservoir
 end
 
 """
-    SimpleCycleReservoir(;weight=0.1)
     SimpleCycleReservoir(weight)
+    SimpleCycleReservoir(;weight=0.1)
 
-Return a Simple Cycle Reservoir Reservoir matrix as described in [2].
+Returns a Simple Cycle Reservoir Reservoir constructor to biuld a reservoir matrix as described in [1]. The 
+```weight``` can be passed as arg or kwarg and it determines the absolute value of all the connections in the reservoir.
 
-[2] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
+[1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function SimpleCycleReservoir(;weight=0.1)
     SimpleCycleReservoir(weight)
@@ -208,9 +218,12 @@ end
     CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1, jump_size=3)
     CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)
 
-Return a Cycle Reservoir with Jumps matrix as described in [2].
+Return a Cycle Reservoir with Jumps constructor to create a reservoir matrix as described in [1]. The 
+```weight``` and ```jump_weight``` can be passed as args or kwargs and they determine the absolute values of 
+all the connections in the reservoir. The ```jump_size``` can also be passed either as arg and kwarg and it 
+detemines the jumps between ```jump_weight```s.
 
-[2] Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+[1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
 """
 function CycleJumpsReservoir(;cycle_weight=0.1, jump_weight=0.1, jump_size=3)
     CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)

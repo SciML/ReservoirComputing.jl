@@ -1,15 +1,15 @@
-
-"""
-    ESNtrain(esn::AbstractReservoirComputer, beta::Float64[, train_data])
-
-Return the trained output layer using Ridge Regression.
-"""
-
 struct StandardRidge{T} <: AbstractLinearModel
     regularization_coeff::T
 end
 
-function StandardRidge(;regularization_coeff=reg_coeff)
+"""
+    StandardRidge(regularization_coeff)
+    StandardRidge(;regularization_coeff=0.0)
+
+Ridge regression training for all the models in the library. The ```regularization_coeff``` is the regularization, 
+it can be passed as an arg or kwarg.
+"""
+function StandardRidge(;regularization_coeff=0.0)
     StandardRidge(regularization_coeff)
 end
 
@@ -35,6 +35,15 @@ struct LinearModel{T,S,K} <: AbstractLinearModel
     regression_kwargs::K
 end
 
+"""
+    LinearModel(;regression=LinearRegression, 
+        solver=Analytical(), 
+        regression_kwargs=(;))
+
+Linear regression training based on [MLJLinearModels](https://juliaai.github.io/MLJLinearModels.jl/stable/) for all the models in the library. 
+All the parameters have to be passed into ```regression_kwargs```, apart from the solver choice. MLJLinearModels.jl needs to be called in order 
+to use these models.
+"""
 function LinearModel(;regression=LinearRegression, 
                  solver=Analytical(), 
                  regression_kwargs=(;))

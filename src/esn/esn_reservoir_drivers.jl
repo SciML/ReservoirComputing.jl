@@ -1,3 +1,10 @@
+abstract type AbstractReservoirDriver end
+
+"""
+    create_states(reservoir_driver::AbstractReservoirDriver, train_data, reservoir_matrix, input_matrix)
+
+Return the trained ESN states according to the given driver.
+"""
 function create_states(reservoir_driver::AbstractReservoirDriver, train_data, reservoir_matrix, input_matrix)
 
     train_len = size(train_data, 2)
@@ -19,7 +26,10 @@ struct RNN{F,T} <: AbstractReservoirDriver
 end
 
 """
+    RNN(activation_function, leaky_coefficient)
     RNN(;activation_function=tanh, leaky_coefficient=1.0)
+
+Returns a Recurrent Neural Network initializer for the ESN. This is the default choice.
 """
 function RNN(;activation_function=tanh, leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
@@ -43,9 +53,17 @@ struct MRNN{F,T,R} <: AbstractReservoirDriver
 end
 
 """
-    MRNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
+    MRNN(activation_function, leaky_coefficient, scaling_factor)
+    MRNN(;activation_function=[tanh, sigmoid], leaky_coefficient=1.0, scaling_factor=fill(leaky_coefficient, length(activation_function)))
+
+Returns a Multiple RNN initializer, where multiple function are combined in a linear combination with chosen parameters ```scaling_factor```.
+The ```activation_function``` and ```scaling_factor``` arguments must vectors of the same size. Multiple combinations are possible, 
+the implementation is based upon a double activation function idea, found in [1].
+
+[1] Lun, Shu-Xian, et al. "_A novel model of leaky integrator echo state network for time-series prediction._" Neurocomputing 159 (2015): 58-66.
+
 """
-function MRNN(;activation_function=tanh, leaky_coefficient=1.0, scaling_factor=leaky_coefficient)
+function MRNN(;activation_function=[tanh, sigmoid], leaky_coefficient=1.0, scaling_factor=fill(leaky_coefficient, length(activation_function)))
     @assert length(activation_function) == length(scaling_factor)
     MRNN(activation_function, leaky_coefficient, scaling_factor)
 end
@@ -74,26 +92,52 @@ end
 #https://arxiv.org/abs/1701.05923# variations of gru
 """
     FullyGated()
+
+Returns a standard Gated Recurrent Unit ESN initializer, as described in [1].
+
+[1] Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder for statistical machine translation._” 
+arXiv preprint arXiv:1406.1078 (2014).
 """
 struct FullyGated <: AbstractGRUVariant end
 
 """
     Variant1()
+
+Returns the variant 1 ESN initializer of the GRU as described in [1], where each gate is computed using only the prevoius hidden states 
+and the bias
+
+[1] Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 
+2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
 """
 struct Variant1 <: AbstractGRUVariant end
 
 """
     Variant2()
+
+Returns the variant 2 ESN initializer of the GRU as described in [1], where each gate is computed using only the previous hidden state.
+
+[1] Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 
+2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
 """
 struct Variant2 <: AbstractGRUVariant end
 
 """
     Variant3()
+
+Returns the variant 3 ESN initializer of the GRU as described in [1], where each gate is computed only using the bias.
+
+[1] Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 
+2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
 """
 struct Variant3 <: AbstractGRUVariant end
 
 """
     Minimal()
+
+Returns a minimal GRU ESN initializer as described in [1].
+
+[1] Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._" 
+International Journal of Automation and Computing 13.3 (2016): 226-234.
 """
 struct Minimal <: AbstractGRUVariant end
 
@@ -104,9 +148,9 @@ struct Minimal <: AbstractGRUVariant end
         reservoir_init = fill(RandSparseReservoir(), 2),
         variant = FullyGated())
 
-Return a Gated Recurrent Unit [1] reservoir driver.
+Returns a Gated Recurrent Unit [1] reservoir driver.
 
-[1] Cho, Kyunghyun, et al. “Learning phrase representations using RNN encoder-decoder for statistical machine translation.” arXiv preprint arXiv:1406.1078 (2014).
+[1] Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder for statistical machine translation._” arXiv preprint arXiv:1406.1078 (2014).
 """
 function GRU(;activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh], #has to be a voctor of size 3
               layer_init = fill(DenseLayer(), 5), #has to be a vector of size 5

@@ -14,16 +14,14 @@ using CellularAutomata
 
 #define global types
 abstract type AbstractReservoirComputer end
-abstract type AbstractPrediction end
-abstract type NonLinearAlgorithm end
-abstract type AbstractStates end
-#should probably move some of these
-abstract type AbstractVariation end
-abstract type AbstractReservoirDriver end
 abstract type AbstractOutputLayer end
+abstract type AbstractPrediction end
+#training methods
 abstract type AbstractLinearModel end
 abstract type AbstractGaussianProcess end
 abstract type AbstractSupportVector end
+#should probably move some of these
+abstract type AbstractVariation end
 abstract type AbstractGRUVariant end
 
 
@@ -36,6 +34,12 @@ struct OutputLayer{T,I,S,L} <: AbstractOutputLayer
 end
 
 #prediction types
+"""
+    Generative(prediction_len)
+
+This prediction methodology allows the models to produce an autonomous prediction, feeding the prediction into itself to generate the next step. 
+The only parameter needed is the number of steps for the prediction.
+"""
 struct Generative{T} <: AbstractPrediction
     prediction_len::T
 end
@@ -45,54 +49,23 @@ struct Predictive{I,T} <: AbstractPrediction
     prediction_len::T
 end
 
+"""
+    Predictive(prediction_data)
+
+Given a set of labels as ```prediction_data``` this method of prediction will return the correspinding labels in a standard Machine Learning fashion.
+"""
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)
     Predictive(prediction_data, prediction_len)
 end
 
-#states types
-struct ExtendedStates <: AbstractStates end
-struct StandardStates <: AbstractStates end
-struct PaddedStates{T} <: AbstractStates
-    padding::T
-end
 
-struct PaddedExtendedStates{T} <: AbstractStates 
-    padding::T
-end
-
-function PaddedStates(;padding=1.0)
-    PaddedStates(padding)
-end
-
-function PaddedExtendedStates(;padding=1.0)
-    PaddedExtendedStates(padding)
-end
-
-function (states_type::ExtendedStates)(nla_type, x, y)
-    x_tmp = vcat(y, x)
-    nla(nla_type, x_tmp)
-end
-
-function (states_type::StandardStates)(nla_type, x, y)
-    nla(nla_type, x)
-end
-
-function (states_type::PaddedStates)(nla_type, x, y)
-    x_tmp = vcat(fill(states_type.padding, (1, size(x, 2))), x)
-    nla(nla_type, x_tmp)
-end
-
-function (states_type::PaddedExtendedStates)(nla_type, x, y)
-    x_tmp = vcat(y, x)
-    x_tmp = vcat(fill(states_type.padding, (1, size(x, 2))), x_tmp)
-    nla(nla_type, x_tmp)
-end
 
 #import/export
 #general
-include("nla.jl")
-export nla, NLADefault, NLAT1, NLAT2, NLAT3
+include("states.jl")
+export nla, NLADefault, NLAT1, NLAT2, NLAT3,
+StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 include("predict.jl")
 export obtain_prediction
 
@@ -105,17 +78,16 @@ include("train/supportvector_regression.jl")
 export _train
 
 #esn
-include("esn/echostatenetwork.jl")
-export ESN, Standard, Hybrid, next_state_prediction, train
 include("esn/esn_input_layers.jl")
-export create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer
+export AbstractLayer, create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer,
 BernoulliSample, IrrationalSample
+include("esn/esn_reservoirs.jl")
+export AbstractReservoir, create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
+DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
 include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
-include("esn/esn_reservoirs.jl")
-export create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
-DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
-
+include("esn/echostatenetwork.jl")
+export ESN, Default, Hybrid, next_state_prediction, train
 
 #reca
 include("reca/reca.jl")
@@ -125,8 +97,7 @@ export RandomMapping, RandomMaps
 
 
 
-export Generative, Predictive, OutputLayer, states_type,
-StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
+export Generative, Predictive, OutputLayer
 
 
 end #module

@@ -15,7 +15,7 @@ end
 """
     Default()
 
-Given as input to ```variation``` return a standard model of the ESN. No parameters are needed.
+Sets the type of the ESN as the standard model. No parameters are needed.
 """
 struct Default <: AbstractVariation end
 struct Hybrid{T,K,O,I,S,D} <: AbstractVariation
@@ -30,8 +30,8 @@ end
 """
     Hybrid(prior_model, u0, tspan, datasize)
 
-Given the model parameters this return an ```Hybrid``` ```variation``` of the ESN. This entails a different training 
-and prediction. Construction taken from [1].
+Given the model parameters returns an ```Hybrid``` variation of the ESN. This entails a different training 
+and prediction. Construction based on [1].
 
 [1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018)
 """
@@ -45,7 +45,25 @@ function Hybrid(prior_model, u0, tspan, datasize)
 end
 
 """
-    ESN()
+    ESN(input_res_size, train_data;
+        variation = Default(),
+        input_init = DenseLayer(),
+        reservoir_init = RandSparseReservoir(),
+        reservoir_driver = RNN(),
+        nla_type = NLADefault(),
+        states_type = StandardStates())
+    (esn::ESN)(prediction::AbstractPrediction,
+        output_layer::AbstractOutputLayer;
+        initial_conditions=output_layer.last_value,
+        last_state=esn.states[:, end])
+
+Constructor for the Echo State Network model. It requires the erserovir size as the input and the data for the training. 
+It returns a struct ready to be trained with the states already harvested. 
+
+After the training this struct can be used for the prediction following the second function call. This will take as input a 
+prediction type and the output layer from the training. The ```initial_conditions``` and ```last_state``` parameters 
+can be left as they are, unless there is a specific reason to change them. All the components are detailed in the 
+API documentation and show how to leverage in the examples.
 """
 function ESN(input_res_size, train_data;
              variation = Default(),
@@ -68,7 +86,7 @@ function ESN(input_res_size, train_data;
 end
 
 
-function (esn::ESN)(prediction,
+function (esn::ESN)(prediction::AbstractPrediction,
     output_layer::AbstractOutputLayer;
     initial_conditions=output_layer.last_value,
     last_state=esn.states[:, end])
@@ -88,6 +106,12 @@ function (esn::ESN)(prediction,
 end
 
 #training dispatch on esn
+"""
+    train(esn::AbstractEchoStateNetwork, target_data, training_method=StandardRidge(0.0))
+
+Training of the built ESN over the ```target_data```. The default training method is RidgeRegression. The output is 
+an ```OutputLayer``` object to be fed at the esn call for the prediction.
+"""
 function train(esn::AbstractEchoStateNetwork, target_data, training_method=StandardRidge(0.0))
 
     esn.variation isa Hybrid ? states = vcat(esn.states, esn.variation.model_data[:, 2:end]) : states=esn.states
