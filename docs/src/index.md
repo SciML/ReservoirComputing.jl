@@ -2,7 +2,6 @@
 
 ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). Reservoir Computing (RC) is an umbrella term used to describe a family of models such as ESNs and Liquid State Machines (LSMs). The key concept is to expand the input data into a higher dimension and use regression in order to train the model; in some ways Reservoir Computers can be considered similar to kernel methods. 
 
-This package is still very much in development, so expect bugs and strange behaviors. If we find something strange don't hesitate to open an issue about it so it can be looked into.
 
 !!! info "Introductory material"
     This library assumes some basic knowledge of Reservoir Computing. For a good introduction, we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in-depth review papers that should cover all the needed information. For the majority of the algorithms implemented in this library we cited in the documentation the original work introducing them. If you ever are in doubt about about a method or a function just type ```? function``` in the Julia REPL to read the relevant notes.
@@ -72,3 +71,6 @@ In addition multiple ways of driving the reservoir states are also provided:
   - ```Minimal```
 
 An hybrid version of the model is also available through ```Hybrid```
+
+### Contributing
+Contributions are very welcomed! Some interesting variation of RC models are posted in the issues, but everyone is free to just post relevant papers that could fit the scope of the library. Help with the documentation, providing new examples or application cases is also really important and appreciated. Everything that can make the package a little better is a great contribution, no matter how small. The API section of the documentation provides a more in depth look into how things work and are connected, so that is a good place to start exploring more the library. For every doubt that cannot be expressed in issues please feel free to contact any of the lead developers on Slack or by email.
