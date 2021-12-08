@@ -8,12 +8,12 @@ makedocs(
         "ReservoirComputing.jl" => "index.md",
         "Echo State Network Tutorials" => Any[
             "Lorenz System Forecasting"=>"esn_tutorials/lorenz_basic.md",
-            #"Using different layers"=>"esn_tutorials/layers.md",
-            #"Using different linear methods"=>"esn_tutorials/linear.md",
-            #"Double Activation Function ESN"=>"esn_tutorials/dafesn.md",
-             #"SVESM"=>"examples/svesm.md",
-            #"ESGP"=>"esn_tutorials/esgp.md"
-            
+            "Using Different Layers" => "esn_tutorials/change_layers.md",
+            "Changing Training Algorithms" => "esn_tutorials/different_training.md",
+            "Generative vs Predictive" => "esn_tutorials/predictive_generative.md",
+            "Altering ESN States" => "esn_tutorials/states_variation.md",
+            "Multiple Activation Function ESN" => "esn_tutorials/dafesn.md",
+            "Gated Echo State Networks" => "esn_tutorials/gruesn.md",
             ],
         "API Documentation"=>Any[
             "Training Algorithms" => "api/training.md",
@@ -22,7 +22,6 @@ makedocs(
             "Echo State Networks" => "api/esn.md",
             "ESN Layers" => "api/esn_layers.md",
             "ESN Drivers" => "api/esn_drivers.md",
-            #"States Types"=>
             ]
         ]
     )

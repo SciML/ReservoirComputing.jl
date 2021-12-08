@@ -12,7 +12,7 @@ ReservoirComputing.jl provides an efficient, modular and easy to use implementat
     * Lukoševičius, Mantas, and Herbert Jaeger: Reservoir computing approaches to recurrent neural network training.
     
 ## Installation
-The installation of the package is done following the usual Julia procedure:
+ReservoirComputing.jl is registered in the General Julia Registry, so the installation of the package follows the usual procedure:
 ```julia
 import Pkg; Pkg.add("ReservoirComputing")
 ```
@@ -71,6 +71,11 @@ In addition multiple ways of driving the reservoir states are also provided:
   - ```Minimal```
 
 An hybrid version of the model is also available through ```Hybrid```
+
+### Reservoir Computing with Cellular Automata
+The package provides also an inplementation of Reservoir Computing models based on one dimensional Cellular Automata through the ```RECA``` call. For the moment the only input encoding available (an input encoding plays a similar role to the input matrix for ESNs) is a random mapping, called through ```RandomMapping```. 
+
+All the training methods described above can be used, as well as all the modifications to the states. Both prediction methods are also possible in theory, although in the literature only ```Predictive``` tasks have been explored.
 
 ### Contributing
 Contributions are very welcomed! Some interesting variation of RC models are posted in the issues, but everyone is free to just post relevant papers that could fit the scope of the library. Help with the documentation, providing new examples or application cases is also really important and appreciated. Everything that can make the package a little better is a great contribution, no matter how small. The API section of the documentation provides a more in depth look into how things work and are connected, so that is a good place to start exploring more the library. For every doubt that cannot be expressed in issues please feel free to contact any of the lead developers on Slack or by email.
