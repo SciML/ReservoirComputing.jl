@@ -1,8 +1,8 @@
  # Lorenz System Forecasting
  
-This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is ```Generative```, for a more detailed explanation of the differences between ```Generative``` and ```Predictive``` please refer to the following examples given in the literature. 
+This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is ```Generative```, for a more detailed explanation of the differences between ```Generative``` and ```Predictive``` please refer to the other examples given in the documentation. The full script for this example is available [here](scripts/lorenz_basic.jl).
 
-## Harvesting the data
+## Generating the data
 Starting off the workflow the first step is to obtain the data. Leveraging ```OrdinaryDiffEq``` it is possible to derive the Lorenz system data in the following way:
 ```julia
 using OrdinaryDiffEq
@@ -55,7 +55,7 @@ esn = ESN(res_size, input_data;
     states_type = StandardStates())
 ```
 
-Most of the parameters here chosen mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening starting from ```res_size```: this value determines the dimensions of the reservoir matrix. In this case a size of 300 has been chose, so the reservoir matrix is going to be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case everything is taken care of internally. 
+Most of the parameters here chosen mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening starting from ```res_size```: this value determines the dimensions of the reservoir matrix. In this case a size of 300 has been chosen, so the reservoir matrix is going to be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case everything is taken care of internally. 
 
 The ```res_radius``` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the ```RandSparseReservoir()``` method is 1.0 in accordance to the most followed guidelines found in the literature (see [^2] and references therein). The ```sparsity``` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values. In this example the call to the parameters inside ```RandSparseReservoir()``` was done explicitly to showcase the meaning of each of them, but it is aslo possible to simply pass the values directly like so ```RandSparseReservoir(1.2, 6/300)```.
 
@@ -88,10 +88,27 @@ output = esn(Generative(predict_len), output_layer)
 both the training method and the output layer are needed in this call. The number of steps for the prediction must be specified to the ```Generative``` method. The output results are given in a matrix. 
 To inspect the results they can easily be plotted using an external library. In this case ```Plots``` is adopted:
 ```julia
-using Plots
-plot(transpose(output),layout=(3,1), label="predicted")
-plot!(transpose(test_data),layout=(3,1), label="actual")
+using Plots, Plots.PlotMeasures
+
+ts = 0.0:0.02:200.0
+lorenz_maxlyap = 0.9056
+predict_ts = ts[shift+train_len+1:shift+train_len+predict_len]
+lyap_time = (predict_ts .- predict_ts[1])*(1/lorenz_maxlyap)
+
+p1 = plot(lyap_time, [test_data[1,:] output[1,:]], label = ["actual" "predicted"], 
+    ylabel = "x(t)", linewidth=2.5, xticks=false, yticks = -15:15:15);
+p2 = plot(lyap_time, [test_data[2,:] output[2,:]], label = ["actual" "predicted"], 
+    ylabel = "y(t)", linewidth=2.5, xticks=false, yticks = -20:20:20);
+p3 = plot(lyap_time, [test_data[3,:] output[3,:]], label = ["actual" "predicted"], 
+    ylabel = "z(t)", linewidth=2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+
+
+plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates", 
+    layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
+    legendfontsize=12, titlefontsize=20, left_margin=4mm)
 ```
+
+![lorenzbasic](images/lorenz_basic.png)
 
 
 ## Bibliography

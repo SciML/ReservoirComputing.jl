@@ -6,15 +6,22 @@ makedocs(
     sitename = "ReservoirComputing.jl",
     pages = [
         "ReservoirComputing.jl" => "index.md",
+        "General Settings" => Any[
+            "Changing Training Algorithms" => "general/different_training.md",
+            "Altering States" => "general/states_variation.md",
+            "Generative vs Predictive" => "general/predictive_generative.md",            
+        ],
         "Echo State Network Tutorials" => Any[
             "Lorenz System Forecasting"=>"esn_tutorials/lorenz_basic.md",
             "Using Different Layers" => "esn_tutorials/change_layers.md",
-            "Changing Training Algorithms" => "esn_tutorials/different_training.md",
-            "Generative vs Predictive" => "esn_tutorials/predictive_generative.md",
-            "Altering ESN States" => "esn_tutorials/states_variation.md",
-            "Multiple Activation Function ESN" => "esn_tutorials/dafesn.md",
-            "Gated Echo State Networks" => "esn_tutorials/gruesn.md",
+            #"Multiple Activation Function ESN" => "esn_tutorials/dafesn.md",
+            #"Gated Echo State Networks" => "esn_tutorials/gruesn.md",
+            "Using Different Reservoir Drivers" => "esn_tutorials/different_drivers.md",
+            "Hybrid Echo State Networks" => "esn_tutorials/hybrid.md",
             ],
+        #"ReCA" => Any[
+
+        #]},
         "API Documentation"=>Any[
             "Training Algorithms" => "api/training.md",
             "States Modifications" => "api/states.md",
@@ -22,6 +29,7 @@ makedocs(
             "Echo State Networks" => "api/esn.md",
             "ESN Layers" => "api/esn_layers.md",
             "ESN Drivers" => "api/esn_drivers.md",
+            #"ReCA" => "api/reca.md"
             ]
         ]
     )

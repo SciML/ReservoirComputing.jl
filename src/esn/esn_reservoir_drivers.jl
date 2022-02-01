@@ -199,7 +199,7 @@ function create_gru_layers(gru, variant::Variant1, res_size, in_size)
 
     Wz_in = nothing
     Wz = create_reservoir(gru.reservoir_init[1], res_size)
-    bz = create_layer(gru.layer_init[2], res_size, 1)
+    bz = create_layer(gru.layer_init[1], res_size, 1)
 
     Wr_in = nothing
     Wr = create_reservoir(gru.reservoir_init[2], res_size)
