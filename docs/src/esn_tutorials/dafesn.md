@@ -1,1 +1,0 @@
-# Multiple Activation Function ESN

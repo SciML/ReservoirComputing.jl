@@ -1,1 +1,0 @@
-# Gated Echo State Networks

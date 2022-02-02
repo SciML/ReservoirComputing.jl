@@ -12,16 +12,15 @@ makedocs(
             "Generative vs Predictive" => "general/predictive_generative.md",            
         ],
         "Echo State Network Tutorials" => Any[
-            "Lorenz System Forecasting"=>"esn_tutorials/lorenz_basic.md",
+            "Lorenz System Forecasting" => "esn_tutorials/lorenz_basic.md",
             "Using Different Layers" => "esn_tutorials/change_layers.md",
-            #"Multiple Activation Function ESN" => "esn_tutorials/dafesn.md",
-            #"Gated Echo State Networks" => "esn_tutorials/gruesn.md",
             "Using Different Reservoir Drivers" => "esn_tutorials/different_drivers.md",
+            "Using Different Training Methods" => "esn_tutorials/different_training.md",
             "Hybrid Echo State Networks" => "esn_tutorials/hybrid.md",
             ],
-        #"ReCA" => Any[
-
-        #]},
+        "Reservoir Computing with Cellular Automata" => Any[
+            "5 Bit Memory Task" => "reca_tutorials/reca.md",
+        ],
         "API Documentation"=>Any[
             "Training Algorithms" => "api/training.md",
             "States Modifications" => "api/states.md",

@@ -4,7 +4,7 @@ While the original implementation of the Echo State Network implemented the mode
 ## Multiple Activation Function RNN
 Based on the double activation function ESN (DAFESN) proposed in [^1], the Multiple Activation Function ESN expands the idea and allows a custom number of activation functions to be used in the reservoir dynamics. This can be thought as a linear combination of multiple activation functions with corresponding parameters.
 ```math
-\mathbf{x}(t+1) = (1-\alpha)\mathbf{x}(t) + \lambda_1 f_1(\mathbf{W}\mathbf{x}(t)+\mathbf{W}_{in}\mathbf}{u}(t)) + \ ... \ + \lambda_D f_D(\mathbf{W}\mathbf{x}(t)+\mathbf{W}_{in}\mathbf}{u}(t))
+\mathbf{x}(t+1) = (1-\alpha)\mathbf{x}(t) + \lambda_1 f_1(\mathbf{W}\mathbf{x}(t)+\mathbf{W}_{in}\mathbf{u}(t)) + \dots + \lambda_D f_D(\mathbf{W}\mathbf{x}(t)+\mathbf{W}_{in}\mathbf{u}(t))
 ```
 where ``D`` is the number of activation function and respective parameters chosen.
 
@@ -92,7 +92,7 @@ The equations for the standard GRU are as follows:
 Going over the `GRU` keyword argument it will be explained how to feed the desired input to the model. 
  - `activation_function` is a vector with default values `[NNlib.sigmoid, NNlib.sigmoid, tanh]`. This argument controls the activation functions of the GRU, going from top to bottom. Changing the first element corresponds in changing the activation function for ``\mathbf{r}(t)``.
  - `layer_init` is a vector with default values `fill(DenseLayer(), 5)`. This keyword argument controls the ``\mathbf{W}_{\text{in}}``s and the ``\mathbf{b}``s going from top to bottom, left to right. For example, changing the first element will change ``\mathbf{W}^r_{\text{in}}``, changing the second will change ``\mathbf{b}_r`` and so on.
- - `reservoir_init` is a vector with default value ``fill(RandSparseReservoir(), 2)``. In a similar fashion to `layer_init`, this keyword argument controls the reservoir matrix construction in a top to bottom order. 
+ - `reservoir_init` is a vector with default value `fill(RandSparseReservoir(), 2)`. In a similar fashion to `layer_init`, this keyword argument controls the reservoir matrix construction in a top to bottom order. 
  - `variant` as already illustrated controls the GRU variant. The default value is set to `FullyGated()`.
  
 It is important to notice that `layer_init` and `reservoir_init` control every layer except ``\mathbf{W}_{in}`` and ``\mathbf{W}``. These arguments are given as input to the `ESN()` call as usual.
@@ -135,12 +135,12 @@ As a consequence `layer_init` is 3-dimensional and `reservoir_init` is 1-dimensi
 
 ### Examples
 
+
+
+
 [^1]: Lun, Shu-Xian, et al. "_A novel model of leaky integrator echo state network for time-series prediction._" Neurocomputing 159 (2015): 58-66.
-[^2]: Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder for statistical machine translation._” 
-arXiv preprint arXiv:1406.1078 (2014).
+[^2]: Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder for statistical machine translation._” arXiv preprint arXiv:1406.1078 (2014).
 [^3]: Wang, Xinjie, Yaochu Jin, and Kuangrong Hao. "_A Gated Recurrent Unit based Echo State Network._" 2020 International Joint Conference on Neural Networks (IJCNN). IEEE, 2020.
 [^4]: Di Sarli, Daniele, Claudio Gallicchio, and Alessio Micheli. "_Gated Echo State Networks: a preliminary study._" 2020 International Conference on INnovations in Intelligent SysTems and Applications (INISTA). IEEE, 2020.
-[^5]: Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 
-2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
-[^6]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._" 
-International Journal of Automation and Computing 13.3 (2016): 226-234.
+[^5]: Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
+[^6]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._" International Journal of Automation and Computing 13.3 (2016): 226-234.
