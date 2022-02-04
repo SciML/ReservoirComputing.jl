@@ -18,7 +18,7 @@ nlas = [NLADefault(), NLAT1(), NLAT2(), NLAT3()]
 for n in nlas
     Random.seed!(77)
     esn = ESN(res_size, input_data; 
-        reservoir_init=RandSparseReservoir(1.2, 0.1),
+        reservoir=RandSparseReservoir(1.2, 0.1),
         nla_type = n)
     output_layer = train(esn, target_data)
     output = esn(Generative(predict_len), output_layer)

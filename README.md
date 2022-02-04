@@ -45,8 +45,8 @@ Now that we have the data we can initialize the ESN with the chosen parameters. 
 ```julia
 res_size = 300
 esn = ESN(res_size, input_data; 
-          reservoir_init = RandSparseReservoir(radius=1.2, sparsity=6/res_size),
-          input_init = WeightedLayer(),
+          reservoir = RandSparseReservoir(radius=1.2, sparsity=6/res_size),
+          input_layer = WeightedLayer(),
           nla_type = NLAT2())
 ```
 

@@ -7,6 +7,7 @@
     SparseLayer
     InformedLayer
     MinimumLayer
+    NullLayer
 ```
 The sign in the ```MinimumLayer``` are chosen based on the following methods:
 ```@docs
@@ -38,6 +39,7 @@ end
     DelayLineBackwardReservoir
     SimpleCycleReservoir
     CycleJumpsReservoir
+    NullReservoir
 ```
 
 Like for the input layers, to actually build the matrix of the reservoir one can call the following function:

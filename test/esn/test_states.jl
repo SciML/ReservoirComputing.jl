@@ -14,7 +14,7 @@ states_types = [StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStat
 for t in states_types
     Random.seed!(77)
     esn = ESN(res_size, input_data;
-        reservoir_init=RandSparseReservoir(1.2, 0.1))
+        reservoir=RandSparseReservoir(1.2, 0.1))
     output_layer = train(esn, target_data)
     output = esn(Generative(predict_len), output_layer)
     @test maximum(abs.(test_data .- output)) ./ maximum(abs.(test_data)) < 0.1

@@ -1,5 +1,5 @@
 abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
-struct ESN{I,S,V,N,T,O,M,ST,IS} <: AbstractEchoStateNetwork
+struct ESN{I,S,V,N,T,O,M,B,ST,IS} <: AbstractEchoStateNetwork
     res_size::I
     train_data::S
     variation::V
@@ -7,6 +7,7 @@ struct ESN{I,S,V,N,T,O,M,ST,IS} <: AbstractEchoStateNetwork
     input_matrix::T
     reservoir_driver::O 
     reservoir_matrix::M
+    bias_vector::B
     states_type::ST
     states::IS
 end
@@ -47,8 +48,9 @@ end
 """
     ESN(input_res_size, train_data;
         variation = Default(),
-        input_init = DenseLayer(),
-        reservoir_init = RandSparseReservoir(),
+        input_layer = DenseLayer(),
+        reservoir = RandSparseReservoir(),
+        bias = NullLayer(),
         reservoir_driver = RNN(),
         nla_type = NLADefault(),
         states_type = StandardStates())
@@ -67,22 +69,24 @@ API documentation and show how to leverage in the examples.
 """
 function ESN(input_res_size, train_data;
              variation = Default(),
-             input_init = DenseLayer(),
-             reservoir_init = RandSparseReservoir(),
+             input_layer = DenseLayer(),
+             reservoir = RandSparseReservoir(),
+             bias = NullLayer(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
              states_type = StandardStates())
 
     variation isa Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
-    input_matrix = create_layer(input_init, input_res_size, in_size)
+    input_matrix = create_layer(input_layer, input_res_size, in_size)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
-    reservoir_matrix = create_reservoir(reservoir_init, res_size)
+    reservoir_matrix = create_reservoir(reservoir, res_size)
+    bias_vector = create_layer(bias, input_res_size, 1)
     inner_reservoir_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
-    states = create_states(inner_reservoir_driver, train_data, reservoir_matrix, input_matrix)
+    states = create_states(inner_reservoir_driver, train_data, reservoir_matrix, input_matrix, bias_vector)
 
     ESN(res_size, train_data, variation, nla_type, input_matrix, inner_reservoir_driver, 
-        reservoir_matrix, states_type, states)
+        reservoir_matrix, bias_vector, states_type, states)
 end
 
 
@@ -127,14 +131,14 @@ end
 
 #dispatch the prediction on the esn variation
 function _variation_prediction!(variation, esn, x, out, i, args...)
-    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, esn.input_matrix)
+    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out, esn.reservoir_matrix, esn.input_matrix, esn.bias_vector)
     x_new = esn.states_type(esn.nla_type, x, out)
     x, x_new
 end
 
 function _variation_prediction!(variation::Hybrid, esn, x, out, i, model_prediction_data)
     out_tmp = vcat(out, model_prediction_data[:,i])
-    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out_tmp, esn.reservoir_matrix, esn.input_matrix)
+    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out_tmp, esn.reservoir_matrix, esn.input_matrix, esn.bias_vector)
     x_tmp = vcat(x, model_prediction_data[:,i])
     x_new = esn.states_type(esn.nla_type, x_tmp, out_tmp)
     x, x_new

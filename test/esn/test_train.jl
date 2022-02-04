@@ -13,7 +13,7 @@ const test = reduce(hcat, data[train_len+1:train_len+predict_len])
 
 Random.seed!(77)
 esn = ESN(res_size, input_data; 
-    reservoir_init=RandSparseReservoir(1.2, 0.1))
+    reservoir=RandSparseReservoir(1.2, 0.1))
 
 training_methods = [LinearModel(), GaussianProcess(MeanZero(), Poly(1.0, 1.0, 2))]
 

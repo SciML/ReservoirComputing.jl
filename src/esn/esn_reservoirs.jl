@@ -12,14 +12,16 @@ end
 Returns a random sparse reservoir initializer, that will return a matrix with given `sparsity` and 
 scaled spectral radius according to `radius`. This is the default choice in the ```ESN``` construction.
 """
-function RandSparseReservoir(;radius=1.0, sparsity::Float64=0.1)
+function RandSparseReservoir(;radius=1.0, sparsity=0.1)
     RandSparseReservoir(radius, sparsity)
 end
 
 """
     create_reservoir(reservoir::AbstractReservoir, res_size)
+    create_reservoir(reservoir, args...)
 
 Given an ```AbstractReservoir` constructor and the reservoir size it returns the corresponding matrix.
+Alternatively it accepts a given matrix.
 """
 function create_reservoir(reservoir::RandSparseReservoir, res_size)
     reservoir_matrix = Matrix(sprand(Float64, res_size, res_size, reservoir.sparsity))
@@ -28,6 +30,10 @@ function create_reservoir(reservoir::RandSparseReservoir, res_size)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= reservoir.radius/rho_w
     reservoir_matrix
+end
+
+function create_reservoir(reservoir, args...)
+    reservoir
 end
 
 #=
@@ -249,3 +255,16 @@ function create_reservoir(reservoir::CycleJumpsReservoir, res_size)
     end
     reservoir_matrix
 end
+
+
+"""
+    NullReservoir()
+
+Return a constructor for a matrix `zeros(res_size, res_size)`
+"""
+struct NullReservoir <: AbstractReservoir end
+
+function create_reservoir(reservoir::NullReservoir, res_size)
+    zeros(res_size, res_size)
+end
+

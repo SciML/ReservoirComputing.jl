@@ -22,13 +22,17 @@ end
 function create_layer(input_layer::WeightedLayer, approx_res_size, in_size)
 
     res_size = Int(floor(approx_res_size/in_size)*in_size)
-    input_matrix = zeros(res_size, in_size)
+    layer_matrix = zeros(res_size, in_size)
     q = floor(Int, res_size/in_size) #need to fix the reservoir input size. Check the constructor #should be fine now
     for i=1:in_size
-        input_matrix[(i-1)*q+1 : (i)*q, i] = rand(Uniform(-input_layer.scaling, input_layer.scaling), 1, q)
+        layer_matrix[(i-1)*q+1 : (i)*q, i] = rand(Uniform(-input_layer.scaling, input_layer.scaling), 1, q)
     end
-    input_matrix
+    layer_matrix
 
+end
+
+function create_layer(layer, args...)
+    layer
 end
 
 """
@@ -242,5 +246,16 @@ function create_layer(input_layer::InformedLayer, res_size, in_size)
         input_matrix[random_row_idx,random_clm_idx] = rand(Uniform(-input_layer.scaling, input_layer.scaling))
     end
     input_matrix
+end
+
+"""
+    NullLayer(model_in_size; scaling=0.1, gamma=0.5)
+
+Returns a vector of zeros.
+"""
+struct NullLayer <: AbstractLayer end
+
+function create_layer(input_layer::NullLayer, res_size, in_size)
+    zeros(res_size, in_size)
 end
 

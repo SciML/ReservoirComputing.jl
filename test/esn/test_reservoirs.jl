@@ -69,3 +69,8 @@ reservoir_constructor = CycleJumpsReservoir(cycle_weight=weight, jump_weight=wei
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
+
+#testing NullReservoir constructors
+reservoir_constructor = NullReservoir()
+reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
+@test size(reservoir_matrix) == (res_size, res_size)

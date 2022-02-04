@@ -79,11 +79,11 @@ export _train
 
 #esn
 include("esn/esn_input_layers.jl")
-export AbstractLayer, create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer,
+export AbstractLayer, create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer,
 BernoulliSample, IrrationalSample
 include("esn/esn_reservoirs.jl")
 export AbstractReservoir, create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
-DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir
+DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
 include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
 include("esn/echostatenetwork.jl")
