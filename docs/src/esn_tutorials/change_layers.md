@@ -65,12 +65,13 @@ Now it is possible to define the input layers and reservoirs we want to compare 
 ```julia
 using ReservoirComputing, StatsBase
 
+res_size = 300
 input_layer = [MinimumLayer(0.85, IrrationalSample()), MinimumLayer(0.95, IrrationalSample())]
-reservoirs = [SimpleCycleReservoir(0.7), 
-     CycleJumpsReservoir(cycle_weight=0.7, jump_weight=0.2, jump_size=5)]
+reservoirs = [SimpleCycleReservoir(res_size, 0.7), 
+     CycleJumpsReservoir(res_size, cycle_weight=0.7, jump_weight=0.2, jump_size=5)]
 
 for i=1:length(reservoirs)
-    esn = ESN(300, training_input;
+    esn = ESN(training_input;
         input_init = input_layer[i],
         reservoir_init = reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))

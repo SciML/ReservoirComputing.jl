@@ -46,9 +46,9 @@ res_sparsity = 6/300
 input_scaling = 0.1
 
 #build ESN struct
-esn = ESN(res_size, input_data; 
+esn = ESN(input_data; 
     variation = Default(),
-    reservoir_init = RandSparseReservoir(radius=res_radius, sparsity=res_sparsity),
+    reservoir_init = RandSparseReservoir(res_size, radius=res_radius, sparsity=res_sparsity),
     input_init = WeightedLayer(scaling=input_scaling),
     reservoir_driver = RNN(),
     nla_type = NLADefault(),

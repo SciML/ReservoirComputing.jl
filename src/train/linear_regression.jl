@@ -50,6 +50,12 @@ function LinearModel(;regression=LinearRegression,
     LinearModel(regression, solver, regression_kwargs)
 end
 
+function LinearModel(regression; 
+    solver=Analytical(), 
+    regression_kwargs=(;))
+LinearModel(regression, solver, regression_kwargs)
+end
+
 function _train(states, target_data, linear::LinearModel)
 
     out_size = size(target_data, 1)

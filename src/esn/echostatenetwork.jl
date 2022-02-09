@@ -46,7 +46,7 @@ function Hybrid(prior_model, u0, tspan, datasize)
 end
 
 """
-    ESN(input_res_size, train_data;
+    ESN(train_data;
         variation = Default(),
         input_layer = DenseLayer(),
         reservoir = RandSparseReservoir(),
@@ -65,9 +65,9 @@ It returns a struct ready to be trained with the states already harvested.
 After the training this struct can be used for the prediction following the second function call. This will take as input a 
 prediction type and the output layer from the training. The ```initial_conditions``` and ```last_state``` parameters 
 can be left as they are, unless there is a specific reason to change them. All the components are detailed in the 
-API documentation and show how to leverage in the examples.
+API documentation. More examples are given in the general documentation.
 """
-function ESN(input_res_size, train_data;
+function ESN(train_data;
              variation = Default(),
              input_layer = DenseLayer(),
              reservoir = RandSparseReservoir(),
@@ -78,10 +78,12 @@ function ESN(input_res_size, train_data;
 
     variation isa Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
     in_size = size(train_data, 1)
+    input_res_size = get_ressize(reservoir)
     input_matrix = create_layer(input_layer, input_res_size, in_size)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(reservoir, res_size)
-    bias_vector = create_layer(bias, input_res_size, 1)
+    @assert size(reservoir_matrix, 1) == res_size
+    bias_vector = create_layer(bias, res_size, 1)
     inner_reservoir_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_reservoir_driver, train_data, reservoir_matrix, input_matrix, bias_vector)
 

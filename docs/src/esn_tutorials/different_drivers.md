@@ -58,9 +58,9 @@ case5 = MRNN([tanh, f4], 0.9, [0.43, 0.13])
 #tests
 test_cases = [base_case, case3, case4, case5]
 for case in test_cases
-    esn = ESN(100, training_input,
+    esn = ESN(training_input,
         input_init = WeightedLayer(scaling=0.3),
-        reservoir_init = RandSparseReservoir(radius=0.4),
+        reservoir_init = RandSparseReservoir(100, radius=0.4),
         reservoir_driver = case,
         states_type = ExtendedStates())
     wout = train(esn, training_target, StandardRidge(10e-6))

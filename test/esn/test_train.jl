@@ -1,4 +1,4 @@
-using ReservoirComputing, GaussianProcesses, Random
+using ReservoirComputing, GaussianProcesses, MLJLinearModels, Random
 
 
 
@@ -10,12 +10,13 @@ const input_data = reduce(hcat, data[1:train_len-1])
 const target_data = reduce(hcat, data[2:train_len])
 const predict_len = 100
 const test = reduce(hcat, data[train_len+1:train_len+predict_len])
+const reg = 10e-6
 
 Random.seed!(77)
-esn = ESN(res_size, input_data; 
-    reservoir=RandSparseReservoir(1.2, 0.1))
+esn = ESN(input_data; 
+    reservoir=RandSparseReservoir(res_size, 1.2, 0.1))
 
-training_methods = [LinearModel(), GaussianProcess(MeanZero(), Poly(1.0, 1.0, 2))]
+training_methods = [LinearModel(RidgeRegression, regression_kwargs=(;lambda=reg)), GaussianProcess(MeanZero(), Poly(1.0, 1.0, 2))]
 
 for t in training_methods
     output_layer = train(esn, target_data, t)

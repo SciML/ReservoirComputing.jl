@@ -44,8 +44,8 @@ test = data[:,shift+train_len:shift+train_len+predict_len-1]
 Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
 ```julia
 res_size = 300
-esn = ESN(res_size, input_data; 
-          reservoir = RandSparseReservoir(radius=1.2, sparsity=6/res_size),
+esn = ESN(input_data; 
+          reservoir = RandSparseReservoir(res_size, radius=1.2, sparsity=6/res_size),
           input_layer = WeightedLayer(),
           nla_type = NLAT2())
 ```
