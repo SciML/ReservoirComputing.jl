@@ -6,7 +6,7 @@ ReservoirComputing.jl provides an efficient, modular and easy to use implementat
 !!! info "Introductory material"
     This library assumes some basic knowledge of Reservoir Computing. For a good introduction, we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in-depth review papers that should cover all the needed information. For the majority of the algorithms implemented in this library we cited in the documentation the original work introducing them. If you ever are in doubt about about a method or a function just type ```? function``` in the Julia REPL to read the relevant notes.
 
-    * Jaeger, Herbert: The “echo state” approach to analysing and training recurrent neural networks-with an erratum note.
+    * Jaeger, Herbert: The “echo state” approach to analyzing and training recurrent neural networks-with an erratum note.
     * Maass W, Natschläger T, Markram H: Real-time computing without stable states: a new framework for neural computation based on perturbations.
     * Lukoševičius, Mantas: A practical guide to applying echo state networks." Neural networks: Tricks of the trade.
     * Lukoševičius, Mantas, and Herbert Jaeger: Reservoir computing approaches to recurrent neural network training.
@@ -33,7 +33,7 @@ Also provided are two different ways of doing predictions using RC:
 It is possible to modify the RC obtained states in the training and prediction step using the following:
 - ```StandardStates```: default choice, no changes will be made to the states.
 - ```ExtendedStates```: the states are extended using a vertical concatenation with the input data.
-- ```PaddedStates```: the states are padded using a vertical concatenation with the chosing padding value
+- ```PaddedStates```: the states are padded using a vertical concatenation with the choosing padding value
 - ```PaddedExtendedStates```: a combination of the first two. First the states are extended and then padded.
 
 In addition another modification is possible through the choice of non linear algorithms:
@@ -73,7 +73,7 @@ In addition multiple ways of driving the reservoir states are also provided:
 An hybrid version of the model is also available through ```Hybrid```
 
 ### Reservoir Computing with Cellular Automata
-The package provides also an inplementation of Reservoir Computing models based on one dimensional Cellular Automata through the ```RECA``` call. For the moment the only input encoding available (an input encoding plays a similar role to the input matrix for ESNs) is a random mapping, called through ```RandomMapping```. 
+The package provides also an implementation of Reservoir Computing models based on one dimensional Cellular Automata through the ```RECA``` call. For the moment the only input encoding available (an input encoding plays a similar role to the input matrix for ESNs) is a random mapping, called through ```RandomMapping```. 
 
 All the training methods described above can be used, as well as all the modifications to the states. Both prediction methods are also possible in theory, although in the literature only ```Predictive``` tasks have been explored.
 

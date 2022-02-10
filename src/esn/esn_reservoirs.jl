@@ -38,7 +38,7 @@ function create_reservoir(reservoir::RandSparseReservoir, res_size)
     replace!(reservoir_matrix, -1.0=>0.0)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= reservoir.radius/rho_w
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 function create_reservoir(reservoir, args...)
@@ -90,7 +90,7 @@ function create_reservoir(reservoir::PseudoSVDReservoir, res_size)
         reservoir_matrix *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size), rand()*2-1)
         tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
     end
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 function create_diag(dim, max_value; sorted = true, reverse_sort = false)
@@ -160,7 +160,7 @@ function create_reservoir(reservoir::DelayLineReservoir, res_size)
     for i=1:res_size-1
         reservoir_matrix[i+1,i] = reservoir.weight
     end
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -192,7 +192,7 @@ function create_reservoir(reservoir::DelayLineBackwardReservoir, res_size)
         reservoir_matrix[i+1,i] = reservoir.weight
         reservoir_matrix[i,i+1] = reservoir.fb_weight
     end
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 #from "minimum complexity echo state network" Rodan
@@ -222,7 +222,7 @@ function create_reservoir(reservoir::SimpleCycleReservoir, res_size)
         reservoir_matrix[i+1,i] = reservoir.weight
     end
     reservoir_matrix[1, res_size] = reservoir.weight
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 #from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
@@ -267,7 +267,7 @@ function create_reservoir(reservoir::CycleJumpsReservoir, res_size)
         reservoir_matrix[i, tmp] = reservoir.jump_weight
         reservoir_matrix[tmp, i] = reservoir.jump_weight
     end
-    reservoir_matrix
+    sparse(reservoir_matrix)
 end
 
 

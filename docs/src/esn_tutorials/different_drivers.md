@@ -1,5 +1,5 @@
 # Using Different Reservoir Drivers
-While the original implementation of the Echo State Network implemented the model using the equations of Recurrent Neural Networks to obtain non linearity in the reservoir, other variations have been proposed in recent years. More specifically the different drivers implemented in ReservoirComputing.jl are the multiple activation function RNN `MRNN()` and the Gated Recurrent Unit `GRU()`. To change them it suffice to give the chosen method to the `ESN` keyword argument `reservoir_driver`. In this section some example of their usage will be given, as well as a quick introduction to their euqations.
+While the original implementation of the Echo State Network implemented the model using the equations of Recurrent Neural Networks to obtain non linearity in the reservoir, other variations have been proposed in recent years. More specifically the different drivers implemented in ReservoirComputing.jl are the multiple activation function RNN `MRNN()` and the Gated Recurrent Unit `GRU()`. To change them it suffice to give the chosen method to the `ESN` keyword argument `reservoir_driver`. In this section some example of their usage will be given, as well as a quick introduction to their equations.
 
 ## Multiple Activation Function RNN
 Based on the double activation function ESN (DAFESN) proposed in [^1], the Multiple Activation Function ESN expands the idea and allows a custom number of activation functions to be used in the reservoir dynamics. This can be thought as a linear combination of multiple activation functions with corresponding parameters.
@@ -10,7 +10,7 @@ where ``D`` is the number of activation function and respective parameters chose
 
 The method to call to use the mutliple activation function ESN is `MRNN(activation_function, leaky_coefficient, scaling_factor)`. The arguments can be used as both `args` or `kwargs`. `activation_function` and `scaling_factor` have to be vectors (or tuples) containing the chosen activation functions and respective scaling factors (``f_1,...,f_D`` and ``\lambda_1,...,\lambda_D`` following the nomenclature introduced above). The leaky_coefficient represents ``\alpha`` and it is a single value. 
 
-Starting the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](scripts/change_drivers_mrnn.jl).
+Starting the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/mrnn/mrnn.jl).
 ```julia
 u(t) = sin(t)+sin(0.51*t)+sin(0.22*t)+sin(0.1002*t)+sin(0.05343*t)
 ```
@@ -31,7 +31,7 @@ f3(x) = (2/pi)*atan((pi/2)*x)
 f4(x) = x/sqrt(1+x*x)
 ```
 
-It is now possible to build different drivers, using the paramters suggested by the paper. Also in this instance the numbering follows the test cases of the paper. In the end a simple for loop is implemented to compare the different drivers and activation functions.
+It is now possible to build different drivers, using the parameters suggested by the paper. Also in this instance the numbering follows the test cases of the paper. In the end a simple for loop is implemented to compare the different drivers and activation functions.
 ```julia
 using Reservoir Computing, Random
 
@@ -78,7 +78,7 @@ end
 In this example it is also possible to observe the input of parameters to the methods `RNN()` `MRNN()` both by argument and by keyword argument.
 
 ## Gated Recurrent Unit
-Gated Recurrent Units (GRUs) [^2] have been proposed in more recent years with the intent of limiting notable problems of RNNs, like the vanishing gradient. This change in the underlying equations can be easily transported in the Reservoir Computing paradigm, switching the RNN equations in the reservoir with the GRU equations. This approach has been explored in [^3] and [^4]. Different variations of GRU have been proposed [^5][^6]; this section is subdivided into different sections that go in detail about the governing equations and the implementation of them into ReservoirComputing.jl. Like before, to access the GRU reservoir driver it suffice to change the `reservoir_diver` keyword argument for `ESN` with `GRU()`. All the variations that are going to be presented can be used in this package by leveraging the keyword argument `variant` in the method `GRU()` and specifying the chosen variant: `Variant1()`, `Variant2()`, `Variant3()` or `Minimal()`. The default is set to the standard version `FullyGated()`. The first section will go in more detail about the default of the `GRU()` method, and the following ones will refer to it to minimize repetitions.
+Gated Recurrent Units (GRUs) [^2] have been proposed in more recent years with the intent of limiting notable problems of RNNs, like the vanishing gradient. This change in the underlying equations can be easily transported in the Reservoir Computing paradigm, switching the RNN equations in the reservoir with the GRU equations. This approach has been explored in [^3] and [^4]. Different variations of GRU have been proposed [^5][^6]; this section is subdivided into different sections that go in detail about the governing equations and the implementation of them into ReservoirComputing.jl. Like before, to access the GRU reservoir driver it suffice to change the `reservoir_diver` keyword argument for `ESN` with `GRU()`. All the variations that are going to be presented can be used in this package by leveraging the keyword argument `variant` in the method `GRU()` and specifying the chosen variant: `FullyGated()` or `Minimal()`. Other variations are possible modifying the inner layers and reservoirs. The default is set to the standard version `FullyGated()`. The first section will go in more detail about the default of the `GRU()` method, and the following ones will refer to it to minimize repetitions.
 
 ### Standard GRU
 The equations for the standard GRU are as follows:
@@ -90,12 +90,15 @@ The equations for the standard GRU are as follows:
 ```
 
 Going over the `GRU` keyword argument it will be explained how to feed the desired input to the model. 
- - `activation_function` is a vector with default values `[NNlib.sigmoid, NNlib.sigmoid, tanh]`. This argument controls the activation functions of the GRU, going from top to bottom. Changing the first element corresponds in changing the activation function for ``\mathbf{r}(t)``.
- - `layer_init` is a vector with default values `fill(DenseLayer(), 5)`. This keyword argument controls the ``\mathbf{W}_{\text{in}}``s and the ``\mathbf{b}``s going from top to bottom, left to right. For example, changing the first element will change ``\mathbf{W}^r_{\text{in}}``, changing the second will change ``\mathbf{b}_r`` and so on.
- - `reservoir_init` is a vector with default value `fill(RandSparseReservoir(), 2)`. In a similar fashion to `layer_init`, this keyword argument controls the reservoir matrix construction in a top to bottom order. 
+ - `activation_function` is a vector with default values `[NNlib.sigmoid, NNlib.sigmoid, tanh]`. This argument controls the activation functions of the GRU, going from top to bottom. Changing the first element corresponds in changing the activation function for ``\mathbf{r}(t)`` and so on.
+ - `inner_layer` is a vector with default values `fill(DenseLayer(), 2)`. This keyword argument controls the ``\mathbf{W}_{\text{in}}``s going from top to bottom like before.
+ - `reservoir` is a vector with default value `fill(RandSparseReservoir(), 2)`. In a similar fashion to `inner_layer`, this keyword argument controls the reservoir matrix construction in a top to bottom order.
+ - `bias` is again a vector with default value `fill(DenseLayer(), 2)`. It is meant to control the ``\mathbf{b}``s, going as usual from top to bottom.
  - `variant` as already illustrated controls the GRU variant. The default value is set to `FullyGated()`.
  
-It is important to notice that `layer_init` and `reservoir_init` control every layer except ``\mathbf{W}_{in}`` and ``\mathbf{W}``. These arguments are given as input to the `ESN()` call as usual.
+It is important to notice that `inner_layer` and `reservoir` control every layer except ``\mathbf{W}_{in}`` and ``\mathbf{W}`` and ``\mathbf{b}``. These arguments are given as input to the `ESN()` call as `input_layer`, `reservoir` and `bias`. 
+
+The following sections are going to illustrate the variations of the GRU architecture and how to obtain them in ReservoirComputing.jl
 
 ### Type 1
 The first variation of the GRU is dependent only on the previous hidden state and the bias:
@@ -104,16 +107,17 @@ The first variation of the GRU is dependent only on the previous hidden state an
 \mathbf{z}(t) = \sigma (\mathbf{W}^z\mathbf{x}(t-1)+\mathbf{b}_z) \\
 ```
 
-This means that `layer_init` is 3-dimensional instead of 5 given the absence of ``\mathbf{W}_{in}``s.
+To obtain this variation it will suffice to set `inner_layer = fill(NullLayer(), 2)` and leaving the `variant = FullyGated()`.
 
 ### Type 2
-The second variation only depends on the previous hiddens state:
+The second variation only depends on the previous hidden state:
 ```math
 \mathbf{r}(t) = \sigma (\mathbf{W}^r\mathbf{x}(t-1)) \\
 \mathbf{z}(t) = \sigma (\mathbf{W}^z\mathbf{x}(t-1)) \\
 ```
 
-Here `layer_init` only has one element, and it control the bias vector of ``\tilde{\mathbf{x}}(t)``.
+Similarly to before, to obtain this variation it is only needed to set `inner_layer = fill(NullLayer(), 2)` and `bias = fill(NullLayer(), 2)` while keeping `variant = FullyGated()`.
+
 ### Type 3
 The final variation before the minimal one depends only on the biases
 ```math
@@ -121,7 +125,8 @@ The final variation before the minimal one depends only on the biases
 \mathbf{z}(t) = \sigma (\mathbf{b}_z) \\
 ```
 
-This means that `layer_init` is 3-dimensional and it controls only the bias vectors. 
+This means that it is only needed to set `inner_layer = fill(NullLayer(), 2)` and `reservoir = fill(NullReservoir(), 2)` while keeping `variant = FullyGated()`.
+
 ### Minimal 
 The minimal GRU variation merges two gates into one:
 ```math
@@ -130,10 +135,11 @@ The minimal GRU variation merges two gates into one:
 \mathbf{x}(t) = (1-\mathbf{f}(t)) \odot \mathbf{x}(t-1) + \mathbf{f}(t) \odot \tilde{\mathbf{x}}(t)
 ```
 
-As a consequence `layer_init` is 3-dimensional and `reservoir_init` is 1-dimensional
-
+This variation can be obtained by setting `variation=Minimal()`. The `inner_layer`, `reservoir` and `bias` kwargs this time are **not** vectors, but must be defined like, for example `inner_layer = DenseLayer()` or `reservoir = SparseDenseReservoir()`.
 
 ### Examples
+To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/gru.jl).
+
 
 
 

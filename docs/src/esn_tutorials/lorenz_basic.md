@@ -1,6 +1,6 @@
  # Lorenz System Forecasting
  
-This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is ```Generative```, for a more detailed explanation of the differences between ```Generative``` and ```Predictive``` please refer to the other examples given in the documentation. The full script for this example is available [here](scripts/lorenz_basic.jl).
+This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is ```Generative```, for a more detailed explanation of the differences between ```Generative``` and ```Predictive``` please refer to the other examples given in the documentation. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/lorenz_basic/lorenz_basic.jl).
 
 ## Generating the data
 Starting off the workflow the first step is to obtain the data. Leveraging ```OrdinaryDiffEq``` it is possible to derive the Lorenz system data in the following way:
@@ -32,7 +32,7 @@ target_data = data[:, shift+1:shift+train_len]
 test_data = data[:,shift+train_len+1:shift+train_len+predict_len]
 ```
 
-It is *important* to notice that the data needs to be formatted in a matrix with the features as rows and timesteps as columns like it is done in this example. This is needed even if the timeserie consists of single values. 
+It is *important* to notice that the data needs to be formatted in a matrix with the features as rows and time steps as columns like it is done in this example. This is needed even if the time series consists of single values. 
 
 ## Building the Echo State Network
 Once the data is ready it is possible to define the parameters for the ESN and the ```ESN``` struct itself. In this example the values from [^1] are loosely followed as general guidelines.
@@ -67,7 +67,7 @@ The reservoir driver represents the dynamics of the reservoir. In the standard E
 ```
 where ``α`` represents the leaky coefficient and tanh can be any activation function. Also ``\textbf{x}`` represent the state vector, ``\textbf{u}`` the input data and ``\textbf{W}, \textbf{W}_{\text{in}}`` are the reservoir matrix and input matrix respectively. The default call to the RNN in the library is the following ```RNN(;activation_function=tanh, leaky_coefficient=1.0)```, where the meaning of the parameters is clear from the equation above. Instead og the hyperbolic tangent any activation function can be used, either leveraging external lybraries such as ```NNlib``` or creating a custom one. 
 
-The final calls are modifications to the states in training or prediction. The default calls, depicted in the example, do not apport any modifications to the states. This is the safest bet is one is not sure on how these work. The ```nla_type``` applies a non linear algorithm to the states, while the ```states_type``` can expand them concatenating them with the inpu data, or padding them concatenating a constant value to all the states. More in depth descriptions about these parameters are given in other examples in the documentation.
+The final calls are modifications to the states in training or prediction. The default calls, depicted in the example, do not make any modifications to the states. This is the safest bet is one is not sure on how these work. The ```nla_type``` applies a non linear algorithm to the states, while the ```states_type``` can expand them concatenating them with the input data, or padding them concatenating a constant value to all the states. More in depth descriptions about these parameters are given in other examples in the documentation.
 
 ## Training and Prediction
 Now that the ESN has been created and all the parameters have been explained it is time to proceed with the training. The full call of the readme example follows this general idea:

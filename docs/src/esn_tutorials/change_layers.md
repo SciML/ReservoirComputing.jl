@@ -20,12 +20,12 @@ function create_layer(input_layer::MyNewLayer, res_size, in_size)
 end
 ```
 Similarly the `reservoir_init` keyword argument provides the possibility to change the construction for the reservoir matrix. The available reservoir are:
-- ```RandSparseReservoir(radius, sparsity)```
-- ```PseudoSVDReservoir(max_value, sparsity, sorted, reverse_sort)```
-- ```DelayLineReservoir(weight)```
-- ```DelayLineBackwardReservoir(weight, fb_weight)```
-- ```SimpleCycleReservoir(weight)```
-- ```CycleJumpsReservoir(cycle_weight, jump_weight, jump_size)```
+- ```RandSparseReservoir(res_size, radius, sparsity)```
+- ```PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)```
+- ```DelayLineReservoir(res_size, weight)```
+- ```DelayLineBackwardReservoir(res_size, weight, fb_weight)```
+- ```SimpleCycleReservoir(res_size, weight)```
+- ```CycleJumpsReservoir(res_size, cycle_weight, jump_weight, jump_size)```
 And, like before, it is possible to build a custom reservoir by following this workflow:
 ```julia
 #creation of the new struct for the reservoir
@@ -40,9 +40,9 @@ end
 ```
 
 ## Example of minimally complex ESN
-Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. 
+Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl).
 
-The task for this example will be the one step ahead prediction of the henon system. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
+The task for this example will be the one step ahead prediction of the Henon map. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
 ```julia
 using DynamicalSystems
 train_len = 3000
@@ -89,5 +89,5 @@ As it is possible to see, changing layers in ESN models is straightforward. Be s
 ## Bibliography
 [^1]: Rodan, Ali, and Peter Tiňo. “Simple deterministically constructed cycle reservoirs with regular jumps.” Neural computation 24.7 (2012): 1822-1852.
 
-[^2]: Rodan, Ali, and Peter Tino. “Minimum complexity echo state network.” IEEE transactions on neural networks 22.1 (2010): 131-144.
+[^2]: Rodan, Ali, and Peter Tiňo. “Minimum complexity echo state network.” IEEE transactions on neural networks 22.1 (2010): 131-144.
 
