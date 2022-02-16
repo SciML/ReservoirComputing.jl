@@ -1,5 +1,15 @@
 abstract type AbstractStates end
+abstract type AbstractPaddedStates <: AbstractStates end
 abstract type NonLinearAlgorithm end
+
+function pad_state(states_type::AbstractPaddedStates, x)
+    vcat(fill(states_type.padding, (1, size(x, 2))), x)
+end
+
+function pad_state(states_type, x)
+    x
+end
+
 
 #states types
 """
@@ -17,11 +27,11 @@ during the prediction section. This is obtained with a vertical concatenation of
 """
 struct ExtendedStates <: AbstractStates end
 
-struct PaddedStates{T} <: AbstractStates
+struct PaddedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-struct PaddedExtendedStates{T} <: AbstractStates 
+struct PaddedExtendedStates{T} <: AbstractPaddedStates 
     padding::T
 end
 

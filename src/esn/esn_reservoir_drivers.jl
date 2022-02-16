@@ -5,18 +5,24 @@ abstract type AbstractReservoirDriver end
 
 Return the trained ESN states according to the given driver.
 """
-function create_states(reservoir_driver::AbstractReservoirDriver, train_data, reservoir_matrix, input_matrix, bias_vector)
+function create_states(reservoir_driver::AbstractReservoirDriver, train_data, washout, 
+    reservoir_matrix, input_matrix, bias_vector)
 
-    train_len = size(train_data, 2)
+    train_len = size(train_data, 2)-washout
     res_size = size(reservoir_matrix, 1)
-    in_size = size(train_data, 1)
-    states = zeros(res_size, train_len+1) 
+    states = zeros(res_size, train_len)
+    _state = zeros(res_size)
 
-    for i=1:train_len
-        states[:, i+1] = next_state(reservoir_driver, states[:, i], train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
+    for i=1:washout
+        _state = next_state(reservoir_driver, _state, train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
     end
 
-    states[:,2:end]
+    for j=1:train_len
+        _state = next_state(reservoir_driver, _state, train_data[:, washout+j], reservoir_matrix, input_matrix, bias_vector)
+        states[:, j] = _state
+    end
+
+    states
 end
 
 #standard RNN driver
@@ -125,7 +131,7 @@ Returns a Gated Recurrent Unit [1] reservoir driver.
 """
 function GRU(;activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh], #has to be a voctor of size 3
               inner_layer = fill(DenseLayer(), 2), #has to be a vector of size 2
-              reservoir = fill(RandSparseReservoir(), 2), #has to be a vector of size 2
+              reservoir = fill(RandSparseReservoir(0), 2), #has to be a vector of size 2
               bias = fill(DenseLayer(), 2), #has to be a vector of size 2
               variant = FullyGated())
 

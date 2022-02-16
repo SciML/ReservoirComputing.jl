@@ -13,14 +13,13 @@ makedocs(
         ],
         "Echo State Network Tutorials" => Any[
             "Lorenz System Forecasting" => "esn_tutorials/lorenz_basic.md",
+            "Mackey-Glass Forecasting" => "esn_tutorials/mackeyglass_basic.md",
             "Using Different Layers" => "esn_tutorials/change_layers.md",
             "Using Different Reservoir Drivers" => "esn_tutorials/different_drivers.md",
             "Using Different Training Methods" => "esn_tutorials/different_training.md",
             "Hybrid Echo State Networks" => "esn_tutorials/hybrid.md",
             ],
-        "Reservoir Computing with Cellular Automata" => Any[
-            "5 Bit Memory Task" => "reca_tutorials/reca.md",
-        ],
+        "Reservoir Computing with Cellular Automata" => "reca_tutorials/reca.md",
         "API Documentation"=>Any[
             "Training Algorithms" => "api/training.md",
             "States Modifications" => "api/states.md",
