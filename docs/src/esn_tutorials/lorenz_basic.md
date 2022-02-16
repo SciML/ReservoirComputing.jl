@@ -48,8 +48,8 @@ input_scaling = 0.1
 #build ESN struct
 esn = ESN(input_data; 
     variation = Default(),
-    reservoir_init = RandSparseReservoir(res_size, radius=res_radius, sparsity=res_sparsity),
-    input_init = WeightedLayer(scaling=input_scaling),
+    reservoir = RandSparseReservoir(res_size, radius=res_radius, sparsity=res_sparsity),
+    input_layer = WeightedLayer(scaling=input_scaling),
     reservoir_driver = RNN(),
     nla_type = NLADefault(),
     states_type = StandardStates())

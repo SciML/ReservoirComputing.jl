@@ -59,8 +59,8 @@ case5 = MRNN([tanh, f4], 0.9, [0.43, 0.13])
 test_cases = [base_case, case3, case4, case5]
 for case in test_cases
     esn = ESN(training_input,
-        input_init = WeightedLayer(scaling=0.3),
-        reservoir_init = RandSparseReservoir(100, radius=0.4),
+        input_layer = WeightedLayer(scaling=0.3),
+        reservoir = RandSparseReservoir(100, radius=0.4),
         reservoir_driver = case,
         states_type = ExtendedStates())
     wout = train(esn, training_target, StandardRidge(10e-6))
@@ -138,10 +138,86 @@ The minimal GRU variation merges two gates into one:
 This variation can be obtained by setting `variation=Minimal()`. The `inner_layer`, `reservoir` and `bias` kwargs this time are **not** vectors, but must be defined like, for example `inner_layer = DenseLayer()` or `reservoir = SparseDenseReservoir()`.
 
 ### Examples
-To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/gru.jl).
+To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/l). 
 
+The data used for this example is the Santa Fe laser dataset [^7] retrieved from [here](https://web.archive.org/web/20160427182805/http://www-psych.stanford.edu/~andreas/Time-Series/SantaFe.html). The data is split to account for a next step prediction.
+```julia
+using DelimitedFiles
 
+data = reduce(hcat, readdlm("santafe_laser.txt"))
 
+train_len   = 5000
+predict_len = 2000
+
+training_input  = data[:, 1:train_len]
+training_target = data[:, 2:train_len+1]
+testing_input   = data[:,train_len+1:train_len+predict_len]
+testing_target  = data[:,train_len+2:train_len+predict_len+1]
+```
+
+The construction of the ESN proceeds as usual. 
+```julia
+using ReservoirComputing, Random
+
+res_size = 300
+res_radius = 1.4
+
+Random.seed!(42)
+esn = ESN(training_input; 
+    reservoir = RandSparseReservoir(res_size, radius=res_radius),
+    reservoir_driver = GRU())
+```
+
+The default inner reservoir and input layer for the GRU are the same defaults for the `reservoir` and `input_layer` of the ESN. One can use the explicit call if they choose so.
+```julia
+gru = GRU(reservoir=[RandSparseReservoir(res_size), 
+    RandSparseReservoir(res_size)],
+    inner_layer=[DenseLayer(), DenseLayer()])
+esn = ESN(training_input; 
+    reservoir = RandSparseReservoir(res_size, radius=res_radius),
+    reservoir_driver = gru)
+```
+
+The training and prediction can proceed as usual:
+```julia
+training_method = StandardRidge(0.0)
+output_layer    = train(esn, training_target, training_method)
+output          = esn(Predictive(testing_input), output_layer)
+```
+
+The results can be plotted using Plots.jl
+```julia
+using Plots
+
+plot([testing_target' output'], label=["actual" "predicted"], 
+    plot_title="Santa Fe Laser",
+    titlefontsize=20,
+    legendfontsize=12,
+    linewidth=2.5,
+    xtickfontsize = 12,
+    ytickfontsize = 12,
+    size=(1080, 720))
+```
+![grulaser](images/gru.png)
+
+It is interesting to see a comparison of the GRU driven ESN and the standard RNN driven ESN. Using the same parameters defined before it is possible to do the following
+```julia
+using StatsBase
+
+esn_rnn = ESN(training_input; 
+    reservoir = RandSparseReservoir(res_size, radius=res_radius),
+    reservoir_driver = RNN())
+
+output_layer    = train(esn_rnn, training_target, training_method)
+output_rnn      = esn_rnn(Predictive(testing_input), output_layer)
+
+println(msd(testing_target, output))
+println(msd(testing_target, output_rnn))
+```
+```
+6.27305930082895
+10.057380254248484
+```
 
 
 [^1]: Lun, Shu-Xian, et al. "_A novel model of leaky integrator echo state network for time-series prediction._" Neurocomputing 159 (2015): 58-66.
@@ -150,3 +226,4 @@ To showcase the use of the `GRU()` method this section will only illustrate the 
 [^4]: Di Sarli, Daniele, Claudio Gallicchio, and Alessio Micheli. "_Gated Echo State Networks: a preliminary study._" 2020 International Conference on INnovations in Intelligent SysTems and Applications (INISTA). IEEE, 2020.
 [^5]: Dey, Rahul, and Fathi M. Salem. "_Gate-variants of gated recurrent unit (GRU) neural networks._" 2017 IEEE 60th international midwest symposium on circuits and systems (MWSCAS). IEEE, 2017.
 [^6]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._" International Journal of Automation and Computing 13.3 (2016): 226-234.
+[^7]: Hübner, Uwe, Nimmi B. Abraham, and Carlos O. Weiss. "_Dimensions and entropies of chaotic intensity pulsations in a single-mode far-infrared NH 3 laser._" Physical Review A 40.11 (1989): 6354.
