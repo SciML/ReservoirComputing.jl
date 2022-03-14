@@ -8,8 +8,8 @@ function get_ressize(reservoir)
     size(reservoir, 1)
 end
 
-struct RandSparseReservoir{S,T,C} <: AbstractReservoir
-    res_size::S
+struct RandSparseReservoir{T,C} <: AbstractReservoir
+    res_size::Int
     radius::T
     sparsity::C
 end
@@ -38,6 +38,9 @@ function create_reservoir(reservoir::RandSparseReservoir, res_size)
     replace!(reservoir_matrix, -1.0=>0.0)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= reservoir.radius/rho_w
+    Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix) ? error(
+        "Sparsity too low for size of the matrix. 
+        Increase res_size or increase sparsity") : nothing
     sparse(reservoir_matrix)
 end
 
@@ -58,8 +61,8 @@ end
 =#    
 
 #SVD reservoir construction based on "Yang, Cuili, et al. "Design of polynomial echo state networks for time series prediction" Yang et al
-struct PseudoSVDReservoir{S,T,C} <: AbstractReservoir
-    res_size::S
+struct PseudoSVDReservoir{T,C} <: AbstractReservoir
+    res_size::Int
     max_value::T
     sparsity::C
     sorted::Bool
@@ -136,8 +139,8 @@ end
 # Delay Line Reservoir
 
 
-struct DelayLineReservoir{S,T} <: AbstractReservoir
-    res_size::S
+struct DelayLineReservoir{T} <: AbstractReservoir
+    res_size::Int
     weight::T
 end
 
@@ -165,8 +168,8 @@ end
 
 #from "minimum complexity echo state network" Rodan
 # Delay Line Reservoir with backward connections
-struct DelayLineBackwardReservoir{S,T} <: AbstractReservoir
-    res_size::S
+struct DelayLineBackwardReservoir{T} <: AbstractReservoir
+    res_size::Int
     weight::T
     fb_weight::T
 end
@@ -197,8 +200,8 @@ end
 
 #from "minimum complexity echo state network" Rodan
 # Simple cycle reservoir
-struct SimpleCycleReservoir{S,T} <: AbstractReservoir
-    res_size::S
+struct SimpleCycleReservoir{T} <: AbstractReservoir
+    res_size::Int
     weight::T
 end
 
@@ -227,11 +230,11 @@ end
 
 #from "simple deterministically constructed cycle reservoirs with regular jumps" by Rodan and Tino
 # Cycle Reservoir with Jumps
-struct CycleJumpsReservoir{S,T,C} <: AbstractReservoir
-    res_size::S
+struct CycleJumpsReservoir{T} <: AbstractReservoir
+    res_size::Int
     cycle_weight::T
     jump_weight::T
-    jump_size::C
+    jump_size::Int
 end
 
 """

@@ -40,3 +40,18 @@ esn = ESN(input_data;
 output_layer = train(esn, target_data, training_method)
 output = esn(Predictive(target_data), output_layer, initial_conditions=target_data[1])
 @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.11
+
+#deep esn
+esn = ESN(input_data; 
+        reservoir=[RandSparseReservoir(res_size, 1.2, 0.1), RandSparseReservoir(res_size, 1.2, 0.1)])
+output_layer = train(esn, target_data, training_method)
+output = esn(Predictive(target_data), output_layer, initial_conditions=target_data[1])
+@test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.11
+
+esn = ESN(input_data; 
+        reservoir=[RandSparseReservoir(res_size, 1.2, 0.1), RandSparseReservoir(res_size, 1.2, 0.1)],
+        input_layer=[DenseLayer(), DenseLayer()],
+        bias=[NullLayer(), NullLayer()])
+output_layer = train(esn, target_data, training_method)
+output = esn(Predictive(target_data), output_layer, initial_conditions=target_data[1])
+@test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.11

@@ -71,7 +71,7 @@ API documentation. More examples are given in the general documentation.
 function ESN(train_data;
              variation = Default(),
              input_layer = DenseLayer(),
-             reservoir = RandSparseReservoir(),
+             reservoir = RandSparseReservoir(100),
              bias = NullLayer(),
              reservoir_driver = RNN(),
              nla_type = NLADefault(),
@@ -79,8 +79,7 @@ function ESN(train_data;
              washout = 0)
 
     variation isa Hybrid ? train_data = vcat(train_data, variation.model_data[:, 1:end-1]) : nothing
-    input_res_size = get_ressize(reservoir)
-
+    
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(ones(1, size(train_data, 2)), train_data)
@@ -88,19 +87,70 @@ function ESN(train_data;
         in_size = size(train_data, 1)
     end
 
-    input_matrix = create_layer(input_layer, input_res_size, in_size)
-    res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
-    reservoir_matrix = create_reservoir(reservoir, res_size)
-    @assert size(reservoir_matrix, 1) == res_size
-    bias_vector = create_layer(bias, res_size, 1)
+    input_matrix, reservoir_matrix, bias_vector, res_size = obtain_layers(in_size,
+        input_layer, reservoir, bias)
 
     inner_reservoir_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_reservoir_driver, train_data, washout, 
         reservoir_matrix, input_matrix, bias_vector)
     train_data = train_data[:,washout+1:end]
 
-    ESN(res_size, train_data, variation, nla_type, input_matrix, inner_reservoir_driver, 
+    ESN(sum(res_size), train_data, variation, nla_type, input_matrix, inner_reservoir_driver, 
         reservoir_matrix, bias_vector, states_type, washout, states)
+end
+
+#shallow esn construction
+function obtain_layers(in_size,
+    input_layer,
+    reservoir,
+    bias)
+
+    input_res_size = get_ressize(reservoir)
+    input_matrix = create_layer(input_layer, input_res_size, in_size)
+    res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
+    reservoir_matrix = create_reservoir(reservoir, res_size)
+    @assert size(reservoir_matrix, 1) == res_size
+    bias_vector = create_layer(bias, res_size, 1)
+
+    input_matrix, reservoir_matrix, bias_vector, res_size
+end
+
+#deep esn construction
+#there is a bug going on with WeightedLayer in this construction.
+#it works for eny other though
+function obtain_layers(in_size,
+    input_layer,
+    reservoir::Vector,
+    bias)
+
+    esn_depth = length(reservoir)
+    input_res_sizes = [get_ressize(reservoir[i]) for i=1:esn_depth]
+    in_sizes = zeros(Int, esn_depth)
+    in_sizes[2:end] = input_res_sizes[1:end-1]
+    in_sizes[1] = in_size
+
+    if input_layer isa Array
+        input_matrix = [create_layer(input_layer[j], input_res_sizes[j], 
+            in_sizes[j]) for j=1:esn_depth]
+    else
+        _input_layer = fill(input_layer, esn_depth)
+        input_matrix = [create_layer(_input_layer[k], input_res_sizes[k], 
+            in_sizes[k]) for k=1:esn_depth]
+    end
+
+    res_sizes = [get_ressize(input_matrix[j]) for j=1:esn_depth]
+    reservoir_matrix = [create_reservoir(reservoir[k], res_sizes[k]) for k=1:esn_depth]
+
+    if bias isa Array
+        bias_vector = [create_layer(bias[j], res_sizes[j], 
+            1) for j=1:esn_depth]
+    else
+        _bias = fill(bias, esn_depth)
+        bias_vector = [create_layer(_bias[k], res_sizes[k], 
+            1) for k=1:esn_depth]
+    end
+
+    input_matrix, reservoir_matrix, bias_vector, res_sizes
 end
 
 

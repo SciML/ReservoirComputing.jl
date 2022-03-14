@@ -9,11 +9,36 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
     reservoir_matrix, input_matrix, bias_vector)
 
     train_len = size(train_data, 2)-washout
+    #reservoir_matrix isa Vector ? res_size = sum([size(reservoir_matrix[i], 1) for i=1:length(reservoir_matrix)]) : res_size = size(reservoir_matrix, 1)
     res_size = size(reservoir_matrix, 1)
     states = zeros(res_size, train_len)
     _state = zeros(res_size)
 
     for i=1:washout
+        _state = next_state(reservoir_driver, _state, train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
+    end
+
+    for j=1:train_len
+        _state = next_state(reservoir_driver, _state, train_data[:, washout+j], reservoir_matrix, input_matrix, bias_vector)
+        states[:, j] = _state
+    end
+
+    states
+end
+
+function create_states(reservoir_driver::AbstractReservoirDriver, train_data, washout, 
+    reservoir_matrix::Vector, input_matrix, bias_vector)
+
+    train_len = size(train_data, 2)-washout
+    res_size = sum([size(reservoir_matrix[i], 1) for i=1:length(reservoir_matrix)])
+    states = zeros(res_size, train_len)
+    _state = zeros(res_size)
+
+    for i=1:washout
+        for j=1:length(reservoir_matrix)
+            _inter_state = next_state(reservoir_driver, _inter_state, train_data[:, i], 
+                reservoir_matrix, input_matrix, bias_vector)
+        end
         _state = next_state(reservoir_driver, _state, train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
     end
 
@@ -49,6 +74,21 @@ function next_state(rnn::RNN, x, y, W, W_in, b)
     rnn_next_state = (1-rnn.leaky_coefficient).*x
     rnn_next_state += rnn.leaky_coefficient*rnn.activation_function.((W*x).+(W_in*y).+b)
     rnn_next_state
+end
+
+function next_state(rnn::RNN, x, y, W::Vector, W_in, b)
+    esn_depth = length(W)
+    res_sizes = vcat(0, [get_ressize(W[i]) for i=1:esn_depth])
+    inner_states = [x[1+sum(res_sizes[1:i]):sum(res_sizes[1:i+1])] 
+        for i=1:esn_depth]
+    inner_inputs = vcat([y], inner_states[1:end-1])
+
+    for i=1:esn_depth
+        inner_states[i] = (1-rnn.leaky_coefficient).*inner_states[i] +
+            rnn.leaky_coefficient*rnn.activation_function.((W[i]*inner_states[i]).+
+            (W_in[i]*inner_inputs[i]).+reduce(vcat,b[i]))
+    end
+    reduce(vcat, inner_states)
 end
 
 #multiple RNN driver
