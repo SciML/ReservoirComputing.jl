@@ -91,8 +91,19 @@ The results are in line with the literature.
 
 The code is partly based on the original [paper](http://www.scholarpedia.org/article/Echo_state_network) by Jaeger, with a few construction changes found in the literature. The reservoir implementation is based on the code used in the following [paper](https://arxiv.org/pdf/1906.08829.pdf), as well as the non-linear transformation algorithms T1, T2, and T3, the first of which was introduced [here](https://www.researchgate.net/publication/322457145_Model-Free_Prediction_of_Large_Spatiotemporally_Chaotic_Systems_from_Data_A_Reservoir_Computing_Approach).
 
+## Citing
 
-## To do list
-* Documentation
-* Implement variable number of outputs as in [this](https://aip.scitation.org/doi/10.1063/1.4979665) paper
-* Implement different systems for the reservoir (like [this](https://arxiv.org/pdf/1410.0162.pdf) paper)
+If you use this library in your work, please cite:
+
+```bibtex
+@misc{https://doi.org/10.48550/arxiv.2204.05117,
+  doi = {10.48550/ARXIV.2204.05117},
+  url = {https://arxiv.org/abs/2204.05117},
+  author = {Martinuzzi, Francesco and Rackauckas, Chris and Abdelrehim, Anas and Mahecha, Miguel D. and Mora, Karin},
+  keywords = {Computational Engineering, Finance, and Science (cs.CE), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution 4.0 International}
+}
+```
