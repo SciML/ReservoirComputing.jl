@@ -26,8 +26,22 @@ Since ReservoirComputing is registered in the Julia General Registry, it will su
 ]add ReservoirComputing
 ```
 
+## Citing
 
+If you use this library in your work, please cite:
 
+```bibtex
+@misc{https://doi.org/10.48550/arxiv.2204.05117,
+  doi = {10.48550/ARXIV.2204.05117},
+  url = {https://arxiv.org/abs/2204.05117},
+  author = {Martinuzzi, Francesco and Rackauckas, Chris and Abdelrehim, Anas and Mahecha, Miguel D. and Mora, Karin},
+  keywords = {Computational Engineering, Finance, and Science (cs.CE), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution 4.0 International}
+}
+```
 
 ## References
 
