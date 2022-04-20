@@ -70,3 +70,20 @@ plot(transpose(output)[:,1], transpose(output)[:,2], transpose(output)[:,3], lab
 plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="actual")
 ```
 ![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)
+
+## Citing
+
+If you use this library in your work, please cite:
+
+```bibtex
+@misc{https://doi.org/10.48550/arxiv.2204.05117,
+  doi = {10.48550/ARXIV.2204.05117},
+  url = {https://arxiv.org/abs/2204.05117},
+  author = {Martinuzzi, Francesco and Rackauckas, Chris and Abdelrehim, Anas and Mahecha, Miguel D. and Mora, Karin},
+  keywords = {Computational Engineering, Finance, and Science (cs.CE), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution 4.0 International}
+}
+```

@@ -79,3 +79,20 @@ All the training methods described above can be used, as well as all the modific
 
 ### Contributing
 Contributions are very welcomed! Some interesting variation of RC models are posted in the issues, but everyone is free to just post relevant papers that could fit the scope of the library. Help with the documentation, providing new examples or application cases is also really important and appreciated. Everything that can make the package a little better is a great contribution, no matter how small. The API section of the documentation provides a more in depth look into how things work and are connected, so that is a good place to start exploring more the library. For every doubt that cannot be expressed in issues please feel free to contact any of the lead developers on Slack or by email.
+
+## Citing
+
+If you use this library in your work, please cite:
+
+```bibtex
+@misc{https://doi.org/10.48550/arxiv.2204.05117,
+  doi = {10.48550/ARXIV.2204.05117},
+  url = {https://arxiv.org/abs/2204.05117},
+  author = {Martinuzzi, Francesco and Rackauckas, Chris and Abdelrehim, Anas and Mahecha, Miguel D. and Mora, Karin},
+  keywords = {Computational Engineering, Finance, and Science (cs.CE), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution 4.0 International}
+}
+```
