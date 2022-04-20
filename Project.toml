@@ -4,6 +4,7 @@ authors = ["Francesco Martinuzzi"]
 version = "0.7.0"
 
 [deps]
+Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -17,18 +18,18 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-Distributions = "0.24, 0.25"
-LIBSVM = "0.6"
-Optim = "1"
-GaussianProcesses = "0.12"
-MLJLinearModels = "0.5"
 Distances = "0.10"
+Distributions = "0.24, 0.25"
+GaussianProcesses = "0.12"
+LIBSVM = "0.6"
+MLJLinearModels = "0.5"
+Optim = "1"
 julia = "1.6"
 
 [extras]
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [targets]
 test = ["Test", "SafeTestsets", "Random"]
