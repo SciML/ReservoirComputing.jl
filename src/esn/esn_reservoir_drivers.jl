@@ -9,18 +9,23 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
     reservoir_matrix, input_matrix, bias_vector)
 
     train_len = size(train_data, 2)-washout
-    #reservoir_matrix isa Vector ? res_size = sum([size(reservoir_matrix[i], 1) for i=1:length(reservoir_matrix)]) : res_size = size(reservoir_matrix, 1)
     res_size = size(reservoir_matrix, 1)
-    states = zeros(res_size, train_len)
-    _state = zeros(res_size)
+
+    states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
+    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size, train_len)
+    _state = Adapt.adapt(typeof(train_data), zeros(res_size))
 
     for i=1:washout
-        _state = next_state(reservoir_driver, _state, train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
+        yv = @view train_data[:,i]
+        _state = next_state!(_state, reservoir_driver, _state, yv, 
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
     end
 
     for j=1:train_len
-        _state = next_state(reservoir_driver, _state, train_data[:, washout+j], reservoir_matrix, input_matrix, bias_vector)
-        states[:, j] = _state
+        yv = @view train_data[:, washout+j]
+        _state = next_state!(_state, reservoir_driver, _state, yv, 
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
+        states[:,j] = _state
     end
 
     states
@@ -31,20 +36,24 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
 
     train_len = size(train_data, 2)-washout
     res_size = sum([size(reservoir_matrix[i], 1) for i=1:length(reservoir_matrix)])
-    states = zeros(res_size, train_len)
-    _state = zeros(res_size)
+
+    states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
+    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size, train_len)
+    _state = Adapt.adapt(typeof(train_data), zeros(res_size))
 
     for i=1:washout
         for j=1:length(reservoir_matrix)
-            _inter_state = next_state(reservoir_driver, _inter_state, train_data[:, i], 
-                reservoir_matrix, input_matrix, bias_vector)
+            _inter_state = next_state!(_inter_state, reservoir_driver, _inter_state, train_data[:, i], 
+                reservoir_matrix, input_matrix, bias_vector, tmp_array)
         end
-        _state = next_state(reservoir_driver, _state, train_data[:, i], reservoir_matrix, input_matrix, bias_vector)
+        _state = next_state!(_state, reservoir_driver, _state, train_data[:, i],
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
     end
 
     for j=1:train_len
-        _state = next_state(reservoir_driver, _state, train_data[:, washout+j], reservoir_matrix, input_matrix, bias_vector)
-        states[:, j] = _state
+        _state = next_state!(_state, reservoir_driver, _state, train_data[:, washout+j],
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
+        states[:,j] = _state
     end
 
     states
@@ -62,7 +71,7 @@ end
 
 Returns a Recurrent Neural Network initializer for the ESN. This is the default choice.
 """
-function RNN(;activation_function=tanh, leaky_coefficient=1.0)
+function RNN(;activation_function= NNlib.fast_act(tanh), leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
 end
 
@@ -70,13 +79,14 @@ function reservoir_driver_params(rnn::RNN, args...)
     rnn
 end
 
-function next_state(rnn::RNN, x, y, W, W_in, b)
-    rnn_next_state = (1-rnn.leaky_coefficient).*x
-    rnn_next_state += rnn.leaky_coefficient*rnn.activation_function.((W*x).+(W_in*y).+b)
-    rnn_next_state
+function next_state!(out, rnn::RNN, x, y, W, W_in, b, tmp_array)
+    mul!(tmp_array[1], W, x)
+    mul!(tmp_array[2], W_in, y)
+    @. tmp_array[1] = rnn.activation_function(tmp_array[1] + tmp_array[2] + b) * rnn.leaky_coefficient
+    @. out = (1-rnn.leaky_coefficient)*x + tmp_array[1]
 end
 
-function next_state(rnn::RNN, x, y, W::Vector, W_in, b)
+function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
     esn_depth = length(W)
     res_sizes = vcat(0, [get_ressize(W[i]) for i=1:esn_depth])
     inner_states = [x[1+sum(res_sizes[1:i]):sum(res_sizes[1:i+1])] 
@@ -90,6 +100,13 @@ function next_state(rnn::RNN, x, y, W::Vector, W_in, b)
     end
     reduce(vcat, inner_states)
 end
+
+function allocate_tmp(driver::RNN, tmp_type, res_size, train_len)
+    tmp1 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp2 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    [tmp1, tmp2]
+end
+
 
 #multiple RNN driver
 struct MRNN{F,T,R} <: AbstractReservoirDriver
@@ -118,12 +135,31 @@ function reservoir_driver_params(mrnn::MRNN, args...)
     mrnn
 end
 
-function next_state(mrnn::MRNN, x, y, W, W_in, b)
+#=
+#to change with this variation
+function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
+    for i=1:length(mrnn.scaling_factor)
+        mul!(tmp_array[1], W, x)
+        mul!(tmp_array[2], W_in, y)
+        @. tmp_array[1] += mrnn.activation_function[i](tmp_array[1] + tmp_array[2] + b) * mrnn.scaling_factor[i]
+    end
+    @. out = (1-mrnn.leaky_coefficient)*x + tmp_array[1]
+end
+
+=#
+function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
     rnn_next_state = (1-mrnn.leaky_coefficient).*x
     for i=1:length(mrnn.scaling_factor)
         rnn_next_state += mrnn.scaling_factor[i]*mrnn.activation_function[i].((W*x).+(W_in*y).+b)
     end
     rnn_next_state
+end
+
+
+function allocate_tmp(driver::MRNN, tmp_type, res_size, train_len)
+    tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp2 = Adapt.adapt(tmp_type, zeros(res_size))
+    [tmp1, tmp2]
 end
 
 
@@ -231,10 +267,16 @@ function reservoir_driver_params(gru::GRUParams, args...)
 end
 
 #dispatch on the important function: next_state
-function next_state(gru::GRUParams,x , y, W, W_in, b)
-
+#TODO: make use of tmp_array
+function next_state!(out, gru::GRUParams, x, y, W, W_in, b, tmp_array)
     gru_next_state = obtain_gru_state(gru.variant, gru, x, y, W, W_in, b)
     gru_next_state
+end
+
+function allocate_tmp(driver::GRUParams, tmp_type, res_size, train_len)
+    tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp2 = Adapt.adapt(tmp_type, zeros(res_size))
+    [tmp1, tmp2]
 end
 
 #W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. (left our notation)

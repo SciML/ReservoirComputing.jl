@@ -1,13 +1,13 @@
 function obtain_prediction(rc::AbstractReservoirComputer,
     prediction::Generative,
-    last_state,
+    x,
     output_layer,
     args...;
     initial_conditions=output_layer.last_value)
 
-    x = last_state
+    #x = last_state
     prediction_len = prediction.prediction_len
-    output = output_storing(output_layer.training_method, output_layer.out_size, prediction_len)
+    output = output_storing(output_layer.training_method, output_layer.out_size, prediction_len, typeof(rc.states))
     out = initial_conditions
 
     for i=1:prediction_len
@@ -20,17 +20,17 @@ end
 
 function obtain_prediction(rc::AbstractReservoirComputer,
     prediction::Predictive,
-    last_state,
+    x,
     output_layer,
     args...;
     kwargs...)
 
-    x = last_state
     prediction_len = prediction.prediction_len
-    output = output_storing(output_layer.training_method, output_layer.out_size, prediction_len)
+    output = output_storing(output_layer.training_method, output_layer.out_size, prediction_len, typeof(rc.states))
 
     for i=1:prediction_len
-        x, x_new = next_state_prediction!(rc, x, prediction.prediction_data[:,i], i, args...)
+        y = @view prediction.prediction_data[:,i]
+        x, x_new = next_state_prediction!(rc, x, y, i, args...)
         out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
         out = store_results!(output_layer.training_method, out_tmp, output, i)
     end
@@ -67,13 +67,13 @@ function get_prediction(training_method::LIBSVM.AbstractSVR, output_layer, x)
 end
 
 #creation of matrices for storing gaussian results (outs and sigmas)
-function output_storing(training_method::AbstractGaussianProcess, out_size, prediction_len)
-    zeros(out_size, prediction_len), zeros(out_size, prediction_len)
+function output_storing(training_method::AbstractGaussianProcess, out_size, prediction_len, storing_type)
+    Adapt.adapt(storing_type, zeros(out_size, prediction_len)), Adapt.adapt(storing_type, zeros(out_size, prediction_len))
 end
 
 #single matrix for other training methods
-function output_storing(training_method, out_size, prediction_len)
-    zeros(out_size, prediction_len)
+function output_storing(training_method, out_size, prediction_len, storing_type)
+    Adapt.adapt(storing_type, zeros(out_size, prediction_len))
 end
 
 #storing results for gaussian training, getting also the sigmas

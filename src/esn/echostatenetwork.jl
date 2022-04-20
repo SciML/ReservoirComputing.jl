@@ -167,9 +167,9 @@ function (esn::ESN)(prediction::AbstractPrediction,
         tspan_new = (variation.tspan[2]+variation.dt, predict_tsteps[end])
         u0 = variation.model_data[:, end]
         model_prediction_data = variation.prior_model(u0, tspan_new, predict_tsteps)[:, 2:end]
-        return obtain_prediction(esn, prediction, last_state, output_layer, model_prediction_data; initial_conditions=initial_conditions)
+        return obtain_esn_prediction(esn, prediction, last_state, output_layer, model_prediction_data; initial_conditions=initial_conditions)
     else 
-        return obtain_prediction(esn, prediction, last_state, output_layer; initial_conditions=initial_conditions)
+        return obtain_esn_prediction(esn, prediction, last_state, output_layer; initial_conditions=initial_conditions)
     end
 end
 
@@ -188,24 +188,12 @@ function train(esn::AbstractEchoStateNetwork, target_data, training_method=Stand
     _train(states_new, target_data, training_method)
 end
 
-#prediction dispatch on esn 
-function next_state_prediction!(esn::ESN, x, out, i, args...)
-    _variation_prediction!(esn.variation, esn, x, out, i, args...)
+function pad_esnstate(variation::Hybrid, states_type, x_pad, x, model_prediction_data)
+    x_tmp = vcat(x, model_prediction_data)
+    x_pad = pad_state!(states_type, x_pad, x_tmp)
 end
 
-#dispatch the prediction on the esn variation
-function _variation_prediction!(variation, esn, x, out, i, args...)
-    out_pad = pad_state(esn.states_type, out)
-    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out_pad, esn.reservoir_matrix, esn.input_matrix, esn.bias_vector)
-    x_new = esn.states_type(esn.nla_type, x, out_pad)
-    x, x_new
+function pad_esnstate!(variation, states_type, x_pad, x, args...)
+    x_pad = pad_state!(states_type, x_pad, x)
 end
 
-function _variation_prediction!(variation::Hybrid, esn, x, out, i, model_prediction_data)
-    out_tmp = vcat(out, model_prediction_data[:,i])
-    out_pad = pad_state(esn.states_type, out_tmp)
-    x = next_state(esn.reservoir_driver, x[1:esn.res_size], out_pad, esn.reservoir_matrix, esn.input_matrix, esn.bias_vector)
-    x_tmp = vcat(x, model_prediction_data[:,i])
-    x_new = esn.states_type(esn.nla_type, x_tmp, out_pad)
-    x, x_new
-end

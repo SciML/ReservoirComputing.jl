@@ -11,6 +11,8 @@ using Statistics
 using Distances
 using NNlib
 using CellularAutomata
+using Adapt
+
 
 #define global types
 abstract type AbstractReservoirComputer end
@@ -88,6 +90,7 @@ include("esn/esn_reservoir_drivers.jl")
 export next_state, create_states, RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
 include("esn/echostatenetwork.jl")
 export ESN, Default, Hybrid, next_state_prediction, train
+include("esn/esn_predict.jl")
 
 #reca
 include("reca/reca.jl")

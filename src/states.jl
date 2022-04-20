@@ -2,14 +2,13 @@ abstract type AbstractStates end
 abstract type AbstractPaddedStates <: AbstractStates end
 abstract type NonLinearAlgorithm end
 
-function pad_state(states_type::AbstractPaddedStates, x)
-    vcat(fill(states_type.padding, (1, size(x, 2))), x)
+function pad_state!(states_type::AbstractPaddedStates, x_pad, x)
+    x_pad = vcat(fill(states_type.padding, (1, size(x, 2))), x)
 end
 
-function pad_state(states_type, x)
-    x
+function pad_state!(states_type, x_pad, x)
+    x_pad = x
 end
-
 
 #states types
 """
@@ -88,7 +87,7 @@ Returns the array untouched, default option.
 struct NLADefault <: NonLinearAlgorithm end
 
 function nla(::NLADefault, x)
-    return x
+    x
 end
 
 """
