@@ -75,6 +75,10 @@ plot!(transpose(test)[:,1], transpose(test)[:,2], transpose(test)[:,3], label="a
 
 If you use this library in your work, please cite:
 
+## Citing
+
+If you use this library in your work, please cite:
+
 ```bibtex
 @misc{https://doi.org/10.48550/arxiv.2204.05117,
   doi = {10.48550/ARXIV.2204.05117},
@@ -86,4 +90,3 @@ If you use this library in your work, please cite:
   year = {2022},
   copyright = {Creative Commons Attribution 4.0 International}
 }
-```
