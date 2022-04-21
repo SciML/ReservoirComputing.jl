@@ -157,7 +157,7 @@ end
 function (esn::ESN)(prediction::AbstractPrediction,
     output_layer::AbstractOutputLayer;
     initial_conditions=output_layer.last_value,
-    last_state=esn.states[:, end])
+    last_state=esn.states[:, [end]])
 
     variation = esn.variation
 
