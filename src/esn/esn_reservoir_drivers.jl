@@ -13,7 +13,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
 
     states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
     tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size, train_len)
-    _state = Adapt.adapt(typeof(train_data), zeros(res_size))
+    _state = Adapt.adapt(typeof(train_data), zeros(res_size,1))
 
     for i=1:washout
         yv = @view train_data[:,i]

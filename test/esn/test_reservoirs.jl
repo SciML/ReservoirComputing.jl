@@ -1,6 +1,6 @@
 using ReservoirComputing
 
-const res_size = 10
+const res_size = 20
 const radius = 1.0
 const sparsity = 0.1
 const weight = 0.2
