@@ -42,7 +42,7 @@ predict_len = 1250
 train = data[:, shift:shift+train_len-1]
 test = data[:, shift+train_len:shift+train_len+predict_len-1]
 ```
-Now that we have the datam we can initialize the parameters for the echo state network:
+Now that we have the data, we can initialize the parameters for the echo state network:
 ```julia
 approx_res_size = 300
 radius = 1.2
