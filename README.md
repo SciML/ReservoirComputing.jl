@@ -39,7 +39,6 @@ input_data = data[:, shift:shift+train_len-1]
 target_data = data[:, shift+1:shift+train_len]
 
 test = data[:,shift+train_len:shift+train_len+predict_len-1]
-
 ```
 Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
 ```julia
@@ -90,3 +89,4 @@ If you use this library in your work, please cite:
   year = {2022},
   copyright = {Creative Commons Attribution 4.0 International}
 }
+```
