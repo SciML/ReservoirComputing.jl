@@ -9,21 +9,29 @@ makedocs(
                          canonical="https://reservoircomputing.sciml.ai/stable/"),
     pages = [
         "ReservoirComputing.jl" => "index.md",
-        "Tutorials" => Any[
-            "Basics"=>"examples/esn.md",
-            "Using different layers"=>"examples/layers.md",
-            "Using different linear methods"=>"examples/linear.md",
-            "Double Activation Function ESN"=>"examples/dafesn.md",
-             #"SVESM"=>"examples/svesm.md",
-            "ESGP"=>"examples/esgp.md"
-            
+        "General Settings" => Any[
+            "Changing Training Algorithms" => "general/different_training.md",
+            "Altering States" => "general/states_variation.md",
+            "Generative vs Predictive" => "general/predictive_generative.md",            
+        ],
+        "Echo State Network Tutorials" => Any[
+            "Lorenz System Forecasting" => "esn_tutorials/lorenz_basic.md",
+            "Mackey-Glass Forecasting" => "esn_tutorials/mackeyglass_basic.md",
+            "Using Different Layers" => "esn_tutorials/change_layers.md",
+            "Using Different Reservoir Drivers" => "esn_tutorials/different_drivers.md",
+            "Using Different Training Methods" => "esn_tutorials/different_training.md",
+            "Deep Echo State Networks" => "esn_tutorials/deep_esn.md",
+            "Hybrid Echo State Networks" => "esn_tutorials/hybrid.md",
             ],
-        "User Guide"=>Any[
-            "Models"=>"user/models.md",
-            "Layers"=>"user/layers.md",
-            "Linear Models"=>"user/linear.md",
-            "Special ESNs"=>"user/spec.md",
-            "Non Linear Algorithm"=>"user/nla.md"
+        "Reservoir Computing with Cellular Automata" => "reca_tutorials/reca.md",
+        "API Documentation"=>Any[
+            "Training Algorithms" => "api/training.md",
+            "States Modifications" => "api/states.md",
+            "Prediction Types" => "api/predict.md",
+            "Echo State Networks" => "api/esn.md",
+            "ESN Layers" => "api/esn_layers.md",
+            "ESN Drivers" => "api/esn_drivers.md",
+            #"ReCA" => "api/reca.md"
             ]
         ]
     )

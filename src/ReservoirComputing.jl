@@ -9,54 +9,98 @@ using Optim
 using Distributions
 using Statistics
 using Distances
+using NNlib
+using CellularAutomata
+using Adapt
 
 
+#define global types
 abstract type AbstractReservoirComputer end
-abstract type AbstractEchoStateNetwork <: AbstractReservoirComputer end
-abstract type NonLinearAlgorithm end
+abstract type AbstractOutputLayer end
+abstract type AbstractPrediction end
+#training methods
+abstract type AbstractLinearModel end
+abstract type AbstractGaussianProcess end
+abstract type AbstractSupportVector end
+#should probably move some of these
+abstract type AbstractVariation end
+abstract type AbstractGRUVariant end
 
-include("leaky_fixed_rnn.jl")
-include("train.jl")
-export ESNtrain, Ridge, Lasso, ElastNet, RobustHuber, HESNtrain
 
-include("nla.jl")
-export nla, NLADefault, NLAT1, NLAT2, NLAT3
+#general output layer struct
+struct OutputLayer{T,I,S,L} <: AbstractOutputLayer
+    training_method::T
+    output_matrix::I
+    out_size::S
+    last_value::L
+end
 
-include("esn_input_layers.jl")
-export init_input_layer, init_dense_input_layer, init_sparse_input_layer, min_complex_input, irrational_sign_input, physics_informed_input
-include("esn_reservoirs.jl")
-export init_reservoir_givendeg, init_reservoir_givensp, pseudoSVD, DLR, DLRB, SCR, CRJ
+#prediction types
+"""
+    Generative(prediction_len)
 
-include("echostatenetwork.jl")
-export ESN, ESNpredict, ESNpredict_h_steps, ESNfitted
+This prediction methodology allows the models to produce an autonomous prediction, feeding the prediction into itself to generate the next step. 
+The only parameter needed is the number of steps for the prediction.
+"""
+struct Generative{T} <: AbstractPrediction
+    prediction_len::T
+end
 
-include("dafesn.jl")
-export dafESN, dafESNpredict, dafESNpredict_h_steps
+struct Predictive{I,T} <: AbstractPrediction
+    prediction_data::I
+    prediction_len::T
+end
 
-include("svesm.jl")
-export SVESMtrain, SVESM_direct_predict, SVESMpredict, SVESMpredict_h_steps
+"""
+    Predictive(prediction_data)
 
-include("esgp.jl")
-export ESGPtrain, ESGPpredict, ESGPpredict_h_steps
+Given a set of labels as ```prediction_data``` this method of prediction will return the correspinding labels in a standard Machine Learning fashion.
+"""
+function Predictive(prediction_data)
+    prediction_len = size(prediction_data, 2)
+    Predictive(prediction_data, prediction_len)
+end
 
-include("ECA.jl")
-export ECA
-#include("reca.jl")
-#export RECA, reca_predict
-include("reca_discrete.jl")
-export RECA_discrete, RECAdirect_predict_discrete
-include("gameoflife.jl")
-export GameOfLife
-include("reca_gol.jl")
-export RECA_TwoDim, RECATDdirect_predict_discrete, RECATD_predict_discrete
 
-include("rmm.jl")
-export RMM, RMMdirect_predict
 
-include("gruesn.jl")
-export GRUESN, GRUESNpredict
+#import/export
+#general
+include("states.jl")
+export nla, NLADefault, NLAT1, NLAT2, NLAT3,
+StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
+include("predict.jl")
+export obtain_prediction
 
-include("hesn.jl")
-export HESN, HESNpredict
+#general training
+include("train/linear_regression.jl")
+export _train, StandardRidge, LinearModel
+include("train/gaussian_regression.jl")
+export _train, GaussianProcess
+include("train/supportvector_regression.jl")
+export _train
+
+#esn
+include("esn/esn_input_layers.jl")
+export AbstractLayer, create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer,
+BernoulliSample, IrrationalSample
+include("esn/esn_reservoirs.jl")
+export AbstractReservoir, create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
+DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
+include("esn/esn_reservoir_drivers.jl")
+export next_state, create_states, RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
+include("esn/echostatenetwork.jl")
+export ESN, Default, Hybrid, next_state_prediction, train
+include("esn/esn_predict.jl")
+
+#reca
+include("reca/reca.jl")
+export RECA, train, next_state_prediction
+include("reca/reca_input_encodings.jl")
+export RandomMapping, RandomMaps
+
+
+
+export Generative, Predictive, OutputLayer
+
 
 end #module
