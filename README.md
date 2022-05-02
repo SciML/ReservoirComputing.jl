@@ -4,7 +4,7 @@
 
 | **Documentation** | **Build Status** | **Reference** |
 |:----------:|:----------:|:----------:|
-| [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](http://reservoir.sciml.ai/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/) | [![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl) | empty
+| [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](http://reservoir.sciml.ai/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/) | [![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl) | [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-00ff00.svg)](https://arxiv.org/abs/2204.05117)
 
 
 ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) to take a look at at not yet released features.
@@ -55,13 +55,13 @@ output_layer = train(esn, target_data)
 output = esn(Generative(predict_len), output_layer)
 ```
 
-The data is returned as a matrix, `ouput` in the code above, that contains the predicted trajectories. The results can now be easily plotted:
+The data is returned as a matrix, `ouput` in the code above, that contains the predicted trajectories. The results can now be easily plotted (for the actual script used to obtain this plot plese refer to the documentation):
 ```julia
 using Plots
 plot(transpose(output),layout=(3,1), label="predicted")
 plot!(transpose(test),layout=(3,1), label="actual")
 ```
-![lorenz_coord](https://user-images.githubusercontent.com/10376688/81470264-42f5c800-91ea-11ea-98a2-a8a8d7d96155.png)
+![lorenz_basic](https://user-images.githubusercontent.com/10376688/166227371-8bffa318-5c49-401f-9c64-9c71980cb3f7.png)
 
 One can also visualize the phase space of the attractor and the comparison with the actual one:
 ```julia

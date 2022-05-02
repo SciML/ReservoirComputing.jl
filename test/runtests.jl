@@ -12,6 +12,7 @@ end
     @safetestset "ESN Train and Predict" begin include("esn/test_train.jl") end
     @safetestset "ESN Drivers" begin include("esn/test_drivers.jl") end
     @safetestset "ESN Non Linear Algos" begin include("esn/test_nla.jl") end
+    @safetestset "Hybrid ESN" begin include("esn/test_hybrid.jl") end
 end
 
 @testset "CA based Reservoirs" begin
