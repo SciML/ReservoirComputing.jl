@@ -274,15 +274,15 @@ function next_state!(out, gru::GRUParams, x, y, W, W_in, b, tmp_array)
 end
 
 function allocate_tmp(driver::GRUParams, tmp_type, res_size, train_len)
-    tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp2 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp3 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp4 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp5 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp6 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp7 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp8 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp9 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp1 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp2 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp3 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp4 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp5 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp6 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp7 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp8 = Adapt.adapt(tmp_type, zeros(res_size, 1))
+    tmp9 = Adapt.adapt(tmp_type, zeros(res_size, 1))
     [tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9]
 end
 
