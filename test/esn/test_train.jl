@@ -11,12 +11,14 @@ const target_data = reduce(hcat, data[2:train_len])
 const predict_len = 100
 const test = reduce(hcat, data[train_len+1:train_len+predict_len])
 const reg = 10e-6
+const washout = 10
 
 Random.seed!(77)
 esn = ESN(input_data; 
-    reservoir=RandSparseReservoir(res_size, 1.2, 0.1))
+    reservoir=RandSparseReservoir(res_size, 1.2, 0.1),
+    washout = washout)
 
-training_methods = [LinearModel(RidgeRegression, regression_kwargs=(;lambda=reg)), GaussianProcess(MeanZero(), Poly(1.0, 1.0, 2))]
+training_methods = [StandardRidge(regularization_coeff=reg), LinearModel(RidgeRegression, regression_kwargs=(;lambda=reg)), LinearModel(regression=RidgeRegression, regression_kwargs=(;lambda=reg)), GaussianProcess(MeanZero(), Poly(1.0, 1.0, 2))]
 
 for t in training_methods
     output_layer = train(esn, target_data, t)
