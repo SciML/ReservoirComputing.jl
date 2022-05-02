@@ -316,8 +316,4 @@ function obtain_gru_state!(out, variant::Minimal, gru, x, y, W, W_in, b, tmp_arr
     @. tmp_array[6] =  gru.activation_function[2](tmp_array[4] + tmp_array[5] + b)
     
     @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
-    #forget_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
-
-    #update = gru.activation_function[2].(W_in*y+W*(forget_gate.*x)+b)
-    #(1 .- forget_gate) .*x + forget_gate.*update
 end
