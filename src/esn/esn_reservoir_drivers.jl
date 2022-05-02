@@ -135,18 +135,18 @@ function reservoir_driver_params(mrnn::MRNN, args...)
     mrnn
 end
 
-#=
-#to change with this variation
+
 function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
+    @. out = (1-mrnn.leaky_coefficient)*x
     for i=1:length(mrnn.scaling_factor)
         mul!(tmp_array[1], W, x)
         mul!(tmp_array[2], W_in, y)
-        @. tmp_array[1] += mrnn.activation_function[i](tmp_array[1] + tmp_array[2] + b) * mrnn.scaling_factor[i]
+        @. out += mrnn.activation_function[i](tmp_array[1] + tmp_array[2] + b) * mrnn.scaling_factor[i]
     end
-    @. out = (1-mrnn.leaky_coefficient)*x + tmp_array[1]
+    out
 end
 
-=#
+#=
 function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
     rnn_next_state = (1-mrnn.leaky_coefficient).*x
     for i=1:length(mrnn.scaling_factor)
@@ -154,7 +154,7 @@ function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
     end
     rnn_next_state
 end
-
+=#
 
 function allocate_tmp(driver::MRNN, tmp_type, res_size, train_len)
     tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
@@ -269,32 +269,55 @@ end
 #dispatch on the important function: next_state
 #TODO: make use of tmp_array
 function next_state!(out, gru::GRUParams, x, y, W, W_in, b, tmp_array)
-    gru_next_state = obtain_gru_state(gru.variant, gru, x, y, W, W_in, b)
+    gru_next_state = obtain_gru_state!(out, gru.variant, gru, x, y, W, W_in, b, tmp_array)
     gru_next_state
 end
 
 function allocate_tmp(driver::GRUParams, tmp_type, res_size, train_len)
     tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
     tmp2 = Adapt.adapt(tmp_type, zeros(res_size))
-    [tmp1, tmp2]
+    tmp3 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp4 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp5 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp6 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp7 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp8 = Adapt.adapt(tmp_type, zeros(res_size))
+    tmp9 = Adapt.adapt(tmp_type, zeros(res_size))
+    [tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9]
 end
 
-#W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. (left our notation)
+#W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. ( on the left our notation)
 #fully gated gru
-function obtain_gru_state(variant::FullyGated, gru, x, y, W, W_in, b)
+function obtain_gru_state!(out, variant::FullyGated, gru, x, y, W, W_in, b, tmp_array)
+    
+    mul!(tmp_array[1], gru.Wz_in, y)
+    mul!(tmp_array[2], gru.Wz, x)
+    @. tmp_array[3] = gru.activation_function[1](tmp_array[1] + tmp_array[2] + gru.bz)
 
-    update_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
-    reset_gate = gru.activation_function[2].(gru.Wr_in*y + gru.Wr*x+gru.br)
+    mul!(tmp_array[4], gru.Wr_in, y)
+    mul!(tmp_array[5], gru.Wr, x)
+    @. tmp_array[6] = gru.activation_function[2](tmp_array[4] + tmp_array[5] + gru.br)
 
-    update = gru.activation_function[3].(W_in*y+W*(reset_gate.*x)+b)
-    (1 .- update_gate) .*x + update_gate.*update
+    mul!(tmp_array[7], W_in, y)
+    mul!(tmp_array[8], W, tmp_array[6].*x)
+    @. tmp_array[9] = gru.activation_function[3](tmp_array[7] + tmp_array[8] + b)
+    @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[9]
 end
 
 #minimal
-function obtain_gru_state(variant::Minimal, gru, x, y, W, W_in, b)
+function obtain_gru_state!(out, variant::Minimal, gru, x, y, W, W_in, b, tmp_array)
 
-    forget_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
+    mul!(tmp_array[1], gru.Wz_in, y)
+    mul!(tmp_array[2], gru.Wz, x)
+    @. tmp_array[3] = gru.activation_function[1](tmp_array[1] + tmp_array[2] + gru.bz)
+    
+    mul!(tmp_array[4], W_in, y)
+    mul!(tmp_array[5], W, tmp_array[3].*x)
+    @. tmp_array[6] =  gru.activation_function[2](tmp_array[4] + tmp_array[5] + b)
+    
+    @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
+    #forget_gate = gru.activation_function[1].(gru.Wz_in*y + gru.Wz*x + gru.bz)
 
-    update = gru.activation_function[2].(W_in*y+W*(forget_gate.*x)+b)
-    (1 .- forget_gate) .*x + forget_gate.*update
+    #update = gru.activation_function[2].(W_in*y+W*(forget_gate.*x)+b)
+    #(1 .- forget_gate) .*x + forget_gate.*update
 end
