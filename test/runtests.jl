@@ -1,11 +1,11 @@
 using Test
 using SafeTestsets
 
-@testset "Commons" begin
+@testset "Common Utilities   " begin
     @safetestset "States" begin include("test_states.jl") end
 end
 
-@testset "Echo State Network tests" begin
+@testset "Echo State Networks" begin
     @safetestset "ESN Input Layers" begin include("esn/test_input_layers.jl") end
     @safetestset "ESN Reservoirs" begin include("esn/test_reservoirs.jl") end
     @safetestset "ESN States" begin include("esn/test_states.jl") end
@@ -14,6 +14,6 @@ end
     @safetestset "ESN Non Linear Algos" begin include("esn/test_nla.jl") end
 end
 
-@testset "Reservoir Computing with Cellular Automata tests" begin
+@testset "CA based Reservoirs" begin
     @safetestset "RECA" begin include("reca/test_predictive.jl") end
 end
