@@ -1,5 +1,5 @@
 # Hybrid Echo State Networks
-Following the idea of giving physical information to machine learning models the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example it is explained how to create and leverage such models in ReservoirComputing.jl. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/hybrid/hybrid.jl).
+Following the idea of giving physical information to machine learning models the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example it is explained how to create and leverage such models in ReservoirComputing.jl. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/hybrid/hybrid.jl). This example was run on Julia v1.7.2.
 
 ## Generating the data
 For this example we are going to forecast the Lorenz system. As usual the data is generated leveraging `DifferentialEquations.jl`:

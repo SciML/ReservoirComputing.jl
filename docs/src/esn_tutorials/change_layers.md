@@ -40,7 +40,7 @@ end
 ```
 
 ## Example of minimally complex ESN
-Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl).
+Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl). This example was run on Julia v1.7.2.
 
 The task for this example will be the one step ahead prediction of the Henon map. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
 ```julia
@@ -80,8 +80,8 @@ for i=1:length(reservoirs)
 end
 ```
 ```
-0.0034027099397770824
-0.0034463857955673305
+0.003402709948526517
+0.0034463857980330612
 ```
 As it is possible to see, changing layers in ESN models is straightforward. Be sure to check the API documentation for a full list of reservoir and layers.
 

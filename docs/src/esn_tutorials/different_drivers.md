@@ -10,7 +10,7 @@ where ``D`` is the number of activation function and respective parameters chose
 
 The method to call to use the mutliple activation function ESN is `MRNN(activation_function, leaky_coefficient, scaling_factor)`. The arguments can be used as both `args` or `kwargs`. `activation_function` and `scaling_factor` have to be vectors (or tuples) containing the chosen activation functions and respective scaling factors (``f_1,...,f_D`` and ``\lambda_1,...,\lambda_D`` following the nomenclature introduced above). The leaky_coefficient represents ``\alpha`` and it is a single value. 
 
-Starting the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/mrnn/mrnn.jl).
+Starting the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/mrnn/mrnn.jl). This example was run on Julia v1.7.2.
 ```julia
 u(t) = sin(t)+sin(0.51*t)+sin(0.22*t)+sin(0.1002*t)+sin(0.05343*t)
 ```
@@ -69,16 +69,16 @@ for case in test_cases
 end
 ```
 ```
-1.2859434466604239e-5
-2.1753694726497823e-5
-2.9563481223700186e-5
-2.5164499914117052e-5
+9.555051477606373e-6
+6.544378702464354e-5
+9.428848251654616e-5
+9.468870751914035e-5
 ```
 
 In this example it is also possible to observe the input of parameters to the methods `RNN()` `MRNN()` both by argument and by keyword argument.
 
 ## Gated Recurrent Unit
-Gated Recurrent Units (GRUs) [^2] have been proposed in more recent years with the intent of limiting notable problems of RNNs, like the vanishing gradient. This change in the underlying equations can be easily transported in the Reservoir Computing paradigm, switching the RNN equations in the reservoir with the GRU equations. This approach has been explored in [^3] and [^4]. Different variations of GRU have been proposed [^5][^6]; this section is subdivided into different sections that go in detail about the governing equations and the implementation of them into ReservoirComputing.jl. Like before, to access the GRU reservoir driver it suffice to change the `reservoir_diver` keyword argument for `ESN` with `GRU()`. All the variations that are going to be presented can be used in this package by leveraging the keyword argument `variant` in the method `GRU()` and specifying the chosen variant: `FullyGated()` or `Minimal()`. Other variations are possible modifying the inner layers and reservoirs. The default is set to the standard version `FullyGated()`. The first section will go in more detail about the default of the `GRU()` method, and the following ones will refer to it to minimize repetitions.
+Gated Recurrent Units (GRUs) [^2] have been proposed in more recent years with the intent of limiting notable problems of RNNs, like the vanishing gradient. This change in the underlying equations can be easily transported in the Reservoir Computing paradigm, switching the RNN equations in the reservoir with the GRU equations. This approach has been explored in [^3] and [^4]. Different variations of GRU have been proposed [^5][^6]; this section is subdivided into different sections that go in detail about the governing equations and the implementation of them into ReservoirComputing.jl. Like before, to access the GRU reservoir driver it suffice to change the `reservoir_diver` keyword argument for `ESN` with `GRU()`. All the variations that are going to be presented can be used in this package by leveraging the keyword argument `variant` in the method `GRU()` and specifying the chosen variant: `FullyGated()` or `Minimal()`. Other variations are possible modifying the inner layers and reservoirs. The default is set to the standard version `FullyGated()`. The first section will go in more detail about the default of the `GRU()` method, and the following ones will refer to it to minimize repetitions. This example was run on Julia v1.7.2.
 
 ### Standard GRU
 The equations for the standard GRU are as follows:
@@ -215,8 +215,8 @@ println(msd(testing_target, output))
 println(msd(testing_target, output_rnn))
 ```
 ```
-6.27305930082895
-10.057380254248484
+6.27305752344394
+10.766736644745862
 ```
 
 
