@@ -19,7 +19,7 @@ makedocs(
             "Mackey-Glass Forecasting" => "esn_tutorials/mackeyglass_basic.md",
             "Using Different Layers" => "esn_tutorials/change_layers.md",
             "Using Different Reservoir Drivers" => "esn_tutorials/different_drivers.md",
-            "Using Different Training Methods" => "esn_tutorials/different_training.md",
+            #"Using Different Training Methods" => "esn_tutorials/different_training.md",
             "Deep Echo State Networks" => "esn_tutorials/deep_esn.md",
             "Hybrid Echo State Networks" => "esn_tutorials/hybrid.md",
             ],

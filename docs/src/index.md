@@ -96,16 +96,3 @@ If you use this library in your work, please cite:
   copyright = {Creative Commons Attribution 4.0 International}
 }
 ```
-
-## References
-
-
-[1]: Shi, Zhiwei, and Min Han. "Support vector echo-state machine for chaotic time-series prediction." IEEE Transactions on Neural Networks 18.2 (2007): 359-372.
-
-[2]: Chatzis, Sotirios P., and Yiannis Demiris. "Echo state Gaussian process." IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.
-
-[3]: Yilmaz, Ozgur. "Reservoir computing using cellular automata." arXiv preprint arXiv:1410.0162 (2014).
-
-[4]: Paaßen, Benjamin, and Alexander Schulz. "Reservoir memory machines." arXiv preprint arXiv:2003.04793 (2020).
-
-[5]: Lun, Shu-Xian, et al. "A novel model of leaky integrator echo state network for time-series prediction." Neurocomputing 159 (2015): 58-66.

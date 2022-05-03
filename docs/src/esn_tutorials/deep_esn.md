@@ -2,7 +2,7 @@
 
 Deep Echo State Network architectures started to gain some traction recently. In this guide we illustrate how it is possible to use ReservoirComputing.jl to build a deep ESN. 
 
-The network implemented in this library is taken from [^1]. It works by stacking reservoirs on top of each other, feeding the output on one in the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in depth explanation refer to the paper linked above. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/deep-esn/deepesn.jl).
+The network implemented in this library is taken from [^1]. It works by stacking reservoirs on top of each other, feeding the output on one in the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in depth explanation refer to the paper linked above. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/deep-esn/deepesn.jl). This example was run on Julia v1.7.2.
 
 ## Lorenz Example
 For this example we are going to reuse the Lorenz data used in the [Lorenz System Forecasting](@ref) example.

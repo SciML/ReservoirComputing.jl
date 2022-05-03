@@ -1,6 +1,6 @@
 # Mackey Glass Time Series Forecasting
 
-This second introductory example showcases the ability of Echo State Networks (ESNs) to forecast another simple low dimensional complex system. More specifically this example uses the [Mackey Glass](http://www.scholarpedia.org/article/Mackey-Glass_equation) chaotic time series. The data and parameters for the following code are taken from dr. Mantas Lukoševičius's [website](https://mantas.info/) and they are going to be compared with the [minimalESN.jl](https://mantas.info/wp/wp-content/uploads/simple_esn/minimalESN.jl) code he provides in it. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/mackeyglass_basic/mackeyglass_basic.jl).
+This second introductory example showcases the ability of Echo State Networks (ESNs) to forecast another simple low dimensional complex system. More specifically this example uses the [Mackey Glass](http://www.scholarpedia.org/article/Mackey-Glass_equation) chaotic time series. The data and parameters for the following code are taken from dr. Mantas Lukoševičius's [website](https://mantas.info/) and they are going to be compared with the [minimalESN.jl](https://mantas.info/wp/wp-content/uploads/simple_esn/minimalESN.jl) code he provides in it. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/mackeyglass_basic/mackeyglass_basic.jl). This example was run on Julia v1.7.2.
 
 ## Downloading the Data
 Instead of leveraging DifferentialEquations.jl this example downloads directly the data from the website. 
@@ -59,7 +59,7 @@ In order to assess if the prediction is comparable to the minimalESN code it suf
 println(sum(abs2.(test_data[:,1:500] .- output[:,1:500]))/500)
 ```
 ```
-4.2159994803239794e-7
+9.488587078654942e-7
 ```
 
 This result is comparable to the value from the minimalESN.jl that is 1.6798044273046558e-6. It could also be helpful to visualize the results:
