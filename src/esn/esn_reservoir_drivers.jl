@@ -12,7 +12,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
     res_size = size(reservoir_matrix, 1)
 
     states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
-    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size, train_len)
+    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
     _state = Adapt.adapt(typeof(train_data), zeros(res_size,1))
 
     for i=1:washout
@@ -38,7 +38,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver, train_data, wa
     res_size = sum([size(reservoir_matrix[i], 1) for i=1:length(reservoir_matrix)])
 
     states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
-    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size, train_len)
+    tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
     _state = Adapt.adapt(typeof(train_data), zeros(res_size))
 
     for i=1:washout
@@ -101,10 +101,8 @@ function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
     reduce(vcat, inner_states)
 end
 
-function allocate_tmp(driver::RNN, tmp_type, res_size, train_len)
-    tmp1 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp2 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    [tmp1, tmp2]
+function allocate_tmp(::RNN, tmp_type, res_size)
+    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
 
 
@@ -156,10 +154,8 @@ function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
 end
 =#
 
-function allocate_tmp(driver::MRNN, tmp_type, res_size, train_len)
-    tmp1 = Adapt.adapt(tmp_type, zeros(res_size))
-    tmp2 = Adapt.adapt(tmp_type, zeros(res_size))
-    [tmp1, tmp2]
+function allocate_tmp(::MRNN, tmp_type, res_size)
+    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
 
 
@@ -267,23 +263,13 @@ function reservoir_driver_params(gru::GRUParams, args...)
 end
 
 #dispatch on the important function: next_state
-#TODO: make use of tmp_array
 function next_state!(out, gru::GRUParams, x, y, W, W_in, b, tmp_array)
     gru_next_state = obtain_gru_state!(out, gru.variant, gru, x, y, W, W_in, b, tmp_array)
     gru_next_state
 end
 
-function allocate_tmp(driver::GRUParams, tmp_type, res_size, train_len)
-    tmp1 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp2 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp3 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp4 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp5 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp6 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp7 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp8 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    tmp9 = Adapt.adapt(tmp_type, zeros(res_size, 1))
-    [tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9]
+function allocate_tmp(::GRUParams, tmp_type, res_size)
+    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:9]
 end
 
 #W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. ( on the left our notation)

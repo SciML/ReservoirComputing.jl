@@ -9,7 +9,7 @@ function obtain_esn_prediction(esn, prediction::Generative,
     out = initial_conditions
 
     out_pad = allocate_outpad(esn.variation, esn.states_type, out)
-    tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size, prediction_len)
+    tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
     for i=1:prediction_len
@@ -31,7 +31,7 @@ function obtain_esn_prediction(esn, prediction::Predictive,
     out = initial_conditions
 
     out_pad = allocate_outpad(esn.variation, esn.states_type, out)
-    tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size, prediction_len)
+    tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
     for i=1:prediction_len
