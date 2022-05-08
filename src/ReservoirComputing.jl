@@ -1,18 +1,33 @@
 module ReservoirComputing
 
-using SparseArrays
+using Adapt
+using CellularAutomata
+using Distances
+using Distributions
+using GaussianProcesses
+using LIBSVM
 using LinearAlgebra
 using MLJLinearModels
-using LIBSVM
-using GaussianProcesses
-using Optim
-using Distributions
-using Statistics
-using Distances
 using NNlib
-using CellularAutomata
-using Adapt
+using Optim
+using SparseArrays
+using Statistics
 
+export NLADefault, NLAT1, NLAT2, NLAT3
+export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
+export StandardRidge, LinearModel
+export AbstractLayer, create_layer 
+export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
+export BernoulliSample, IrrationalSample
+export GaussianProcess
+export AbstractReservoir, create_reservoir
+export RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir
+export DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
+export RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
+export ESN, Default, Hybrid, train
+export RECA, train
+export RandomMapping, RandomMaps
+export Generative, Predictive, OutputLayer
 
 #define global types
 abstract type AbstractReservoirComputer end
@@ -25,7 +40,6 @@ abstract type AbstractSupportVector end
 #should probably move some of these
 abstract type AbstractVariation end
 abstract type AbstractGRUVariant end
-
 
 #general output layer struct
 struct OutputLayer{T,I,S,L} <: AbstractOutputLayer
@@ -61,46 +75,24 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
-
-
-#import/export
 #general
 include("states.jl")
-export nla, NLADefault, NLAT1, NLAT2, NLAT3,
-StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 include("predict.jl")
-export obtain_prediction
 
 #general training
 include("train/linear_regression.jl")
-export _train, StandardRidge, LinearModel
 include("train/gaussian_regression.jl")
-export _train, GaussianProcess
 include("train/supportvector_regression.jl")
-export _train
 
 #esn
 include("esn/esn_input_layers.jl")
-export AbstractLayer, create_layer, WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer,
-BernoulliSample, IrrationalSample
 include("esn/esn_reservoirs.jl")
-export AbstractReservoir, create_reservoir, RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir,
-DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
 include("esn/esn_reservoir_drivers.jl")
-export next_state, create_states, RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
 include("esn/echostatenetwork.jl")
-export ESN, Default, Hybrid, next_state_prediction, train
 include("esn/esn_predict.jl")
 
 #reca
 include("reca/reca.jl")
-export RECA, train, next_state_prediction
 include("reca/reca_input_encodings.jl")
-export RandomMapping, RandomMaps
-
-
-
-export Generative, Predictive, OutputLayer
-
 
 end #module
