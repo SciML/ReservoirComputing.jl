@@ -89,7 +89,9 @@ function ESN(
     
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
-        train_data = vcat(ones(1, size(train_data, 2)), train_data)
+        train_data = vcat(
+            Adapt.adapt(matrix_type, ones(1, size(train_data, 2))), train_data
+        )
     else 
         in_size = size(train_data, 1)
     end
