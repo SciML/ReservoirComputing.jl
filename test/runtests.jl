@@ -1,5 +1,5 @@
-using Test
 using SafeTestsets
+using Test
 
 @testset "Common Utilities   " begin
     @safetestset "States" begin include("test_states.jl") end
