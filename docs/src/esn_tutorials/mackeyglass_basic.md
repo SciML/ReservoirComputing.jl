@@ -1,15 +1,15 @@
-# Mackey Glass Time Series Forecasting
+# Mackey Glass Time Series Forecasting on the GPU
 
-This second introductory example showcases the ability of Echo State Networks (ESNs) to forecast another simple low dimensional complex system. More specifically this example uses the [Mackey Glass](http://www.scholarpedia.org/article/Mackey-Glass_equation) chaotic time series. The data and parameters for the following code are taken from dr. Mantas Lukoševičius's [website](https://mantas.info/) and they are going to be compared with the [minimalESN.jl](https://mantas.info/wp/wp-content/uploads/simple_esn/minimalESN.jl) code he provides in it. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/mackeyglass_basic/mackeyglass_basic.jl). This example was run on Julia v1.7.2.
+This second introductory example showcases the ability of Echo State Networks (ESNs) to forecast another simple low dimensional complex system, but this time the calculations will be performed on the GPU. More specifically this example uses the [Mackey Glass](http://www.scholarpedia.org/article/Mackey-Glass_equation) chaotic time series. The data and parameters for the following code are taken from dr. Mantas Lukoševičius's [website](https://mantas.info/) and they are going to be compared with the [minimalESN.jl](https://mantas.info/wp/wp-content/uploads/simple_esn/minimalESN.jl) code he provides in it. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/mackeyglass_basic/mackeyglass_basic.jl). This example was run on Julia v1.7.2.
 
 ## Downloading the Data
 Instead of leveraging DifferentialEquations.jl this example downloads directly the data from the website. 
 ```julia
-using Downloads, DelimitedFiles
+using Downloads, DelimitedFiles, CUDA
 
 data_path = Downloads.download("https://mantas.info/wp/wp-content/uploads/simple_esn/MackeyGlass_t17.txt", 
     string(pwd(),"/MackeyGlass_t17.txt"))
-data = reduce(hcat,readdlm(data_path))
+data = CuArray(reduce(hcat, convert(Matrix{Float32}, readdlm(data_path, ','))))
 ```
 
 Once the data has been obtained it is time to split it into the needed datasets. In the Lorenz example the initial transient of the data was excluded using a `shift` parameter. In this case the ESN itself is going to be washing out the initial data, so a different parameter `washout` is needed. This needs to be taken into consideration when splitting the data, in order to adjust the target data accordingly.
@@ -33,15 +33,12 @@ using ReservoirComputing, Random, LinearAlgebra
 Random.seed!(42)
 res_size = 1000
 
-W    = rand(res_size, res_size) .- 0.5 
-rhoW = maximum(abs.(eigvals(W)))
-W  .*= (1.25 / rhoW)
-Win  = (rand(res_size, 2) .- 0.5) .* 1
-
 esn = ESN(input_data; 
-    reservoir = W,
-    input_layer = Win,
+    variation = Default(),
+    reservoir = RandSparseReservoir(res_size, 1.25, 1.0),
+    input_layer = WeightedLayer(1.0),
     reservoir_driver = RNN(leaky_coefficient=0.3),
+    nla_type = NLADefault(),
     states_type = PaddedExtendedStates(),
     washout=washout)
 ```
