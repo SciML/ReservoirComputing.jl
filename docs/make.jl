@@ -31,7 +31,7 @@ makedocs(
             "Echo State Networks" => "api/esn.md",
             "ESN Layers" => "api/esn_layers.md",
             "ESN Drivers" => "api/esn_drivers.md",
-            #"ReCA" => "api/reca.md"
+            "ReCA" => "api/reca.md"
             ]
         ]
     )
