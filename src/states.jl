@@ -93,6 +93,18 @@ function nla(::NLADefault, x)
     return x
 end
 
+struct NLAT1 <: NonLinearAlgorithm end
+
+struct NLAT2 <: NonLinearAlgorithm end
+
+struct NLAT3 <: NonLinearAlgorithm end
+
+function nla(nla_type::Union{NLAT1, NLAT2, NLAT3}, x_old)
+    x_new = similar(x_old)
+    nla!(nla_type, x_old, x_new)
+    return x_new
+end
+
 """
     NLAT1()
 Applies the \$ \\text{T}_1 \$ transformation algorithm, as defined in [1] and [2].
@@ -105,17 +117,10 @@ ANN, and RNN-LSTM._" (2019).
 systems from data: A reservoir computing approach._"
 Physical review letters 120.2 (2018): 024102.
 """
-struct NLAT1 <: NonLinearAlgorithm end
 
-function nla(::NLAT1, x_old)
-    x_new = copy(x_old)
-    for i in 1:size(x_new, 1)
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i,:].*x_old[i,:])
-        end
-    end
-
-    return x_new
+function nla!(::NLAT1, x_old, x_new)
+    x_new[2:2:end, :] = x_old[2:2:end, :]
+    x_new[1:2:end, :] = x_old[1:2:end, :].^2
 end
 
 """
@@ -126,17 +131,14 @@ Apply the \$ \\text{T}_2 \$ transformation algorithm, as defined in [1].
 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
 and RNN-LSTM._" (2019).
 """
-struct NLAT2 <: NonLinearAlgorithm end
 
-function nla(::NLAT2, x_old)
-    x_new = copy(x_old)
-    for i in 2:size(x_new, 1)-1
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i-1,:].*x_old[i-2,:])
-        end
+function nla!(::NLAT2, x_old, x_new)
+    x_new[1, :] = x_old[1, :]
+    if mod(size(x_new, 1), 2) != 0
+        x_new[end, :] = x_old[end, :]
     end
-
-    return x_new
+    x_new[2:2:end, :] = x_old[2:2:end, :]
+    x_new[3:2:end-1, :] = x_old[2:2:end-2, :].*x_old[1:2:end-3, :]
 end
 
 """
@@ -147,15 +149,12 @@ Apply the \$ \\text{T}_3 \$ transformation algorithm, as defined in [1].
 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
 and RNN-LSTM._" (2019).
 """
-struct NLAT3 <: NonLinearAlgorithm end
 
-function nla(::NLAT3, x_old)
-    x_new = copy(x_old)
-    for i in 2:size(x_new, 1)-1
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i-1,:].*x_old[i+1,:])
-        end
+function nla!(::NLAT3, x_old, x_new)
+    x_new[1, :] = x_old[1, :]
+    if mod(size(x_new, 1), 2) != 0
+        x_new[end, :] = x_old[end, :]
     end
-
-    return x_new
+    x_new[2:2:end, :]= x_old[2:2:end, :]
+    x_new[3:2:end-1, :]= x_old[2:2:end-2, :].*x_old[4:2:end, :]
 end
