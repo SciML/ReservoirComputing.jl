@@ -93,7 +93,13 @@ function nla(::NLADefault, x)
     return x
 end
 
-function nla(nla_type, x_old)
+struct NLAT1 <: NonLinearAlgorithm end
+
+struct NLAT2 <: NonLinearAlgorithm end
+
+struct NLAT3 <: NonLinearAlgorithm end
+
+function nla(nla_type::Union{NLAT1, NLAT2, NLAT3}, x_old)
     x_new = similar(x_old)
     nla!(nla_type, x_old, x_new)
     return x_new
@@ -111,7 +117,6 @@ ANN, and RNN-LSTM._" (2019).
 systems from data: A reservoir computing approach._"
 Physical review letters 120.2 (2018): 024102.
 """
-struct NLAT1 <: NonLinearAlgorithm end
 
 function nla!(::NLAT1, x_old, x_new)
     x_new[2:2:end, :] = x_old[2:2:end, :]
@@ -126,10 +131,12 @@ Apply the \$ \\text{T}_2 \$ transformation algorithm, as defined in [1].
 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
 and RNN-LSTM._" (2019).
 """
-struct NLAT2 <: NonLinearAlgorithm end
 
 function nla!(::NLAT2, x_old, x_new)
     x_new[1, :] = x_old[1, :]
+    if mod(size(x_new, 1), 2) != 0
+        x_new[end, :] = x_old[end, :]
+    end
     x_new[2:2:end, :] = x_old[2:2:end, :]
     x_new[3:2:end-1, :] = x_old[2:2:end-2, :].*x_old[1:2:end-3, :]
 end
@@ -142,10 +149,12 @@ Apply the \$ \\text{T}_3 \$ transformation algorithm, as defined in [1].
 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
 and RNN-LSTM._" (2019).
 """
-struct NLAT3 <: NonLinearAlgorithm end
 
 function nla!(::NLAT3, x_old, x_new)
-    x_new[1,:]= x_old[1, :]
+    x_new[1, :] = x_old[1, :]
+    if mod(size(x_new, 1), 2) != 0
+        x_new[end, :] = x_old[end, :]
+    end
     x_new[2:2:end, :]= x_old[2:2:end, :]
     x_new[3:2:end-1, :]= x_old[2:2:end-2, :].*x_old[4:2:end, :]
 end
