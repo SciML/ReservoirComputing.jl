@@ -8,12 +8,12 @@ const weight = 0.2
 #testing WeightedLayer implicit and esplicit constructors
 input_constructor = WeightedLayer(scaling)
 input_matrix = create_layer(input_constructor, res_size, in_size)
-@test size(input_matrix) == (Int(floor(res_size/in_size)*in_size), in_size)
+@test size(input_matrix) == (Int(floor(res_size / in_size) * in_size), in_size)
 @test maximum(input_matrix) <= scaling
 
-input_constructor = WeightedLayer(scaling=scaling)
+input_constructor = WeightedLayer(scaling = scaling)
 input_matrix = create_layer(input_constructor, res_size, in_size)
-@test size(input_matrix) == (Int(floor(res_size/in_size)*in_size), in_size)
+@test size(input_matrix) == (Int(floor(res_size / in_size) * in_size), in_size)
 @test maximum(input_matrix) <= scaling
 
 #testing DenseLayer implicit and esplicit constructors
@@ -22,7 +22,7 @@ input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) <= scaling
 
-input_constructor = DenseLayer(scaling=scaling)
+input_constructor = DenseLayer(scaling = scaling)
 input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) <= scaling
@@ -33,7 +33,7 @@ input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) <= scaling
 
-input_constructor = SparseLayer(scaling=scaling)
+input_constructor = SparseLayer(scaling = scaling)
 input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) <= scaling
@@ -44,7 +44,7 @@ input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) == weight
 
-input_constructor = MinimumLayer(weight=weight)
+input_constructor = MinimumLayer(weight = weight)
 input_matrix = create_layer(input_constructor, res_size, in_size)
 @test size(input_matrix) == (res_size, in_size)
 @test maximum(input_matrix) == weight

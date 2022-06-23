@@ -16,7 +16,7 @@ using Statistics
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
-export AbstractLayer, create_layer 
+export AbstractLayer, create_layer
 export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
 export BernoulliSample, IrrationalSample
 export GaussianProcess
@@ -42,7 +42,7 @@ abstract type AbstractVariation end
 abstract type AbstractGRUVariant end
 
 #general output layer struct
-struct OutputLayer{T,I,S,L} <: AbstractOutputLayer
+struct OutputLayer{T, I, S, L} <: AbstractOutputLayer
     training_method::T
     output_matrix::I
     out_size::S
@@ -60,7 +60,7 @@ struct Generative{T} <: AbstractPrediction
     prediction_len::T
 end
 
-struct Predictive{I,T} <: AbstractPrediction
+struct Predictive{I, T} <: AbstractPrediction
     prediction_data::I
     prediction_len::T
 end

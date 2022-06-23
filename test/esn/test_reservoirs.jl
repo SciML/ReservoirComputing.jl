@@ -11,7 +11,7 @@ reservoir_constructor = RandSparseReservoir(res_size, radius, sparsity)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 
-reservoir_constructor = RandSparseReservoir(res_size, radius=radius, sparsity=sparsity)
+reservoir_constructor = RandSparseReservoir(res_size, radius = radius, sparsity = sparsity)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 
@@ -21,7 +21,8 @@ reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) <= radius
 
-reservoir_constructor = PseudoSVDReservoir(res_size, max_value=radius, sparsity=sparsity)
+reservoir_constructor = PseudoSVDReservoir(res_size, max_value = radius,
+                                           sparsity = sparsity)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) <= radius
@@ -32,7 +33,7 @@ reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
 
-reservoir_constructor = DelayLineReservoir(res_size, weight=weight)
+reservoir_constructor = DelayLineReservoir(res_size, weight = weight)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
@@ -43,7 +44,8 @@ reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
 
-reservoir_constructor = DelayLineBackwardReservoir(res_size, weight=weight, fb_weight=weight)
+reservoir_constructor = DelayLineBackwardReservoir(res_size, weight = weight,
+                                                   fb_weight = weight)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
@@ -54,7 +56,7 @@ reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
 
-reservoir_constructor = SimpleCycleReservoir(res_size, weight=weight)
+reservoir_constructor = SimpleCycleReservoir(res_size, weight = weight)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
@@ -65,7 +67,8 @@ reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight
 
-reservoir_constructor = CycleJumpsReservoir(res_size, cycle_weight=weight, jump_weight=weight, jump_size=jump_size)
+reservoir_constructor = CycleJumpsReservoir(res_size, cycle_weight = weight,
+                                            jump_weight = weight, jump_size = jump_size)
 reservoir_matrix = create_reservoir(reservoir_constructor, res_size)
 @test size(reservoir_matrix) == (res_size, res_size)
 @test maximum(reservoir_matrix) == weight

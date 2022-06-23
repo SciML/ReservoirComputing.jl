@@ -33,7 +33,7 @@ struct PaddedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-struct PaddedExtendedStates{T} <: AbstractPaddedStates 
+struct PaddedExtendedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
@@ -44,7 +44,7 @@ end
 The states are padded with a chosen value. Usually this value is set to one. The padding is obtained through a 
 vertical concatenation of the padding value and the states.
 """
-function PaddedStates(;padding=1.0)
+function PaddedStates(; padding = 1.0)
     return PaddedStates(padding)
 end
 
@@ -56,7 +56,7 @@ The states are extended with the training data or predicted data and subsequentl
 Usually the padding value is set to one. The padding and the extension are obtained through a vertical concatenation 
 of the padding value, the data and the states.
 """
-function PaddedExtendedStates(;padding=1.0)
+function PaddedExtendedStates(; padding = 1.0)
     return PaddedExtendedStates(padding)
 end
 
@@ -110,8 +110,8 @@ struct NLAT1 <: NonLinearAlgorithm end
 function nla(::NLAT1, x_old)
     x_new = copy(x_old)
     for i in 1:size(x_new, 1)
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i,:].*x_old[i,:])
+        if mod(i, 2) != 0
+            x_new[i, :] = copy(x_old[i, :] .* x_old[i, :])
         end
     end
 
@@ -130,9 +130,9 @@ struct NLAT2 <: NonLinearAlgorithm end
 
 function nla(::NLAT2, x_old)
     x_new = copy(x_old)
-    for i in 2:size(x_new, 1)-1
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i-1,:].*x_old[i-2,:])
+    for i in 2:(size(x_new, 1) - 1)
+        if mod(i, 2) != 0
+            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i - 2, :])
         end
     end
 
@@ -151,9 +151,9 @@ struct NLAT3 <: NonLinearAlgorithm end
 
 function nla(::NLAT3, x_old)
     x_new = copy(x_old)
-    for i in 2:size(x_new, 1)-1
-        if mod(i, 2)!=0
-            x_new[i,:] = copy(x_old[i-1,:].*x_old[i+1,:])
+    for i in 2:(size(x_new, 1) - 1)
+        if mod(i, 2) != 0
+            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i + 1, :])
         end
     end
 

@@ -16,23 +16,22 @@ in [1]. The ```scaling``` factor can be given as arg or kwarg.
 in chaotic systems._" 
 Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
-function WeightedLayer(; scaling=0.1)
+function WeightedLayer(; scaling = 0.1)
     return WeightedLayer(scaling)
 end
 
-function create_layer(
-    input_layer::WeightedLayer,
-    approx_res_size,
-    in_size;
-    matrix_type = Matrix{Float64}
-)
+function create_layer(input_layer::WeightedLayer,
+                      approx_res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
-    res_size = Int(floor(approx_res_size/in_size)*in_size)
+    res_size = Int(floor(approx_res_size / in_size) * in_size)
     layer_matrix = zeros(res_size, in_size)
-    q = floor(Int, res_size/in_size)
+    q = floor(Int, res_size / in_size)
 
     for i in 1:in_size
-        layer_matrix[(i-1)*q+1:(i)*q, i] = rand(Uniform(-scaling, scaling), 1, q)
+        layer_matrix[((i - 1) * q + 1):((i) * q), i] = rand(Uniform(-scaling, scaling), 1,
+                                                            q)
     end
 
     return Adapt.adapt(matrix_type, layer_matrix)
@@ -55,7 +54,7 @@ struct DenseLayer{T} <: AbstractLayer
     scaling::T
 end
 
-function DenseLayer(; scaling=0.1)
+function DenseLayer(; scaling = 0.1)
     return DenseLayer(scaling)
 end
 
@@ -65,12 +64,10 @@ end
 Returns a ```res_size``` times ```in_size``` matrix layer, built accordingly to the
 ```input_layer``` constructor.
 """
-function create_layer(
-    input_layer::DenseLayer,
-    res_size,
-    in_size;
-    matrix_type = Matrix{Float64}
-)
+function create_layer(input_layer::DenseLayer,
+                      res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
     layer_matrix = rand(Uniform(-scaling, scaling), res_size, in_size)
     return Adapt.adapt(matrix_type, layer_matrix)
@@ -90,24 +87,22 @@ struct SparseLayer{T} <: AbstractLayer
     sparsity::T
 end
 
-function SparseLayer(; scaling=0.1, sparsity=0.1)
+function SparseLayer(; scaling = 0.1, sparsity = 0.1)
     return SparseLayer(scaling, sparsity)
 end
 
-function SparseLayer(scaling_arg; scaling=scaling_arg, sparsity=0.1)
+function SparseLayer(scaling_arg; scaling = scaling_arg, sparsity = 0.1)
     return SparseLayer(scaling, sparsity)
 end
 
-function create_layer(
-    input_layer::SparseLayer,
-    res_size,
-    in_size;
-    matrix_type = Matrix{Float64}
-)
+function create_layer(input_layer::SparseLayer,
+                      res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     layer_matrix = Matrix(sprand(res_size, in_size, input_layer.sparsity))
-    layer_matrix = 2.0 .*(layer_matrix.-0.5)
-    replace!(layer_matrix, -1.0=>0.0)
-    layer_matrix = input_layer.scaling .*layer_matrix
+    layer_matrix = 2.0 .* (layer_matrix .- 0.5)
+    replace!(layer_matrix, -1.0 => 0.0)
+    layer_matrix = input_layer.scaling .* layer_matrix
     return Adapt.adapt(matrix_type, layer_matrix)
 end
 
@@ -130,7 +125,7 @@ in [1].
 [1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function BernoulliSample(;p=0.5)
+function BernoulliSample(; p = 0.5)
     return BernoulliSample(p)
 end
 
@@ -151,11 +146,11 @@ then the n-th input sign will be + and - respectively.
 [1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
 with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
 """
-function IrrationalSample(;irrational=pi, start=1)
+function IrrationalSample(; irrational = pi, start = 1)
     return IrrationalSample(irrational, start)
 end
 
-struct MinimumLayer{T,K} <: AbstractLayer
+struct MinimumLayer{T, K} <: AbstractLayer
     weight::T
     sampling::K
 end
@@ -175,20 +170,18 @@ IEEE transactions on neural networks 22.1 (2010): 131-144.
 [2] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
 with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
 """
-function MinimumLayer(weight; sampling=BernoulliSample(0.5))
+function MinimumLayer(weight; sampling = BernoulliSample(0.5))
     return MinimumLayer(weight, sampling)
 end
 
-function MinimumLayer(; weight=0.1, sampling=BernoulliSample(0.5))
+function MinimumLayer(; weight = 0.1, sampling = BernoulliSample(0.5))
     return MinimumLayer(weight, sampling)
 end
 
-function create_layer(
-    input_layer::MinimumLayer,
-    res_size,
-    in_size;
-    matrix_type = Matrix{Float64}
-)
+function create_layer(input_layer::MinimumLayer,
+                      res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     sampling = input_layer.sampling
     weight = input_layer.weight
     layer_matrix = create_minimum_input(sampling, res_size, in_size, weight)
@@ -208,7 +201,7 @@ function create_minimum_input(sampling::BernoulliSample, res_size, in_size, weig
 end
 
 function create_minimum_input(sampling::IrrationalSample, res_size, in_size, weight)
-    setprecision(BigFloat, Int(ceil(log2(10)*(res_size*in_size+sampling.start+1))))
+    setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + sampling.start + 1))))
     ir_string = string(BigFloat(sampling.irrational)) |> collect
     deleteat!(ir_string, findall(x -> x == '.', ir_string))
     ir_array = zeros(length(ir_string))
@@ -230,7 +223,7 @@ function create_minimum_input(sampling::IrrationalSample, res_size, in_size, wei
     return input_matrix
 end
 
-struct InformedLayer{T,K,M} <: AbstractLayer
+struct InformedLayer{T, K, M} <: AbstractLayer
     scaling::T
     gamma::K
     model_in_size::M
@@ -247,16 +240,14 @@ as described in [1].
 [1] Jaideep Pathak et al. "_Hybrid Forecasting of Chaotic Processes: Using Machine Learning
 in Conjunction with a Knowledge-Based Model_" (2018)
 """
-function InformedLayer(model_in_size; scaling=0.1, gamma=0.5)
+function InformedLayer(model_in_size; scaling = 0.1, gamma = 0.5)
     return InformedLayer(scaling, gamma, model_in_size)
 end
 
-function create_layer(
-    input_layer::InformedLayer,
-    res_size,
-    in_size;
-    matrix_type = Matrix{Float64}
-)
+function create_layer(input_layer::InformedLayer,
+                      res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
     state_size = in_size - input_layer.model_in_size
 
@@ -268,25 +259,25 @@ function create_layer(
     #Vector used to find res nodes not yet connected
     zero_connections = zeros(in_size)
     #Num of res nodes allotted for raw states
-    num_for_state = floor(Int, res_size*input_layer.gamma)
+    num_for_state = floor(Int, res_size * input_layer.gamma)
     #Num of res nodes allotted for prior model input
-    num_for_model = floor(Int, (res_size*(1-input_layer.gamma)))
+    num_for_model = floor(Int, (res_size * (1 - input_layer.gamma)))
 
     for i in 1:num_for_state
         #find res nodes with no connections
-        idxs = findall(Bool[zero_connections == input_matrix[i,:] 
-            for i in 1:size(input_matrix,1)])
+        idxs = findall(Bool[zero_connections == input_matrix[i, :]
+                            for i in 1:size(input_matrix, 1)])
         random_row_idx = idxs[rand(1:end)]
         random_clm_idx = range(1, state_size, step = 1)[rand(1:end)]
-        input_matrix[random_row_idx,random_clm_idx] = rand(Uniform(-scaling, scaling))
+        input_matrix[random_row_idx, random_clm_idx] = rand(Uniform(-scaling, scaling))
     end
 
     for i in 1:num_for_model
-        idxs = findall(Bool[zero_connections == input_matrix[i,:] 
-            for i in 1:size(input_matrix,1)])
+        idxs = findall(Bool[zero_connections == input_matrix[i, :]
+                            for i in 1:size(input_matrix, 1)])
         random_row_idx = idxs[rand(1:end)]
-        random_clm_idx = range(state_size+1, in_size, step = 1)[rand(1:end)]
-        input_matrix[random_row_idx,random_clm_idx] = rand(Uniform(-scaling, scaling))
+        random_clm_idx = range(state_size + 1, in_size, step = 1)[rand(1:end)]
+        input_matrix[random_row_idx, random_clm_idx] = rand(Uniform(-scaling, scaling))
     end
 
     return Adapt.adapt(matrix_type, input_matrix)
@@ -299,11 +290,9 @@ Returns a vector of zeros.
 """
 struct NullLayer <: AbstractLayer end
 
-function create_layer(
-    input_layer::NullLayer,
-    res_size,
-    in_size;
-    matrix_type = Matrix{Float64})
+function create_layer(input_layer::NullLayer,
+                      res_size,
+                      in_size;
+                      matrix_type = Matrix{Float64})
     return Adapt.adapt(matrix_type, zeros(res_size, in_size))
 end
-

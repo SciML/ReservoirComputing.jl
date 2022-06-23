@@ -1,9 +1,7 @@
 using SafeTestsets
 using Test
 
-@testset "Common Utilities   " begin
-    @safetestset "States" begin include("test_states.jl") end
-end
+@testset "Common Utilities   " begin @safetestset "States" begin include("test_states.jl") end end
 
 @testset "Echo State Networks" begin
     @safetestset "ESN Input Layers" begin include("esn/test_input_layers.jl") end
@@ -15,6 +13,4 @@ end
     @safetestset "Hybrid ESN" begin include("esn/test_hybrid.jl") end
 end
 
-@testset "CA based Reservoirs" begin
-    @safetestset "RECA" begin include("reca/test_predictive.jl") end
-end
+@testset "CA based Reservoirs" begin @safetestset "RECA" begin include("reca/test_predictive.jl") end end
