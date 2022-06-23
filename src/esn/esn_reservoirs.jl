@@ -8,7 +8,7 @@ function get_ressize(reservoir)
     return size(reservoir, 1)
 end
 
-struct RandSparseReservoir{T,C} <: AbstractReservoir
+struct RandSparseReservoir{T, C} <: AbstractReservoir
     res_size::Int
     radius::T
     sparsity::C
@@ -22,7 +22,7 @@ Returns a random sparse reservoir initializer, that will return a matrix with gi
 `sparsity` and scaled spectral radius according to `radius`. This is the default choice
 in the ```ESN``` construction.
 """
-function RandSparseReservoir(res_size; radius=1.0, sparsity=0.1)
+function RandSparseReservoir(res_size; radius = 1.0, sparsity = 0.1)
     return RandSparseReservoir(res_size, radius, sparsity)
 end
 
@@ -33,20 +33,18 @@ end
 Given an ```AbstractReservoir` constructor and the reservoir size it returns the
 corresponding matrix. Alternatively it accepts a given matrix.
 """
-function create_reservoir(
-    reservoir::RandSparseReservoir,
-    res_size;
-    matrix_type=Matrix{Float64}
-)
+function create_reservoir(reservoir::RandSparseReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     reservoir_matrix = Matrix(sprand(res_size, res_size, reservoir.sparsity))
-    reservoir_matrix = 2.0 .*(reservoir_matrix.-0.5)
-    replace!(reservoir_matrix, -1.0=>0.0)
+    reservoir_matrix = 2.0 .* (reservoir_matrix .- 0.5)
+    replace!(reservoir_matrix, -1.0 => 0.0)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
-    reservoir_matrix .*= reservoir.radius/rho_w
+    reservoir_matrix .*= reservoir.radius / rho_w
     #TODO: change to explicit if
-    Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix) ? error(
-        "Sparsity too low for size of the matrix. 
-        Increase res_size or increase sparsity") : nothing
+    Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix) ?
+    error("Sparsity too low for size of the matrix. 
+          Increase res_size or increase sparsity") : nothing
     return Adapt.adapt(matrix_type, reservoir_matrix)
 end
 
@@ -66,7 +64,7 @@ function create_reservoir(res_size, reservoir::RandReservoir)
 end
 =#
 
-struct PseudoSVDReservoir{T,C} <: AbstractReservoir
+struct PseudoSVDReservoir{T, C} <: AbstractReservoir
     res_size::Int
     max_value::T
     sparsity::C
@@ -74,13 +72,11 @@ struct PseudoSVDReservoir{T,C} <: AbstractReservoir
     reverse_sort::Bool
 end
 
-function PseudoSVDReservoir(
-    res_size;
-    max_value=1.0,
-    sparsity=0.1,
-    sorted=true,
-    reverse_sort=false
-)
+function PseudoSVDReservoir(res_size;
+                            max_value = 1.0,
+                            sparsity = 0.1,
+                            sorted = true,
+                            reverse_sort = false)
     return PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)
 end
 
@@ -94,26 +90,23 @@ created using SVD as described in [1].
 [1] Yang, Cuili, et al. "_Design of polynomial echo state networks for time
 series prediction._" Neurocomputing 290 (2018): 148-160.
 """
-function PseudoSVDReservoir(res_size, max_value, sparsity; sorted=true, reverse_sort=false)
+function PseudoSVDReservoir(res_size, max_value, sparsity; sorted = true,
+                            reverse_sort = false)
     return PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)
 end
 
-function create_reservoir(
-    reservoir::PseudoSVDReservoir,
-    res_size;
-    matrix_type=Matrix{Float64}
-)
+function create_reservoir(reservoir::PseudoSVDReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     sorted = reservoir.sorted
     reverse_sort = reservoir.reverse_sort
-    reservoir_matrix = create_diag(
-        res_size, reservoir.max_value, sorted=sorted, reverse_sort=reverse_sort
-    )
+    reservoir_matrix = create_diag(res_size, reservoir.max_value, sorted = sorted,
+                                   reverse_sort = reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
 
     while tmp_sparsity <= reservoir.sparsity
-        reservoir_matrix *= create_qmatrix(
-            res_size, rand(1:res_size), rand(1:res_size), rand()*2-1
-        )
+        reservoir_matrix *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size),
+                                           rand() * 2 - 1)
         tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
     end
 
@@ -124,14 +117,14 @@ function create_diag(dim, max_value; sorted = true, reverse_sort = false)
     diagonal_matrix = zeros(dim, dim)
     if sorted == true
         if reverse_sort == true
-            diagonal_values = sort(rand(dim).*max_value, rev = true)
+            diagonal_values = sort(rand(dim) .* max_value, rev = true)
             diagonal_values[1] = max_value
         else
-            diagonal_values = sort(rand(dim).*max_value)
+            diagonal_values = sort(rand(dim) .* max_value)
             diagonal_values[end] = max_value
         end
     else
-        diagonal_values = rand(dim).*max_value
+        diagonal_values = rand(dim) .* max_value
     end
 
     for i in 1:dim
@@ -145,7 +138,7 @@ function create_qmatrix(dim, coord_i, coord_j, theta)
     qmatrix = zeros(dim, dim)
 
     for i in 1:dim
-        qmatrix[i,i] = 1.0
+        qmatrix[i, i] = 1.0
     end
 
     qmatrix[coord_i, coord_i] = cos(theta)
@@ -156,12 +149,11 @@ function create_qmatrix(dim, coord_i, coord_j, theta)
 end
 
 function get_sparsity(M, dim)
-    return size(M[M .!= 0], 1)/(dim*dim-size(M[M .!= 0], 1)) #nonzero/zero elements
+    return size(M[M .!= 0], 1) / (dim * dim - size(M[M .!= 0], 1)) #nonzero/zero elements
 end
 
 #from "minimum complexity echo state network" Rodan
 # Delay Line Reservoir
-
 
 struct DelayLineReservoir{T} <: AbstractReservoir
     res_size::Int
@@ -179,19 +171,17 @@ absolute value of all the connections in the reservoir.
 [1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DelayLineReservoir(res_size; weight=0.1)
+function DelayLineReservoir(res_size; weight = 0.1)
     return DelayLineReservoir(res_size, weight)
 end
 
-function create_reservoir(
-    reservoir::DelayLineReservoir,
-    res_size;
-    matrix_type=Matrix{Float64}
-)
+function create_reservoir(reservoir::DelayLineReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
-    for i in 1:res_size-1
-        reservoir_matrix[i+1, i] = reservoir.weight
+    for i in 1:(res_size - 1)
+        reservoir_matrix[i + 1, i] = reservoir.weight
     end
 
     return Adapt.adapt(matrix_type, reservoir_matrix)
@@ -216,20 +206,18 @@ kwargs, and they determine the only absolute values of the connections in the re
 [1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function DelayLineBackwardReservoir(res_size; weight=0.1, fb_weight=0.2)
+function DelayLineBackwardReservoir(res_size; weight = 0.1, fb_weight = 0.2)
     return DelayLineBackwardReservoir(res_size, weight, fb_weight)
 end
 
-function create_reservoir(
-    reservoir::DelayLineBackwardReservoir,
-    res_size;
-    matrix_type=Matrix{Float64}
-)
+function create_reservoir(reservoir::DelayLineBackwardReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
-    for i in 1:res_size-1
-        reservoir_matrix[i+1, i] = reservoir.weight
-        reservoir_matrix[i, i+1] = reservoir.fb_weight
+    for i in 1:(res_size - 1)
+        reservoir_matrix[i + 1, i] = reservoir.weight
+        reservoir_matrix[i, i + 1] = reservoir.fb_weight
     end
 
     return Adapt.adapt(matrix_type, reservoir_matrix)
@@ -253,18 +241,17 @@ absolute value of all the connections in the reservoir.
 [1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function SimpleCycleReservoir(res_size; weight=0.1)
+function SimpleCycleReservoir(res_size; weight = 0.1)
     return SimpleCycleReservoir(res_size, weight)
 end
 
-function create_reservoir(
-    reservoir::SimpleCycleReservoir,
-    res_size;
-    matrix_type=Matrix{Float64})
+function create_reservoir(reservoir::SimpleCycleReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(Float64, res_size, res_size)
 
-    for i in 1:res_size-1
-        reservoir_matrix[i+1, i] = reservoir.weight
+    for i in 1:(res_size - 1)
+        reservoir_matrix[i + 1, i] = reservoir.weight
     end
 
     reservoir_matrix[1, res_size] = reservoir.weight
@@ -293,25 +280,23 @@ can also be passed either as arg and kwarg and it detemines the jumps between
 [1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
 with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
 """
-function CycleJumpsReservoir(res_size; cycle_weight=0.1, jump_weight=0.1, jump_size=3)
+function CycleJumpsReservoir(res_size; cycle_weight = 0.1, jump_weight = 0.1, jump_size = 3)
     return CycleJumpsReservoir(res_size, cycle_weight, jump_weight, jump_size)
 end
 
-function create_reservoir(
-    reservoir::CycleJumpsReservoir,
-    res_size;
-    matrix_type=Matrix{Float64}
-)
+function create_reservoir(reservoir::CycleJumpsReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
-    for i in 1:res_size-1
-        reservoir_matrix[i+1, i] = reservoir.cycle_weight
+    for i in 1:(res_size - 1)
+        reservoir_matrix[i + 1, i] = reservoir.cycle_weight
     end
 
     reservoir_matrix[1, res_size] = reservoir.cycle_weight
 
-    for i in 1:reservoir.jump_size:res_size-reservoir.jump_size
-        tmp = (i+reservoir.jump_size)%res_size
+    for i in 1:(reservoir.jump_size):(res_size - reservoir.jump_size)
+        tmp = (i + reservoir.jump_size) % res_size
         if tmp == 0
             tmp = res_size
         end
@@ -322,7 +307,6 @@ function create_reservoir(
     return Adapt.adapt(matrix_type, reservoir_matrix)
 end
 
-
 """
     NullReservoir()
 
@@ -330,10 +314,8 @@ Return a constructor for a matrix `zeros(res_size, res_size)`
 """
 struct NullReservoir <: AbstractReservoir end
 
-function create_reservoir(
-    reservoir::NullReservoir,
-    res_size;
-    matrix_type=Matrix{Float64})
+function create_reservoir(reservoir::NullReservoir,
+                          res_size;
+                          matrix_type = Matrix{Float64})
     return Adapt.adapt(matrix_type, zeros(res_size, res_size))
 end
-

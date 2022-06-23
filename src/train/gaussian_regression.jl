@@ -1,4 +1,4 @@
-struct GaussianProcess{M,K,L,O} <: AbstractGaussianProcess
+struct GaussianProcess{M, K, L, O} <: AbstractGaussianProcess
     mean::M
     kernel::K
     lognoise::L
@@ -20,13 +20,11 @@ Regression for ESNs has first been explored in [1].
 [1] Chatzis, Sotirios P., and Yiannis Demiris. "_Echo state Gaussian process._"
 IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.
 """
-function GaussianProcess(
-    mean,
-    kernel;
-    lognoise=-2,
-    optimize=false,
-    optimizer=Optim.LBFGS()
-)
+function GaussianProcess(mean,
+                         kernel;
+                         lognoise = -2,
+                         optimize = false,
+                         optimizer = Optim.LBFGS())
     return GaussianProcess(mean, kernel, lognoise, optimize, optimizer)
 end
 
@@ -35,10 +33,10 @@ function _train(states, target_data, gp::GaussianProcess)
     output_matrix = []
 
     for i in 1:out_size
-        out_size == 1 ? target = vec(target_data) : target = target_data[i,:]
+        out_size == 1 ? target = vec(target_data) : target = target_data[i, :]
         push!(output_matrix, GP(states, target, gp.mean, gp.kernel, gp.lognoise))
-        gp.optimize ? optimize!(output_matrix[i]; method=gp.optimizer) : nothing
+        gp.optimize ? optimize!(output_matrix[i]; method = gp.optimizer) : nothing
     end
 
-    return OutputLayer(gp, output_matrix, out_size, target_data[:,end])
+    return OutputLayer(gp, output_matrix, out_size, target_data[:, end])
 end

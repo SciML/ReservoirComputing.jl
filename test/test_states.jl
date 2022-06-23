@@ -4,9 +4,9 @@ using ReservoirComputing
 test_array = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 standard_array = zeros(length(test_array), 1)
 extension = [0, 0, 0]
-padded_array = zeros(length(test_array)+1, 1)
-extended_array = zeros(length(test_array)+length(extension), 1)
-padded_extended_array = zeros(length(test_array)+length(extension)+1, 1)
+padded_array = zeros(length(test_array) + 1, 1)
+extended_array = zeros(length(test_array) + length(extension), 1)
+padded_extended_array = zeros(length(test_array) + length(extension) + 1, 1)
 padding = 10.0
 
 #testing non linear algos
@@ -29,19 +29,21 @@ standard_array = states_type(NLADefault(), test_array, extension)
 
 states_type = PaddedStates(padding = padding)
 padded_array = states_type(NLADefault(), test_array, extension)
-@test padded_array == reshape(vcat(padding, test_array), length(test_array)+1, 1)
+@test padded_array == reshape(vcat(padding, test_array), length(test_array) + 1, 1)
 
 states_type = PaddedStates(padding)
 padded_array = states_type(NLADefault(), test_array, extension)
-@test padded_array == reshape(vcat(padding, test_array), length(test_array)+1, 1)
+@test padded_array == reshape(vcat(padding, test_array), length(test_array) + 1, 1)
 
 states_type = PaddedExtendedStates(padding = padding)
 padded_extended_array = states_type(NLADefault(), test_array, extension)
-@test padded_extended_array == reshape(vcat(padding, extension, test_array), length(test_array)+length(extension)+1, 1)
+@test padded_extended_array == reshape(vcat(padding, extension, test_array),
+              length(test_array) + length(extension) + 1, 1)
 
 states_type = PaddedExtendedStates(padding)
 padded_extended_array = states_type(NLADefault(), test_array, extension)
-@test padded_extended_array == reshape(vcat(padding, extension, test_array), length(test_array)+length(extension)+1, 1)
+@test padded_extended_array == reshape(vcat(padding, extension, test_array),
+              length(test_array) + length(extension) + 1, 1)
 
 states_type = ExtendedStates()
 extended_array = states_type(NLADefault(), test_array, extension)
