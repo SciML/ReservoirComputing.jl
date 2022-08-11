@@ -46,20 +46,6 @@ function get_prediction(training_method::AbstractLinearModel, output_layer, x)
     return output_layer.output_matrix * x
 end
 
-#gaussian regression
-function get_prediction(training_method::AbstractGaussianProcess, output_layer, x)
-    out, sigma = zeros(output_layer.out_size), zeros(output_layer.out_size)
-
-    for j in 1:(output_layer.out_size)
-        x_new = reshape(x, length(x), 1)
-        gr = GaussianProcesses.predict_y(output_layer.output_matrix[j], x_new)
-        out[j] = gr[1][1]
-        sigma[j] = gr[2][1]
-    end
-
-    return (out, sigma)
-end
-
 #support vector regression
 function get_prediction(training_method::LIBSVM.AbstractSVR, output_layer, x)
     out = zeros(output_layer.out_size)
@@ -72,26 +58,9 @@ function get_prediction(training_method::LIBSVM.AbstractSVR, output_layer, x)
     return out
 end
 
-#creation of matrices for storing gaussian results (outs and sigmas)
-function output_storing(training_method::AbstractGaussianProcess,
-                        out_size,
-                        prediction_len,
-                        storing_type)
-    out = Adapt.adapt(storing_type, zeros(out_size, prediction_len))
-    sigma = Adapt.adapt(storing_type, zeros(out_size, prediction_len))
-    return (out, sigma)
-end
-
 #single matrix for other training methods
 function output_storing(training_method, out_size, prediction_len, storing_type)
     return Adapt.adapt(storing_type, zeros(out_size, prediction_len))
-end
-
-#storing results for gaussian training, getting also the sigmas
-function store_results!(training_method::AbstractGaussianProcess, out, output, i)
-    output[1][:, i] = out[1]
-    output[2][:, i] = out[2]
-    return out[1]
 end
 
 #general storing -> single matrix
