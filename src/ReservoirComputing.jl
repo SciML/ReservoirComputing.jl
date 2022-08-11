@@ -4,7 +4,6 @@ using Adapt
 using CellularAutomata
 using Distances
 using Distributions
-using GaussianProcesses
 using LIBSVM
 using LinearAlgebra
 using MLJLinearModels
@@ -35,7 +34,6 @@ abstract type AbstractOutputLayer end
 abstract type AbstractPrediction end
 #training methods
 abstract type AbstractLinearModel end
-abstract type AbstractGaussianProcess end
 abstract type AbstractSupportVector end
 #should probably move some of these
 abstract type AbstractVariation end
@@ -81,7 +79,6 @@ include("predict.jl")
 
 #general training
 include("train/linear_regression.jl")
-include("train/gaussian_regression.jl")
 include("train/supportvector_regression.jl")
 
 #esn
