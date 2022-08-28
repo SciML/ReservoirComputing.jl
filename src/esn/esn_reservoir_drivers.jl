@@ -1,9 +1,12 @@
 abstract type AbstractReservoirDriver end
 
 """
-    create_states(
-        reservoir_driver::AbstractReservoirDriver, train_data, reservoir_matrix,input_matrix
-    )
+    create_states(reservoir_driver::AbstractReservoirDriver,
+                       train_data,
+                       washout,
+                       reservoir_matrix,
+                       input_matrix,
+                       bias_vector)
 
 Return the trained ESN states according to the given driver.
 """

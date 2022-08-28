@@ -19,7 +19,7 @@ export AbstractLayer, create_layer
 export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
 export BernoulliSample, IrrationalSample
 export GaussianProcess
-export AbstractReservoir, create_reservoir
+export AbstractReservoir, create_reservoir, create_states
 export RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir
 export DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
 export RNN, MRNN, GRU, GRUParams, FullyGated, Variant1, Variant2, Variant3, Minimal
