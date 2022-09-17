@@ -26,3 +26,9 @@ for t in training_methods
     output = esn(Predictive(input_data), output_layer)
     @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.21
 end
+
+for t in training_methods
+    output_layer = train(esn, target_data, t)
+    output, states = esn(Predictive(input_data), output_layer, save_states=true)
+    @test size(states) == (res_size, size(input_data, 2))
+end
