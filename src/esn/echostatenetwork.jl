@@ -164,8 +164,8 @@ end
 
 function (esn::ESN)(prediction::AbstractPrediction,
                     output_layer::AbstractOutputLayer;
-                    initial_conditions = output_layer.last_value,
-                    last_state = esn.states[:, [end]])
+                    last_state = esn.states[:, [end]],
+                    kwargs...)
     variation = esn.variation
     pred_len = prediction.prediction_len
 
@@ -178,10 +178,10 @@ function (esn::ESN)(prediction::AbstractPrediction,
         model_pred_data = model(u0, tspan_new, predict_tsteps)[:, 2:end]
         return obtain_esn_prediction(esn, prediction, last_state, output_layer,
                                      model_pred_data;
-                                     initial_conditions = initial_conditions)
+                                     kwargs...)
     else
         return obtain_esn_prediction(esn, prediction, last_state, output_layer;
-                                     initial_conditions = initial_conditions)
+                                     kwargs...)
     end
 end
 

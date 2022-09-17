@@ -3,13 +3,15 @@ function obtain_esn_prediction(esn,
                                x,
                                output_layer,
                                args...;
-                               initial_conditions = output_layer.last_value)
+                               initial_conditions = output_layer.last_value,
+                               save_states = false)
     out_size = output_layer.out_size
     training_method = output_layer.training_method
     prediction_len = prediction.prediction_len
 
     output = output_storing(training_method, out_size, prediction_len, typeof(esn.states))
     out = initial_conditions
+    states = similar(esn.states, size(esn.states, 1), prediction_len)
 
     out_pad = allocate_outpad(esn.variation, esn.states_type, out)
     tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
@@ -20,9 +22,10 @@ function obtain_esn_prediction(esn,
                                           args...)
         out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
         out = store_results!(output_layer.training_method, out_tmp, output, i)
+        states[:,i] = x
     end
 
-    return output
+    save_states ? (output, states) : output
 end
 
 function obtain_esn_prediction(esn,
@@ -30,13 +33,15 @@ function obtain_esn_prediction(esn,
                                x,
                                output_layer,
                                args...;
-                               initial_conditions = output_layer.last_value)
+                               initial_conditions = output_layer.last_value,
+                               save_states=false)
     out_size = output_layer.out_size
     training_method = output_layer.training_method
     prediction_len = prediction.prediction_len
 
     output = output_storing(training_method, out_size, prediction_len, typeof(esn.states))
     out = initial_conditions
+    states = similar(esn.states, size(esn.states, 1), prediction_len)
 
     out_pad = allocate_outpad(esn.variation, esn.states_type, out)
     tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
@@ -47,9 +52,10 @@ function obtain_esn_prediction(esn,
                                           out_pad, i, tmp_array, args...)
         out_tmp = get_prediction(training_method, output_layer, x_new)
         out = store_results!(training_method, out_tmp, output, i)
+        states[:,i] = x
     end
 
-    return output
+    save_states ? (output, states) : output
 end
 
 #prediction dispatch on esn 

@@ -86,6 +86,10 @@ Once the ```OutputLayer``` has been obtained the prediction can be done followin
 output = esn(Generative(predict_len), output_layer)
 ```
 both the training method and the output layer are needed in this call. The number of steps for the prediction must be specified to the ```Generative``` method. The output results are given in a matrix. 
+
+!!! info "Saving the states during prediction"
+    While the states are saved in the `ESN` struct for the training, for the prediction they are not saved by default. To inspect the states it is necessary to pass the boolean keyword argument `save_states` to the prediction call, in this example using `esn(... ; save_states=true)`. This returns a tuple `(output, states)` where `size(states) = res_size, prediction_len`
+
 To inspect the results they can easily be plotted using an external library. In this case ```Plots``` is adopted:
 ```julia
 using Plots, Plots.PlotMeasures
