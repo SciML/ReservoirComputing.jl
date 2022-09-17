@@ -22,7 +22,7 @@ function obtain_esn_prediction(esn,
                                           args...)
         out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
         out = store_results!(output_layer.training_method, out_tmp, output, i)
-        states[:,i] = x
+        states[:, i] = x
     end
 
     save_states ? (output, states) : output
@@ -34,7 +34,7 @@ function obtain_esn_prediction(esn,
                                output_layer,
                                args...;
                                initial_conditions = output_layer.last_value,
-                               save_states=false)
+                               save_states = false)
     out_size = output_layer.out_size
     training_method = output_layer.training_method
     prediction_len = prediction.prediction_len
@@ -52,7 +52,7 @@ function obtain_esn_prediction(esn,
                                           out_pad, i, tmp_array, args...)
         out_tmp = get_prediction(training_method, output_layer, x_new)
         out = store_results!(training_method, out_tmp, output, i)
-        states[:,i] = x
+        states[:, i] = x
     end
 
     save_states ? (output, states) : output
