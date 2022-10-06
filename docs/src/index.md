@@ -85,14 +85,14 @@ Contributions are very welcomed! Some interesting variation of RC models are pos
 If you use this library in your work, please cite:
 
 ```bibtex
-@misc{https://doi.org/10.48550/arxiv.2204.05117,
-  doi = {10.48550/ARXIV.2204.05117},
-  url = {https://arxiv.org/abs/2204.05117},
-  author = {Martinuzzi, Francesco and Rackauckas, Chris and Abdelrehim, Anas and Mahecha, Miguel D. and Mora, Karin},
-  keywords = {Computational Engineering, Finance, and Science (cs.CE), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {Creative Commons Attribution 4.0 International}
+@article{JMLR:v23:22-0611,
+  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  journal = {Journal of Machine Learning Research},
+  year    = {2022},
+  volume  = {23},
+  number  = {288},
+  pages   = {1--8},
+  url     = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
