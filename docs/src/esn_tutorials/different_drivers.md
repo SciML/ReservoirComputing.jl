@@ -33,7 +33,7 @@ f4(x) = x/sqrt(1+x*x)
 
 It is now possible to build different drivers, using the parameters suggested by the paper. Also in this instance the numbering follows the test cases of the paper. In the end a simple for loop is implemented to compare the different drivers and activation functions.
 ```julia
-using Reservoir Computing, Random
+using ReservoirComputing, Random
 
 #fix seed for reproducibility
 Random.seed!(42)
