@@ -1,13 +1,19 @@
 # ReservoirComputing.jl
 
+[![Join the chat at https://julialang.zulipchat.com #sciml-bridged](https://img.shields.io/static/v1?label=Zulip&message=chat&color=9558b2&labelColor=389826)](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](http://nonlinearsolve.sciml.ai/stable/)
+[![Global Docs](https://img.shields.io/badge/docs-SciML-blue.svg)](https://docs.sciml.ai/ReservoirComputing/stable/)
+ [![arXiv](https://img.shields.io/badge/arXiv-2204.05117-00b300.svg)](https://arxiv.org/abs/2204.05117)
+
+[![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl)
+[![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI)
+
+[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
+
 ![rc_full_logo_large_white_cropped](https://user-images.githubusercontent.com/10376688/144242116-8243f58a-5ac6-4e0e-88d5-3409f00e20b4.png)
 
-| **Documentation** | **Build Status** | **Reference** |
-|:----------:|:----------:|:----------:|
-| [![Global Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://docs.sciml.ai/ReservoirComputing/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](http://reservoir.sciml.ai/dev/) | [![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl) | [![arXiv](https://img.shields.io/badge/arXiv-2204.05117-00b300.svg)](https://arxiv.org/abs/2204.05117)
-
-
-ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](http://reservoir.sciml.ai/stable/). Use the [in-development documentation](http://reservoir.sciml.ai/dev/) to take a look at at not yet released features.
+ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](https://docs.sciml.ai/ReservoirComputing/stable/). Use the [in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/) to take a look at at not yet released features.
 
 ## Quick Example
 
