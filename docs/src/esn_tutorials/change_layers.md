@@ -72,8 +72,8 @@ reservoirs = [SimpleCycleReservoir(res_size, 0.7),
 
 for i=1:length(reservoirs)
     esn = ESN(training_input;
-        input_init = input_layer[i],
-        reservoir_init = reservoirs[i])
+        input_layer = input_layer[i],
+        reservoir = reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))
     output = esn(Predictive(testing_input), wout)
     println(msd(testing_target, output))

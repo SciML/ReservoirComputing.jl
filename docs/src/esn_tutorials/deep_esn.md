@@ -61,8 +61,10 @@ output_layer = train(esn, target_data, training_method)
 
 output = esn(Generative(predict_len), output_layer)
 ```
-
+Plotting the results:
 ```@example deep_lorenz
+using Plots
+
 ts = 0.0:0.02:200.0
 lorenz_maxlyap = 0.9056
 predict_ts = ts[shift+train_len+1:shift+train_len+predict_len]

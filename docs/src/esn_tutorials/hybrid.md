@@ -28,7 +28,7 @@ input_data  = ode_data[:, 1:train_len]
 target_data = ode_data[:, 2:train_len+1]
 test_data   = ode_data[:, train_len+1:end][:, 1:1000]
 
-predict_len = size(test, 2)
+predict_len = size(test_data, 2)
 tspan_train = (tspan[1], ode_sol.t[train_len])
 ```
 

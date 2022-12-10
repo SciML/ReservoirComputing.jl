@@ -37,7 +37,7 @@ f4(x) = x/sqrt(1+x*x)
 
 It is now possible to build different drivers, using the parameters suggested by the paper. Also in this instance the numbering follows the test cases of the paper. In the end a simple for loop is implemented to compare the different drivers and activation functions.
 ```@example mrnn
-using ReservoirComputing, Random
+using ReservoirComputing, Random, StatsBase
 
 #fix seed for reproducibility
 Random.seed!(42)
@@ -144,13 +144,13 @@ using DelimitedFiles
 
 data = reduce(hcat, readdlm("santafe_laser.txt"))
 
-train_len   = 5000
+train_len = 5000
 predict_len = 2000
 
-training_input  = data[:, 1:train_len]
+training_input = data[:, 1:train_len]
 training_target = data[:, 2:train_len+1]
-testing_input   = data[:,train_len+1:train_len+predict_len]
-testing_target  = data[:,train_len+2:train_len+predict_len+1]
+testing_input = data[:,train_len+1:train_len+predict_len]
+testing_target = data[:,train_len+2:train_len+predict_len+1]
 ```
 
 The construction of the ESN proceeds as usual. 
@@ -179,8 +179,8 @@ esn = ESN(training_input;
 The training and prediction can proceed as usual:
 ```@example gru
 training_method = StandardRidge(0.0)
-output_layer    = train(esn, training_target, training_method)
-output          = esn(Predictive(testing_input), output_layer)
+output_layer = train(esn, training_target, training_method)
+output = esn(Predictive(testing_input), output_layer)
 ```
 
 The results can be plotted using Plots.jl
@@ -205,8 +205,8 @@ esn_rnn = ESN(training_input;
     reservoir = RandSparseReservoir(res_size, radius=res_radius),
     reservoir_driver = RNN())
 
-output_layer    = train(esn_rnn, training_target, training_method)
-output_rnn      = esn_rnn(Predictive(testing_input), output_layer)
+output_layer = train(esn_rnn, training_target, training_method)
+output_rnn = esn_rnn(Predictive(testing_input), output_layer)
 
 println(msd(testing_target, output))
 println(msd(testing_target, output_rnn))
