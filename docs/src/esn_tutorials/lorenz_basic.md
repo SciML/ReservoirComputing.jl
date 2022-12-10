@@ -107,9 +107,9 @@ p3 = plot(lyap_time, [test_data[3,:] output[3,:]], label = ["actual" "predicted"
     ylabel = "z(t)", linewidth=2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
 
 
-plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates", 
+plot(p1, p2, p3, plot_title = "Lorenz System Coordinates", 
     layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
-    legendfontsize=12, titlefontsize=20, left_margin=4mm)
+    legendfontsize=12, titlefontsize=20)
 ```
 
 ## Bibliography

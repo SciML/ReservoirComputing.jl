@@ -142,7 +142,7 @@ The data used for this example is the Santa Fe laser dataset [^7] retrieved from
 ```@example gru
 using DelimitedFiles
 
-data = reduce(hcat, readdlm("santafe_laser.txt"))
+data = reduce(hcat, readdlm("./data/santafe_laser.txt"))
 
 train_len = 5000
 predict_len = 2000

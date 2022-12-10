@@ -78,9 +78,9 @@ p3 = plot(lyap_time, [test_data[3,:] output[3,:]], label = ["actual" "predicted"
     ylabel = "z(t)", linewidth=2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
 
 
-plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates", 
+plot(p1, p2, p3, plot_title = "Lorenz System Coordinates", 
     layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
-    legendfontsize=12, titlefontsize=20, left_margin=4mm)
+    legendfontsize=12, titlefontsize=20)
 ```
 
 Note that there is a known bug at the moment with using `WeightedLayer` as the input layer with the deep ESN. We are in the process of investigating and solving it. The leak coefficient for the reservoirs has to always be the same with the current implementation. This is also something we are actively looking into expanding.

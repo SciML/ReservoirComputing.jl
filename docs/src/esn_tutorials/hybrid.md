@@ -63,6 +63,7 @@ output = esn(Generative(predict_len), output_layer)
 
 It is now possible to plot the results, leveraging Plots.jl:
 ```@example hybrid
+using Plots
 lorenz_maxlyap = 0.9056
 predict_ts = tsteps[train_len+1:train_len+predict_len]
 lyap_time = (predict_ts .- predict_ts[1])*(1/lorenz_maxlyap)
@@ -75,9 +76,9 @@ p3 = plot(lyap_time, [test_data[3,:] output[3,:]], label = ["actual" "predicted"
     ylabel = "z(t)", linewidth=2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
 
 
-plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates", 
+plot(p1, p2, p3, plot_title = "Lorenz System Coordinates", 
     layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
-    legendfontsize=12, titlefontsize=20, left_margin=4mm)
+    legendfontsize=12, titlefontsize=20)
 ```
 
 ## Bibliography
