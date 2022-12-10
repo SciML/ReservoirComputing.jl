@@ -6,7 +6,7 @@ To showcase how to use this models this page illustrates the performance of ReCA
 
 ## 5 bit memory task
 The data can be read as follows:
-```julia
+```@example reca
 using DelimitedFiles
 
 input = readdlm("./5bitinput.txt", ',', Bool)
@@ -14,37 +14,31 @@ output = readdlm("./5bitoutput.txt", ',', Bool)
 ```
 
 To use a ReCA model it is necessary to define the rule one intends to use. To do so ReservoirComputing.jl leverages [CellularAutomata.jl](https://github.com/MartinuzziFrancesco/CellularAutomata.jl) that needs to be called as well to define the `RECA` struct:
-```julia
+```@example reca
 using ReservoirComputing, CellularAutomata
 
 ca = DCA(90)
 ```
 
 To define the ReCA model it suffices to call:
-```julia
+```@example reca
 reca = RECA(input, ca; 
     generations = 16,
     input_encoding = RandomMapping(16, 40))
 ```
 
 After the training can be performed with the chosen method. 
-```julia
+```@example reca
 output_layer = train(reca, output, StandardRidge(0.00001))
 ```
 
 The prediction in this case will be a `Predictive()` with the input data equal to the training data. In addition, to test the 5 bit memory task, a conversion from Float to Bool is necessary:
-```julia
+```@example reca
 prediction = reca(Predictive(input), output_layer)
 final_pred = convert(AbstractArray{Bool}, prediction .> 0.5)
 
 final_pred == output
 ```
-```
-true
-```
-
-
-
 
 [^1]: Yilmaz, Ozgur. "Reservoir computing using cellular automata." arXiv preprint arXiv:1410.0162 (2014).
 

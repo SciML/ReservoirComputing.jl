@@ -3,7 +3,7 @@ Following the idea of giving physical information to machine learning models the
 
 ## Generating the data
 For this example we are going to forecast the Lorenz system. As usual the data is generated leveraging `DifferentialEquations.jl`:
-```julia
+```@example hybrid
 using DifferentialEquations
 
 u0 = [1.0,0.0,0.0]                       
@@ -34,7 +34,7 @@ tspan_train = (tspan[1], ode_sol.t[train_len])
 
 ## Building the Hybrid Echo State Network
 In order to feed the data to the ESN it is necessary to create a suitable function.
-```julia
+```@example hybrid
 function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
     prob = ODEProblem(lorenz, u0, tspan) 
     sol = Array(solve(prob, saveat = tsteps))
@@ -43,7 +43,7 @@ end
 ```
 
 Given initial condition, time span and time steps this function returns the data for the chosen model. Now, using the `Hybrid` method it is possible to input all this information to the model
-```julia
+```@example hybrid
 using ReservoirComputing, Random
 Random.seed!(42)
 
@@ -56,13 +56,13 @@ esn = ESN(input_data,
 
 ## Training and Prediction
 The training and prediction of the Hybrid ESN can proceed as usual:
-```julia
+```@example hybrid
 output_layer = train(esn, target_data, StandardRidge(0.3))
 output = esn(Generative(predict_len), output_layer)
 ```
 
 It is now possible to plot the results, leveraging Plots.jl:
-```julia
+```@example hybrid
 lorenz_maxlyap = 0.9056
 predict_ts = tsteps[train_len+1:train_len+predict_len]
 lyap_time = (predict_ts .- predict_ts[1])*(1/lorenz_maxlyap)
@@ -79,7 +79,6 @@ plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates",
     layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
     legendfontsize=12, titlefontsize=20, left_margin=4mm)
 ```
-![hybrid](images/hybrid.png)
 
 ## Bibliography
 [^1]: Pathak, Jaideep, et al. "_Hybrid forecasting of chaotic processes: Using machine learning in conjunction with a knowledge-based model._" Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018): 041101.

@@ -4,7 +4,7 @@ This example expands on the readme Lorenz system forecasting to better showcase 
 
 ## Generating the data
 Starting off the workflow the first step is to obtain the data. Leveraging ```OrdinaryDiffEq``` it is possible to derive the Lorenz system data in the following way:
-```julia
+```@example lorenz
 using OrdinaryDiffEq
 
 #define lorenz system
@@ -20,7 +20,7 @@ data = solve(prob, ABM54(), dt=0.02)
 ```
 
 After obtaining the data it is necessary to determine the kind of prediction for the model. Since this example is going to use the ```Generative``` prediction type, this means that the target data is foing to be the next step of the input data. In addition it is important to notice that the Lorenz system just obtained presents a transient period that is not representative of the general behavior of the system. This can easily be discarded setting a ```shift``` parameter.
-```julia
+```@example lorenz
 #determine shift length, training length and prediction length
 shift = 300
 train_len = 5000
@@ -36,7 +36,7 @@ It is *important* to notice that the data needs to be formatted in a matrix with
 
 ## Building the Echo State Network
 Once the data is ready it is possible to define the parameters for the ESN and the ```ESN``` struct itself. In this example the values from [^1] are loosely followed as general guidelines.
-```julia
+```@example lorenz
 using ReservoirComputing
 
 #define ESN parameters
@@ -71,7 +71,7 @@ The final calls are modifications to the states in training or prediction. The d
 
 ## Training and Prediction
 Now that the ESN has been created and all the parameters have been explained it is time to proceed with the training. The full call of the readme example follows this general idea:
-```julia
+```@example lorenz
 #define training method
 training_method = StandardRidge(0.0)
 
@@ -82,7 +82,7 @@ output_layer = train(esn, target_data, training_method)
 The training returns an ```OutputLayer``` struct containing the trained output matrix and other informations needed for the prediction. The necessary elements in the ```train()``` call are the ```ESN``` struct created in the previous step and the ```target_data```, that in this case is the one step ahead evolution of the Lorenz system. The training method chosen in this example is the standard one, so an equivalent way of calling the ```train``` function here is ```output_layer = train(esn, target_data)``` like the readme basic version. Likewise the default value for the ridge regression parameter is set to zero, so the actual default training is Ordinary Least Squares regression. Other training methods are available and will be explained in following examples. 
 
 Once the ```OutputLayer``` has been obtained the prediction can be done following this procedure:
-```julia
+```@example lorenz
 output = esn(Generative(predict_len), output_layer)
 ```
 both the training method and the output layer are needed in this call. The number of steps for the prediction must be specified to the ```Generative``` method. The output results are given in a matrix. 
@@ -91,7 +91,7 @@ both the training method and the output layer are needed in this call. The numbe
     While the states are saved in the `ESN` struct for the training, for the prediction they are not saved by default. To inspect the states it is necessary to pass the boolean keyword argument `save_states` to the prediction call, in this example using `esn(... ; save_states=true)`. This returns a tuple `(output, states)` where `size(states) = res_size, prediction_len`
 
 To inspect the results they can easily be plotted using an external library. In this case ```Plots``` is adopted:
-```julia
+```@example lorenz
 using Plots, Plots.PlotMeasures
 
 ts = 0.0:0.02:200.0
@@ -111,9 +111,6 @@ plot(p1, p2, p3, size=(1080, 720), plot_title = "Lorenz System Coordinates",
     layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
     legendfontsize=12, titlefontsize=20, left_margin=4mm)
 ```
-
-![lorenzbasic](images/lorenz_basic.png)
-
 
 ## Bibliography
 
