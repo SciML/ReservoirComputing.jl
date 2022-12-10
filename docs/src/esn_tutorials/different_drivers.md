@@ -17,6 +17,10 @@ u(t) = sin(t)+sin(0.51*t)+sin(0.22*t)+sin(0.1002*t)+sin(0.05343*t)
 
 For this example the type of prediction will be one step ahead. The metric used to assure a good prediction is going to be the normalized root-mean-square deviation `rmsd` from [StatsBase](https://juliastats.org/StatsBase.jl/stable/). Like in the other examples first it is needed to gather the data:
 ```@example mrnn
+train_len = 3000
+predict_len = 2000
+shift = 1
+
 data = u.(collect(0.0:0.01:500))
 training_input = reduce(hcat, data[shift:shift+train_len-1])
 training_target = reduce(hcat, data[shift+1:shift+train_len])

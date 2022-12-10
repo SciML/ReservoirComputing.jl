@@ -35,6 +35,8 @@ Again, it is *important* to notice that the data needs to be formatted in a matr
 
 The construction of the ESN is also really similar. The only difference is that the reservoir can be fed as an array of reservoirs. 
 ```@example deep_lorenz
+using ReservoirComputing
+
 reservoirs = [RandSparseReservoir(99, radius=1.1, sparsity=0.1),
     RandSparseReservoir(100, radius=1.2, sparsity=0.1),
     RandSparseReservoir(200, radius=1.4, sparsity=0.1)]
