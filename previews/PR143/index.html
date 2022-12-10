@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>ReservoirComputing.jl · ReservoirComputing.jl</title><script async src="https://www.googletagmanager.com/gtag/js?id=UA-90474609-3"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-90474609-3', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="assets/warner.js"></script><link rel="canonical" href="https://docs.sciml.ai/ReservoirComputing/stable/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script><link href="assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.png" alt="ReservoirComputing.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href>ReservoirComputing.jl</a></span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>ReservoirComputing.jl</a><ul class="internal"><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Features-Overview"><span>Features Overview</span></a></li><li><a class="tocitem" href="#Citing"><span>Citing</span></a></li><li><a class="tocitem" href="#Reproducibility"><span>Reproducibility</span></a></li></ul></li><li><span class="tocitem">General Settings</span><ul><li><a class="tocitem" href="general/different_training/">Changing Training Algorithms</a></li><li><a class="tocitem" href="general/states_variation/">Altering States</a></li><li><a class="tocitem" href="general/predictive_generative/">Generative vs Predictive</a></li></ul></li><li><span class="tocitem">Echo State Network Tutorials</span><ul><li><a class="tocitem" href="esn_tutorials/lorenz_basic/">Lorenz System Forecasting</a></li><li><a class="tocitem" href="esn_tutorials/mackeyglass_basic/">Mackey-Glass Forecasting on GPU</a></li><li><a class="tocitem" href="esn_tutorials/change_layers/">Using Different Layers</a></li><li><a class="tocitem" href="esn_tutorials/different_drivers/">Using Different Reservoir Drivers</a></li><li><a class="tocitem" href="esn_tutorials/deep_esn/">Deep Echo State Networks</a></li><li><a class="tocitem" href="esn_tutorials/hybrid/">Hybrid Echo State Networks</a></li></ul></li><li><a class="tocitem" href="reca_tutorials/reca/">Reservoir Computing with Cellular Automata</a></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="api/training/">Training Algorithms</a></li><li><a class="tocitem" href="api/states/">States Modifications</a></li><li><a class="tocitem" href="api/predict/">Prediction Types</a></li><li><a class="tocitem" href="api/esn/">Echo State Networks</a></li><li><a class="tocitem" href="api/esn_layers/">ESN Layers</a></li><li><a class="tocitem" href="api/esn_drivers/">ESN Drivers</a></li><li><a class="tocitem" href="api/reca/">ReCA</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>ReservoirComputing.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>ReservoirComputing.jl</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="ReservoirComputing.jl"><a class="docs-heading-anchor" href="#ReservoirComputing.jl">ReservoirComputing.jl</a><a id="ReservoirComputing.jl-1"></a><a class="docs-heading-anchor-permalink" href="#ReservoirComputing.jl" title="Permalink"></a></h1><p>ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). Reservoir Computing (RC) is an umbrella term used to describe a family of models such as ESNs and Liquid State Machines (LSMs). The key concept is to expand the input data into a higher dimension and use regression in order to train the model; in some ways Reservoir Computers can be considered similar to kernel methods. </p><div class="admonition is-info"><header class="admonition-header">Introductory material</header><div class="admonition-body"><p>This library assumes some basic knowledge of Reservoir Computing. For a good introduction, we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in-depth review papers that should cover all the needed information. For the majority of the algorithms implemented in this library we cited in the documentation the original work introducing them. If you ever are in doubt about about a method or a function just type <code>? function</code> in the Julia REPL to read the relevant notes.</p><ul><li>Jaeger, Herbert: The “echo state” approach to analyzing and training recurrent neural networks-with an erratum note.</li><li>Maass W, Natschläger T, Markram H: Real-time computing without stable states: a new framework for neural computation based on perturbations.</li><li>Lukoševičius, Mantas: A practical guide to applying echo state networks.&quot; Neural networks: Tricks of the trade.</li><li>Lukoševičius, Mantas, and Herbert Jaeger: Reservoir computing approaches to recurrent neural network training.</li></ul></div></div><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><p>ReservoirComputing.jl is registered in the General Julia Registry, so the installation of the package follows the usual procedure:</p><pre><code class="language-julia hljs">import Pkg; Pkg.add(&quot;ReservoirComputing&quot;)</code></pre><p>The support for this library is for Julia v1.6 or greater.</p><h2 id="Features-Overview"><a class="docs-heading-anchor" href="#Features-Overview">Features Overview</a><a id="Features-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Features-Overview" title="Permalink"></a></h2><p>This library provides multiple ways of training the chosen RC model. More specifically the available algorithms are:</p><ul><li><code>StandardRidge</code>: a naive implementation of Ridge Regression. The default choice for training.</li><li><code>LinearModel</code>: a wrap around <a href="https://juliaai.github.io/MLJLinearModels.jl/stable/">MLJLinearModels</a>.</li><li><code>GaussianProcess</code>: a wrap around <a href="http://stor-i.github.io/GaussianProcesses.jl/latest/">GaussianProcesses</a>.</li><li><code>LIBSVM.AbstractSVR</code>: a direct call of <a href="https://github.com/JuliaML/LIBSVM.jl">LIBSVM</a> regression methods.</li></ul><p>Also provided are two different ways of doing predictions using RC:</p><ul><li><code>Generative</code>: the algorithm uses the prediction of the model in the previous step to continue the prediction. It only needs the number of steps as input.</li><li><code>Predictive</code>: standard Machine Learning type of prediction. Given the features the RC model will return the label/prediction.</li></ul><p>It is possible to modify the RC obtained states in the training and prediction step using the following:</p><ul><li><code>StandardStates</code>: default choice, no changes will be made to the states.</li><li><code>ExtendedStates</code>: the states are extended using a vertical concatenation with the input data.</li><li><code>PaddedStates</code>: the states are padded using a vertical concatenation with the choosing padding value</li><li><code>PaddedExtendedStates</code>: a combination of the first two. First the states are extended and then padded.</li></ul><p>In addition another modification is possible through the choice of non linear algorithms:</p><ul><li><code>NLADefault</code>: default choice, no changes will be made to the states.</li><li><code>NLAT1</code></li><li><code>NLAT2</code></li><li><code>NLAT3</code></li></ul><h3 id="Echo-State-Networks"><a class="docs-heading-anchor" href="#Echo-State-Networks">Echo State Networks</a><a id="Echo-State-Networks-1"></a><a class="docs-heading-anchor-permalink" href="#Echo-State-Networks" title="Permalink"></a></h3><p>Regarding ESNs in the library are implemented the following input layers:</p><ul><li><code>WeightedLayer</code>: weighted layer matrix with weights sampled from a uniform distribution.</li><li><code>DenseLayer</code>: dense layer matrix with weights sampled from a uniform distribution.</li><li><code>SparseLayer</code>: sparse layer matrix with weights sampled from a uniform distribution.</li><li><code>MinimumLayer</code>: matrix with constant weights and weight sign decided following one of the two:<ul><li><code>BernoulliSample</code></li><li><code>IrrationalSample</code></li></ul></li><li><code>InformedLayer</code>: special kin of weighted layer matrix for Hybrid ESNs.</li></ul><p>The package also contains multiple implementation of Reservoirs:</p><ul><li><code>RandSparseReservoir</code>: random sparse matrix with scaling of spectral radius</li><li><code>PseudoSVDReservoir</code>: Pseudo SVD construction of a random sparse matrix</li><li><code>DelayLineReservoir</code>: minimal matrix with chosen weights</li><li><code>DelayLineBackwardReservoir</code>: minimal matrix with chosen weights</li><li><code>SimpleCycleReservoir</code>: minimal matrix with chosen weights</li><li><code>CycleJumpsReservoir</code>: minimal matrix with chosen weights</li></ul><p>In addition multiple ways of driving the reservoir states are also provided:</p><ul><li><code>RNN</code>: standard Recurrent Neural Network driver.</li><li><code>MRNN</code>: Multiple RNN driver, it consists on a linear combination of RNNs</li><li><code>GRU</code>: gated Recurrent Unit driver, with all the possible GRU variants available:<ul><li><code>FullyGated</code></li><li><code>Variant1</code></li><li><code>Variant2</code></li><li><code>Variant3</code></li><li><code>Minimal</code></li></ul></li></ul><p>An hybrid version of the model is also available through <code>Hybrid</code></p><h3 id="Reservoir-Computing-with-Cellular-Automata"><a class="docs-heading-anchor" href="#Reservoir-Computing-with-Cellular-Automata">Reservoir Computing with Cellular Automata</a><a id="Reservoir-Computing-with-Cellular-Automata-1"></a><a class="docs-heading-anchor-permalink" href="#Reservoir-Computing-with-Cellular-Automata" title="Permalink"></a></h3><p>The package provides also an implementation of Reservoir Computing models based on one dimensional Cellular Automata through the <code>RECA</code> call. For the moment the only input encoding available (an input encoding plays a similar role to the input matrix for ESNs) is a random mapping, called through <code>RandomMapping</code>. </p><p>All the training methods described above can be used, as well as all the modifications to the states. Both prediction methods are also possible in theory, although in the literature only <code>Predictive</code> tasks have been explored.</p><h3 id="Contributing"><a class="docs-heading-anchor" href="#Contributing">Contributing</a><a id="Contributing-1"></a><a class="docs-heading-anchor-permalink" href="#Contributing" title="Permalink"></a></h3><p>Contributions are very welcomed! Some interesting variation of RC models are posted in the issues, but everyone is free to just post relevant papers that could fit the scope of the library. Help with the documentation, providing new examples or application cases is also really important and appreciated. Everything that can make the package a little better is a great contribution, no matter how small. The API section of the documentation provides a more in depth look into how things work and are connected, so that is a good place to start exploring more the library. For every doubt that cannot be expressed in issues please feel free to contact any of the lead developers on Slack or by email.</p><h2 id="Citing"><a class="docs-heading-anchor" href="#Citing">Citing</a><a id="Citing-1"></a><a class="docs-heading-anchor-permalink" href="#Citing" title="Permalink"></a></h2><p>If you use this library in your work, please cite:</p><pre><code class="language-bibtex hljs">@article{JMLR:v23:22-0611,
+  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  journal = {Journal of Machine Learning Research},
+  year    = {2022},
+  volume  = {23},
+  number  = {288},
+  pages   = {1--8},
+  url     = {http://jmlr.org/papers/v23/22-0611.html}
+}</code></pre><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this SciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/ReservoirComputing.jl/ReservoirComputing.jl/docs/Project.toml`
+  [e30172f5] Documenter v0.27.23
+  [7c2d2b1e] ReservoirComputing v0.9.1 `~/work/ReservoirComputing.jl/ReservoirComputing.jl`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.8.3
+Commit 0434deb161e (2022-11-14 20:14 UTC)
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 2 × Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-13.0.1 (ORCJIT, icelake-server)
+  Threads: 1 on 2 virtual cores</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/ReservoirComputing.jl/ReservoirComputing.jl/docs/Manifest.toml`
+  [a4c015fc] ANSIColoredPrinters v0.0.1
+  [79e6a3ab] Adapt v3.4.0
+  [30b0a656] ArrayInterfaceCore v0.1.26
+  [49dc2e85] Calculus v0.5.1
+  [878138dc] CellularAutomata v0.0.2
+  [d360d2e6] ChainRulesCore v1.15.6
+  [9e997f8a] ChangesOfVariables v0.1.4
+  [bbf7d656] CommonSubexpressions v0.3.0
+  [34da2185] Compat v4.5.0
+  [187b0558] ConstructionBase v1.4.1
+  [9a962f9c] DataAPI v1.13.0
+  [864edb3b] DataStructures v0.18.13
+  [b429d917] DensityInterface v0.4.0
+  [163ba53b] DiffResults v1.1.0
+  [b552c78f] DiffRules v1.12.2
+  [b4f34e82] Distances v0.10.7
+  [31c24e10] Distributions v0.25.79
+  [ffbed154] DocStringExtensions v0.9.3
+  [e30172f5] Documenter v0.27.23
+  [fa6b7ba4] DualNumbers v0.6.8
+  [1a297f60] FillArrays v0.13.6
+  [6a86dc24] FiniteDiff v2.17.0
+  [f6369f11] ForwardDiff v0.10.34
+  [34004b35] HypergeometricFunctions v0.3.11
+  [b5f81e59] IOCapture v0.2.2
+  [3587e190] InverseFunctions v0.1.8
+  [92d709cd] IrrationalConstants v0.1.1
+  [42fd0dbc] IterativeSolvers v0.9.2
+  [692b3bcd] JLLWrappers v1.4.1
+  [682c06a0] JSON v0.21.3
+  [2d691ee1] LIBLINEAR v0.6.0
+  [b1bec4e5] LIBSVM v0.8.0
+  [d3d80556] LineSearches v7.2.0
+  [7a12625a] LinearMaps v3.8.0
+  [2ab3a3ac] LogExpFunctions v0.3.19
+⌅ [6ee0df7b] MLJLinearModels v0.7.1
+  [e80e1ace] MLJModelInterface v1.8.0
+  [1914dd2f] MacroTools v0.5.10
+  [e1d29d7a] Missings v1.0.2
+  [d41bc354] NLSolversBase v7.8.3
+  [872c559c] NNlib v0.8.11
+  [77ba4419] NaNMath v1.0.1
+  [429524aa] Optim v1.7.4
+  [bac558e1] OrderedCollections v1.4.1
+  [90014a1f] PDMats v0.11.16
+  [d96e819e] Parameters v0.12.3
+  [69de0a69] Parsers v2.5.1
+  [85a6dd25] PositiveFactorizations v0.2.4
+  [21216c6a] Preferences v1.3.0
+  [1fd47b50] QuadGK v2.6.0
+  [3cdcf5f2] RecipesBase v1.3.2
+  [189a3867] Reexport v1.2.2
+  [ae029012] Requires v1.3.0
+  [7c2d2b1e] ReservoirComputing v0.9.1 `~/work/ReservoirComputing.jl/ReservoirComputing.jl`
+  [79098fc4] Rmath v0.7.0
+  [30f210dd] ScientificTypesBase v3.0.0
+  [6e75b9c4] ScikitLearnBase v0.5.0
+  [efcf1570] Setfield v1.1.1
+  [66db9d55] SnoopPrecompile v1.0.1
+  [a2af1166] SortingAlgorithms v1.1.0
+  [276daf66] SpecialFunctions v2.1.7
+  [90137ffa] StaticArrays v1.5.11
+  [1e83bf80] StaticArraysCore v1.4.0
+  [64bff920] StatisticalTraits v3.2.0
+  [82ae8749] StatsAPI v1.5.0
+  [2913bbd2] StatsBase v0.33.21
+  [4c63d2b9] StatsFuns v1.1.1
+  [3a884ed6] UnPack v1.0.2
+  [1d63c593] LLVMOpenMP_jll v15.0.4+0
+  [efe28fd5] OpenSpecFun_jll v0.5.5+0
+  [f50d1b31] Rmath_jll v0.3.0+0
+  [275f1f90] liblinear_jll v2.30.0+0
+  [08558c22] libsvm_jll v3.25.0+0
+  [0dad84c5] ArgTools v1.1.1
+  [56f22d72] Artifacts
+  [2a0f44e3] Base64
+  [ade2ca70] Dates
+  [8ba89e20] Distributed
+  [f43a241f] Downloads v1.6.0
+  [7b1f6079] FileWatching
+  [9fa8497b] Future
+  [b77e0a4c] InteractiveUtils
+  [b27032c2] LibCURL v0.6.3
+  [76f85450] LibGit2
+  [8f399da3] Libdl
+  [37e2e46d] LinearAlgebra
+  [56ddb016] Logging
+  [d6f4376e] Markdown
+  [a63ad114] Mmap
+  [ca575930] NetworkOptions v1.2.0
+  [44cfe95a] Pkg v1.8.0
+  [de0858da] Printf
+  [3fa0cd96] REPL
+  [9a3f8284] Random
+  [ea8e919c] SHA v0.7.0
+  [9e88b42a] Serialization
+  [6462fe0b] Sockets
+  [2f01184e] SparseArrays
+  [10745b16] Statistics
+  [4607b0f0] SuiteSparse
+  [fa267f1f] TOML v1.0.0
+  [a4e569a6] Tar v1.10.1
+  [8dfed614] Test
+  [cf7118a7] UUIDs
+  [4ec0a83e] Unicode
+  [e66e0078] CompilerSupportLibraries_jll v0.5.2+0
+  [deac9b47] LibCURL_jll v7.84.0+0
+  [29816b5a] LibSSH2_jll v1.10.2+0
+  [c8ffd9c3] MbedTLS_jll v2.28.0+0
+  [14a3606d] MozillaCACerts_jll v2022.2.1
+  [4536629a] OpenBLAS_jll v0.3.20+0
+  [05823500] OpenLibm_jll v0.8.1+0
+  [83775a58] Zlib_jll v1.2.12+3
+  [8e850b90] libblastrampoline_jll v5.1.1+0
+  [8e850ede] nghttp2_jll v1.48.0+0
+  [3f19e933] p7zip_jll v17.4.0+0
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated -m`</code></pre></details>You can also download the 
+<a href="https://github.com/SciML/ReservoirComputing.jl/tree/gh-pages/v0.9.1/assets/Manifest.toml">manifest</a> file and the
+<a href="https://github.com/SciML/ReservoirComputing.jl/tree/gh-pages/v0.9.1/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="general/different_training/">Changing Training Algorithms »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Saturday 10 December 2022 15:55">Saturday 10 December 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
