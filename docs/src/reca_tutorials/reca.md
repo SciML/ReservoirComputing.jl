@@ -9,8 +9,8 @@ The data can be read as follows:
 ```@example reca
 using DelimitedFiles
 
-input = readdlm("./5bitinput.txt", ',', Bool)
-output = readdlm("./5bitoutput.txt", ',', Bool)
+input = readdlm("./5bitinput.txt", ',', Float32)
+output = readdlm("./5bitoutput.txt", ',', Float32)
 ```
 
 To use a ReCA model it is necessary to define the rule one intends to use. To do so ReservoirComputing.jl leverages [CellularAutomata.jl](https://github.com/MartinuzziFrancesco/CellularAutomata.jl) that needs to be called as well to define the `RECA` struct:
@@ -32,10 +32,10 @@ After the training can be performed with the chosen method.
 output_layer = train(reca, output, StandardRidge(0.00001))
 ```
 
-The prediction in this case will be a `Predictive()` with the input data equal to the training data. In addition, to test the 5 bit memory task, a conversion from Float to Bool is necessary:
+The prediction in this case will be a `Predictive()` with the input data equal to the training data. In addition, to test the 5 bit memory task, a conversion from Float to Bool is necessary (at the moment we are aware of a bug that doesn't allow to input boolean data to the RECA models):
 ```@example reca
 prediction = reca(Predictive(input), output_layer)
-final_pred = convert(AbstractArray{Bool}, prediction .> 0.5)
+final_pred = convert(AbstractArray{Float32}, prediction .> 0.5)
 
 final_pred == output
 ```
