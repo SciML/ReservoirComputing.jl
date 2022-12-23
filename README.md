@@ -18,6 +18,7 @@ ReservoirComputing.jl provides an efficient, modular and easy to use implementat
 ## Quick Example
 
 To illustrate the workflow of this library we will showcase how it is possible to train an ESN to learn the dynamics of the Lorenz system. As a first step we will need to gather the data. For the `Generative` prediction we need the target data to be one step ahead of the training data:
+
 ```julia
 using ReservoirComputing, OrdinaryDiffEq
 

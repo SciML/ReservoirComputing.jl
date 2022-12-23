@@ -43,7 +43,7 @@ end
 Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl). This example was run on Julia v1.7.2.
 
 The task for this example will be the one step ahead prediction of the Henon map. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
-```julia
+```@example mesn
 using DynamicalSystems
 train_len = 3000
 predict_len = 2000
@@ -62,7 +62,7 @@ testing_target = data[:,shift+train_len+1:shift+train_len+predict_len]
 
 Now it is possible to define the input layers and reservoirs we want to compare and run the comparison in a simple for loop. The accuracy will be tested using the mean squared deviation `msd` from [StatsBase](https://juliastats.org/StatsBase.jl/stable/).
 
-```julia
+```@example mesn
 using ReservoirComputing, StatsBase
 
 res_size = 300
@@ -72,16 +72,12 @@ reservoirs = [SimpleCycleReservoir(res_size, 0.7),
 
 for i=1:length(reservoirs)
     esn = ESN(training_input;
-        input_init = input_layer[i],
-        reservoir_init = reservoirs[i])
+        input_layer = input_layer[i],
+        reservoir = reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))
     output = esn(Predictive(testing_input), wout)
     println(msd(testing_target, output))
 end
-```
-```
-0.003402709948526517
-0.0034463857980330612
 ```
 As it is possible to see, changing layers in ESN models is straightforward. Be sure to check the API documentation for a full list of reservoir and layers.
 

@@ -11,12 +11,16 @@ where ``D`` is the number of activation function and respective parameters chose
 The method to call to use the mutliple activation function ESN is `MRNN(activation_function, leaky_coefficient, scaling_factor)`. The arguments can be used as both `args` or `kwargs`. `activation_function` and `scaling_factor` have to be vectors (or tuples) containing the chosen activation functions and respective scaling factors (``f_1,...,f_D`` and ``\lambda_1,...,\lambda_D`` following the nomenclature introduced above). The leaky_coefficient represents ``\alpha`` and it is a single value. 
 
 Starting the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/mrnn/mrnn.jl). This example was run on Julia v1.7.2.
-```julia
+```@example mrnn
 u(t) = sin(t)+sin(0.51*t)+sin(0.22*t)+sin(0.1002*t)+sin(0.05343*t)
 ```
 
 For this example the type of prediction will be one step ahead. The metric used to assure a good prediction is going to be the normalized root-mean-square deviation `rmsd` from [StatsBase](https://juliastats.org/StatsBase.jl/stable/). Like in the other examples first it is needed to gather the data:
-```julia
+```@example mrnn
+train_len = 3000
+predict_len = 2000
+shift = 1
+
 data = u.(collect(0.0:0.01:500))
 training_input = reduce(hcat, data[shift:shift+train_len-1])
 training_target = reduce(hcat, data[shift+1:shift+train_len])
@@ -25,15 +29,15 @@ testing_target = reduce(hcat, data[shift+train_len+1:shift+train_len+predict_len
 ```
 
 In order to follow the paper more closely it is necessary to define a couple of activation functions. The numbering of them follows the ones in the paper. Of course one can also use any function, custom defined, available in the base language or any activation function from [NNlib](https://fluxml.ai/Flux.jl/stable/models/nnlib/#Activation-Functions).
-```julia
+```@example mrnn
 f2(x) = (1-exp(-x))/(2*(1+exp(-x)))
 f3(x) = (2/pi)*atan((pi/2)*x)
 f4(x) = x/sqrt(1+x*x)
 ```
 
 It is now possible to build different drivers, using the parameters suggested by the paper. Also in this instance the numbering follows the test cases of the paper. In the end a simple for loop is implemented to compare the different drivers and activation functions.
-```julia
-using ReservoirComputing, Random
+```@example mrnn
+using ReservoirComputing, Random, StatsBase
 
 #fix seed for reproducibility
 Random.seed!(42)
@@ -67,12 +71,6 @@ for case in test_cases
     output = esn(Predictive(testing_input), wout)
     println(rmsd(testing_target, output, normalize=true))
 end
-```
-```
-9.555051477606373e-6
-6.544378702464354e-5
-9.428848251654616e-5
-9.468870751914035e-5
 ```
 
 In this example it is also possible to observe the input of parameters to the methods `RNN()` `MRNN()` both by argument and by keyword argument.
@@ -141,22 +139,22 @@ This variation can be obtained by setting `variation=Minimal()`. The `inner_laye
 To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/l). 
 
 The data used for this example is the Santa Fe laser dataset [^7] retrieved from [here](https://web.archive.org/web/20160427182805/http://www-psych.stanford.edu/~andreas/Time-Series/SantaFe.html). The data is split to account for a next step prediction.
-```julia
+```@example gru
 using DelimitedFiles
 
-data = reduce(hcat, readdlm("santafe_laser.txt"))
+data = reduce(hcat, readdlm("./data/santafe_laser.txt"))
 
-train_len   = 5000
+train_len = 5000
 predict_len = 2000
 
-training_input  = data[:, 1:train_len]
+training_input = data[:, 1:train_len]
 training_target = data[:, 2:train_len+1]
-testing_input   = data[:,train_len+1:train_len+predict_len]
-testing_target  = data[:,train_len+2:train_len+predict_len+1]
+testing_input = data[:,train_len+1:train_len+predict_len]
+testing_target = data[:,train_len+2:train_len+predict_len+1]
 ```
 
 The construction of the ESN proceeds as usual. 
-```julia
+```@example gru
 using ReservoirComputing, Random
 
 res_size = 300
@@ -169,7 +167,7 @@ esn = ESN(training_input;
 ```
 
 The default inner reservoir and input layer for the GRU are the same defaults for the `reservoir` and `input_layer` of the ESN. One can use the explicit call if they choose so.
-```julia
+```@example gru
 gru = GRU(reservoir=[RandSparseReservoir(res_size), 
     RandSparseReservoir(res_size)],
     inner_layer=[DenseLayer(), DenseLayer()])
@@ -179,14 +177,14 @@ esn = ESN(training_input;
 ```
 
 The training and prediction can proceed as usual:
-```julia
+```@example gru
 training_method = StandardRidge(0.0)
-output_layer    = train(esn, training_target, training_method)
-output          = esn(Predictive(testing_input), output_layer)
+output_layer = train(esn, training_target, training_method)
+output = esn(Predictive(testing_input), output_layer)
 ```
 
 The results can be plotted using Plots.jl
-```julia
+```@example gru
 using Plots
 
 plot([testing_target' output'], label=["actual" "predicted"], 
@@ -198,27 +196,21 @@ plot([testing_target' output'], label=["actual" "predicted"],
     ytickfontsize = 12,
     size=(1080, 720))
 ```
-![grulaser](images/gru.png)
 
 It is interesting to see a comparison of the GRU driven ESN and the standard RNN driven ESN. Using the same parameters defined before it is possible to do the following
-```julia
+```@example gru
 using StatsBase
 
 esn_rnn = ESN(training_input; 
     reservoir = RandSparseReservoir(res_size, radius=res_radius),
     reservoir_driver = RNN())
 
-output_layer    = train(esn_rnn, training_target, training_method)
-output_rnn      = esn_rnn(Predictive(testing_input), output_layer)
+output_layer = train(esn_rnn, training_target, training_method)
+output_rnn = esn_rnn(Predictive(testing_input), output_layer)
 
 println(msd(testing_target, output))
 println(msd(testing_target, output_rnn))
 ```
-```
-6.27305752344394
-10.766736644745862
-```
-
 
 [^1]: Lun, Shu-Xian, et al. "_A novel model of leaky integrator echo state network for time-series prediction._" Neurocomputing 159 (2015): 58-66.
 [^2]: Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder for statistical machine translation._” arXiv preprint arXiv:1406.1078 (2014).

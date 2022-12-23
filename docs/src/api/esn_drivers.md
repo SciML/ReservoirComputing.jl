@@ -11,7 +11,3 @@ The ```GRU``` driver also provides the user the choice of the possible variant:
 ```
 Please refer to the original papers for more detail about these architectures.
 
-The states are created using the following function
-```@docs
-    create_states
-```

@@ -6,7 +6,7 @@ The network implemented in this library is taken from [^1]. It works by stacking
 
 ## Lorenz Example
 For this example we are going to reuse the Lorenz data used in the [Lorenz System Forecasting](@ref) example.
-```julia
+```@example deep_lorenz
 using OrdinaryDiffEq
 
 #define lorenz system
@@ -34,7 +34,9 @@ test_data = data[:,shift+train_len+1:shift+train_len+predict_len]
 Again, it is *important* to notice that the data needs to be formatted in a matrix with the features as rows and time steps as columns like it is done in this example. This is needed even if the time series consists of single values. 
 
 The construction of the ESN is also really similar. The only difference is that the reservoir can be fed as an array of reservoirs. 
-```julia
+```@example deep_lorenz
+using ReservoirComputing
+
 reservoirs = [RandSparseReservoir(99, radius=1.1, sparsity=0.1),
     RandSparseReservoir(100, radius=1.2, sparsity=0.1),
     RandSparseReservoir(200, radius=1.4, sparsity=0.1)]
@@ -53,13 +55,33 @@ As it is possible to see, different sizes can be chosen for the different reserv
 In addition to using the provided functions for the construction of the layers the user can also choose to build their own matrix, or array of matrices, and feed that into the `ESN` in the same way.
 
 The training and prediction follows the usual framework:
-```julia
+```@example deep_lorenz
 training_method = StandardRidge(0.0) 
 output_layer = train(esn, target_data, training_method)
 
 output = esn(Generative(predict_len), output_layer)
 ```
-![deepesn](images/deepesn.png)
+Plotting the results:
+```@example deep_lorenz
+using Plots
+
+ts = 0.0:0.02:200.0
+lorenz_maxlyap = 0.9056
+predict_ts = ts[shift+train_len+1:shift+train_len+predict_len]
+lyap_time = (predict_ts .- predict_ts[1])*(1/lorenz_maxlyap)
+
+p1 = plot(lyap_time, [test_data[1,:] output[1,:]], label = ["actual" "predicted"], 
+    ylabel = "x(t)", linewidth=2.5, xticks=false, yticks = -15:15:15);
+p2 = plot(lyap_time, [test_data[2,:] output[2,:]], label = ["actual" "predicted"], 
+    ylabel = "y(t)", linewidth=2.5, xticks=false, yticks = -20:20:20);
+p3 = plot(lyap_time, [test_data[3,:] output[3,:]], label = ["actual" "predicted"], 
+    ylabel = "z(t)", linewidth=2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+
+
+plot(p1, p2, p3, plot_title = "Lorenz System Coordinates", 
+    layout=(3,1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize=15, yguidefontsize=15,
+    legendfontsize=12, titlefontsize=20)
+```
 
 Note that there is a known bug at the moment with using `WeightedLayer` as the input layer with the deep ESN. We are in the process of investigating and solving it. The leak coefficient for the reservoirs has to always be the same with the current implementation. This is also something we are actively looking into expanding.
 
