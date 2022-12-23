@@ -216,7 +216,8 @@ function create_minimum_input(sampling::IrrationalSample, res_size, in_size, wei
 
     for i in 1:res_size
         for j in 1:in_size
-            ir_array[counter] < 5 ? input_matrix[i, j] = -weight : input_matrix[i, j] = weight
+            ir_array[counter] < 5 ? input_matrix[i, j] = -weight :
+            input_matrix[i, j] = weight
             counter += 1
         end
     end
