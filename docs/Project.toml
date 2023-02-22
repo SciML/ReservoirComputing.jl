@@ -12,8 +12,8 @@ ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+CUDA = "3, 4"
 CellularAutomata = "0.0.2"
-CUDA = "3"
 DifferentialEquations = "7"
 Documenter = "0.27"
 DynamicalSystems = "2"
