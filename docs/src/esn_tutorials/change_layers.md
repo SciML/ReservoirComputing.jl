@@ -44,12 +44,12 @@ Using [^1] and [^2] as references this section will provide an example on how to
 
 The task for this example will be the one step ahead prediction of the Henon map. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
 ```@example mesn
-using DynamicalSystems
+using PredefinedDynamicalSystems
 train_len = 3000
 predict_len = 2000
 
-ds = Systems.henon()
-traj = trajectory(ds, 7000)
+ds = PredefinedDynamicalSystems.henon()
+traj, time = trajectory(ds, 7000)
 data = Matrix(traj)'
 data = (data .-0.5) .* 2
 shift = 200
