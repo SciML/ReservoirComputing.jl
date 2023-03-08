@@ -49,7 +49,7 @@ train_len = 3000
 predict_len = 2000
 
 ds = PredefinedDynamicalSystems.henon()
-data, time = trajectory(ds, 7000)
+traj, time = trajectory(ds, 7000)
 data = Matrix(traj)'
 data = (data .-0.5) .* 2
 shift = 200
