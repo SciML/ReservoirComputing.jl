@@ -14,9 +14,12 @@ ReservoirComputing.jl provides an efficient, modular and easy to use implementat
 !!! info "Performance tip"
     For faster computations on the CPU it is suggested to add `using MKL` to the script. For clarity's sake this library will not be indicated under every example in the documentation.
 ## Installation
-ReservoirComputing.jl is registered in the General Julia Registry, so the installation of the package follows the usual procedure:
+
+To install ReservoirComputing.jl, use the Julia package manager:
+
 ```julia
-import Pkg; Pkg.add("ReservoirComputing")
+using Pkg
+Pkg.add("ReservoirComputing")
 ```
 The support for this library is for Julia v1.6 or greater.
 
@@ -78,8 +81,22 @@ The package provides also an implementation of Reservoir Computing models based 
 
 All the training methods described above can be used, as well as all the modifications to the states. Both prediction methods are also possible in theory, although in the literature only ```Predictive``` tasks have been explored.
 
-### Contributing
-Contributions are very welcomed! Some interesting variation of RC models are posted in the issues, but everyone is free to just post relevant papers that could fit the scope of the library. Help with the documentation, providing new examples or application cases is also really important and appreciated. Everything that can make the package a little better is a great contribution, no matter how small. The API section of the documentation provides a more in depth look into how things work and are connected, so that is a good place to start exploring more the library. For every doubt that cannot be expressed in issues please feel free to contact any of the lead developers on Slack or by email.
+## Contributing
+
+  - Please refer to the
+    [SciML ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://github.com/SciML/ColPrac/blob/master/README.md)
+    for guidance on PRs, issues, and other matters relating to contributing to SciML.
+
+  - See the [SciML Style Guide](https://github.com/SciML/SciMLStyle) for common coding practices and other style decisions.
+  - There are a few community forums:
+    
+      + The #diffeq-bridged and #sciml-bridged channels in the
+        [Julia Slack](https://julialang.org/slack/)
+      + The #diffeq-bridged and #sciml-bridged channels in the
+        [Julia Zulip](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
+      + On the [Julia Discourse forums](https://discourse.julialang.org)
+      + See also [SciML Community page](https://sciml.ai/community/)
+
 
 ## Citing
 
@@ -129,26 +146,19 @@ Pkg.status(;mode = PKGMODE_MANIFEST) # hide
 ```@raw html
 </details>
 ```
-```@raw html
-You can also download the 
-<a href="
-```
 ```@eval
 using TOML
-version = TOML.parse(read("../../Project.toml",String))["version"]
-name = TOML.parse(read("../../Project.toml",String))["name"]
-link = "https://github.com/SciML/"*name*".jl/tree/gh-pages/v"*version*"/assets/Manifest.toml"
-```
-```@raw html
-">manifest</a> file and the
-<a href="
-```
-```@eval
-using TOML
-version = TOML.parse(read("../../Project.toml",String))["version"]
-name = TOML.parse(read("../../Project.toml",String))["name"]
-link = "https://github.com/SciML/"*name*".jl/tree/gh-pages/v"*version*"/assets/Project.toml"
-```
-```@raw html
-">project</a> file.
+using Markdown
+version = TOML.parse(read("../../Project.toml", String))["version"]
+name = TOML.parse(read("../../Project.toml", String))["name"]
+link_manifest = "https://github.com/SciML/" * name * ".jl/tree/gh-pages/v" * version *
+                "/assets/Manifest.toml"
+link_project = "https://github.com/SciML/" * name * ".jl/tree/gh-pages/v" * version *
+               "/assets/Project.toml"
+Markdown.parse("""You can also download the
+[manifest]($link_manifest)
+file and the
+[project]($link_project)
+file.
+""")
 ```

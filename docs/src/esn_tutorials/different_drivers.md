@@ -136,7 +136,7 @@ The minimal GRU variation merges two gates into one:
 This variation can be obtained by setting `variation=Minimal()`. The `inner_layer`, `reservoir` and `bias` kwargs this time are **not** vectors, but must be defined like, for example `inner_layer = DenseLayer()` or `reservoir = SparseDenseReservoir()`.
 
 ### Examples
-To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/l). 
+To showcase the use of the `GRU()` method this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/). 
 
 The data used for this example is the Santa Fe laser dataset [^7] retrieved from [here](https://web.archive.org/web/20160427182805/http://www-psych.stanford.edu/~andreas/Time-Series/SantaFe.html). The data is split to account for a next step prediction.
 ```@example gru
