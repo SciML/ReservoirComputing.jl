@@ -8,12 +8,12 @@ end
     WeightedInput(scaling)
     WeightedInput(;scaling=0.1)
 
-Returns a weighted layer initializer object, that will produce a weighted input matrix with 
-a with random non-zero elements drawn from [-```scaling```, ```scaling```], as described
+Returns a weighted layer initializer object, that will produce a weighted input matrix with
+random non-zero elements drawn from [-```scaling```, ```scaling```], as described
 in [1]. The ```scaling``` factor can be given as arg or kwarg.
 
 [1] Lu, Zhixin, et al. "_Reservoir observers: Model-free inference of unmeasured variables
-in chaotic systems._" 
+in chaotic systems._"
 Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function WeightedLayer(; scaling = 0.1)
@@ -46,7 +46,7 @@ end
     DenseLayer(;scaling=0.1)
 
 Returns a fully connected layer initializer object, that will produce a weighted input
-matrix with a with random non-zero elements drawn from [-```scaling```, ```scaling```]. 
+matrix with random non-zero elements drawn from [-```scaling```, ```scaling```].
 The ```scaling``` factor can be given as arg or kwarg. This is the default choice in the
 ```ESN``` construction.
 """
@@ -61,7 +61,7 @@ end
 """
     create_layer(input_layer::AbstractLayer, res_size, in_size)
 
-Returns a ```res_size``` times ```in_size``` matrix layer, built accordingly to the
+Returns a ```res_size``` times ```in_size``` matrix layer, built according to the
 ```input_layer``` constructor.
 """
 function create_layer(input_layer::DenseLayer,
@@ -78,8 +78,8 @@ end
     SparseLayer(scaling; sparsity=0.1)
     SparseLayer(;scaling=0.1, sparsity=0.1)
 
-Returns a sparsely connected layer initializer object, that will produce a random sparse 
-input matrix with random non-zero elements drawn from [-```scaling```, ```scaling```] and 
+Returns a sparsely connected layer initializer object, that will produce a random sparse
+input matrix with random non-zero elements drawn from [-```scaling```, ```scaling```] and
 given sparsity. The ```scaling``` and ```sparsity``` factors can be given as args or kwargs.
 """
 struct SparseLayer{T} <: AbstractLayer
@@ -118,7 +118,7 @@ end
     BernoulliSample(;p=0.5)
 
 Returns a Bernoulli sign constructor for the ```MinimumLayer``` call. The ```p``` factor
-determines the probability of the result as in the Distributions call. The value can be
+determines the probability of the result, as in the Distributions call. The value can be
 passed as an arg or kwarg. This sign weight determination for input layers is introduced
 in [1].
 
@@ -138,8 +138,8 @@ end
     IrrationalSample(irrational, start)
     IrrationalSample(;irrational=pi, start=1)
 
-Returns an irrational sign contructor for the '''MinimumLayer''' call. The values can be
-passed as args or kwargs. The sign of the weight are decided from the decimal expansion of
+Returns an irrational sign constructor for the ```MinimumLayer``` call. The values can be
+passed as args or kwargs. The sign of the weight is decided from the decimal expansion of
 the given ```irrational```. The first ```start``` decimal digits are thresholded at 4.5,
 then the n-th input sign will be + and - respectively.
 

@@ -1,5 +1,5 @@
 # Using Different Layers
-A great deal of efforts in the ESNs field are devoted to finding an ideal construction for the reservoir matrices. With a simple interface using ReservoirComputing.jl is possible to leverage the currently implemented matrix constructions methods for both the reservoir and the input layer. In this page it is showcased how it is possible to change both of these layers.
+A great deal of effort in the ESNs field is devoted to finding the ideal construction for the reservoir matrices. With a simple interface using ReservoirComputing.jl it is possible to leverage the currently implemented matrix construction methods for both the reservoir and the input layer. On this page, it is showcased how it is possible to change both of these layers.
 
 The `input_init` keyword argument provided with the `ESN` constructor allows for changing the input layer. The layers provided in ReservoirComputing.jl are the following:
 - ```WeightedLayer(scaling)```
@@ -7,7 +7,7 @@ The `input_init` keyword argument provided with the `ESN` constructor allows for
 - ```SparseLayer(scaling, sparsity)```
 - ```MinimumLayer(weight, sampling)```
 - ```InformedLayer(model_in_size; scaling=0.1, gamma=0.5)```
-In addition the user can define a custom layer following this workflow:
+In addition, the user can define a custom layer following this workflow:
 ```julia
 #creation of the new struct for the layer
 struct MyNewLayer <: AbstractLayer
@@ -39,10 +39,10 @@ function create_reservoir(reservoir::AbstractReservoir, res_size)
 end
 ```
 
-## Example of minimally complex ESN
-Using [^1] and [^2] as references this section will provide an example on how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl). This example was run on Julia v1.7.2.
+## Example of a minimally complex ESN
+Using [^1] and [^2] as references, this section will provide an example of how to change both the input layer and the reservoir for ESNs. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_layers/layers.jl). This example was run on Julia v1.7.2.
 
-The task for this example will be the one step ahead prediction of the Henon map. To obtain the data one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
+The task for this example will be the one step ahead prediction of the Henon map. To obtain the data, one can leverage the package [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystems.jl/dev/). The data is scaled to be between -1 and 1.
 ```@example mesn
 using PredefinedDynamicalSystems
 train_len = 3000
@@ -79,7 +79,7 @@ for i=1:length(reservoirs)
     println(msd(testing_target, output))
 end
 ```
-As it is possible to see, changing layers in ESN models is straightforward. Be sure to check the API documentation for a full list of reservoir and layers.
+As it is possible to see, changing layers in ESN models is straightforward. Be sure to check the API documentation for a full list of reservoirs and layers.
 
 
 ## Bibliography

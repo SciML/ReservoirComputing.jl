@@ -31,7 +31,7 @@ end
 """
     Hybrid(prior_model, u0, tspan, datasize)
 
-Given the model parameters returns an ```Hybrid``` variation of the ESN. This entails
+Given the model parameters, returns an ```Hybrid``` variation of the ESN. This entails
 a different training and prediction. Construction based on [1].
 
 [1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine
@@ -62,9 +62,9 @@ end
 
 Constructor for the Echo State Network model. It requires the reservoir size as the input
 and the data for the training. It returns a struct ready to be trained with the states
-already harvested. 
+already harvested.
 
-After the training this struct can be used for the prediction following the second
+After the training, this struct can be used for the prediction following the second
 function call. This will take as input a prediction type and the output layer from the
 training. The ```initial_conditions``` and ```last_state``` parameters can be left as
 they are, unless there is a specific reason to change them. All the components are
@@ -190,7 +190,7 @@ end
     train(esn::AbstractEchoStateNetwork, target_data, training_method=StandardRidge(0.0))
 
 Training of the built ESN over the ```target_data```. The default training method is
-RidgeRegression. The output is an ```OutputLayer``` object to be fed at the esn call
+RidgeRegression. The output is an ```OutputLayer``` object to be fed to the esn call
 for the prediction.
 """
 function train(esn::AbstractEchoStateNetwork,

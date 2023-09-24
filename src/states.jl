@@ -41,7 +41,7 @@ end
     PaddedStates(padding)
     PaddedStates(;padding=1.0)
 
-The states are padded with a chosen value. Usually this value is set to one. The padding is obtained through a 
+The states are padded with a chosen value. Usually, this value is set to one. The padding is obtained through a
 vertical concatenation of the padding value and the states.
 """
 function PaddedStates(; padding = 1.0)
@@ -52,9 +52,9 @@ end
     PaddedExtendedStates(padding)
     PaddedExtendedStates(;padding=1.0)
 
-The states are extended with the training data or predicted data and subsequently padded with a chosen value. 
-Usually the padding value is set to one. The padding and the extension are obtained through a vertical concatenation 
-of the padding value, the data and the states.
+The states are extended with the training data or predicted data and subsequently padded with a chosen value.
+Usually, the padding value is set to one. The padding and the extension are obtained through a vertical concatenation
+of the padding value, the data, and the states.
 """
 function PaddedExtendedStates(; padding = 1.0)
     return PaddedExtendedStates(padding)

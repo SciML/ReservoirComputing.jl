@@ -1,8 +1,8 @@
 # Hybrid Echo State Networks
-Following the idea of giving physical information to machine learning models the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example it is explained how to create and leverage such models in ReservoirComputing.jl. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/hybrid/hybrid.jl). This example was run on Julia v1.7.2.
+Following the idea of giving physical information to machine learning models, the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example, it is explained how to create and leverage such models in ReservoirComputing.jl. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/hybrid/hybrid.jl). This example was run on Julia v1.7.2.
 
 ## Generating the data
-For this example we are going to forecast the Lorenz system. As usual the data is generated leveraging `DifferentialEquations.jl`:
+For this example, we are going to forecast the Lorenz system. As usual, the data is generated leveraging `DifferentialEquations.jl`:
 ```@example hybrid
 using DifferentialEquations
 
@@ -33,7 +33,7 @@ tspan_train = (tspan[1], ode_sol.t[train_len])
 ```
 
 ## Building the Hybrid Echo State Network
-In order to feed the data to the ESN it is necessary to create a suitable function.
+To feed the data to the ESN, it is necessary to create a suitable function.
 ```@example hybrid
 function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
     prob = ODEProblem(lorenz, u0, tspan) 
@@ -42,7 +42,7 @@ function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
 end
 ```
 
-Given initial condition, time span and time steps this function returns the data for the chosen model. Now, using the `Hybrid` method it is possible to input all this information to the model
+Given the initial condition, time span, and time steps, this function returns the data for the chosen model. Now, using the `Hybrid` method, it is possible to input all this information to the model.
 ```@example hybrid
 using ReservoirComputing, Random
 Random.seed!(42)
