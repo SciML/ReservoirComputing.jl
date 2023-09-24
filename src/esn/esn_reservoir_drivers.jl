@@ -127,13 +127,13 @@ end
 
 """
     MRNN(activation_function, leaky_coefficient, scaling_factor)
-    MRNN(;activation_function=[tanh, sigmoid], leaky_coefficient=1.0, 
+    MRNN(;activation_function=[tanh, sigmoid], leaky_coefficient=1.0,
         scaling_factor=fill(leaky_coefficient, length(activation_function)))
 
-Returns a Multiple RNN initializer, where multiple function are combined in a linear
+Returns a Multiple RNN initializer, where multiple functions are combined in a linear
 combination with chosen parameters ```scaling_factor```. The ```activation_function```
-and ```scaling_factor``` arguments must vectors of the same size. Multiple combinations
-are possible, the implementation is based upon a double activation function idea,
+and ```scaling_factor``` arguments must be vectors of the same size. Multiple combinations
+are possible. The implementation is based upon the double activation function idea,
 found in [1].
 
 [1] Lun, Shu-Xian, et al. "_A novel model of leaky integrator echo state network for
@@ -195,7 +195,7 @@ end
 Returns a standard Gated Recurrent Unit ESN initializer, as described in [1].
 
 [1] Cho, Kyunghyun, et al. “_Learning phrase representations using RNN encoder-decoder
-for statistical machine translation._” 
+for statistical machine translation._”
 arXiv preprint arXiv:1406.1078 (2014).
 """
 struct FullyGated <: AbstractGRUVariant end
@@ -205,7 +205,7 @@ struct FullyGated <: AbstractGRUVariant end
 
 Returns a minimal GRU ESN initializer as described in [1].
 
-[1] Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._" 
+[1] Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._"
 International Journal of Automation and Computing 13.3 (2016): 226-234.
 """
 struct Minimal <: AbstractGRUVariant end

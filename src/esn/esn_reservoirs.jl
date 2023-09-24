@@ -30,8 +30,8 @@ end
     create_reservoir(reservoir::AbstractReservoir, res_size)
     create_reservoir(reservoir, args...)
 
-Given an ```AbstractReservoir` constructor and the reservoir size it returns the
-corresponding matrix. Alternatively it accepts a given matrix.
+Given an ```AbstractReservoir` constructor and the reservoir size, it returns the
+corresponding matrix. Alternatively, it accepts a given matrix.
 """
 function create_reservoir(reservoir::RandSparseReservoir,
                           res_size;
@@ -43,7 +43,7 @@ function create_reservoir(reservoir::RandSparseReservoir,
     reservoir_matrix .*= reservoir.radius / rho_w
     #TODO: change to explicit if
     Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix) ?
-    error("Sparsity too low for size of the matrix. 
+    error("Sparsity too low for size of the matrix.
           Increase res_size or increase sparsity") : nothing
     return Adapt.adapt(matrix_type, reservoir_matrix)
 end
@@ -85,7 +85,7 @@ end
     PseudoSVDReservoir(max_value, sparsity; sorted=true, reverse_sort=false)
 
 Returns an initializer to build a sparse reservoir matrix, with given ```sparsity```
-created using SVD as described in [1]. 
+created using SVD as described in [1].
 
 [1] Yang, Cuili, et al. "_Design of polynomial echo state networks for time
 series prediction._" Neurocomputing 290 (2018): 148-160.
@@ -164,8 +164,8 @@ end
     DelayLineReservoir(res_size, weight)
     DelayLineReservoir(res_size; weight=0.1)
 
-Returns a Delay Line Reservoir matrix constructor to obtain a deterministi reservoir as
-described in [1]. The ```weight``` can be passed as arg or kwarg and it determines the
+Returns a Delay Line Reservoir matrix constructor to obtain a deterministic reservoir as
+described in [1]. The ```weight``` can be passed as arg or kwarg, and it determines the
 absolute value of all the connections in the reservoir.
 
 [1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
@@ -234,8 +234,8 @@ end
     SimpleCycleReservoir(res_size, weight)
     SimpleCycleReservoir(res_size; weight=0.1)
 
-Returns a Simple Cycle Reservoir Reservoir constructor to biuld a reservoir matrix as
-described in [1]. The ```weight``` can be passed as arg or kwarg and it determines the
+Returns a Simple Cycle Reservoir constructor to build a reservoir matrix as
+described in [1]. The ```weight``` can be passed as arg or kwarg, and it determines the
 absolute value of all the connections in the reservoir.
 
 [1] Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
@@ -272,9 +272,9 @@ end
     CycleJumpsReservoir(res_size, cycle_weight, jump_weight, jump_size)
 
 Return a Cycle Reservoir with Jumps constructor to create a reservoir matrix as described
-in [1]. The ```weight``` and ```jump_weight``` can be passed as args or kwargs and they
+in [1]. The ```weight``` and ```jump_weight``` can be passed as args or kwargs, and they
 determine the absolute values of all the connections in the reservoir. The ```jump_size```
-can also be passed either as arg and kwarg and it detemines the jumps between
+can also be passed either as arg or kwarg, and it detemines the jumps between
 ```jump_weight```s.
 
 [1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
@@ -310,7 +310,7 @@ end
 """
     NullReservoir()
 
-Return a constructor for a matrix `zeros(res_size, res_size)`
+Return a constructor for a matrix `zeros(res_size, res_size)`.
 """
 struct NullReservoir <: AbstractReservoir end
 

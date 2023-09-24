@@ -51,7 +51,7 @@ end
 """
     Generative(prediction_len)
 
-This prediction methodology allows the models to produce an autonomous prediction, feeding the prediction into itself to generate the next step. 
+This prediction methodology allows the models to produce an autonomous prediction, feeding the prediction into itself to generate the next step.
 The only parameter needed is the number of steps for the prediction.
 """
 struct Generative{T} <: AbstractPrediction
@@ -66,7 +66,7 @@ end
 """
     Predictive(prediction_data)
 
-Given a set of labels as ```prediction_data``` this method of prediction will return the correspinding labels in a standard Machine Learning fashion.
+Given a set of labels as ```prediction_data```, this method of prediction will return the corresponding labels in a standard Machine Learning fashion.
 """
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)

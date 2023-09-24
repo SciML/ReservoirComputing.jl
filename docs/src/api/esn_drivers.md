@@ -4,7 +4,7 @@
     MRNN
     GRU
 ```
-The ```GRU``` driver also provides the user the choice of the possible variant:
+The ```GRU``` driver also provides the user with the choice of the possible variants:
 ```@docs
     FullyGated
     Minimal
