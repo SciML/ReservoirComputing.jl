@@ -274,7 +274,7 @@ end
 Return a Cycle Reservoir with Jumps constructor to create a reservoir matrix as described
 in [1]. The ```weight``` and ```jump_weight``` can be passed as args or kwargs, and they
 determine the absolute values of all the connections in the reservoir. The ```jump_size```
-can also be passed either as arg or kwarg, and it detemines the jumps between
+can also be passed either as arg or kwarg, and it determines the jumps between
 ```jump_weight```s.
 
 [1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs

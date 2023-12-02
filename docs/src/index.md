@@ -69,9 +69,6 @@ In addition, multiple ways of driving the reservoir states are also provided:
 - ```MRNN```: Multiple RNN driver, it consists of a linear combination of RNNs
 - ```GRU```: gated Recurrent Unit driver, with all the possible GRU variants available:
   - ```FullyGated```
-  - ```Variant1```
-  - ```Variant2```
-  - ```Variant3```
   - ```Minimal```
 
 A hybrid version of the model is also available through ```Hybrid```

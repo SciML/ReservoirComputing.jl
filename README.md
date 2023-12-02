@@ -62,7 +62,7 @@ output_layer = train(esn, target_data)
 output = esn(Generative(predict_len), output_layer)
 ```
 
-The data is returned as a matrix, `ouput` in the code above, that contains the predicted trajectories. The results can now be easily plotted (for the actual script used to obtain this plot plese refer to the documentation):
+The data is returned as a matrix, `output` in the code above, that contains the predicted trajectories. The results can now be easily plotted (for the actual script used to obtain this plot please refer to the documentation):
 ```julia
 using Plots
 plot(transpose(output),layout=(3,1), label="predicted")
