@@ -251,7 +251,7 @@ function reservoir_driver_params(gru::GRU, res_size, in_size)
     return gru_params
 end
 
-#dispatch on the differenct gru variations
+#dispatch on the different gru variations
 function create_gru_layers(gru, variant::FullyGated, res_size, in_size)
     Wz_in = create_layer(gru.inner_layer[1], res_size, in_size)
     Wz = create_reservoir(gru.reservoir[1], res_size)

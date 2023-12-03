@@ -2,6 +2,7 @@ using SafeTestsets
 using Test
 
 @testset "Common Utilities   " begin
+    @safetestset "Quality Assurance" begin include("qa.jl") end
     @safetestset "States" begin include("test_states.jl") end
 end
 
