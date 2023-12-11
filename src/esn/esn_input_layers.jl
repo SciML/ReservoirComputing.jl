@@ -8,13 +8,21 @@ end
     WeightedInput(scaling)
     WeightedInput(;scaling=0.1)
 
-Returns a weighted layer initializer object, that will produce a weighted input matrix with
-random non-zero elements drawn from [-```scaling```, ```scaling```], as described
-in [1]. The ```scaling``` factor can be given as arg or kwarg.
+Creates a `WeightedInput` layer initializer for Echo State Networks.
+This initializer generates a weighted input matrix with random non-zero
+elements distributed uniformly within the range [-`scaling`, `scaling`],
+following the approach in [^Lu].
 
-[1] Lu, Zhixin, et al. "_Reservoir observers: Model-free inference of unmeasured variables
-in chaotic systems._"
-Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
+# Parameters
+- `scaling`: The scaling factor for the weight distribution (default: 0.1).
+
+# Returns
+- A `WeightedInput` instance to be used for initializing the input layer of an ESN.
+
+Reference:
+[^Lu]: Lu, Zhixin, et al.
+    "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems."
+    Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function WeightedLayer(; scaling = 0.1)
     return WeightedLayer(scaling)
@@ -45,10 +53,16 @@ end
     DenseLayer(scaling)
     DenseLayer(;scaling=0.1)
 
-Returns a fully connected layer initializer object, that will produce a weighted input
-matrix with random non-zero elements drawn from [-```scaling```, ```scaling```].
-The ```scaling``` factor can be given as arg or kwarg. This is the default choice in the
-```ESN``` construction.
+Creates a `DenseLayer` initializer for Echo State Networks, generating a fully connected input layer.
+The layer is initialized with random weights uniformly distributed within [-`scaling`, `scaling`].
+This scaling factor can be provided either as an argument or a keyword argument.
+The `DenseLayer` is the default input layer in `ESN` construction.
+
+# Parameters
+- `scaling`: The scaling factor for weight distribution (default: 0.1).
+
+# Returns
+- A `DenseLayer` instance for initializing the ESN's input layer.
 """
 struct DenseLayer{T} <: AbstractLayer
     scaling::T
@@ -61,8 +75,15 @@ end
 """
     create_layer(input_layer::AbstractLayer, res_size, in_size)
 
-Returns a ```res_size``` times ```in_size``` matrix layer, built according to the
-```input_layer``` constructor.
+Generates a matrix layer of size `res_size` x `in_size`, constructed according to the specifications of the `input_layer`.
+
+# Parameters
+- `input_layer`: An instance of `AbstractLayer` determining the layer construction.
+- `res_size`: The number of rows (reservoir size) for the layer.
+- `in_size`: The number of columns (input size) for the layer.
+
+# Returns
+- A matrix representing the constructed layer.
 """
 function create_layer(input_layer::DenseLayer,
                       res_size,
@@ -78,9 +99,16 @@ end
     SparseLayer(scaling; sparsity=0.1)
     SparseLayer(;scaling=0.1, sparsity=0.1)
 
-Returns a sparsely connected layer initializer object, that will produce a random sparse
-input matrix with random non-zero elements drawn from [-```scaling```, ```scaling```] and
-given sparsity. The ```scaling``` and ```sparsity``` factors can be given as args or kwargs.
+Creates a `SparseLayer` initializer for Echo State Networks, generating a sparse input layer.
+The layer is initialized with weights distributed within [-`scaling`, `scaling`]
+and a specified `sparsity` level. Both `scaling` and `sparsity` can be set as arguments or keyword arguments.
+
+# Parameters
+- `scaling`: Scaling factor for weight distribution (default: 0.1).
+- `sparsity`: Sparsity level of the layer (default: 0.1).
+
+# Returns
+- A `SparseLayer` instance for initializing ESN's input layer with sparse connections.
 """
 struct SparseLayer{T} <: AbstractLayer
     scaling::T
@@ -117,13 +145,21 @@ end
     BernoulliSample(p)
     BernoulliSample(;p=0.5)
 
-Returns a Bernoulli sign constructor for the ```MinimumLayer``` call. The ```p``` factor
-determines the probability of the result, as in the Distributions call. The value can be
-passed as an arg or kwarg. This sign weight determination for input layers is introduced
-in [1].
+Creates a `BernoulliSample` constructor for the `MinimumLayer`.
+It uses a Bernoulli distribution to determine the sign of weights in the input layer.
+The parameter `p` sets the probability of a weight being positive, as per the `Distributions` package.
+This method of sign weight determination for input layers is based on the approach in [^Rodan].
 
-[1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+# Parameters
+- `p`: Probability of a positive weight (default: 0.5).
+
+# Returns
+- A `BernoulliSample` instance for generating sign weights in `MinimumLayer`.
+
+Reference:
+[^Rodan]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network." 
+    IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
 """
 function BernoulliSample(; p = 0.5)
     return BernoulliSample(p)
@@ -138,13 +174,22 @@ end
     IrrationalSample(irrational, start)
     IrrationalSample(;irrational=pi, start=1)
 
-Returns an irrational sign constructor for the ```MinimumLayer``` call. The values can be
-passed as args or kwargs. The sign of the weight is decided from the decimal expansion of
-the given ```irrational```. The first ```start``` decimal digits are thresholded at 4.5,
-then the n-th input sign will be + and - respectively.
+Creates an `IrrationalSample` constructor for the `MinimumLayer`.
+It determines the sign of weights in the input layer based on the decimal expansion of an `irrational` number.
+The `start` parameter sets the starting point in the decimal sequence.
+The signs are assigned based on the thresholding of each decimal digit against 4.5, as described in [^Rodan].
 
-[1] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
-with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
+# Parameters
+- `irrational`: An irrational number for weight sign determination (default: π).
+- `start`: Starting index in the decimal expansion (default: 1).
+
+# Returns
+- An `IrrationalSample` instance for generating sign weights in `MinimumLayer`.
+
+Reference:
+[^Rodan]: Rodan, Ali, and Peter Tiňo.
+    "Simple deterministically constructed cycle reservoirs with regular jumps."
+    Neural Computation 24.7 (2012): 1822-1852.
 """
 function IrrationalSample(; irrational = pi, start = 1)
     return IrrationalSample(irrational, start)
@@ -160,15 +205,25 @@ end
     MinimumLayer(weight; sampling=BernoulliSample(0.5))
     MinimumLayer(;weight=0.1, sampling=BernoulliSample(0.5))
 
-Returns a fully connected layer initializer object. The matrix constructed with this
-initializer presents the same absolute weight value, decided by the ```weight``` factor.
-The sign of each entry is decided by the ```sampling``` struct. Construction detailed
-in [1] and [2].
+Creates a `MinimumLayer` initializer for Echo State Networks, generating a fully connected input layer.
+This layer has a uniform absolute weight value (`weight`) with the sign of each
+weight determined by the `sampling` method. This approach, as detailed in [^Rodan1] and [^Rodan2],
+allows for controlled weight distribution in the layer.
 
-[1] Rodan, Ali, and Peter Tino. "_Minimum complexity echo state network._"
-IEEE transactions on neural networks 22.1 (2010): 131-144.
-[2] Rodan, Ali, and Peter Tiňo. "_Simple deterministically constructed cycle reservoirs
-with regular jumps._" Neural computation 24.7 (2012): 1822-1852.
+# Parameters
+- `weight`: Absolute value of weights in the layer.
+- `sampling`: Method for determining the sign of weights (default: `BernoulliSample(0.5)`).
+
+# Returns
+- A `MinimumLayer` instance for initializing the ESN's input layer.
+
+References:
+[^Rodan1]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network."
+    IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
+[^Rodan2]: Rodan, Ali, and Peter Tiňo.
+    "Simple deterministically constructed cycle reservoirs with regular jumps."
+    Neural Computation 24.7 (2012): 1822-1852.
 """
 function MinimumLayer(weight; sampling = BernoulliSample(0.5))
     return MinimumLayer(weight, sampling)
@@ -234,13 +289,26 @@ end
 """
     InformedLayer(model_in_size; scaling=0.1, gamma=0.5)
 
-Returns a weighted input layer matrix, with random non-zero elements drawn from
-[-```scaling```, ```scaling```], where some γ of reservoir nodes are connected exclusively
-to the raw inputs, and the rest to the outputs of the prior knowledge model,
-as described in [1].
+Creates an `InformedLayer` initializer for Echo State Networks (ESNs) that generates
+a weighted input layer matrix. The matrix contains random non-zero elements drawn from
+the range [-```scaling```, ```scaling```]. This initializer ensures that a fraction (`gamma`)
+of reservoir nodes are exclusively connected to the raw inputs, while the rest are
+connected to the outputs of a prior knowledge model, as described in [^Pathak].
 
-[1] Jaideep Pathak et al. "_Hybrid Forecasting of Chaotic Processes: Using Machine Learning
-in Conjunction with a Knowledge-Based Model_" (2018)
+# Arguments
+- `model_in_size`: The size of the prior knowledge model's output,
+    which determines the number of columns in the input layer matrix.
+
+# Keyword Arguments
+- `scaling`: The absolute value of the weights (default: 0.1).
+- `gamma`: The fraction of reservoir nodes connected exclusively to raw inputs (default: 0.5).
+
+# Returns
+- An `InformedLayer` instance for initializing the ESN's input layer matrix.
+
+Reference:
+[^Pathak]: Jaideep Pathak et al. 
+    "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function InformedLayer(model_in_size; scaling = 0.1, gamma = 0.5)
     return InformedLayer(scaling, gamma, model_in_size)
@@ -286,9 +354,12 @@ function create_layer(input_layer::InformedLayer,
 end
 
 """
-    NullLayer(model_in_size; scaling=0.1, gamma=0.5)
+    NullLayer()
 
-Returns a vector of zeros.
+Creates a `NullLayer` initializer for Echo State Networks (ESNs) that generates a vector of zeros.
+
+# Returns
+- A `NullLayer` instance for initializing the ESN's input layer matrix.
 """
 struct NullLayer <: AbstractLayer end
 

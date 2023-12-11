@@ -16,16 +16,21 @@ end
 """
     StandardStates()
 
-No modification of the states takes place, default option.
+When this struct is employed, the states of the reservoir are not modified. It represents the default behavior 
+in scenarios where no specific state modification is required. This approach is ideal for applications 
+where the inherent dynamics of the reservoir are sufficient, and no external manipulation of the states 
+is necessary. It maintains the original state representation, ensuring that the reservoir's natural properties 
+are preserved and utilized in computations.
 """
 struct StandardStates <: AbstractStates end
 
 """
     ExtendedStates()
 
-The states are extended with the input data, for the training section, and the prediction
-data, during the prediction section. This is obtained with a vertical concatenation of the
-data and the states.
+The `ExtendedStates` struct is used to extend the reservoir states by 
+vertically concatenating the input data (during training) and the prediction data (during the prediction phase). 
+This method enriches the state representation by integrating external data, enhancing the model's capability 
+to capture and utilize complex patterns in both training and prediction stages.
 """
 struct ExtendedStates <: AbstractStates end
 
@@ -41,8 +46,12 @@ end
     PaddedStates(padding)
     PaddedStates(;padding=1.0)
 
-The states are padded with a chosen value. Usually, this value is set to one. The padding is obtained through a
-vertical concatenation of the padding value and the states.
+Creates an instance of the `PaddedStates` struct with specified padding value.
+This padding is typically set to 1.0 by default but can be customized.
+The states of the reservoir are padded by vertically concatenating this padding value,
+enhancing the dimensionality and potentially improving the performance of the reservoir computing model.
+This function is particularly useful in scenarios where adding a constant baseline to the states is necessary
+for the desired computational task.
 """
 function PaddedStates(; padding = 1.0)
     return PaddedStates(padding)
@@ -52,9 +61,12 @@ end
     PaddedExtendedStates(padding)
     PaddedExtendedStates(;padding=1.0)
 
-The states are extended with the training data or predicted data and subsequently padded with a chosen value.
-Usually, the padding value is set to one. The padding and the extension are obtained through a vertical concatenation
-of the padding value, the data, and the states.
+Constructs a `PaddedExtendedStates` struct, which first extends the reservoir states with training or prediction data,
+then pads them with a specified value (defaulting to 1.0). This process is achieved through vertical concatenation,
+combining the padding value, data, and states.
+This function is particularly useful for enhancing the reservoir's state representation in more complex scenarios,
+where both extended contextual information and consistent baseline padding are crucial for the computational
+effectiveness of the reservoir computing model.
 """
 function PaddedExtendedStates(; padding = 1.0)
     return PaddedExtendedStates(padding)
@@ -85,7 +97,12 @@ end
 """
     NLADefault()
 
-Returns the array untouched, default option.
+`NLADefault` represents the default non-linear algorithm option. 
+When used, it leaves the input array unchanged.
+This option is suitable in cases where no non-linear transformation of the data is required,
+maintaining the original state of the input array for further processing.
+It's the go-to choice for preserving the raw data integrity within the computational pipeline
+of the reservoir computing model.
 """
 struct NLADefault <: NonLinearAlgorithm end
 
@@ -95,15 +112,21 @@ end
 
 """
     NLAT1()
-Applies the \$ \\text{T}_1 \$ transformation algorithm, as defined in [1] and [2].
 
-[1] Chattopadhyay, Ashesh, et al. "_Data-driven prediction of a multi-scale Lorenz 96
-chaotic system using a hierarchy of deep learning methods: Reservoir computing,
-ANN, and RNN-LSTM._" (2019).
+`NLAT1` implements the T₁ transformation algorithm introduced in [^Chattopadhyay] and [^Pathak].
+The T₁ algorithm selectively squares elements of the input array,
+specifically targeting every second row. This non-linear transformation enhances certain data characteristics,
+making it a valuable tool in analyzing chaotic systems and improving the performance of reservoir computing models.
+The T₁ transformation's uniqueness lies in its selective approach, allowing for a more nuanced manipulation of the input data.
 
-[2] Pathak, Jaideep, et al. "_Model-free prediction of large spatiotemporally chaotic
-systems from data: A reservoir computing approach._"
-Physical review letters 120.2 (2018): 024102.
+References:
+[^Chattopadhyay]: Chattopadhyay, Ashesh, et al. 
+    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
+    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
+[^Pathak]: Pathak, Jaideep, et al.
+    "Model-free prediction of large spatiotemporally chaotic systems from data:
+    A reservoir computing approach."
+    Physical review letters 120.2 (2018): 024102.
 """
 struct NLAT1 <: NonLinearAlgorithm end
 
@@ -120,11 +143,18 @@ end
 
 """
     NLAT2()
-Apply the \$ \\text{T}_2 \$ transformation algorithm, as defined in [1].
 
-[1] Chattopadhyay, Ashesh, et al. "_Data-driven prediction of a multi-scale Lorenz 96
-chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
-and RNN-LSTM._" (2019).
+`NLAT2` implements the T₂ transformation algorithm as defined in [^Chattopadhyay].
+This transformation algorithm modifies the reservoir states by multiplying each odd-indexed
+row (starting from the second row) with the product of its two preceding rows.
+This specific approach to non-linear transformation is useful for capturing and
+enhancing complex patterns in the data, particularly beneficial in the analysis of chaotic
+systems and in improving the dynamics within reservoir computing models.
+
+Reference:
+[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
+    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
+    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
 """
 struct NLAT2 <: NonLinearAlgorithm end
 
@@ -141,12 +171,31 @@ end
 
 """
     NLAT3()
-Apply the \$ \\text{T}_3 \$ transformation algorithm, as defined in [1].
 
-[1] Chattopadhyay, Ashesh, et al. "_Data-driven prediction of a multi-scale Lorenz 96
-chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN,
-and RNN-LSTM._" (2019).
+The `NLAT3` struct implements the T₃ transformation algorithm as detailed in [^Chattopadhyay].
+This algorithm modifies the reservoir's states by multiplying each odd-indexed row
+(beginning from the second row) with the product of the immediately preceding and the
+immediately following rows. T₃'s unique approach to data transformation makes it particularly
+useful for enhancing complex data patterns, thereby improving the modeling and analysis
+capabilities within reservoir computing, especially for chaotic and dynamic systems.
+
+Reference:
+[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
+    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods:
+    Reservoir computing, ANN, and RNN-LSTM." (2019).
 """
+struct NLAT3 <: NonLinearAlgorithm end
+
+function nla(::NLAT3, x_old)
+    x_new = copy(x_old)
+    for i in 2:(size(x_new, 1) - 1)
+        if mod(i, 2) != 0
+            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i + 1, :])
+        end
+    end
+
+    return x_new
+end
 struct NLAT3 <: NonLinearAlgorithm end
 
 function nla(::NLAT3, x_old)

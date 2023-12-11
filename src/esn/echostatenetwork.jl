@@ -16,7 +16,9 @@ end
 """
     Default()
 
-Sets the type of the ESN as the standard model. No parameters are needed.
+The `Default` struct specifies the use of the standard model in Echo State Networks (ESNs).
+It requires no parameters and is used when no specific variations or customizations of the ESN model are needed.
+This struct is ideal for straightforward applications where the default ESN settings are sufficient.
 """
 struct Default <: AbstractVariation end
 struct Hybrid{T, K, O, I, S, D} <: AbstractVariation
@@ -31,11 +33,24 @@ end
 """
     Hybrid(prior_model, u0, tspan, datasize)
 
-Given the model parameters, returns an ```Hybrid``` variation of the ESN. This entails
-a different training and prediction. Construction based on [1].
+Constructs a `Hybrid` variation of Echo State Networks (ESNs) integrating a knowledge-based model
+(`prior_model`) with ESNs for advanced training and prediction in chaotic systems. 
 
-[1] Jaideep Pathak et al. "Hybrid Forecasting of Chaotic Processes: Using Machine
-Learning in Conjunction with a Knowledge-Based Model" (2018)
+# Parameters
+- `prior_model`: A knowledge-based model function for integration with ESNs.
+- `u0`: Initial conditions for the model.
+- `tspan`: Time span as a tuple, indicating the duration for model operation.
+- `datasize`: The size of the data to be processed.
+
+# Returns
+- A `Hybrid` struct instance representing the combined ESN and knowledge-based model.
+
+This method is effective for chaotic processes as highlighted in [^Pathak].
+
+Reference:
+[^Pathak]: Jaideep Pathak et al.
+    "Hybrid Forecasting of Chaotic Processes:
+    Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function Hybrid(prior_model, u0, tspan, datasize)
     trange = collect(range(tspan[1], tspan[2], length = datasize))
@@ -47,28 +62,33 @@ function Hybrid(prior_model, u0, tspan, datasize)
 end
 
 """
-    ESN(train_data;
-        variation = Default(),
-        input_layer = DenseLayer(),
-        reservoir = RandSparseReservoir(),
-        bias = NullLayer(),
-        reservoir_driver = RNN(),
-        nla_type = NLADefault(),
-        states_type = StandardStates())
-    (esn::ESN)(prediction::AbstractPrediction,
-        output_layer::AbstractOutputLayer;
-        initial_conditions=output_layer.last_value,
-        last_state=esn.states[:, end])
+    ESN(train_data; kwargs...) -> ESN
 
-Constructor for the Echo State Network model. It requires the reservoir size as the input
-and the data for the training. It returns a struct ready to be trained with the states
-already harvested.
+Creates an Echo State Network (ESN) using specified parameters and training data, suitable for various machine learning tasks.
 
-After the training, this struct can be used for the prediction following the second
-function call. This will take as input a prediction type and the output layer from the
-training. The ```initial_conditions``` and ```last_state``` parameters can be left as
-they are, unless there is a specific reason to change them. All the components are
-detailed in the API documentation. More examples are given in the general documentation.
+# Parameters
+- `train_data`: Matrix of training data (columns as time steps, rows as features).
+- `variation`: Variation of ESN (default: `Default()`).
+- `input_layer`: Input layer of ESN (default: `DenseLayer()`).
+- `reservoir`: Reservoir of the ESN (default: `RandSparseReservoir(100)`).
+- `bias`: Bias vector for each time step (default: `NullLayer()`).
+- `reservoir_driver`: Mechanism for evolving reservoir states (default: `RNN()`).
+- `nla_type`: Non-linear activation type (default: `NLADefault()`).
+- `states_type`: Format for storing states (default: `StandardStates()`).
+- `washout`: Initial time steps to discard (default: `0`).
+- `matrix_type`: Type of matrices used internally (default: type of `train_data`).
+
+# Returns
+- An initialized ESN instance with specified parameters.
+
+# Examples
+```julia
+using ReservoirComputing
+
+train_data = rand(10, 100)  # 10 features, 100 time steps
+
+esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
+```
 """
 function ESN(train_data;
              variation = Default(),
@@ -187,11 +207,42 @@ end
 
 #training dispatch on esn
 """
-    train(esn::AbstractEchoStateNetwork, target_data, training_method=StandardRidge(0.0))
+    train(esn::AbstractEchoStateNetwork, target_data, training_method = StandardRidge(0.0))
 
-Training of the built ESN over the ```target_data```. The default training method is
-RidgeRegression. The output is an ```OutputLayer``` object to be fed to the esn call
-for the prediction.
+Trains an Echo State Network (ESN) using the provided target data and a specified training method.
+
+# Parameters
+- `esn::AbstractEchoStateNetwork`: The ESN instance to be trained.
+- `target_data`: Supervised training data for the ESN.
+- `training_method`: The method for training the ESN (default: `StandardRidge(0.0)`).
+
+# Returns
+- The trained ESN model. Its type and structure depend on `training_method` and the ESN's implementation.
+
+
+# Returns
+The trained ESN model. The exact type and structure of the return value depends on the
+`training_method` and the specific ESN implementation.
+
+```julia
+using ReservoirComputing
+
+# Initialize an ESN instance and target data
+esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
+target_data = rand(size(train_data, 2))
+
+# Train the ESN using the default training method
+trained_esn = train(esn, target_data)
+
+# Train the ESN using a custom training method
+trained_esn = train(esn, target_data, training_method=StandardRidge(1.0))
+```
+
+# Notes
+- When using a `Hybrid` variation, the function extends the state matrix with data from the
+    physical model included in the `variation`.
+- The training is handled by a lower-level `_train` function which takes the new state matrix
+    and performs the actual training using the specified `training_method`.
 """
 function train(esn::AbstractEchoStateNetwork,
                target_data,
