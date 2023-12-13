@@ -6,8 +6,8 @@ const g = 6
 const rule = 90
 
 reca = RECA(input, DCA(rule);
-            generations = g,
-            input_encoding = RandomMapping(6, 10))
+    generations = g,
+    input_encoding = RandomMapping(6, 10))
 
 output_layer = train(reca, output, StandardRidge(0.001))
 prediction = reca(Predictive(input), output_layer)

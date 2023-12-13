@@ -12,7 +12,7 @@ const reg = 10e-6
 
 Random.seed!(77)
 esn = ESN(input_data;
-          reservoir = RandSparseReservoir(res_size, 1.2, 0.1))
+    reservoir = RandSparseReservoir(res_size, 1.2, 0.1))
 
 training_methods = [
     StandardRidge(regularization_coeff = reg),

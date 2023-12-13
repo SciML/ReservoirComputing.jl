@@ -5,7 +5,9 @@ Reservoir Computing based on Elementary Cellular Automata (ECA) has been recentl
 To showcase how to use these models, this page illustrates the performance of ReCA in the 5 bit memory task [^4]. The script for the example and companion data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/tree/main/reca).
 
 ## 5 bit memory task
+
 The data can be read as follows:
+
 ```@example reca
 using DelimitedFiles
 
@@ -14,6 +16,7 @@ output = readdlm("./5bitoutput.txt", ',', Float32)
 ```
 
 To use a ReCA model, it is necessary to define the rule one intends to use. To do so, ReservoirComputing.jl leverages [CellularAutomata.jl](https://github.com/MartinuzziFrancesco/CellularAutomata.jl) that needs to be called as well to define the `RECA` struct:
+
 ```@example reca
 using ReservoirComputing, CellularAutomata
 
@@ -21,18 +24,21 @@ ca = DCA(90)
 ```
 
 To define the ReCA model, it suffices to call:
+
 ```@example reca
-reca = RECA(input, ca; 
+reca = RECA(input, ca;
     generations = 16,
     input_encoding = RandomMapping(16, 40))
 ```
 
-After this, the training can be performed with the chosen method. 
+After this, the training can be performed with the chosen method.
+
 ```@example reca
 output_layer = train(reca, output, StandardRidge(0.00001))
 ```
 
 The prediction in this case will be a `Predictive()` with the input data equal to the training data. In addition, to test the 5 bit memory task, a conversion from Float to Bool is necessary (at the moment, we are aware of a bug that doesn't allow boolean input data to the RECA models):
+
 ```@example reca
 prediction = reca(Predictive(input), output_layer)
 final_pred = convert(AbstractArray{Float32}, prediction .> 0.5)
@@ -41,9 +47,6 @@ final_pred == output
 ```
 
 [^1]: Yilmaz, Ozgur. "Reservoir computing using cellular automata." arXiv preprint arXiv:1410.0162 (2014).
-
 [^2]: Margem, Mrwan, and Ozgür Yilmaz. "An experimental study on cellular automata reservoir in pathological sequence learning tasks." (2017).
-
 [^3]: Nichele, Stefano, and Andreas Molund. "Deep reservoir computing using cellular automata." arXiv preprint arXiv:1703.02806 (2017).
-
 [^4]: Hochreiter, Sepp, and Jürgen Schmidhuber. "Long short-term memory." Neural computation 9.8 (1997): 1735-1780.

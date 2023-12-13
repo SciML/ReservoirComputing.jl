@@ -54,8 +54,8 @@ A matrix representing the reservoir, generated based on the properties of the sp
 The choice of reservoir initialization is crucial in Echo State Networks (ESNs) for achieving effective temporal modeling. Specific references for reservoir initialization methods may vary based on the type of reservoir used, but the practice of initializing reservoirs for ESNs is widely documented in the ESN literature.
 """
 function create_reservoir(reservoir::RandSparseReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     reservoir_matrix = Matrix(sprand(res_size, res_size, reservoir.sparsity))
     reservoir_matrix = 2.0 .* (reservoir_matrix .- 0.5)
     replace!(reservoir_matrix, -1.0 => 0.0)
@@ -93,10 +93,10 @@ struct PseudoSVDReservoir{T, C} <: AbstractReservoir
 end
 
 function PseudoSVDReservoir(res_size;
-                            max_value = 1.0,
-                            sparsity = 0.1,
-                            sorted = true,
-                            reverse_sort = false)
+        max_value = 1.0,
+        sparsity = 0.1,
+        sorted = true,
+        reverse_sort = false)
     return PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)
 end
 
@@ -122,22 +122,22 @@ This reservoir initialization method, based on a pseudo-SVD approach, is inspire
 [^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
 """
 function PseudoSVDReservoir(res_size, max_value, sparsity; sorted = true,
-                            reverse_sort = false)
+        reverse_sort = false)
     return PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)
 end
 
 function create_reservoir(reservoir::PseudoSVDReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     sorted = reservoir.sorted
     reverse_sort = reservoir.reverse_sort
     reservoir_matrix = create_diag(res_size, reservoir.max_value, sorted = sorted,
-                                   reverse_sort = reverse_sort)
+        reverse_sort = reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
 
     while tmp_sparsity <= reservoir.sparsity
         reservoir_matrix *= create_qmatrix(res_size, rand(1:res_size), rand(1:res_size),
-                                           rand() * 2 - 1)
+            rand() * 2 - 1)
         tmp_sparsity = get_sparsity(reservoir_matrix, res_size)
     end
 
@@ -214,8 +214,8 @@ function DelayLineReservoir(res_size; weight = 0.1)
 end
 
 function create_reservoir(reservoir::DelayLineReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
     for i in 1:(res_size - 1)
@@ -258,8 +258,8 @@ function DelayLineBackwardReservoir(res_size; weight = 0.1, fb_weight = 0.2)
 end
 
 function create_reservoir(reservoir::DelayLineBackwardReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
     for i in 1:(res_size - 1)
@@ -301,8 +301,8 @@ function SimpleCycleReservoir(res_size; weight = 0.1)
 end
 
 function create_reservoir(reservoir::SimpleCycleReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(Float64, res_size, res_size)
 
     for i in 1:(res_size - 1)
@@ -348,8 +348,8 @@ function CycleJumpsReservoir(res_size; cycle_weight = 0.1, jump_weight = 0.1, ju
 end
 
 function create_reservoir(reservoir::CycleJumpsReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     reservoir_matrix = zeros(res_size, res_size)
 
     for i in 1:(res_size - 1)
@@ -387,7 +387,7 @@ A `NullReservoir` object.
 struct NullReservoir <: AbstractReservoir end
 
 function create_reservoir(reservoir::NullReservoir,
-                          res_size;
-                          matrix_type = Matrix{Float64})
+        res_size;
+        matrix_type = Matrix{Float64})
     return Adapt.adapt(matrix_type, zeros(res_size, res_size))
 end

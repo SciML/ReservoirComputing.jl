@@ -91,15 +91,15 @@ esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
 ```
 """
 function ESN(train_data;
-             variation = Default(),
-             input_layer = DenseLayer(),
-             reservoir = RandSparseReservoir(100),
-             bias = NullLayer(),
-             reservoir_driver = RNN(),
-             nla_type = NLADefault(),
-             states_type = StandardStates(),
-             washout = 0,
-             matrix_type = typeof(train_data))
+        variation = Default(),
+        input_layer = DenseLayer(),
+        reservoir = RandSparseReservoir(100),
+        bias = NullLayer(),
+        reservoir_driver = RNN(),
+        nla_type = NLADefault(),
+        states_type = StandardStates(),
+        washout = 0,
+        matrix_type = typeof(train_data))
     if variation isa Hybrid
         train_data = vcat(train_data, variation.model_data[:, 1:(end - 1)])
     end
@@ -107,19 +107,19 @@ function ESN(train_data;
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
-                          train_data)
+            train_data)
     else
         in_size = size(train_data, 1)
     end
 
     input_matrix, reservoir_matrix, bias_vector, res_size = obtain_layers(in_size,
-                                                                          input_layer,
-                                                                          reservoir, bias;
-                                                                          matrix_type = matrix_type)
+        input_layer,
+        reservoir, bias;
+        matrix_type = matrix_type)
 
     inner_res_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_res_driver, train_data, washout, reservoir_matrix,
-                           input_matrix, bias_vector)
+        input_matrix, bias_vector)
     train_data = train_data[:, (washout + 1):end]
 
     ESN(sum(res_size), train_data, variation, nla_type, input_matrix,
@@ -129,13 +129,13 @@ end
 
 #shallow esn construction
 function obtain_layers(in_size,
-                       input_layer,
-                       reservoir,
-                       bias;
-                       matrix_type = Matrix{Float64})
+        input_layer,
+        reservoir,
+        bias;
+        matrix_type = Matrix{Float64})
     input_res_size = get_ressize(reservoir)
     input_matrix = create_layer(input_layer, input_res_size, in_size,
-                                matrix_type = matrix_type)
+        matrix_type = matrix_type)
     res_size = size(input_matrix, 1) #WeightedInput actually changes the res size
     reservoir_matrix = create_reservoir(reservoir, res_size, matrix_type = matrix_type)
     @assert size(reservoir_matrix, 1) == res_size
@@ -147,10 +147,10 @@ end
 #there is a bug going on with WeightedLayer in this construction.
 #it works for eny other though
 function obtain_layers(in_size,
-                       input_layer,
-                       reservoir::Vector,
-                       bias;
-                       matrix_type = Matrix{Float64})
+        input_layer,
+        reservoir::Vector,
+        bias;
+        matrix_type = Matrix{Float64})
     esn_depth = length(reservoir)
     input_res_sizes = [get_ressize(reservoir[i]) for i in 1:esn_depth]
     in_sizes = zeros(Int, esn_depth)
@@ -159,16 +159,16 @@ function obtain_layers(in_size,
 
     if input_layer isa Array
         input_matrix = [create_layer(input_layer[j], input_res_sizes[j], in_sizes[j],
-                                     matrix_type = matrix_type) for j in 1:esn_depth]
+            matrix_type = matrix_type) for j in 1:esn_depth]
     else
         _input_layer = fill(input_layer, esn_depth)
         input_matrix = [create_layer(_input_layer[k], input_res_sizes[k], in_sizes[k],
-                                     matrix_type = matrix_type) for k in 1:esn_depth]
+            matrix_type = matrix_type) for k in 1:esn_depth]
     end
 
     res_sizes = [get_ressize(input_matrix[j]) for j in 1:esn_depth]
     reservoir_matrix = [create_reservoir(reservoir[k], res_sizes[k],
-                                         matrix_type = matrix_type) for k in 1:esn_depth]
+        matrix_type = matrix_type) for k in 1:esn_depth]
 
     if bias isa Array
         bias_vector = [create_layer(bias[j], res_sizes[j], 1, matrix_type = matrix_type)
@@ -183,9 +183,9 @@ function obtain_layers(in_size,
 end
 
 function (esn::ESN)(prediction::AbstractPrediction,
-                    output_layer::AbstractOutputLayer;
-                    last_state = esn.states[:, [end]],
-                    kwargs...)
+        output_layer::AbstractOutputLayer;
+        last_state = esn.states[:, [end]],
+        kwargs...)
     variation = esn.variation
     pred_len = prediction.prediction_len
 
@@ -197,11 +197,11 @@ function (esn::ESN)(prediction::AbstractPrediction,
         u0 = variation.model_data[:, end]
         model_pred_data = model(u0, tspan_new, predict_tsteps)[:, 2:end]
         return obtain_esn_prediction(esn, prediction, last_state, output_layer,
-                                     model_pred_data;
-                                     kwargs...)
+            model_pred_data;
+            kwargs...)
     else
         return obtain_esn_prediction(esn, prediction, last_state, output_layer;
-                                     kwargs...)
+            kwargs...)
     end
 end
 
@@ -245,8 +245,8 @@ trained_esn = train(esn, target_data, training_method=StandardRidge(1.0))
     and performs the actual training using the specified `training_method`.
 """
 function train(esn::AbstractEchoStateNetwork,
-               target_data,
-               training_method = StandardRidge(0.0))
+        target_data,
+        training_method = StandardRidge(0.0))
     variation = esn.variation
 
     if esn.variation isa Hybrid

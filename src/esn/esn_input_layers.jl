@@ -29,9 +29,9 @@ function WeightedLayer(; scaling = 0.1)
 end
 
 function create_layer(input_layer::WeightedLayer,
-                      approx_res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        approx_res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
     res_size = Int(floor(approx_res_size / in_size) * in_size)
     layer_matrix = zeros(res_size, in_size)
@@ -39,7 +39,7 @@ function create_layer(input_layer::WeightedLayer,
 
     for i in 1:in_size
         layer_matrix[((i - 1) * q + 1):((i) * q), i] = rand(Uniform(-scaling, scaling), 1,
-                                                            q)
+            q)
     end
 
     return Adapt.adapt(matrix_type, layer_matrix)
@@ -86,9 +86,9 @@ Generates a matrix layer of size `res_size` x `in_size`, constructed according t
 - A matrix representing the constructed layer.
 """
 function create_layer(input_layer::DenseLayer,
-                      res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
     layer_matrix = rand(Uniform(-scaling, scaling), res_size, in_size)
     return Adapt.adapt(matrix_type, layer_matrix)
@@ -124,9 +124,9 @@ function SparseLayer(scaling_arg; scaling = scaling_arg, sparsity = 0.1)
 end
 
 function create_layer(input_layer::SparseLayer,
-                      res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     layer_matrix = Matrix(sprand(res_size, in_size, input_layer.sparsity))
     layer_matrix = 2.0 .* (layer_matrix .- 0.5)
     replace!(layer_matrix, -1.0 => 0.0)
@@ -234,9 +234,9 @@ function MinimumLayer(; weight = 0.1, sampling = BernoulliSample(0.5))
 end
 
 function create_layer(input_layer::MinimumLayer,
-                      res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     sampling = input_layer.sampling
     weight = input_layer.weight
     layer_matrix = create_minimum_input(sampling, res_size, in_size, weight)
@@ -315,9 +315,9 @@ function InformedLayer(model_in_size; scaling = 0.1, gamma = 0.5)
 end
 
 function create_layer(input_layer::InformedLayer,
-                      res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     scaling = input_layer.scaling
     state_size = in_size - input_layer.model_in_size
 
@@ -364,8 +364,8 @@ Creates a `NullLayer` initializer for Echo State Networks (ESNs) that generates 
 struct NullLayer <: AbstractLayer end
 
 function create_layer(input_layer::NullLayer,
-                      res_size,
-                      in_size;
-                      matrix_type = Matrix{Float64})
+        res_size,
+        in_size;
+        matrix_type = Matrix{Float64})
     return Adapt.adapt(matrix_type, zeros(res_size, in_size))
 end

@@ -38,12 +38,12 @@ padded_array = states_type(NLADefault(), test_array, extension)
 states_type = PaddedExtendedStates(padding = padding)
 padded_extended_array = states_type(NLADefault(), test_array, extension)
 @test padded_extended_array == reshape(vcat(padding, extension, test_array),
-              length(test_array) + length(extension) + 1, 1)
+    length(test_array) + length(extension) + 1, 1)
 
 states_type = PaddedExtendedStates(padding)
 padded_extended_array = states_type(NLADefault(), test_array, extension)
 @test padded_extended_array == reshape(vcat(padding, extension, test_array),
-              length(test_array) + length(extension) + 1, 1)
+    length(test_array) + length(extension) + 1, 1)
 
 states_type = ExtendedStates()
 extended_array = states_type(NLADefault(), test_array, extension)

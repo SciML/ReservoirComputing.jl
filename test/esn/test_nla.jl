@@ -15,8 +15,8 @@ nlas = [NLADefault(), NLAT1(), NLAT2(), NLAT3()]
 for n in nlas
     Random.seed!(77)
     esn = ESN(input_data;
-              reservoir = RandSparseReservoir(res_size, 1.2, 0.1),
-              nla_type = n)
+        reservoir = RandSparseReservoir(res_size, 1.2, 0.1),
+        nla_type = n)
     output_layer = train(esn, target_data, training_method)
     output = esn(Generative(predict_len), output_layer)
     @test maximum(abs.(test .- output)) ./ maximum(abs.(test)) < 0.1

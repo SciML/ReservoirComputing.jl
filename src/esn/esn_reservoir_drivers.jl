@@ -26,11 +26,11 @@ Create and return the trained Echo State Network (ESN) states according to the s
 This function is responsible for creating and returning the states of the ESN during training based on the provided training data and parameters.
 """
 function create_states(reservoir_driver::AbstractReservoirDriver,
-                       train_data,
-                       washout,
-                       reservoir_matrix,
-                       input_matrix,
-                       bias_vector)
+        train_data,
+        washout,
+        reservoir_matrix,
+        input_matrix,
+        bias_vector)
     train_len = size(train_data, 2) - washout
     res_size = size(reservoir_matrix, 1)
 
@@ -41,13 +41,13 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
     for i in 1:washout
         yv = @view train_data[:, i]
         _state = next_state!(_state, reservoir_driver, _state, yv, reservoir_matrix,
-                             input_matrix, bias_vector, tmp_array)
+            input_matrix, bias_vector, tmp_array)
     end
 
     for j in 1:train_len
         yv = @view train_data[:, washout + j]
         _state = next_state!(_state, reservoir_driver, _state, yv,
-                             reservoir_matrix, input_matrix, bias_vector, tmp_array)
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
         states[:, j] = _state
     end
 
@@ -55,11 +55,11 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
 end
 
 function create_states(reservoir_driver::AbstractReservoirDriver,
-                       train_data,
-                       washout,
-                       reservoir_matrix::Vector,
-                       input_matrix,
-                       bias_vector)
+        train_data,
+        washout,
+        reservoir_matrix::Vector,
+        input_matrix,
+        bias_vector)
     train_len = size(train_data, 2) - washout
     res_size = sum([size(reservoir_matrix[i], 1) for i in 1:length(reservoir_matrix)])
 
@@ -70,17 +70,17 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
     for i in 1:washout
         for j in 1:length(reservoir_matrix)
             _inter_state = next_state!(_inter_state, reservoir_driver, _inter_state,
-                                       train_data[:, i],
-                                       reservoir_matrix, input_matrix, bias_vector,
-                                       tmp_array)
+                train_data[:, i],
+                reservoir_matrix, input_matrix, bias_vector,
+                tmp_array)
         end
         _state = next_state!(_state, reservoir_driver, _state, train_data[:, i],
-                             reservoir_matrix, input_matrix, bias_vector, tmp_array)
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
     end
 
     for j in 1:train_len
         _state = next_state!(_state, reservoir_driver, _state, train_data[:, washout + j],
-                             reservoir_matrix, input_matrix, bias_vector, tmp_array)
+            reservoir_matrix, input_matrix, bias_vector, tmp_array)
         states[:, j] = _state
     end
 
@@ -180,10 +180,10 @@ This function creates an MRNN object with the specified activation functions, le
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
 function MRNN(
-              ;
-              activation_function = [tanh, sigmoid],
-              leaky_coefficient = 1.0,
-              scaling_factor = fill(leaky_coefficient, length(activation_function)))
+        ;
+        activation_function = [tanh, sigmoid],
+        leaky_coefficient = 1.0,
+        scaling_factor = fill(leaky_coefficient, length(activation_function)))
     @assert length(activation_function) == length(scaling_factor)
     return MRNN(activation_function, leaky_coefficient, scaling_factor)
 end
@@ -283,12 +283,12 @@ A GRUParams object containing the parameters needed for the GRU-based reservoir 
     arXiv preprint arXiv:1406.1078 (2014).
 """
 function GRU(
-             ;
-             activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
-             inner_layer = fill(DenseLayer(), 2),
-             reservoir = fill(RandSparseReservoir(0), 2),
-             bias = fill(DenseLayer(), 2),
-             variant = FullyGated())
+        ;
+        activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
+        inner_layer = fill(DenseLayer(), 2),
+        reservoir = fill(RandSparseReservoir(0), 2),
+        bias = fill(DenseLayer(), 2),
+        variant = FullyGated())
     return GRU(activation_function, inner_layer, reservoir, bias, variant)
 end
 

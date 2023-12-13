@@ -1,6 +1,7 @@
 # States Modifications
 
 ## Padding and Estension
+
 ```@docs
     StandardStates
     ExtendedStates
@@ -9,6 +10,7 @@
 ```
 
 ## Non Linear Transformations
+
 ```@docs
     NLADefault
     NLAT1
