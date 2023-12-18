@@ -82,14 +82,20 @@ function (::ExtendedStates)(nla_type, x, y)
     return nla(nla_type, x_tmp)
 end
 
+#check matrix/vector
 function (states_type::PaddedStates)(nla_type, x, y)
-    x_tmp = vcat(fill(states_type.padding, (1, size(x, 2))), x)
+    tt = typeof(first(x))
+    x_tmp = vcat(fill(tt(states_type.padding), (1, size(x, 2))), x)
+    #x_tmp = reduce(vcat, x_tmp)
     return nla(nla_type, x_tmp)
 end
 
+#check matrix/vector
 function (states_type::PaddedExtendedStates)(nla_type, x, y)
+    tt = typeof(first(x))
     x_tmp = vcat(y, x)
-    x_tmp = vcat(fill(states_type.padding, (1, size(x, 2))), x_tmp)
+    x_tmp = vcat(fill(tt(states_type.padding), (1, size(x, 2))), x_tmp)
+    #x_tmp = reduce(vcat, x_tmp)
     return nla(nla_type, x_tmp)
 end
 
@@ -184,18 +190,6 @@ Reference:
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods:
     Reservoir computing, ANN, and RNN-LSTM." (2019).
 """
-struct NLAT3 <: NonLinearAlgorithm end
-
-function nla(::NLAT3, x_old)
-    x_new = copy(x_old)
-    for i in 2:(size(x_new, 1) - 1)
-        if mod(i, 2) != 0
-            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i + 1, :])
-        end
-    end
-
-    return x_new
-end
 struct NLAT3 <: NonLinearAlgorithm end
 
 function nla(::NLAT3, x_old)

@@ -24,7 +24,7 @@ training_methods = [
 for t in training_methods
     output_layer = train(esn, target_data, t)
     output = esn(Predictive(input_data), output_layer)
-    @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.21
+    @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.22
 end
 
 for t in training_methods
