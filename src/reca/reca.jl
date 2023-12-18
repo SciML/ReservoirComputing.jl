@@ -25,11 +25,11 @@ arXiv preprint arXiv:1410.0162 (2014).
 automata._” arXiv preprint arXiv:1703.02806 (2017).
 """
 function RECA(train_data,
-              automata;
-              generations = 8,
-              input_encoding = RandomMapping(),
-              nla_type = NLADefault(),
-              states_type = StandardStates())
+        automata;
+        generations = 8,
+        input_encoding = RandomMapping(),
+        nla_type = NLADefault(),
+        states_type = StandardStates())
     in_size = size(train_data, 1)
     #res_size = obtain_res_size(input_encoding, generations)
     state_encoding = create_encoding(input_encoding, train_data, generations)
@@ -46,11 +46,11 @@ end
 
 #predict dispatch
 function (reca::RECA)(prediction,
-                      output_layer::AbstractOutputLayer,
-                      initial_conditions = output_layer.last_value,
-                      last_state = zeros(reca.input_encoding.ca_size))
+        output_layer::AbstractOutputLayer,
+        initial_conditions = output_layer.last_value,
+        last_state = zeros(reca.input_encoding.ca_size))
     return obtain_prediction(reca, prediction, last_state, output_layer;
-                             initial_conditions = initial_conditions)
+        initial_conditions = initial_conditions)
 end
 
 function next_state_prediction!(reca::RECA, x, out, i, args...)

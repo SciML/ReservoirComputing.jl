@@ -34,8 +34,8 @@ hybrid = Hybrid(prior_model_data_generator, u0, tspan_train, train_len)
 
 Random.seed!(77)
 esn = ESN(input_data,
-          reservoir = RandSparseReservoir(300),
-          variation = hybrid)
+    reservoir = RandSparseReservoir(300),
+    variation = hybrid)
 
 output_layer = train(esn, target_data, StandardRidge(0.3))
 

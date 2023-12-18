@@ -41,15 +41,15 @@ apart from the solver choice. MLJLinearModels.jl needs to be called in order
 to use these models.
 """
 function LinearModel(
-                     ; regression = LinearRegression,
-                     solver = Analytical(),
-                     regression_kwargs = (;))
+        ; regression = LinearRegression,
+        solver = Analytical(),
+        regression_kwargs = (;))
     return LinearModel(regression, solver, regression_kwargs)
 end
 
 function LinearModel(regression;
-                     solver = Analytical(),
-                     regression_kwargs = (;))
+        solver = Analytical(),
+        regression_kwargs = (;))
     return LinearModel(regression, solver, regression_kwargs)
 end
 
@@ -59,7 +59,7 @@ function _train(states, target_data, linear::LinearModel)
     for i in 1:size(target_data, 1)
         regressor = linear.regression(; fit_intercept = false, linear.regression_kwargs...)
         output_layer[i, :] = MLJLinearModels.fit(regressor, states',
-                                                 target_data[i, :], solver = linear.solver)
+            target_data[i, :], solver = linear.solver)
     end
 
     return OutputLayer(linear, output_layer, out_size, target_data[:, end])

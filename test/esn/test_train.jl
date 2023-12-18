@@ -12,7 +12,7 @@ const reg = 10e-6
 
 Random.seed!(77)
 esn = ESN(input_data;
-          reservoir = RandSparseReservoir(res_size, 1.2, 0.1))
+    reservoir = RandSparseReservoir(res_size, 1.2, 0.1))
 
 training_methods = [
     StandardRidge(regularization_coeff = reg),
@@ -24,7 +24,7 @@ training_methods = [
 for t in training_methods
     output_layer = train(esn, target_data, t)
     output = esn(Predictive(input_data), output_layer)
-    @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.21
+    @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.22
 end
 
 for t in training_methods

@@ -1,103 +1,53 @@
 # ReservoirComputing.jl
 
-ReservoirComputing.jl provides an efficient, modular, and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). Reservoir Computing (RC) is an umbrella term used to describe a family of models such as ESNs and Liquid State Machines (LSMs). The key concept is to expand the input data into a higher dimension and use regression to train the model; in some ways, Reservoir Computers can be considered similar to kernel methods. 
-
+ReservoirComputing.jl is a versatile and user-friendly Julia package designed for the implementation of advanced Reservoir Computing models, such as Echo State Networks (ESNs). Central to Reservoir Computing is the expansion of input data into a higher-dimensional space, leveraging regression techniques for effective model training. This approach bears resemblance to kernel methods, offering a unique perspective in machine learning. ReservoirComputing.jl offers a modular design, ensuring both ease of use for newcomers and flexibility for advanced users, establishing it as a key tool for innovative computing solutions.
 
 !!! info "Introductory material"
-    This library assumes some basic knowledge of Reservoir Computing. For a good introduction, we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in-depth review papers that should cover all the needed information. For the majority of the algorithms implemented in this library, we cited in the documentation the original work introducing them. If you ever have doubts about a method or a function, just type ```? function``` in the Julia REPL to read the relevant notes.
-
-    * Jaeger, Herbert: The “echo state” approach to analyzing and training recurrent neural networks-with an erratum note.
-    * Maass W, Natschläger T, Markram H: Real-time computing without stable states: a new framework for neural computation based on perturbations.
-    * Lukoševičius, Mantas: A practical guide to applying echo state networks." Neural networks: Tricks of the trade.
-    * Lukoševičius, Mantas, and Herbert Jaeger: Reservoir computing approaches to recurrent neural network training.
     
+    This library assumes some basic knowledge of Reservoir Computing. For a good introduction, we suggest the following papers: the first two are the seminal papers about ESN and LSM, the others are in-depth review papers that should cover all the needed information. For the majority of the algorithms implemented in this library we cited in the documentation the original work introducing them. If you ever are in doubt about a method or a function just type `? function` in the Julia REPL to read the relevant notes.
+    
+      - Jaeger, Herbert: The “echo state” approach to analyzing and training recurrent neural networks-with an erratum note.
+      - Maass W, Natschläger T, Markram H: Real-time computing without stable states: a new framework for neural computation based on perturbations.
+      - Lukoševičius, Mantas: A practical guide to applying echo state networks." Neural networks: Tricks of the trade.
+      - Lukoševičius, Mantas, and Herbert Jaeger: Reservoir computing approaches to recurrent neural network training.
+
 !!! info "Performance tip"
-    For faster computations on the CPU, it is suggested to add `using MKL` to the script. For clarity's sake, this library will not be indicated under every example in the documentation.
+    
+    For faster computations on the CPU it is suggested to add `using MKL` to the script. For clarity's sake this library will not be indicated under every example in the documentation.
+
 ## Installation
 
-To install ReservoirComputing.jl, use the Julia package manager:
+To install ReservoirComputing.jl, ensure you have Julia version 1.6 or higher. Follow these steps:
+
+    1. Open the Julia command line.
+    2. Enter the Pkg REPL mode by pressing ].
+    3. Type add ReservoirComputing and press Enter.
+
+For a more customized installation or to contribute to the package, consider cloning the repository:
 
 ```julia
 using Pkg
-Pkg.add("ReservoirComputing")
+Pkg.clone("https://github.com/SciML/ReservoirComputing.jl.git")
 ```
-The support for this library is for Julia v1.6 or greater.
+
+or `dev` the package.
 
 ## Features Overview
 
-This library provides multiple ways of training the chosen RC model. More specifically, the available algorithms are:
-- ```StandardRidge```: a naive implementation of Ridge Regression. The default choice for training.
-- ```LinearModel```: a wrap around [MLJLinearModels](https://juliaai.github.io/MLJLinearModels.jl/stable/).
-- ```LIBSVM.AbstractSVR```: a direct call of [LIBSVM](https://github.com/JuliaML/LIBSVM.jl) regression methods.
-
-Also provided are two different ways of making predictions using RC:
-- ```Generative```: the algorithm uses the prediction of the model in the previous step to continue the prediction. It only needs the number of steps as input.
-- ```Predictive```: standard Machine Learning type of prediction. Given the features, the RC model will return the label/prediction.
-
-It is possible to modify the RC obtained states in the training and prediction steps using the following:
-- ```StandardStates```: default choice, no changes will be made to the states.
-- ```ExtendedStates```: the states are extended using a vertical concatenation, with the input data.
-- ```PaddedStates```: the states are padded using a vertical concatenation with the chosen padding value.
-- ```PaddedExtendedStates```: a combination of the first two. First, the states are extended and then padded.
-
-In addition, another modification is possible through the choice of non-linear algorithms:
-- ```NLADefault```: default choice, no changes will be made to the states.
-- ```NLAT1```
-- ```NLAT2```
-- ```NLAT3```
-
-### Echo State Networks
-For ESNs the following input layers are implemented :
-- ```WeightedLayer```: weighted layer matrix with weights sampled from a uniform distribution.
-- ```DenseLayer```: dense layer matrix with weights sampled from a uniform distribution.
-- ```SparseLayer```: sparse layer matrix with weights sampled from a uniform distribution.
-- ```MinimumLayer```: matrix with constant weights and weight sign decided following one of the two:
-  - ```BernoulliSample```
-  - ```IrrationalSample```
-- ```InformedLayer```: special kin of weighted layer matrix for Hybrid ESNs.
- 
-The package also contains multiple implementations of Reservoirs:
-- ```RandSparseReservoir```: random sparse matrix with scaling of spectral radius
-- ```PseudoSVDReservoir```: Pseudo SVD construction of a random sparse matrix
-- ```DelayLineReservoir```: minimal matrix with chosen weights
-- ```DelayLineBackwardReservoir```: minimal matrix with chosen weights
-- ```SimpleCycleReservoir```: minimal matrix with chosen weights
-- ```CycleJumpsReservoir```: minimal matrix with chosen weights
- 
-In addition, multiple ways of driving the reservoir states are also provided:
-- ```RNN```: standard Recurrent Neural Network driver.
-- ```MRNN```: Multiple RNN driver, it consists of a linear combination of RNNs
-- ```GRU```: gated Recurrent Unit driver, with all the possible GRU variants available:
-  - ```FullyGated```
-  - ```Minimal```
-
-A hybrid version of the model is also available through ```Hybrid```
-
-### Reservoir Computing with Cellular Automata
-The package provides also an implementation of Reservoir Computing models based on one dimensional Cellular Automata through the ```RECA``` call. For the moment, the only input encoding available (an input encoding plays a similar role to the input matrix for ESNs) is a random mapping, called through ```RandomMapping```. 
-
-All the training methods described above can be used, as can all the modifications to the states. Both prediction methods are also possible in theory, although in the literature only ```Predictive``` tasks have been explored.
+  - **Multiple Training Algorithms**: Supports Ridge Regression, Linear Models, and LIBSVM regression methods for Reservoir Computing models.
+  - **Diverse Prediction Methods**: Offers both generative and predictive methods for Reservoir Computing predictions.
+  - **Modifiable Training and Prediction**: Allows modifications in Reservoir Computing states, such as state extension, padding, and combination methods.
+  - **Non-linear Algorithm Options**: Includes options for non-linear modifications in algorithms.
+  - **Echo State Networks (ESNs)**: Features various input layers, reservoirs, and methods for driving ESN reservoir states.
+  - **Cellular Automata-Based Reservoir Computing**: Introduces models based on one-dimensional Cellular Automata for Reservoir Computing.
 
 ## Contributing
 
-  - Please refer to the
-    [SciML ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://github.com/SciML/ColPrac/blob/master/README.md)
-    for guidance on PRs, issues, and other matters relating to contributing to SciML.
-
-  - See the [SciML Style Guide](https://github.com/SciML/SciMLStyle) for common coding practices and other style decisions.
-  - There are a few community forums:
-    
-      + The #diffeq-bridged and #sciml-bridged channels in the
-        [Julia Slack](https://julialang.org/slack/)
-      + The #diffeq-bridged and #sciml-bridged channels in the
-        [Julia Zulip](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
-      + On the [Julia Discourse forums](https://discourse.julialang.org)
-      + See also [SciML Community page](https://sciml.ai/community/)
-
+Contributions to ReservoirComputing.jl are highly encouraged and appreciated. Whether it's through implementing new RC model variations, enhancing documentation, adding examples, or any improvement, your contribution is valuable. We welcome posts of relevant papers or ideas in the issues section. For deeper insights into the library's functionality, the API section in the documentation is a great resource. For any queries not suited for issues, please reach out to the lead developers via Slack or email.
 
 ## Citing
 
-If you use this library in your work, please cite:
+If you use ReservoirComputing.jl in your work, we kindly ask you to cite it. Here is the BibTeX entry for your convenience:
 
 ```bibtex
 @article{JMLR:v23:22-0611,
@@ -113,36 +63,46 @@ If you use this library in your work, please cite:
 ```
 
 ## Reproducibility
+
 ```@raw html
 <details><summary>The documentation of this SciML package was built using these direct dependencies,</summary>
 ```
+
 ```@example
 using Pkg # hide
 Pkg.status() # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@raw html
 <details><summary>and using this machine and Julia version.</summary>
 ```
+
 ```@example
 using InteractiveUtils # hide
 versioninfo() # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@raw html
 <details><summary>A more complete overview of all dependencies and their versions is also provided.</summary>
 ```
+
 ```@example
 using Pkg # hide
-Pkg.status(;mode = PKGMODE_MANIFEST) # hide
+Pkg.status(; mode = PKGMODE_MANIFEST) # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@eval
 using TOML
 using Markdown

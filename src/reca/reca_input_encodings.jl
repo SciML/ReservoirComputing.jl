@@ -41,7 +41,7 @@ function create_encoding(rm::RandomMapping, input_data, generations)
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations
     return RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size,
-                      ca_size)
+        ca_size)
 end
 
 function reca_create_states(rm::RandomMaps, automata, input_data)
@@ -67,9 +67,9 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
 
     for i in 1:(rm.permutations)
         new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(input_vector,
-                                                                                                     new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
-                                                                                                     rm.maps[i,
-                                                                                                             :])
+            new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
+            rm.maps[i,
+                :])
     end
 
     return new_tot_enc_vec

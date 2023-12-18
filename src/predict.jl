@@ -1,9 +1,9 @@
 function obtain_prediction(rc::AbstractReservoirComputer,
-                           prediction::Generative,
-                           x,
-                           output_layer,
-                           args...;
-                           initial_conditions = output_layer.last_value)
+        prediction::Generative,
+        x,
+        output_layer,
+        args...;
+        initial_conditions = output_layer.last_value)
     #x = last_state
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method
@@ -21,11 +21,11 @@ function obtain_prediction(rc::AbstractReservoirComputer,
 end
 
 function obtain_prediction(rc::AbstractReservoirComputer,
-                           prediction::Predictive,
-                           x,
-                           output_layer,
-                           args...;
-                           kwargs...)
+        prediction::Predictive,
+        x,
+        output_layer,
+        args...;
+        kwargs...)
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method
     out_size = output_layer.out_size

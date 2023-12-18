@@ -1,10 +1,17 @@
 # Generative vs Predictive
-The library provides two different methods for prediction, denoted as `Predictive()` and `Generative()`, following the two major applications of Reservoir Computing models found in the literature. Both of these methods are given as arguments for the trained model. While copy-pasteable example swill be provided further on in the documentation, it is better to clarify the difference early on to focus more on the library implementation going forward.
+
+The library provides two different methods for prediction, denoted as `Predictive()` and `Generative()`. These methods correspond to the two major applications of Reservoir Computing models found in the literature. This section aims to clarify the differences between these two methods before providing further details on their usage in the library.
 
 ## Predictive
-In the first method, the user can use Reservoir Computing models similarly as standard Machine Learning models. This means using a set of features as input and a set of labels as outputs. In this case, the features and labels can be vectors of different dimensions, as ``X=\{x_1,...,x_n\} \ x_i \in \mathbb{R}^{N}`` and ``Y=\{y_1,...,y_n\} \ y_i \in \mathbb{R}^{M}`` where ``X`` is the feature set and ``Y`` the label set. Given the difference in dimensionality for the prediction call, it will be needed to feed to the function the feature set to be labeled, for example by calling `Predictive(X)` using the set given in this example.
 
-!this allows for one step ahead or h steps ahead prediction.
+In the first method, users can utilize Reservoir Computing models in a manner similar to standard Machine Learning models. This involves using a set of features as input and a set of labels as outputs. In this case, both the feature and label sets can consist of vectors of different dimensions. Specifically, let's denote the feature set as ``X=\{x_1,...,x_n\}`` where ``x_i \in \mathbb{R}^{N}``, and the label set as ``Y=\{y_1,...,y_n\}`` where ``y_i \in \mathbb{R}^{M}``.
+
+To make predictions using this method, you need to provide the feature set that you want to predict the labels for. For example, you can call `Predictive(X)` using the feature set ``X`` as input. This method allows for both one-step-ahead and multi-step-ahead predictions.
 
 ## Generative
-The generative method allows the user to extend the forecasting capabilities of the model, letting the predicted results to be fed back into the model to generate the next prediction. By doing so, the model can run autonomously, without any feature dataset as input. The call for this model needs only the number of steps that the user intends to forecast, for example calling `Generative(100)` to generate one hundred time steps.
+
+The generative method provides a different approach to forecasting with Reservoir Computing models. It enables you to extend the forecasting capabilities of the model by allowing predicted results to be fed back into the model to generate the next prediction. This autonomy allows the model to make predictions without the need for a feature dataset as input.
+
+To use the generative method, you only need to specify the number of time steps that you intend to forecast. For instance, you can call `Generative(100)` to generate predictions for the next one hundred time steps.
+
+The key distinction between these methods lies in how predictions are made. The predictive method relies on input feature sets to make predictions, while the generative method allows for autonomous forecasting by feeding predicted results back into the model.
