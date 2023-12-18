@@ -5,7 +5,6 @@ nla1_states = [1, 2, 9, 4, 25, 6, 49, 8, 81]
 nla2_states = [1, 2, 2, 4, 12, 6, 30, 8, 9]
 nla3_states = [1, 2, 8, 4, 24, 6, 48, 8, 9]
 
-
 test_types = [Float64, Float32, Float16]
 
 for tt in test_types

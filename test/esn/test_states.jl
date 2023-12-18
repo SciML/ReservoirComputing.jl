@@ -25,14 +25,10 @@ for tt in test_types
     @test typeof(st_states[1]) == typeof(tt.(states)[1])
 end
 
-
-
 ## testing non linear algos
 nla1_states = [1, 2, 9, 4, 25, 6, 49, 8, 81]
 nla2_states = [1, 2, 2, 4, 12, 6, 30, 8, 9]
 nla3_states = [1, 2, 8, 4, 24, 6, 48, 8, 9]
-
-
 
 for tt in test_types
     # test default
