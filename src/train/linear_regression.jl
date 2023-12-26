@@ -15,7 +15,6 @@ end
 
 #default training - OLS
 function _train(states, target_data, sr::StandardRidge = StandardRidge(0.0))
-    typeof(target_data[1])(sr.regularization_coeff)
     output_layer = ((states * states' + sr.regularization_coeff * I) \
                     (states * target_data'))'
     #output_layer = (target_data*states')*inv(states*states'+sr.regularization_coeff*I)
