@@ -1671,9 +1671,9 @@ version = "1.3.0"
 
 [[deps.ReservoirComputing]]
 deps = ["Adapt", "CellularAutomata", "Distances", "Distributions", "LIBSVM", "LinearAlgebra", "MLJLinearModels", "NNlib", "Optim", "SparseArrays", "Statistics"]
-path = "/var/lib/buildkite-agent/builds/gpuci-13/julialang/reservoircomputing-dot-jl"
+path = "/var/lib/buildkite-agent/builds/gpuci-11/julialang/reservoircomputing-dot-jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
-version = "0.9.5"
+version = "0.9.6"
 
 [[deps.ResettableStacks]]
 deps = ["StaticArrays"]
