@@ -18,9 +18,7 @@ export StandardRidge, LinearModel
 export AbstractLayer, create_layer
 export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
 export BernoulliSample, IrrationalSample
-export AbstractReservoir, create_reservoir
-export RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir
-export DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
+export rand_sparse, delay_line
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, Default, Hybrid, train
 export RECA, train
