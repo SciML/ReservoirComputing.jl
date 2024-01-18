@@ -23,11 +23,11 @@ This type of reservoir initialization is commonly used in ESNs for capturing tem
 function rand_sparse(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        radius = 1.0,
-        sparsity = 0.1) where {T <: Number}
+        radius = T(1.0),
+        sparsity = T(0.1)) where {T <: Number}
     reservoir_matrix = Matrix{T}(sprand(rng, dims..., sparsity))
-    reservoir_matrix = 2.0 .* (reservoir_matrix .- 0.5)
-    replace!(reservoir_matrix, -1.0 => 0.0)
+    reservoir_matrix = T(2.0) .* (reservoir_matrix .- T(0.5))
+    replace!(reservoir_matrix, T(-1.0) => T(0.0))
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
@@ -62,7 +62,7 @@ Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE Transa
 function delay_line(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        weight = 0.1) where {T <: Number}
+        weight = T(0.1)) where {T <: Number}
     reservoir_matrix = zeros(T, dims...)
     @assert length(dims) == 2 && dims[1] == dims[2],
     "The dimensions must define a square matrix (e.g., (100, 100))"
