@@ -90,33 +90,30 @@ train_data = rand(10, 100)  # 10 features, 100 time steps
 esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
 ```
 """
-function ESN(train_data;
-        variation = Default(),
-        input_layer = DenseLayer(),
-        reservoir = RandSparseReservoir(100),
-        bias = NullLayer(),
-        reservoir_driver = RNN(),
-        nla_type = NLADefault(),
-        states_type = StandardStates(),
-        washout = 0,
-        matrix_type = typeof(train_data))
-    if variation isa Hybrid
-        train_data = vcat(train_data, variation.model_data[:, 1:(end - 1)])
-    end
+function ESN(
+    train_data,
+    in_size,
+    res_size;
+    input_layer = scaled_rand,
+    reservoir = rand_sparse,
+    bias = zeros64,
+    reservoir_driver = RNN(),
+    nla_type = NLADefault(),
+    states_type = StandardStates(),
+    washout = 0,
+    rng = _default_rng(),
+    matrix_type = typeof(train_data)
+) where {T <: Number}
 
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
             train_data)
-    else
-        in_size = size(train_data, 1)
     end
 
-    input_matrix, reservoir_matrix, bias_vector, res_size = obtain_layers(in_size,
-        input_layer,
-        reservoir, bias;
-        matrix_type = matrix_type)
-
+    reservoir_matrix = reservoir(rng, T, res_size, res_size)
+    input_matrix = input_layer(rng, T, res_size, in_size)
+    bias_vector = bias(rng, T, res_size)
     inner_res_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_res_driver, train_data, washout, reservoir_matrix,
         input_matrix, bias_vector)

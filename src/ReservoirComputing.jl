@@ -13,13 +13,13 @@ using PartialFunctions
 using Random
 using SparseArrays
 using Statistics
+using WeightInitializers
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
 export AbstractLayer, create_layer
-export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
-export BernoulliSample, IrrationalSample
+export scaled_rand
 export rand_sparse, delay_line
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, Default, Hybrid, train
@@ -70,6 +70,29 @@ Given a set of labels as ```prediction_data```, this method of prediction will r
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)
     Predictive(prediction_data, prediction_len)
+end
+
+#fallbacks for initializers
+for initializer in (:rand_sparse, :delay_line, :scaled_rand)
+    NType = ifelse(initializer === :rand_sparse, Real, Number)
+    @eval function ($initializer)(dims::Integer...; kwargs...)
+        return $initializer(_default_rng(), Float32, dims...; kwargs...)
+    end
+    @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
+        return $initializer(rng, Float32, dims...; kwargs...)
+    end
+    @eval function ($initializer)(::Type{T},
+            dims::Integer...; kwargs...) where {T <: $NType}
+        return $initializer(_default_rng(), T, dims...; kwargs...)
+    end
+    @eval function ($initializer)(rng::AbstractRNG; kwargs...)
+        return __partial_apply($initializer, (rng, (; kwargs...)))
+    end
+    @eval function ($initializer)(rng::AbstractRNG,
+            ::Type{T}; kwargs...) where {T <: $NType}
+        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
+    end
+    @eval ($initializer)(; kwargs...) = __partial_apply($initializer, (; kwargs...))
 end
 
 #general

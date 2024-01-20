@@ -11,7 +11,7 @@ const jump_size = 3
 const rng = Random.default_rng()
 
 dtypes = [Float16, Float32, Float64]
-reservoir_inits = [rand_sparse]
+reservoir_inits = [rand_sparse, delay_line]
 
 @testset "Sizes and types" begin
     for init in reservoir_inits
@@ -32,5 +32,10 @@ end
 @testset "rand_sparse" begin
     sp = rand_sparse(res_size, res_size)
     @test check_radius(sp, radius)
+end
+
+@testset "delay_line" begin
+    dl = delay_line(res_size, res_size)
+    @test unique(dl) == Float32.([0.0, 0.1])
 end
 

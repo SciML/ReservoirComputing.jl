@@ -1,7 +1,3 @@
-function get_ressize(reservoir)
-    return size(reservoir, 1)
-end
-
 """
     rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...; radius=1.0, sparsity=0.1)
 
@@ -64,36 +60,13 @@ function delay_line(rng::AbstractRNG,
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
     reservoir_matrix = zeros(T, dims...)
-    @assert length(dims) == 2 && dims[1] == dims[2],
-    "The dimensions must define a square matrix (e.g., (100, 100))"
+    @assert length(dims) == 2 && dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
     end
 
     return reservoir_matrix
-end
-
-for initializer in (:rand_sparse, :delay_line)
-    NType = ifelse(initializer === :rand_sparse, Real, Number)
-    @eval function ($initializer)(dims::Integer...; kwargs...)
-        return $initializer(_default_rng(), Float32, dims...; kwargs...)
-    end
-    @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
-        return $initializer(rng, Float32, dims...; kwargs...)
-    end
-    @eval function ($initializer)(::Type{T},
-            dims::Integer...; kwargs...) where {T <: $NType}
-        return $initializer(_default_rng(), T, dims...; kwargs...)
-    end
-    @eval function ($initializer)(rng::AbstractRNG; kwargs...)
-        return __partial_apply($initializer, (rng, (; kwargs...)))
-    end
-    @eval function ($initializer)(rng::AbstractRNG,
-            ::Type{T}; kwargs...) where {T <: $NType}
-        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
-    end
-    @eval ($initializer)(; kwargs...) = __partial_apply($initializer, (; kwargs...))
 end
 
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
