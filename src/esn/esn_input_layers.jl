@@ -123,7 +123,7 @@ Create a layer of a neural network.
 
 # Example
 ```julia
-rng = Random.GLOBAL_RNG
+rng = Random.default_rng()
 dims = (100, 200)
 model_in_size = 50
 input_matrix = informed_layer(rng, Float64, dims; model_in_size=model_in_size)
@@ -161,4 +161,61 @@ function informed_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
 
     return input_matrix
+end
+
+
+
+function BernoulliSample(; p = 0.5)
+    return BernoulliSample(p)
+end
+
+function create_minimum_input(BernoulliSample(; p = 0.5), res_size, in_size, weight, rng::AbstractRNG)
+    p = BernoulliSample(; p = 0.5)
+    input_matrix = zeros(res_size, in_size)
+    for i in 1:res_size
+        for j in 1:in_size
+            rand(rng, Bernoulli(p)) ? (input_matrix[i, j] = weight) : (input_matrix[i, j] = -weight)
+        end
+    end
+    return input_matrix
+end
+
+
+"""
+    bernoulli_sample_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = 0.1,
+        sampling = BernoulliSample(0.5)
+    ) where {T <: Number}
+
+Create a layer matrix using the Bernoulli sampling method.
+
+# Arguments
+- `rng::AbstractRNG`: The random number generator.
+- `dims::Integer...`: The dimensions of the layer matrix.
+- `weight::Number = 0.1`: The weight value.
+- `sampling::BernoulliSample = BernoulliSample(0.5)`: The Bernoulli sampling object.
+
+# Returns
+The generated layer matrix.
+
+# Example
+```julia
+rng = Random.default_rng()
+dims = (100, 200)
+weight = 0.1
+sampling = BernoulliSample(0.5)
+layer_matrix = bernoulli_sample_layer(rng, Float64, dims; weight=weight, sampling=sampling)
+```
+
+"""
+function bernoulli_sample_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    weight = 0.1,
+    sampling = BernoulliSample(0.5)
+    )where {T <: Number}
+
+    res_size, in_size = dims
+    sampling = sampling
+    weight = weight
+    layer_matrix = create_minimum_input(sampling, res_size, in_size, weight, rng)
+    return layer_matrix
 end
