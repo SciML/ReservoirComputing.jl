@@ -13,7 +13,7 @@ function obtain_esn_prediction(esn,
     out = initial_conditions
     states = similar(esn.states, size(esn.states, 1), prediction_len)
 
-    out_pad = allocate_outpad(esn.variation, esn.states_type, out)
+    out_pad = allocate_outpad(esn, esn.states_type, out)
     tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
@@ -43,7 +43,7 @@ function obtain_esn_prediction(esn,
     out = initial_conditions
     states = similar(esn.states, size(esn.states, 1), prediction_len)
 
-    out_pad = allocate_outpad(esn.variation, esn.states_type, out)
+    out_pad = allocate_outpad(esn, esn.states_type, out)
     tmp_array = allocate_tmp(esn.reservoir_driver, typeof(esn.states), esn.res_size)
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
@@ -60,20 +60,6 @@ end
 
 #prediction dispatch on esn 
 function next_state_prediction!(esn::ESN, x, x_new, out, out_pad, i, tmp_array, args...)
-    return _variation_prediction!(esn.variation, esn, x, x_new, out, out_pad, i, tmp_array,
-        args...)
-end
-
-#dispatch the prediction on the esn variation
-function _variation_prediction!(variation,
-        esn,
-        x,
-        x_new,
-        out,
-        out_pad,
-        i,
-        tmp_array,
-        args...)
     out_pad = pad_state!(esn.states_type, out_pad, out)
     xv = @view x[1:(esn.res_size)]
     x = next_state!(x, esn.reservoir_driver, xv, out_pad,
@@ -82,15 +68,8 @@ function _variation_prediction!(variation,
     return x, x_new
 end
 
-function _variation_prediction!(variation::Hybrid,
-        esn,
-        x,
-        x_new,
-        out,
-        out_pad,
-        i,
-        tmp_array,
-        model_prediction_data)
+#TODO fixme @MatrinuzziFra
+function next_state_prediction!(hesn::HybridESN, x, x_new, out, out_pad, i, tmp_array, args...)
     out_tmp = vcat(out, model_prediction_data[:, i])
     out_pad = pad_state!(esn.states_type, out_pad, out_tmp)
     x = next_state!(x, esn.reservoir_driver, x[1:(esn.res_size)], out_pad,
@@ -100,12 +79,12 @@ function _variation_prediction!(variation::Hybrid,
     return x, x_new
 end
 
-function allocate_outpad(variation, states_type, out)
+function allocate_outpad(ens::ESN, states_type, out)
     return allocate_singlepadding(states_type, out)
 end
 
-function allocate_outpad(variation::Hybrid, states_type, out)
-    pad_length = length(out) + size(variation.model_data[:, 1], 1)
+function allocate_outpad(hesn::HybridESN, states_type, out)
+    pad_length = length(out) + size(hesn.model.model_data[:, 1], 1)
     out_tmp = Adapt.adapt(typeof(out), zeros(pad_length))
     return allocate_singlepadding(states_type, out_tmp)
 end

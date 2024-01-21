@@ -19,10 +19,11 @@ export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
 export AbstractLayer, create_layer
-export scaled_rand
+export scaled_rand, weighted_init
 export rand_sparse, delay_line
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
-export ESN, Default, Hybrid, train
+export ESN, train
+export DeepESN, HybridESN
 export RECA, train
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer
@@ -73,7 +74,7 @@ function Predictive(prediction_data)
 end
 
 #fallbacks for initializers
-for initializer in (:rand_sparse, :delay_line, :scaled_rand)
+for initializer in (:rand_sparse, :delay_line, :scaled_rand, :weighted_init)
     NType = ifelse(initializer === :rand_sparse, Real, Number)
     @eval function ($initializer)(dims::Integer...; kwargs...)
         return $initializer(_default_rng(), Float32, dims...; kwargs...)
@@ -107,7 +108,9 @@ include("train/supportvector_regression.jl")
 include("esn/esn_input_layers.jl")
 include("esn/esn_reservoirs.jl")
 include("esn/esn_reservoir_drivers.jl")
-include("esn/echostatenetwork.jl")
+include("esn/esn.jl")
+include("esn/deepesn.jl")
+include("esn/hybridesn.jl")
 include("esn/esn_predict.jl")
 
 #reca

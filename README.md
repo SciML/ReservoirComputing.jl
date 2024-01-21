@@ -51,14 +51,15 @@ test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
 
 ```julia
+input_size = 3
 res_size = 300
-esn = ESN(input_data;
-    reservoir = RandSparseReservoir(res_size, radius = 1.2, sparsity = 6 / res_size),
-    input_layer = WeightedLayer(),
+esn = ESN(input_data, input_size, res_size;
+    reservoir = rand_sparse(;radius = 1.2, sparsity = 6 / res_size),
+    input_layer = weighted_init,
     nla_type = NLAT2())
 ```
 
-The echo state network can now be trained and tested. If not specified, the training will always be Ordinary Least Squares regression. The full range of training methods is detailed in the documentation.
+The echo state network can now be trained and tested. If not specified, the training will always be ordinary least squares regression. The full range of training methods is detailed in the documentation.
 
 ```julia
 output_layer = train(esn, target_data)
