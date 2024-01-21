@@ -23,7 +23,8 @@ export scaled_rand, weighted_init
 export rand_sparse, delay_line
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, train
-export DeepESN, HybridESN
+export HybridESN, KnowledgeModel
+export DeepESN
 export RECA, train
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer

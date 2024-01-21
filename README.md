@@ -104,3 +104,6 @@ If you use this library in your work, please cite:
   url     = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
+## Acknowledgements
+
+This project was possible thanks to initial funding through the [Google summer of code](https://summerofcode.withgoogle.com/) 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/) and [RSC4Earth](https://rsc4earth.de/) for supporting the current progress on the library.

@@ -66,39 +66,3 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(
 
     return layer_matrix
 end
-
-
-"""
-    sparse_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(0.1), sparsity=T(0.1)) where {T <: Number}
-
-Create and return a sparse layer matrix for use in neural network models.
-The matrix will be of size specified by `dims`, with the specified `sparsity` and `scaling`.
-
-# Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation.
-- `T`: The data type for the elements of the matrix.
-- `dims`: Dimensions of the resulting sparse layer matrix.
-- `scaling`: The scaling factor for the sparse layer matrix. Defaults to 0.1.
-- `sparsity`: The sparsity level of the sparse layer matrix, controlling the fraction of zero elements. Defaults to 0.1.
-
-# Returns
-A sparse layer matrix.
-
-
-# Example
-```julia
-rng = Random.default_rng()
-input_layer = weighted_init(rng, Float64, (3, 300); scaling=0.2, sparsity=0.1)
-```
-"""
-function sparse_layer(rng::AbstractRNG,::Type{T}, dims::Integer...;
-    scaling=T(0.1),  sparsity=T(0.1)) where {T <: Number}
-
-    in_size, res_size = dims
-    layer_matrix = Matrix(sprand(rng, res_size, in_size, sparsity))
-    layer_matrix = 2.0 .* (layer_matrix .- 0.5)
-    replace!(layer_matrix, -1.0 => 0.0)
-    layer_matrix = scaling .* layer_matrix
-
-    return layer_matrix
-end
