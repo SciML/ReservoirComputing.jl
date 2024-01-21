@@ -69,13 +69,13 @@ function next_state_prediction!(esn::ESN, x, x_new, out, out_pad, i, tmp_array, 
 end
 
 #TODO fixme @MatrinuzziFra
-function next_state_prediction!(hesn::HybridESN, x, x_new, out, out_pad, i, tmp_array, args...)
+function next_state_prediction!(hesn::HybridESN, x, x_new, out, out_pad, i, tmp_array, model_prediction_data)
     out_tmp = vcat(out, model_prediction_data[:, i])
-    out_pad = pad_state!(esn.states_type, out_pad, out_tmp)
-    x = next_state!(x, esn.reservoir_driver, x[1:(esn.res_size)], out_pad,
-        esn.reservoir_matrix, esn.input_matrix, esn.bias_vector, tmp_array)
+    out_pad = pad_state!(hesn.states_type, out_pad, out_tmp)
+    x = next_state!(x, hesn.reservoir_driver, x[1:(hesn.res_size)], out_pad,
+    hesn.reservoir_matrix, hesn.input_matrix, hesn.bias_vector, tmp_array)
     x_tmp = vcat(x, model_prediction_data[:, i])
-    x_new = esn.states_type(esn.nla_type, x_tmp, out_pad)
+    x_new = hesn.states_type(hesn.nla_type, x_tmp, out_pad)
     return x, x_new
 end
 

@@ -138,6 +138,6 @@ end
 #    x_pad = pad_state!(states_type, x_pad, x_tmp)
 #end
 
-function pad_esnstate!(variation, states_type, x_pad, x, args...)
-    x_pad = pad_state!(states_type, x_pad, x)
-end
+#function pad_esnstate!(variation, states_type, x_pad, x, args...)
+#    x_pad = pad_state!(states_type, x_pad, x)
+#end
