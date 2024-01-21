@@ -166,11 +166,11 @@ end
 
 
 function BernoulliSample(; p = 0.5)
-    return BernoulliSample(p)
+    return p
 end
 
-function create_minimum_input(BernoulliSample(; p = 0.5), res_size, in_size, weight, rng::AbstractRNG)
-    p = BernoulliSample(; p = 0.5)
+function create_minimum_input(p = sampling, res_size, in_size, weight, rng::AbstractRNG)
+    
     input_matrix = zeros(res_size, in_size)
     for i in 1:res_size
         for j in 1:in_size
@@ -217,5 +217,72 @@ function bernoulli_sample_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     sampling = sampling
     weight = weight
     layer_matrix = create_minimum_input(sampling, res_size, in_size, weight, rng)
+    return layer_matrix
+end
+
+
+
+function IrrationalSample(; irrational = pi, start = 1)
+    return irrational, start
+end
+
+function create_minimum_input(irrational, start = sampling, res_size, in_size, weight, rng::AbstractRNG)
+    setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + start + 1))))
+    ir_string = string(BigFloat(irrational)) |> collect
+    deleteat!(ir_string, findall(x -> x == '.', ir_string))
+    ir_array = zeros(length(ir_string))
+    input_matrix = zeros(res_size, in_size)
+
+    for i in 1:length(ir_string)
+        ir_array[i] = parse(Int, ir_string[i])
+    end
+
+    for i in 1:res_size
+        for j in 1:in_size
+            random_number = rand(rng) 
+            input_matrix[i, j] = random_number < 0.5 ? -weight : weight 
+        end
+    end
+
+    return input_matrix
+end
+
+"""
+    irrational_sample_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    weight = 0.1,
+    sampling = IrrationalSample(; irrational = pi, start = 1)
+    ) where {T <: Number}
+
+Create a layer matrix using the provided random number generator and sampling parameters.
+
+# Arguments
+- `rng::AbstractRNG`: The random number generator used to generate random numbers.
+- `dims::Integer...`: The dimensions of the layer matrix.
+- `weight`: The weight used to fill the layer matrix. Default is 0.1.
+- `sampling`: The sampling parameters used to generate the input matrix. Default is IrrationalSample(irrational = pi, start = 1).
+
+# Returns
+The layer matrix generated using the provided random number generator and sampling parameters.
+
+# Example
+```julia
+using Random
+rng = Random.default_rng()
+dims = (3, 2)
+weight = 0.5
+layer_matrix = irrational_sample_layer(rng, Float64, dims; weight = weight, sampling = IrrationalSample(irrational = sqrt(2), start = 1))
+```
+"""
+
+function irrational_sample_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    weight = 0.1,
+    sampling = IrrationalSample(; irrational = pi, start = 1)
+    )where {T <: Number}
+
+    res_size, in_size = dims
+    sampling = sampling
+    weight = weight
+    layer_matrix = create_minimum_input(sampling, res_size, in_size, weight, rng)
+
     return layer_matrix
 end
