@@ -89,7 +89,7 @@ A sparse layer matrix.
 # Example
 ```julia
 rng = Random.default_rng()
-input_layer = weighted_init(rng, Float64, (3, 300); scaling=0.2, sparsity=0.1)
+input_layer = sparse_layer(rng, Float64, (3, 300); scaling=0.2, sparsity=0.1)
 ```
 """
 function sparse_layer(rng::AbstractRNG,::Type{T}, dims::Integer...;
@@ -104,3 +104,61 @@ function sparse_layer(rng::AbstractRNG,::Type{T}, dims::Integer...;
     return layer_matrix
 end
 
+
+"""
+    informed_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
+
+Create a layer of a neural network.
+
+# Arguments
+- `rng::AbstractRNG`: The random number generator.
+- `T::Type`: The data type.
+- `dims::Integer...`: The dimensions of the layer.
+- `scaling::T = T(0.1)`: The scaling factor for the input matrix.
+- `model_in_size`: The size of the input model.
+- `gamma::T = T(0.5)`: The gamma value.
+
+# Returns
+- `input_matrix`: The created input matrix for the layer.
+
+# Example
+```julia
+rng = Random.GLOBAL_RNG
+dims = (100, 200)
+model_in_size = 50
+input_matrix = informed_layer(rng, Float64, dims; model_in_size=model_in_size)
+```
+"""
+function informed_layer(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
+    scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
+    
+    res_size, in_size = dims
+    state_size = in_size - model_in_size
+
+    if state_size <= 0
+        throw(DimensionMismatch("in_size must be greater than model_in_size"))
+    end
+
+    input_matrix = zeros(res_size, in_size)
+    zero_connections = zeros(in_size)
+    num_for_state = floor(Int, res_size * gamma)
+    num_for_model = floor(Int, res_size * (1 - gamma))
+
+    for i in 1:num_for_state
+        idxs = findall(Bool[zero_connections .== input_matrix[i, :]
+                            for i in 1:size(input_matrix, 1)])
+        random_row_idx = idxs[rand(rng, 1:end)]
+        random_clm_idx = range(1, state_size, step=1)[rand(rng, 1:end)]
+        input_matrix[random_row_idx, random_clm_idx] = rand(rng, Uniform(-scaling, scaling))
+    end
+
+    for i in 1:num_for_model
+        idxs = findall(Bool[zero_connections .== input_matrix[i, :]
+                            for i in 1:size(input_matrix, 1)])
+        random_row_idx = idxs[rand(rng, 1:end)]
+        random_clm_idx = range(state_size + 1, in_size, step=1)[rand(rng, 1:end)]
+        input_matrix[random_row_idx, random_clm_idx] = rand(rng, Uniform(-scaling, scaling))
+    end
+
+    return input_matrix
+end
