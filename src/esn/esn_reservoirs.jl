@@ -69,6 +69,44 @@ function delay_line(rng::AbstractRNG,
     return reservoir_matrix
 end
 
+"""
+    delay_line_backward_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = T(0.1), fb_weight = T(0.2)) where {T <: Number}
+
+Create a delay line backward reservoir with the specified by `dims` and weights. Creates a matrix with backward connections
+as described in [^Rodan2010]. The `weight` and `fb_weight` can be passed as either arguments or
+keyword arguments, and they determine the absolute values of the connections in the reservoir.
+
+# Arguments
+- `rng::AbstractRNG`: Random number generator.
+- `T::Type`: Type of the elements in the reservoir matrix.
+- `dims::Integer...`: Dimensions of the reservoir matrix.
+- `weight::T`: The weight determines the absolute value of forward connections in the reservoir, and is set to 0.1 by default.
+- `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir, and is set to 0.2 by default.
+
+
+# Returns
+Reservoir matrix with the dimensions specified by `dims` and weights.
+
+# References
+[^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
+IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
+function delay_line_backward_reservoir(rng::AbstractRNG,
+        ::Type{T},
+        dims::Integer...;
+        weight = T(0.1), 
+        fb_weight = T(0.2)) where {T <: Number}
+    reservoir_matrix = zeros(res_size, res_size)
+
+    for i in 1:(res_size - 1)
+        reservoir_matrix[i + 1, i] = weight
+        reservoir_matrix[i, i + 1] = fb_weight
+    end
+
+    return reservoir_matrix
+end
+
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
 function _default_rng()
     @static if VERSION >= v"1.7"
