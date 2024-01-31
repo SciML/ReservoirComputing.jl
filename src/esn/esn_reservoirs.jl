@@ -191,6 +191,90 @@ function simple_cycle_reservoir(rng::AbstractRNG,
 end
 
 
+
+
+"""
+    pseudo_svd_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
+        max_value, sparsity, sorted = true, reverse_sort = false) where {T <: Number}
+
+    Returns an initializer to build a sparse reservoir matrix with the given `sparsity` by using a pseudo-SVD approach as described in [^yang].
+
+# Arguments
+- `rng::AbstractRNG`: Random number generator.
+- `T::Type`: Type of the elements in the reservoir matrix.
+- `dims::Integer...`: Dimensions of the reservoir matrix.
+- `max_value`: The maximum absolute value of elements in the matrix.
+- `sparsity`: The desired sparsity level of the reservoir matrix.
+- `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
+- `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
+
+# Returns
+Reservoir matrix with the specified dimensions, max value, and sparsity.
+
+# References
+This reservoir initialization method, based on a pseudo-SVD approach, is inspired by the work in [^yang], which focuses on designing polynomial echo state networks for time series prediction.
+
+[^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
+"""
+function pseudo_svd_reservoir(rng::AbstractRNG,
+        ::Type{T},
+        dims::Integer...; 
+        max_value, sparsity;
+        sorted = true, 
+        reverse_sort = false) where {T <: Number}
+
+    reservoir_matrix = create_diag( dims[1], max_value, sorted = sorted, reverse_sort = reverse_sort)
+    tmp_sparsity = get_sparsity(reservoir_matrix,   dims[1])
+
+    while tmp_sparsity <= sparsity
+        reservoir_matrix *= create_qmatrix(dims[1], rand(1:dims[1]), rand(1:dims[1]), rand() * 2 - 1)
+        tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
+    end
+
+    return reservoir_matrix
+end
+
+function create_diag(dim, max_value; sorted = true, reverse_sort = false)
+    diagonal_matrix = zeros(dim, dim)
+    if sorted == true
+        if reverse_sort == true
+            diagonal_values = sort(rand(dim) .* max_value, rev = true)
+            diagonal_values[1] = max_value
+        else
+            diagonal_values = sort(rand(dim) .* max_value)
+            diagonal_values[end] = max_value
+        end
+    else
+        diagonal_values = rand(dim) .* max_value
+    end
+
+    for i in 1:dim
+        diagonal_matrix[i, i] = diagonal_values[i]
+    end
+
+    return diagonal_matrix
+end
+
+function create_qmatrix(dim, coord_i, coord_j, theta)
+    qmatrix = zeros(dim, dim)
+
+    for i in 1:dim
+        qmatrix[i, i] = 1.0
+    end
+
+    qmatrix[coord_i, coord_i] = cos(theta)
+    qmatrix[coord_j, coord_j] = cos(theta)
+    qmatrix[coord_i, coord_j] = -sin(theta)
+    qmatrix[coord_j, coord_i] = sin(theta)
+    return qmatrix
+end
+
+function get_sparsity(M, dim)
+    return size(M[M .!= 0], 1) / (dim * dim - size(M[M .!= 0], 1)) #nonzero/zero elements
+end
+
+
+
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
 function _default_rng()
     @static if VERSION >= v"1.7"
