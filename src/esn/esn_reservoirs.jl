@@ -107,6 +107,56 @@ function delay_line_backward_reservoir(rng::AbstractRNG,
     return reservoir_matrix
 end
 
+
+"""
+    cycle_jumps_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        cycle_weight = T(0.1), jump_weight = T(0.1), jump_size = 3) where {T <: Number}
+
+Create a cycle jumps reservoir with the specified dimensions, cycle weight, jump weight, and jump size.
+
+# Arguments
+- `rng::AbstractRNG`: Random number generator.
+- `T::Type`: Type of the elements in the reservoir matrix.
+- `dims::Integer...`: Dimensions of the reservoir matrix.
+- `cycle_weight::T = T(0.1)`:  The weight of cycle connections.
+- `jump_weight::T = T(0.1)`: The weight of jump connections.
+- `jump_size::Int = 3`:  The number of steps between jump connections.
+
+# Returns
+Reservoir matrix with the specified dimensions, cycle weight, jump weight, and jump size.
+
+# References
+[^Rodan2012]: Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs
+with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+"""
+function cycle_jumps_reservoir(rng::AbstractRNG,
+        ::Type{T},
+        dims::Integer...;
+        cycle_weight = T(0.1), 
+        jump_weight = T(0.1), 
+        jump_size = T(3)) where {T <: Number}
+
+    reservoir_matrix = zeros(T, dims...)
+
+    for i in 1:(dims[1] - 1)
+        reservoir_matrix[i + 1, i] = cycle_weight
+    end
+
+    reservoir_matrix[1, dims[1]] = cycle_weight
+
+    for i in 1:jump_size:(dims[1] - jump_size)
+        tmp = (i + jump_size) % dims[1]
+        if tmp == 0
+            tmp = dims[1]
+        end
+        reservoir_matrix[i, tmp] = jump_weight
+        reservoir_matrix[tmp, i] = jump_weight
+    end
+
+    return reservoir_matrix
+end
+
+
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
 function _default_rng()
     @static if VERSION >= v"1.7"
