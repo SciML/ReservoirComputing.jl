@@ -157,6 +157,40 @@ function cycle_jumps_reservoir(rng::AbstractRNG,
 end
 
 
+"""
+    simple_cycle_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = T(0.1)) where {T <: Number}
+
+Create a simple cycle reservoir with the specified dimensions and weight.
+
+# Arguments
+- `rng::AbstractRNG`: Random number generator.
+- `T::Type`: Type of the elements in the reservoir matrix.
+- `dims::Integer...`: Dimensions of the reservoir matrix.
+- `weight::T = T(0.1)`: Weight of the connections in the reservoir matrix.
+
+# Returns
+Reservoir matrix with the dimensions specified by `dims` and weights.
+
+# References
+[^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
+IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
+function simple_cycle_reservoir(rng::AbstractRNG,
+        ::Type{T},
+        dims::Integer...;
+        weight = T(0.1)) where {T <: Number}
+    reservoir_matrix = zeros(T, dims...)
+
+    for i in 1:(dims[1] - 1)
+        reservoir_matrix[i + 1, i] = weight
+    end
+
+    reservoir_matrix[1, dims[1]] = weight
+    return reservoir_matrix
+end
+
+
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
 function _default_rng()
     @static if VERSION >= v"1.7"

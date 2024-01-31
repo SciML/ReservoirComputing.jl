@@ -20,7 +20,7 @@ export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
 export AbstractLayer, create_layer
 export scaled_rand, weighted_init, sparse_layer, informed_layer, bernoulli_sample_layer, irrational_sample_layer
-export rand_sparse, delay_line, delay_line_backward_reservoir, cycle_jumps_reservoir
+export rand_sparse, delay_line, delay_line_backward_reservoir, cycle_jumps_reservoir, simple_cycle_reservoir
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, train
 export HybridESN, KnowledgeModel
@@ -75,7 +75,7 @@ function Predictive(prediction_data)
 end
 
 #fallbacks for initializers
-for initializer in (:rand_sparse, :delay_line, :delay_line_backward_reservoir, :cycle_jumps_reservoir, :scaled_rand, :weighted_init, :sparse_layer, :informed_layer, :bernoulli_sample_layer, :irrational_sample_layer)
+for initializer in (:rand_sparse, :delay_line, :delay_line_backward_reservoir, :cycle_jumps_reservoir, :simple_cycle_reservoir, :scaled_rand, :weighted_init, :sparse_layer, :informed_layer, :bernoulli_sample_layer, :irrational_sample_layer)
     NType = ifelse(initializer === :rand_sparse, Real, Number)
     @eval function ($initializer)(dims::Integer...; kwargs...)
         return $initializer(_default_rng(), Float32, dims...; kwargs...)
