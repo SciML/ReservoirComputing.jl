@@ -285,9 +285,9 @@ A GRUParams object containing the parameters needed for the GRU-based reservoir 
 function GRU(
         ;
         activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
-        inner_layer = fill(DenseLayer(), 2),
-        reservoir = fill(RandSparseReservoir(0), 2),
-        bias = fill(DenseLayer(), 2),
+        inner_layer = fill(scaled_rand, 2),
+        reservoir = fill(rand_sparse, 2),
+        bias = fill(scaled_rand, 2),
         variant = FullyGated())
     return GRU(activation_function, inner_layer, reservoir, bias, variant)
 end
@@ -312,22 +312,22 @@ end
 
 #dispatch on the different gru variations
 function create_gru_layers(gru, variant::FullyGated, res_size, in_size)
-    Wz_in = create_layer(gru.inner_layer[1], res_size, in_size)
-    Wz = create_reservoir(gru.reservoir[1], res_size)
-    bz = create_layer(gru.bias[1], res_size, 1)
+    Wz_in = gru.inner_layer[1](res_size, in_size)
+    Wz = gru.reservoir[1](res_size, res_size)
+    bz = gru.bias[1](res_size, 1)
 
-    Wr_in = create_layer(gru.inner_layer[2], res_size, in_size)
-    Wr = create_reservoir(gru.reservoir[2], res_size)
-    br = create_layer(gru.bias[2], res_size, 1)
+    Wr_in = gru.inner_layer[2](res_size, in_size)
+    Wr = gru.reservoir[2](res_size, res_size)
+    br = gru.bias[2](res_size, 1)
 
     return GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br)
 end
 
 #check this one, not sure
 function create_gru_layers(gru, variant::Minimal, res_size, in_size)
-    Wz_in = create_layer(gru.inner_layer, res_size, in_size)
-    Wz = create_reservoir(gru.reservoir, res_size)
-    bz = create_layer(gru.bias, res_size, 1)
+    Wz_in = gru.inner_layer(res_size, in_size)
+    Wz = gru.reservoir(res_size, res_size)
+    bz = gru.bias(res_size, 1)
 
     Wr_in = nothing
     Wr = nothing

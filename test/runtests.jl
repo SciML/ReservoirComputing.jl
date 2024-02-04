@@ -11,11 +11,8 @@ using Test
 end
 
 @testset "Echo State Networks" begin
-    @safetestset "ESN Input Layers" begin
-        include("esn/test_input_layers.jl")
-    end
-    @safetestset "ESN Reservoirs" begin
-        include("esn/test_reservoirs.jl")
+    @safetestset "Test initializers" begin
+        include("esn/test_inits.jl")
     end
     @safetestset "ESN States" begin
         include("esn/test_states.jl")

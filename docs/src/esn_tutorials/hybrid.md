@@ -57,8 +57,7 @@ km = KnowledgeModel(prior_model_data_generator, u0, tspan_train, train_len)
 
 in_size = 3
 res_size = 300
-hesn = HybridESN(
-    km,
+hesn = HybridESN(km,
     input_data,
     in_size,
     res_size;

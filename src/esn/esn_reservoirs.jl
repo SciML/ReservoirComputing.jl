@@ -60,7 +60,7 @@ function delay_line(rng::AbstractRNG,
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
     reservoir_matrix = zeros(T, dims...)
-    @assert length(dims) == 2 && dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
+    @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -70,7 +70,7 @@ function delay_line(rng::AbstractRNG,
 end
 
 """
-    delay_line_backward_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight = T(0.1), fb_weight = T(0.2)) where {T <: Number}
 
 Create a delay line backward reservoir with the specified by `dims` and weights. Creates a matrix with backward connections
@@ -92,12 +92,13 @@ Reservoir matrix with the dimensions specified by `dims` and weights.
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function delay_line_backward_reservoir(rng::AbstractRNG,
+function delay_line_backward(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        weight = T(0.1), 
+        weight = T(0.1),
         fb_weight = T(0.2)) where {T <: Number}
-    reservoir_matrix = zeros(res_size, res_size)
+    res_size = first(dims)
+    reservoir_matrix = zeros(T, dims...)
 
     for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -107,9 +108,8 @@ function delay_line_backward_reservoir(rng::AbstractRNG,
     return reservoir_matrix
 end
 
-
 """
-    cycle_jumps_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight = T(0.1), jump_weight = T(0.1), jump_size = 3) where {T <: Number}
 
 Create a cycle jumps reservoir with the specified dimensions, cycle weight, jump weight, and jump size.
@@ -129,25 +129,25 @@ Reservoir matrix with the specified dimensions, cycle weight, jump weight, and j
 [^Rodan2012]: Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs
 with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
-function cycle_jumps_reservoir(rng::AbstractRNG,
+function cycle_jumps(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        cycle_weight = T(0.1), 
-        jump_weight = T(0.1), 
-        jump_size = T(3)) where {T <: Number}
-
+        cycle_weight::Number = T(0.1),
+        jump_weight::Number = T(0.1),
+        jump_size::Int = 3) where {T <: Number}
+    res_size = first(dims)
     reservoir_matrix = zeros(T, dims...)
 
-    for i in 1:(dims[1] - 1)
+    for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = cycle_weight
     end
 
-    reservoir_matrix[1, dims[1]] = cycle_weight
+    reservoir_matrix[1, res_size] = cycle_weight
 
-    for i in 1:jump_size:(dims[1] - jump_size)
-        tmp = (i + jump_size) % dims[1]
+    for i in 1:jump_size:(res_size - jump_size)
+        tmp = (i + jump_size) % res_size
         if tmp == 0
-            tmp = dims[1]
+            tmp = res_size
         end
         reservoir_matrix[i, tmp] = jump_weight
         reservoir_matrix[tmp, i] = jump_weight
@@ -156,9 +156,8 @@ function cycle_jumps_reservoir(rng::AbstractRNG,
     return reservoir_matrix
 end
 
-
 """
-    simple_cycle_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+    simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight = T(0.1)) where {T <: Number}
 
 Create a simple cycle reservoir with the specified dimensions and weight.
@@ -176,7 +175,7 @@ Reservoir matrix with the dimensions specified by `dims` and weights.
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
 IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function simple_cycle_reservoir(rng::AbstractRNG,
+function simple_cycle(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
@@ -190,11 +189,8 @@ function simple_cycle_reservoir(rng::AbstractRNG,
     return reservoir_matrix
 end
 
-
-
-
 """
-    pseudo_svd_reservoir(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
+    pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
         max_value, sparsity, sorted = true, reverse_sort = false) where {T <: Number}
 
     Returns an initializer to build a sparse reservoir matrix with the given `sparsity` by using a pseudo-SVD approach as described in [^yang].
@@ -216,36 +212,45 @@ This reservoir initialization method, based on a pseudo-SVD approach, is inspire
 
 [^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
 """
-function pseudo_svd_reservoir(rng::AbstractRNG,
+function pseudo_svd(rng::AbstractRNG,
         ::Type{T},
-        dims::Integer...; 
-        max_value, sparsity;
-        sorted = true, 
-        reverse_sort = false) where {T <: Number}
-
-    reservoir_matrix = create_diag( dims[1], max_value, sorted = sorted, reverse_sort = reverse_sort)
-    tmp_sparsity = get_sparsity(reservoir_matrix,   dims[1])
+        dims::Integer...;
+        max_value::Number = T(1.0),
+        sparsity::Number = 0.1,
+        sorted::Bool = true,
+        reverse_sort::Bool = false) where {T <: Number}
+    reservoir_matrix = create_diag(dims[1],
+        max_value,
+        T;
+        sorted = sorted,
+        reverse_sort = reverse_sort)
+    tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
 
     while tmp_sparsity <= sparsity
-        reservoir_matrix *= create_qmatrix(dims[1], rand(1:dims[1]), rand(1:dims[1]), rand() * 2 - 1)
+        reservoir_matrix *= create_qmatrix(dims[1],
+            rand(1:dims[1]),
+            rand(1:dims[1]),
+            rand(T) * T(2) - T(1),
+            T)
         tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
     end
 
     return reservoir_matrix
 end
 
-function create_diag(dim, max_value; sorted = true, reverse_sort = false)
-    diagonal_matrix = zeros(dim, dim)
+function create_diag(dim::Number, max_value::Number, ::Type{T};
+        sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
+    diagonal_matrix = zeros(T, dim, dim)
     if sorted == true
         if reverse_sort == true
-            diagonal_values = sort(rand(dim) .* max_value, rev = true)
+            diagonal_values = sort(rand(T, dim) .* max_value, rev = true)
             diagonal_values[1] = max_value
         else
-            diagonal_values = sort(rand(dim) .* max_value)
+            diagonal_values = sort(rand(T, dim) .* max_value)
             diagonal_values[end] = max_value
         end
     else
-        diagonal_values = rand(dim) .* max_value
+        diagonal_values = rand(T, dim) .* max_value
     end
 
     for i in 1:dim
@@ -255,8 +260,12 @@ function create_diag(dim, max_value; sorted = true, reverse_sort = false)
     return diagonal_matrix
 end
 
-function create_qmatrix(dim, coord_i, coord_j, theta)
-    qmatrix = zeros(dim, dim)
+function create_qmatrix(dim::Number,
+        coord_i::Number,
+        coord_j::Number,
+        theta::Number,
+        ::Type{T}) where {T <: Number}
+    qmatrix = zeros(T, dim, dim)
 
     for i in 1:dim
         qmatrix[i, i] = 1.0
@@ -272,8 +281,6 @@ end
 function get_sparsity(M, dim)
     return size(M[M .!= 0], 1) / (dim * dim - size(M[M .!= 0], 1)) #nonzero/zero elements
 end
-
-
 
 # from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
 function _default_rng()

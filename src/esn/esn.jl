@@ -41,22 +41,19 @@ train_data = rand(10, 100)  # 10 features, 100 time steps
 esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
 ```
 """
-function ESN(
-    train_data,
-    in_size::Int,
-    res_size::Int;
-    input_layer = scaled_rand,
-    reservoir = rand_sparse,
-    bias = zeros64,
-    reservoir_driver = RNN(),
-    nla_type = NLADefault(),
-    states_type = StandardStates(),
-    washout = 0,
-    rng = _default_rng(),
-    T = Float32,
-    matrix_type = typeof(train_data)
-)
-
+function ESN(train_data,
+        in_size::Int,
+        res_size::Int;
+        input_layer = scaled_rand,
+        reservoir = rand_sparse,
+        bias = zeros64,
+        reservoir_driver = RNN(),
+        nla_type = NLADefault(),
+        states_type = StandardStates(),
+        washout = 0,
+        rng = _default_rng(),
+        T = Float32,
+        matrix_type = typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
@@ -64,7 +61,7 @@ function ESN(
     end
 
     reservoir_matrix = reservoir(rng, T, res_size, res_size)
-    input_matrix = input_layer(rng, T, in_size, res_size)
+    input_matrix = input_layer(rng, T, res_size, in_size)
     bias_vector = bias(rng, res_size)
     inner_res_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_res_driver, train_data, washout, reservoir_matrix,

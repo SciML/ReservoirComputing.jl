@@ -54,7 +54,7 @@ Now that we have the data we can initialize the ESN with the chosen parameters. 
 input_size = 3
 res_size = 300
 esn = ESN(input_data, input_size, res_size;
-    reservoir = rand_sparse(;radius = 1.2, sparsity = 6 / res_size),
+    reservoir = rand_sparse(; radius = 1.2, sparsity = 6 / res_size),
     input_layer = weighted_init,
     nla_type = NLAT2())
 ```
@@ -104,6 +104,7 @@ If you use this library in your work, please cite:
   url     = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
+
 ## Acknowledgements
 
 This project was possible thanks to initial funding through the [Google summer of code](https://summerofcode.withgoogle.com/) 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/) and [RSC4Earth](https://rsc4earth.de/) for supporting the current progress on the library.

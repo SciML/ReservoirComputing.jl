@@ -52,23 +52,20 @@ function KnowledgeModel(prior_model, u0, tspan, datasize)
     return KnowledgeModel(prior_model, u0, tspan, dt, datasize, model_data)
 end
 
-function HybridESN(
-    model,
-    train_data,
-    in_size::Int,
-    res_size::Int;
-    input_layer = scaled_rand,
-    reservoir = rand_sparse,
-    bias = zeros64,
-    reservoir_driver = RNN(),
-    nla_type = NLADefault(),
-    states_type = StandardStates(),
-    washout = 0,
-    rng = _default_rng(),
-    T = Float32,
-    matrix_type = typeof(train_data)
-)
-
+function HybridESN(model,
+        train_data,
+        in_size::Int,
+        res_size::Int;
+        input_layer = scaled_rand,
+        reservoir = rand_sparse,
+        bias = zeros64,
+        reservoir_driver = RNN(),
+        nla_type = NLADefault(),
+        states_type = StandardStates(),
+        washout = 0,
+        rng = _default_rng(),
+        T = Float32,
+        matrix_type = typeof(train_data))
     train_data = vcat(train_data, model.model_data[:, 1:(end - 1)])
 
     if states_type isa AbstractPaddedStates
@@ -94,10 +91,9 @@ function HybridESN(
 end
 
 function (hesn::HybridESN)(prediction::AbstractPrediction,
-    output_layer::AbstractOutputLayer;
-    last_state = hesn.states[:, [end]],
-    kwargs...)
-
+        output_layer::AbstractOutputLayer;
+        last_state = hesn.states[:, [end]],
+        kwargs...)
     km = hesn.model
     pred_len = prediction.prediction_len
 
@@ -114,9 +110,8 @@ function (hesn::HybridESN)(prediction::AbstractPrediction,
 end
 
 function train(hesn::HybridESN,
-    target_data,
-    training_method = StandardRidge(0.0))
-
+        target_data,
+        training_method = StandardRidge(0.0))
     states = vcat(hesn.states, hesn.model.model_data[:, 2:end])
     states_new = hesn.states_type(hesn.nla_type, states, hesn.train_data[:, 1:end])
 
