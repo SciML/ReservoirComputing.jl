@@ -24,6 +24,7 @@ function DeepESN(train_data,
         rng = _default_rng(),
         T = Float64,
         matrix_type = typeof(train_data))
+        
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),

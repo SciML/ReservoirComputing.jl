@@ -29,12 +29,13 @@ esn_configs = [
     Dict(:reservoir => rand_sparse(; radius = 1.2),
         :reservoir_driver => GRU(variant = Minimal(),
             reservoir = rand_sparse(; radius = 1.0, sparsity = 0.5),
-            inner_layer = scaled_rand)),
+            inner_layer = scaled_rand,
+            bias = scaled_rand)),
     Dict(:reservoir => rand_sparse(; radius = 1.2),
         :reservoir_driver => MRNN(activation_function = (tanh, sigmoid),
             scaling_factor = (0.8, 0.1))),
 ]
 
-for config in esn_configs
+@testset "Test Drivers: $config" for config in esn_configs
     test_esn(input_data, target_data, training_method, config)
 end
