@@ -129,7 +129,7 @@ end
 
 function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
     esn_depth = length(W)
-    res_sizes = vcat(0, [get_ressize(W[i]) for i in 1:esn_depth])
+    res_sizes = vcat(0, [size(W[i],1) for i in 1:esn_depth])
     inner_states = [x[(1 + sum(res_sizes[1:i])):sum(res_sizes[1:(i + 1)])]
                     for i in 1:esn_depth]
     inner_inputs = vcat([y], inner_states[1:(end - 1)])

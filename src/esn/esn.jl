@@ -73,7 +73,7 @@ function ESN(train_data,
         states)
 end
 
-function (esn::ESN)(prediction::AbstractPrediction,
+function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
         output_layer::AbstractOutputLayer;
         last_state = esn.states[:, [end]],
         kwargs...)
@@ -122,7 +122,7 @@ trained_esn = train(esn, target_data, training_method=StandardRidge(1.0))
 - The training is handled by a lower-level `_train` function which takes the new state matrix
     and performs the actual training using the specified `training_method`.
 """
-function train(esn::ESN,
+function train(esn::AbstractEchoStateNetwork,
         target_data,
         training_method = StandardRidge(0.0))
     states_new = esn.states_type(esn.nla_type, esn.states, esn.train_data[:, 1:end])

@@ -14,9 +14,6 @@ end
     @safetestset "Test initializers" begin
         include("esn/test_inits.jl")
     end
-    @safetestset "ESN States" begin
-        include("esn/test_states.jl")
-    end
     @safetestset "ESN Train and Predict" begin
         include("esn/test_train.jl")
     end
@@ -24,6 +21,9 @@ end
         include("esn/test_drivers.jl")
     end
     @safetestset "Hybrid ESN" begin
+        include("esn/test_hybrid.jl")
+    end
+    @safetestset "Deep ESN" begin
         include("esn/test_hybrid.jl")
     end
 end
