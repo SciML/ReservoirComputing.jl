@@ -15,7 +15,7 @@ Random.seed!(77)
 res = rand_sparse(; radius=1.2, sparsity=0.1)
 esn = DeepESN(input_data, 1, res_size)
 
-output_layer = train(esn, target_data, ta)
-output = esn(Predictive(input_data), output_layer)
-@test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.22
+output_layer = train(esn, target_data)
+output = esn(Generative(length(test)), output_layer)
+@test mean(abs.(test .- output)) ./ mean(abs.(test)) < 0.22
 

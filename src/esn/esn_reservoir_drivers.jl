@@ -135,6 +135,7 @@ function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
     inner_inputs = vcat([y], inner_states[1:(end - 1)])
 
     for i in 1:esn_depth
+
         inner_states[i] = (1 - rnn.leaky_coefficient) .* inner_states[i] +
                           rnn.leaky_coefficient *
                           rnn.activation_function.((W[i] * inner_states[i]) .+

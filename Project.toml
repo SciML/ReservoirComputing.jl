@@ -37,6 +37,7 @@ SafeTestsets = "0.1"
 SparseArrays = "1.10"
 Statistics = "1.10"
 Test = "1"
+WeightInitializers = "0.1"
 julia = "1.6"
 
 [extras]

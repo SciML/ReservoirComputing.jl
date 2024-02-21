@@ -18,7 +18,6 @@ using WeightInitializers
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
-export AbstractLayer, create_layer
 export scaled_rand, weighted_init, sparse_init, informed_init, minimal_init
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal

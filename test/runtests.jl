@@ -24,7 +24,7 @@ end
         include("esn/test_hybrid.jl")
     end
     @safetestset "Deep ESN" begin
-        include("esn/test_hybrid.jl")
+        include("esn/deepesn.jl")
     end
 end
 

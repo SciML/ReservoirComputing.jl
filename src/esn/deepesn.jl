@@ -33,14 +33,14 @@ function DeepESN(train_data,
     end
 
     reservoir_matrix = [reservoir[i](rng, T, res_size, res_size) for i in 1:depth]
-    input_matrix = [input_layer[i](rng, T, res_size, in_size) for i in 1:depth]
+    input_matrix = [i == 1 ? input_layer[i](rng, T, res_size, in_size) : input_layer[i](rng, T, res_size, res_size) for i in 1:depth]
     bias_vector = [bias[i](rng, res_size) for i in 1:depth]
     inner_res_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_res_driver, train_data, washout, reservoir_matrix,
         input_matrix, bias_vector)
     train_data = train_data[:, (washout + 1):end]
 
-    DeepESN(res_size, train_data, variation, nla_type, input_matrix,
+    DeepESN(res_size, train_data, nla_type, input_matrix,
         inner_res_driver, reservoir_matrix, bias_vector, states_type, washout,
         states)
 end

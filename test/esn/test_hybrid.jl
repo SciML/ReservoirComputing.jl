@@ -30,15 +30,17 @@ test_data = ode_data[:, (train_len + 1):end][:, 1:1000]
 predict_len = size(test_data, 2)
 tspan_train = (tspan[1], ode_sol.t[train_len])
 
-hybrid = Hybrid(prior_model_data_generator, u0, tspan_train, train_len)
+km = KnowledgeModel(prior_model_data_generator, u0, tspan_train, train_len)
 
 Random.seed!(77)
-esn = ESN(input_data,
-    reservoir = RandSparseReservoir(300),
-    variation = hybrid)
+hesn = HybridESN(km,
+    input_data,
+    3,
+    300;
+    reservoir = rand_sparse)
 
-output_layer = train(esn, target_data, StandardRidge(0.3))
+output_layer = train(hesn, target_data, StandardRidge(0.3))
 
-output = esn(Generative(predict_len), output_layer)
+output = hesn(Generative(predict_len), output_layer)
 
 @test mean(abs.(test_data[1:100] .- output[1:100])) ./ mean(abs.(test_data[1:100])) < 0.11

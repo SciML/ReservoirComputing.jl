@@ -59,10 +59,10 @@ function obtain_esn_prediction(esn,
 end
 
 #prediction dispatch on esn 
-function next_state_prediction!(esn::ESN, x, x_new, out, out_pad, i, tmp_array, args...)
+function next_state_prediction!(esn::AbstractEchoStateNetwork, x, x_new, out, out_pad, i, tmp_array, args...)
     out_pad = pad_state!(esn.states_type, out_pad, out)
     xv = @view x[1:(esn.res_size)]
-    x = next_state!(x, esn.reservoir_driver, xv, out_pad,
+    x = next_state!(x, esn.reservoir_driver, x, out_pad,
         esn.reservoir_matrix, esn.input_matrix, esn.bias_vector, tmp_array)
     x_new = esn.states_type(esn.nla_type, x, out_pad)
     return x, x_new
@@ -86,7 +86,7 @@ function next_state_prediction!(hesn::HybridESN,
     return x, x_new
 end
 
-function allocate_outpad(ens::ESN, states_type, out)
+function allocate_outpad(ens::AbstractEchoStateNetwork, states_type, out)
     return allocate_singlepadding(states_type, out)
 end
 
