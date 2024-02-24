@@ -76,7 +76,7 @@ using ReservoirComputing, StatsBase
 res_size = 300
 input_layer = [
     MinimumLayer(0.85, IrrationalSample()),
-    MinimumLayer(0.95, IrrationalSample()),
+    MinimumLayer(0.95, IrrationalSample())
 ]
 reservoirs = [SimpleCycleReservoir(res_size, 0.7),
     CycleJumpsReservoir(res_size, cycle_weight = 0.7, jump_weight = 0.2, jump_size = 5)]

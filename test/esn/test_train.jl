@@ -18,7 +18,7 @@ training_methods = [
     StandardRidge(regularization_coeff = reg),
     LinearModel(RidgeRegression, regression_kwargs = (; lambda = reg)),
     LinearModel(regression = RidgeRegression, regression_kwargs = (; lambda = reg)),
-    EpsilonSVR(),
+    EpsilonSVR()
 ]
 
 for t in training_methods

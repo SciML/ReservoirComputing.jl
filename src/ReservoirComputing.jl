@@ -65,7 +65,7 @@ end
 """
     Predictive(prediction_data)
 
-Given a set of labels as ```prediction_data```, this method of prediction will return the corresponding labels in a standard Machine Learning fashion.
+Given a set of labels as `prediction_data`, this method of prediction will return the corresponding labels in a standard Machine Learning fashion.
 """
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)

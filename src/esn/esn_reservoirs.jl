@@ -18,18 +18,20 @@ end
     RandSparseReservoir(res_size, radius, sparsity)
     RandSparseReservoir(res_size; radius=1.0, sparsity=0.1)
 
-
 Returns a random sparse reservoir initializer, which generates a matrix of size `res_size x res_size` with the specified `sparsity` and scaled spectral radius according to `radius`. This type of reservoir initializer is commonly used in Echo State Networks (ESNs) for capturing complex temporal dependencies.
 
 # Arguments
-- `res_size`: The size of the reservoir matrix.
-- `radius`: The desired spectral radius of the reservoir. By default, it is set to 1.0.
-- `sparsity`: The sparsity level of the reservoir matrix, controlling the fraction of zero elements. By default, it is set to 0.1.
+
+  - `res_size`: The size of the reservoir matrix.
+  - `radius`: The desired spectral radius of the reservoir. By default, it is set to 1.0.
+  - `sparsity`: The sparsity level of the reservoir matrix, controlling the fraction of zero elements. By default, it is set to 0.1.
 
 # Returns
+
 A RandSparseReservoir object that can be used as a reservoir initializer in ESN construction.
 
 # References
+
 This type of reservoir initialization is a common choice in ESN construction for its ability to capture temporal dependencies in data. However, there is no specific reference associated with this function.
 """
 function RandSparseReservoir(res_size; radius = 1.0, sparsity = 0.1)
@@ -43,14 +45,17 @@ end
 Given an `AbstractReservoir` constructor and the size of the reservoir (`res_size`), this function returns the corresponding reservoir matrix. Alternatively, it accepts a pre-generated matrix.
 
 # Arguments
-- `reservoir`: An `AbstractReservoir` object or constructor.
-- `res_size`: The size of the reservoir matrix.
-- `matrix_type`: The type of the resulting matrix. By default, it is set to `Matrix{Float64}`.
+
+  - `reservoir`: An `AbstractReservoir` object or constructor.
+  - `res_size`: The size of the reservoir matrix.
+  - `matrix_type`: The type of the resulting matrix. By default, it is set to `Matrix{Float64}`.
 
 # Returns
+
 A matrix representing the reservoir, generated based on the properties of the specified `reservoir` object or constructor.
 
 # References
+
 The choice of reservoir initialization is crucial in Echo State Networks (ESNs) for achieving effective temporal modeling. Specific references for reservoir initialization methods may vary based on the type of reservoir used, but the practice of initializing reservoirs for ESNs is widely documented in the ESN literature.
 """
 function create_reservoir(reservoir::RandSparseReservoir,
@@ -107,16 +112,19 @@ end
 Returns an initializer to build a sparse reservoir matrix with the given `sparsity` by using a pseudo-SVD approach as described in [^yang].
 
 # Arguments
-- `res_size`: The size of the reservoir matrix.
-- `max_value`: The maximum absolute value of elements in the matrix.
-- `sparsity`: The desired sparsity level of the reservoir matrix.
-- `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
-- `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
+
+  - `res_size`: The size of the reservoir matrix.
+  - `max_value`: The maximum absolute value of elements in the matrix.
+  - `sparsity`: The desired sparsity level of the reservoir matrix.
+  - `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
+  - `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
 
 # Returns
+
 A PseudoSVDReservoir object that can be used as a reservoir initializer in ESN construction.
 
 # References
+
 This reservoir initialization method, based on a pseudo-SVD approach, is inspired by the work in [^yang], which focuses on designing polynomial echo state networks for time series prediction.
 
 [^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
@@ -199,15 +207,18 @@ Returns a Delay Line Reservoir matrix constructor to obtain a deterministic rese
 described in [^Rodan2010].
 
 # Arguments
-- `res_size::Int`: The size of the reservoir.
-- `weight::T`: The weight determines the absolute value of all the connections in the reservoir.
+
+  - `res_size::Int`: The size of the reservoir.
+  - `weight::T`: The weight determines the absolute value of all the connections in the reservoir.
 
 # Returns
+
 A `DelayLineReservoir` object.
 
 # References
+
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function DelayLineReservoir(res_size; weight = 0.1)
     return DelayLineReservoir(res_size, weight)
@@ -242,16 +253,19 @@ as described in [^Rodan2010]. The `weight` and `fb_weight` can be passed as eith
 keyword arguments, and they determine the absolute values of the connections in the reservoir.
 
 # Arguments
-- `res_size::Int`: The size of the reservoir.
-- `weight::T`: The weight determines the absolute value of forward connections in the reservoir.
-- `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir.
+
+  - `res_size::Int`: The size of the reservoir.
+  - `weight::T`: The weight determines the absolute value of forward connections in the reservoir.
+  - `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir.
 
 # Returns
+
 A `DelayLineBackwardReservoir` object.
 
 # References
+
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function DelayLineBackwardReservoir(res_size; weight = 0.1, fb_weight = 0.2)
     return DelayLineBackwardReservoir(res_size, weight, fb_weight)
@@ -286,15 +300,18 @@ described in [^Rodan2010]. The `weight` can be passed as an argument or a keywor
 absolute value of all the connections in the reservoir.
 
 # Arguments
-- `res_size::Int`: The size of the reservoir.
-- `weight::T`: The weight determines the absolute value of connections in the reservoir.
+
+  - `res_size::Int`: The size of the reservoir.
+  - `weight::T`: The weight determines the absolute value of connections in the reservoir.
 
 # Returns
+
 A `SimpleCycleReservoir` object.
 
 # References
+
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function SimpleCycleReservoir(res_size; weight = 0.1)
     return SimpleCycleReservoir(res_size, weight)
@@ -331,17 +348,20 @@ in [^Rodan2012]. The `cycle_weight`, `jump_weight`, and `jump_size` can be passe
 determine the absolute values of connections in the reservoir. The `jump_size` determines the jumps between `jump_weight`s.
 
 # Arguments
-- `res_size::Int`: The size of the reservoir.
-- `cycle_weight::T`: The weight of cycle connections.
-- `jump_weight::T`: The weight of jump connections.
-- `jump_size::Int`: The number of steps between jump connections.
+
+  - `res_size::Int`: The size of the reservoir.
+  - `cycle_weight::T`: The weight of cycle connections.
+  - `jump_weight::T`: The weight of jump connections.
+  - `jump_size::Int`: The number of steps between jump connections.
 
 # Returns
+
 A `CycleJumpsReservoir` object.
 
 # References
+
 [^Rodan2012]: Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs
-with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+    with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
 function CycleJumpsReservoir(res_size; cycle_weight = 0.1, jump_weight = 0.1, jump_size = 3)
     return CycleJumpsReservoir(res_size, cycle_weight, jump_weight, jump_size)
@@ -376,13 +396,16 @@ end
 Return a constructor for a matrix of zeros with dimensions `res_size x res_size`.
 
 # Arguments
-- None
+
+  - None
 
 # Returns
+
 A `NullReservoir` object.
 
 # References
-- None
+
+  - None
 """
 struct NullReservoir <: AbstractReservoir end
 
