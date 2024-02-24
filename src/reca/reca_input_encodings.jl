@@ -11,11 +11,11 @@ end
     RandomMapping(permutations; expansion_size=40)
     RandomMapping(;permutations=8, expansion_size=40)
 
-Random mapping of the input data directly in the reservoir. The ```expansion_size```
-determines the dimension of the single reservoir, and ```permutations``` determines the
+Random mapping of the input data directly in the reservoir. The `expansion_size`
+determines the dimension of the single reservoir, and `permutations` determines the
 number of total reservoirs that will be connected, each with a different mapping.
 The detail of this implementation can be found in [1].
- 
+
 [1] Nichele, Stefano, and Andreas Molund. “Deep reservoir computing using cellular
 automata.” arXiv preprint arXiv:1703.02806 (2017).
 """
@@ -66,7 +66,8 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
-        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(input_vector,
+        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(
+            input_vector,
             new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
             rm.maps[i,
                 :])

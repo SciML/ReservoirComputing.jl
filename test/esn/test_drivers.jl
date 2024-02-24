@@ -16,7 +16,7 @@ esn = ESN(input_data;
     reservoir_driver = GRU(variant = FullyGated(),
         reservoir = [
             RandSparseReservoir(res_size, 1.0, 0.5),
-            RandSparseReservoir(res_size, 1.2, 0.1),
+            RandSparseReservoir(res_size, 1.2, 0.1)
         ]))
 
 output_layer = train(esn, target_data, training_method)
@@ -47,7 +47,7 @@ output = esn(Predictive(target_data), output_layer, initial_conditions = target_
 esn = ESN(input_data;
     reservoir = [
         RandSparseReservoir(res_size, 1.2, 0.1),
-        RandSparseReservoir(res_size, 1.2, 0.1),
+        RandSparseReservoir(res_size, 1.2, 0.1)
     ])
 output_layer = train(esn, target_data, training_method)
 output = esn(Predictive(target_data), output_layer, initial_conditions = target_data[1])
@@ -56,7 +56,7 @@ output = esn(Predictive(target_data), output_layer, initial_conditions = target_
 esn = ESN(input_data;
     reservoir = [
         RandSparseReservoir(res_size, 1.2, 0.1),
-        RandSparseReservoir(res_size, 1.2, 0.1),
+        RandSparseReservoir(res_size, 1.2, 0.1)
     ],
     input_layer = [DenseLayer(), DenseLayer()],
     bias = [NullLayer(), NullLayer()])

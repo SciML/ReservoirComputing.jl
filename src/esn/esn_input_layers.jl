@@ -14,12 +14,15 @@ elements distributed uniformly within the range [-`scaling`, `scaling`],
 following the approach in [^Lu].
 
 # Parameters
-- `scaling`: The scaling factor for the weight distribution (default: 0.1).
+
+  - `scaling`: The scaling factor for the weight distribution (default: 0.1).
 
 # Returns
-- A `WeightedInput` instance to be used for initializing the input layer of an ESN.
+
+  - A `WeightedInput` instance to be used for initializing the input layer of an ESN.
 
 Reference:
+
 [^Lu]: Lu, Zhixin, et al.
     "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
@@ -59,10 +62,12 @@ This scaling factor can be provided either as an argument or a keyword argument.
 The `DenseLayer` is the default input layer in `ESN` construction.
 
 # Parameters
-- `scaling`: The scaling factor for weight distribution (default: 0.1).
+
+  - `scaling`: The scaling factor for weight distribution (default: 0.1).
 
 # Returns
-- A `DenseLayer` instance for initializing the ESN's input layer.
+
+  - A `DenseLayer` instance for initializing the ESN's input layer.
 """
 struct DenseLayer{T} <: AbstractLayer
     scaling::T
@@ -78,12 +83,14 @@ end
 Generates a matrix layer of size `res_size` x `in_size`, constructed according to the specifications of the `input_layer`.
 
 # Parameters
-- `input_layer`: An instance of `AbstractLayer` determining the layer construction.
-- `res_size`: The number of rows (reservoir size) for the layer.
-- `in_size`: The number of columns (input size) for the layer.
+
+  - `input_layer`: An instance of `AbstractLayer` determining the layer construction.
+  - `res_size`: The number of rows (reservoir size) for the layer.
+  - `in_size`: The number of columns (input size) for the layer.
 
 # Returns
-- A matrix representing the constructed layer.
+
+  - A matrix representing the constructed layer.
 """
 function create_layer(input_layer::DenseLayer,
         res_size,
@@ -104,11 +111,13 @@ The layer is initialized with weights distributed within [-`scaling`, `scaling`]
 and a specified `sparsity` level. Both `scaling` and `sparsity` can be set as arguments or keyword arguments.
 
 # Parameters
-- `scaling`: Scaling factor for weight distribution (default: 0.1).
-- `sparsity`: Sparsity level of the layer (default: 0.1).
+
+  - `scaling`: Scaling factor for weight distribution (default: 0.1).
+  - `sparsity`: Sparsity level of the layer (default: 0.1).
 
 # Returns
-- A `SparseLayer` instance for initializing ESN's input layer with sparse connections.
+
+  - A `SparseLayer` instance for initializing ESN's input layer with sparse connections.
 """
 struct SparseLayer{T} <: AbstractLayer
     scaling::T
@@ -151,14 +160,17 @@ The parameter `p` sets the probability of a weight being positive, as per the `D
 This method of sign weight determination for input layers is based on the approach in [^Rodan].
 
 # Parameters
-- `p`: Probability of a positive weight (default: 0.5).
+
+  - `p`: Probability of a positive weight (default: 0.5).
 
 # Returns
-- A `BernoulliSample` instance for generating sign weights in `MinimumLayer`.
+
+  - A `BernoulliSample` instance for generating sign weights in `MinimumLayer`.
 
 Reference:
+
 [^Rodan]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network." 
+    "Minimum complexity echo state network."
     IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
 """
 function BernoulliSample(; p = 0.5)
@@ -180,13 +192,16 @@ The `start` parameter sets the starting point in the decimal sequence.
 The signs are assigned based on the thresholding of each decimal digit against 4.5, as described in [^Rodan].
 
 # Parameters
-- `irrational`: An irrational number for weight sign determination (default: π).
-- `start`: Starting index in the decimal expansion (default: 1).
+
+  - `irrational`: An irrational number for weight sign determination (default: π).
+  - `start`: Starting index in the decimal expansion (default: 1).
 
 # Returns
-- An `IrrationalSample` instance for generating sign weights in `MinimumLayer`.
+
+  - An `IrrationalSample` instance for generating sign weights in `MinimumLayer`.
 
 Reference:
+
 [^Rodan]: Rodan, Ali, and Peter Tiňo.
     "Simple deterministically constructed cycle reservoirs with regular jumps."
     Neural Computation 24.7 (2012): 1822-1852.
@@ -211,13 +226,16 @@ weight determined by the `sampling` method. This approach, as detailed in [^Roda
 allows for controlled weight distribution in the layer.
 
 # Parameters
-- `weight`: Absolute value of weights in the layer.
-- `sampling`: Method for determining the sign of weights (default: `BernoulliSample(0.5)`).
+
+  - `weight`: Absolute value of weights in the layer.
+  - `sampling`: Method for determining the sign of weights (default: `BernoulliSample(0.5)`).
 
 # Returns
-- A `MinimumLayer` instance for initializing the ESN's input layer.
+
+  - A `MinimumLayer` instance for initializing the ESN's input layer.
 
 References:
+
 [^Rodan1]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
@@ -291,23 +309,27 @@ end
 
 Creates an `InformedLayer` initializer for Echo State Networks (ESNs) that generates
 a weighted input layer matrix. The matrix contains random non-zero elements drawn from
-the range [-```scaling```, ```scaling```]. This initializer ensures that a fraction (`gamma`)
+the range [-`scaling`, `scaling`]. This initializer ensures that a fraction (`gamma`)
 of reservoir nodes are exclusively connected to the raw inputs, while the rest are
 connected to the outputs of a prior knowledge model, as described in [^Pathak].
 
 # Arguments
-- `model_in_size`: The size of the prior knowledge model's output,
+
+  - `model_in_size`: The size of the prior knowledge model's output,
     which determines the number of columns in the input layer matrix.
 
 # Keyword Arguments
-- `scaling`: The absolute value of the weights (default: 0.1).
-- `gamma`: The fraction of reservoir nodes connected exclusively to raw inputs (default: 0.5).
+
+  - `scaling`: The absolute value of the weights (default: 0.1).
+  - `gamma`: The fraction of reservoir nodes connected exclusively to raw inputs (default: 0.5).
 
 # Returns
-- An `InformedLayer` instance for initializing the ESN's input layer matrix.
+
+  - An `InformedLayer` instance for initializing the ESN's input layer matrix.
 
 Reference:
-[^Pathak]: Jaideep Pathak et al. 
+
+[^Pathak]: Jaideep Pathak et al.
     "Hybrid Forecasting of Chaotic Processes: Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function InformedLayer(model_in_size; scaling = 0.1, gamma = 0.5)
@@ -359,7 +381,8 @@ end
 Creates a `NullLayer` initializer for Echo State Networks (ESNs) that generates a vector of zeros.
 
 # Returns
-- A `NullLayer` instance for initializing the ESN's input layer matrix.
+
+  - A `NullLayer` instance for initializing the ESN's input layer matrix.
 """
 struct NullLayer <: AbstractLayer end
 
