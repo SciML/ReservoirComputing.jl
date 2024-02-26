@@ -12,10 +12,9 @@ const reg = 10e-6
 #test_types = [Float64, Float32, Float16]
 
 Random.seed!(77)
-res = rand_sparse(; radius=1.2, sparsity=0.1)
+res = rand_sparse(; radius = 1.2, sparsity = 0.1)
 esn = DeepESN(input_data, 1, res_size)
 
 output_layer = train(esn, target_data)
 output = esn(Generative(length(test)), output_layer)
 @test mean(abs.(test .- output)) ./ mean(abs.(test)) < 0.22
-

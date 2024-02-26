@@ -24,7 +24,7 @@ esn_configs = [
         :reservoir_driver => GRU(variant = FullyGated(),
             reservoir = [
                 rand_sparse(; radius = 1.0, sparsity = 0.5),
-                rand_sparse(; radius = 1.2, sparsity = 0.1),
+                rand_sparse(; radius = 1.2, sparsity = 0.1)
             ])),
     Dict(:reservoir => rand_sparse(; radius = 1.2),
         :reservoir_driver => GRU(variant = Minimal(),
@@ -33,7 +33,7 @@ esn_configs = [
             bias = scaled_rand)),
     Dict(:reservoir => rand_sparse(; radius = 1.2),
         :reservoir_driver => MRNN(activation_function = (tanh, sigmoid),
-            scaling_factor = (0.8, 0.1))),
+            scaling_factor = (0.8, 0.1)))
 ]
 
 @testset "Test Drivers: $config" for config in esn_configs

@@ -12,7 +12,7 @@ const reg = 10e-6
 #test_types = [Float64, Float32, Float16]
 
 Random.seed!(77)
-res = rand_sparse(; radius=1.2, sparsity=0.1)
+res = rand_sparse(; radius = 1.2, sparsity = 0.1)
 esn = ESN(input_data, 1, res_size;
     reservoir = rand_sparse)
 
@@ -20,7 +20,7 @@ training_methods = [
     StandardRidge(regularization_coeff = reg),
     LinearModel(RidgeRegression, regression_kwargs = (; lambda = reg)),
     LinearModel(regression = RidgeRegression, regression_kwargs = (; lambda = reg)),
-    EpsilonSVR(),
+    EpsilonSVR()
 ]
 
 # TODO check types

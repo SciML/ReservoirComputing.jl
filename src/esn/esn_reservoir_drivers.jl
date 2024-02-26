@@ -129,13 +129,12 @@ end
 
 function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
     esn_depth = length(W)
-    res_sizes = vcat(0, [size(W[i],1) for i in 1:esn_depth])
+    res_sizes = vcat(0, [size(W[i], 1) for i in 1:esn_depth])
     inner_states = [x[(1 + sum(res_sizes[1:i])):sum(res_sizes[1:(i + 1)])]
                     for i in 1:esn_depth]
     inner_inputs = vcat([y], inner_states[1:(end - 1)])
 
     for i in 1:esn_depth
-
         inner_states[i] = (1 - rnn.leaky_coefficient) .* inner_states[i] +
                           rnn.leaky_coefficient *
                           rnn.activation_function.((W[i] * inner_states[i]) .+
@@ -180,9 +179,7 @@ This function creates an MRNN object with the specified activation functions, le
     "_A novel model of leaky integrator echo state network for
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
-function MRNN(
-        ;
-        activation_function = [tanh, sigmoid],
+function MRNN(; activation_function = [tanh, sigmoid],
         leaky_coefficient = 1.0,
         scaling_factor = fill(leaky_coefficient, length(activation_function)))
     @assert length(activation_function) == length(scaling_factor)
@@ -283,9 +280,7 @@ A GRUParams object containing the parameters needed for the GRU-based reservoir 
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
-function GRU(
-        ;
-        activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
+function GRU(; activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
         inner_layer = fill(scaled_rand, 2),
         reservoir = fill(rand_sparse, 2),
         bias = fill(scaled_rand, 2),

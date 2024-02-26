@@ -39,8 +39,7 @@ models in the library. All the parameters have to be passed into ```regression_k
 apart from the solver choice. MLJLinearModels.jl needs to be called in order
 to use these models.
 """
-function LinearModel(
-        ; regression = LinearRegression,
+function LinearModel(; regression = LinearRegression,
         solver = Analytical(),
         regression_kwargs = (;))
     return LinearModel(regression, solver, regression_kwargs)

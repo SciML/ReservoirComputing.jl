@@ -66,7 +66,8 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
-        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(input_vector,
+        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(
+            input_vector,
             new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
             rm.maps[i,
                 :])

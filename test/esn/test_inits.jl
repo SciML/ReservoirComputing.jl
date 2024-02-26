@@ -23,14 +23,14 @@ reservoir_inits = [
     delay_line_backward,
     cycle_jumps,
     simple_cycle,
-    pseudo_svd,
+    pseudo_svd
 ]
 input_inits = [
     scaled_rand,
     weighted_init,
     sparse_init,
     minimal_init,
-    minimal_init(; sampling_type = :irrational),
+    minimal_init(; sampling_type = :irrational)
 ]
 
 @testset "Reservoir Initializers" begin
@@ -55,7 +55,7 @@ input_inits = [
         delay_line,
         delay_line_backward,
         cycle_jumps,
-        simple_cycle,
+        simple_cycle
     ]
         dl = init(res_size, res_size)
         if init === delay_line_backward
@@ -82,7 +82,7 @@ end
 
     @testset "Minimum complexity: $init" for init in [
         minimal_init,
-        minimal_init(; sampling_type = :irrational),
+        minimal_init(; sampling_type = :irrational)
     ]
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
