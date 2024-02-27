@@ -54,7 +54,7 @@ function ESN(train_data,
         nla_type = NLADefault(),
         states_type = StandardStates(),
         washout = 0,
-        rng = _default_rng(),
+        rng = WeightInitializers._default_rng(),
         T = Float32,
         matrix_type = typeof(train_data))
     if states_type isa AbstractPaddedStates
@@ -120,13 +120,6 @@ trained_esn = train(esn, target_data)
 # Train the ESN using a custom training method
 trained_esn = train(esn, target_data, training_method = StandardRidge(1.0))
 ```
-
-# Notes
-
-  - When using a `Hybrid` variation, the function extends the state matrix with data from the
-    physical model included in the `variation`.
-  - The training is handled by a lower-level `_train` function which takes the new state matrix
-    and performs the actual training using the specified `training_method`.
 """
 function train(esn::AbstractEchoStateNetwork,
         target_data,

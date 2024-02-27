@@ -23,10 +23,10 @@ function rand_sparse(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         radius = T(1.0),
-        sparsity = T(0.1)) where {T <: Number}
-    reservoir_matrix = Matrix{T}(sprand(rng, dims..., sparsity))
-    reservoir_matrix = T(2.0) .* (reservoir_matrix .- T(0.5))
-    replace!(reservoir_matrix, T(-1.0) => T(0.0))
+        sparsity = T(0.1),
+        std = T(1.0)) where {T <: Number}
+    lcl_sparsity = T(1) - sparsity #consistency with current implementations
+    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
@@ -299,14 +299,3 @@ end
 function get_sparsity(M, dim)
     return size(M[M .!= 0], 1) / (dim * dim - size(M[M .!= 0], 1)) #nonzero/zero elements
 end
-
-# from WeightInitializers.jl, TODO @MartinuzziFrancesco consider importing package
-function _default_rng()
-    @static if VERSION >= v"1.7"
-        return Xoshiro(1234)
-    else
-        return MersenneTwister(1234)
-    end
-end
-
-__partial_apply(fn, inp) = fn$inp

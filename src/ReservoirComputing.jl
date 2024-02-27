@@ -11,14 +11,13 @@ using NNlib
 using Optim
 using PartialFunctions
 using Random
-using SparseArrays
 using Statistics
 using WeightInitializers
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
-export scaled_rand, weighted_init, sparse_init, informed_init, minimal_init
+export scaled_rand, weighted_init, informed_init, minimal_init
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, train
@@ -76,26 +75,27 @@ end
 #fallbacks for initializers
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd,
-    :scaled_rand, :weighted_init, :sparse_init, :informed_init, :minimal_init)
+    :scaled_rand, :weighted_init, :informed_init, :minimal_init)
     NType = ifelse(initializer === :rand_sparse, Real, Number)
     @eval function ($initializer)(dims::Integer...; kwargs...)
-        return $initializer(_default_rng(), Float32, dims...; kwargs...)
+        return $initializer(WeightInitializers._default_rng(), Float32, dims...; kwargs...)
     end
     @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
         return $initializer(rng, Float32, dims...; kwargs...)
     end
     @eval function ($initializer)(::Type{T},
             dims::Integer...; kwargs...) where {T <: $NType}
-        return $initializer(_default_rng(), T, dims...; kwargs...)
+        return $initializer(WeightInitializers._default_rng(), T, dims...; kwargs...)
     end
     @eval function ($initializer)(rng::AbstractRNG; kwargs...)
-        return __partial_apply($initializer, (rng, (; kwargs...)))
+        return WeightInitializers.__partial_apply($initializer, (rng, (; kwargs...)))
     end
     @eval function ($initializer)(rng::AbstractRNG,
             ::Type{T}; kwargs...) where {T <: $NType}
-        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
+        return WeightInitializers.__partial_apply($initializer, ((rng, T), (; kwargs...)))
     end
-    @eval ($initializer)(; kwargs...) = __partial_apply($initializer, (; kwargs...))
+    @eval ($initializer)(; kwargs...) = WeightInitializers.__partial_apply(
+        $initializer, (; kwargs...))
 end
 
 #general
