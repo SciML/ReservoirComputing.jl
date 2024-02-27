@@ -22,7 +22,7 @@ function DeepESN(train_data,
         nla_type = NLADefault(),
         states_type = StandardStates(),
         washout::Int = 0,
-        rng = _default_rng(),
+        rng = WeightInitializers._default_rng(),
         T = Float64,
         matrix_type = typeof(train_data))
     if states_type isa AbstractPaddedStates
