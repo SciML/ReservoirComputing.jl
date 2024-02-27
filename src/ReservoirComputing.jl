@@ -94,7 +94,8 @@ for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jump
             ::Type{T}; kwargs...) where {T <: $NType}
         return WeightInitializers.__partial_apply($initializer, ((rng, T), (; kwargs...)))
     end
-    @eval ($initializer)(; kwargs...) = WeightInitializers.__partial_apply($initializer, (; kwargs...))
+    @eval ($initializer)(; kwargs...) = WeightInitializers.__partial_apply(
+        $initializer, (; kwargs...))
 end
 
 #general

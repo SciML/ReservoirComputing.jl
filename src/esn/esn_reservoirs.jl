@@ -25,9 +25,8 @@ function rand_sparse(rng::AbstractRNG,
         radius = T(1.0),
         sparsity = T(0.1),
         std = T(1.0)) where {T <: Number}
-
-    lcl_sparsity = T(1)-sparsity #consistency with current implementations
-    reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
+    lcl_sparsity = T(1) - sparsity #consistency with current implementations
+    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
