@@ -4,16 +4,19 @@
 Create and return a random sparse reservoir matrix for use in Echo State Networks (ESNs). The matrix will be of size specified by `dims`, with specified `sparsity` and scaled spectral radius according to `radius`.
 
 # Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation.
-- `T`: The data type for the elements of the matrix.
-- `dims`: Dimensions of the reservoir matrix.
-- `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
-- `sparsity`: The sparsity level of the reservoir matrix, controlling the fraction of zero elements. Defaults to 0.1.
+
+  - `rng`: An instance of `AbstractRNG` for random number generation.
+  - `T`: The data type for the elements of the matrix.
+  - `dims`: Dimensions of the reservoir matrix.
+  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
+  - `sparsity`: The sparsity level of the reservoir matrix, controlling the fraction of zero elements. Defaults to 0.1.
 
 # Returns
+
 A matrix representing the random sparse reservoir.
 
 # References
+
 This type of reservoir initialization is commonly used in ESNs for capturing temporal dependencies in data.
 """
 function rand_sparse(rng::AbstractRNG,
@@ -38,20 +41,24 @@ end
 Create and return a delay line reservoir matrix for use in Echo State Networks (ESNs). A delay line reservoir is a deterministic structure where each unit is connected only to its immediate predecessor with a specified weight. This method is particularly useful for tasks that require specific temporal processing.
 
 # Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation. This argument is not used in the current implementation but is included for consistency with other initialization functions.
-- `T`: The data type for the elements of the matrix.
-- `dims`: Dimensions of the reservoir matrix. Typically, this should be a tuple of two equal integers representing a square matrix.
-- `weight`: The weight determines the absolute value of all connections in the reservoir. Defaults to 0.1.
+
+  - `rng`: An instance of `AbstractRNG` for random number generation. This argument is not used in the current implementation but is included for consistency with other initialization functions.
+  - `T`: The data type for the elements of the matrix.
+  - `dims`: Dimensions of the reservoir matrix. Typically, this should be a tuple of two equal integers representing a square matrix.
+  - `weight`: The weight determines the absolute value of all connections in the reservoir. Defaults to 0.1.
 
 # Returns
+
 A delay line reservoir matrix with dimensions specified by `dims`. The matrix is initialized such that each element in the `i+1`th row and `i`th column is set to `weight`, and all other elements are zeros.
 
 # Example
+
 ```julia
-reservoir = delay_line(Float64, 100, 100; weight=0.2)
+reservoir = delay_line(Float64, 100, 100; weight = 0.2)
 ```
 
 # References
+
 This type of reservoir initialization is described in:
 Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
 """
@@ -78,19 +85,21 @@ as described in [^Rodan2010]. The `weight` and `fb_weight` can be passed as eith
 keyword arguments, and they determine the absolute values of the connections in the reservoir.
 
 # Arguments
-- `rng::AbstractRNG`: Random number generator.
-- `T::Type`: Type of the elements in the reservoir matrix.
-- `dims::Integer...`: Dimensions of the reservoir matrix.
-- `weight::T`: The weight determines the absolute value of forward connections in the reservoir, and is set to 0.1 by default.
-- `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir, and is set to 0.2 by default.
 
+  - `rng::AbstractRNG`: Random number generator.
+  - `T::Type`: Type of the elements in the reservoir matrix.
+  - `dims::Integer...`: Dimensions of the reservoir matrix.
+  - `weight::T`: The weight determines the absolute value of forward connections in the reservoir, and is set to 0.1 by default.
+  - `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir, and is set to 0.2 by default.
 
 # Returns
+
 Reservoir matrix with the dimensions specified by `dims` and weights.
 
 # References
+
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG,
         ::Type{T},
@@ -115,19 +124,22 @@ end
 Create a cycle jumps reservoir with the specified dimensions, cycle weight, jump weight, and jump size.
 
 # Arguments
-- `rng::AbstractRNG`: Random number generator.
-- `T::Type`: Type of the elements in the reservoir matrix.
-- `dims::Integer...`: Dimensions of the reservoir matrix.
-- `cycle_weight::T = T(0.1)`:  The weight of cycle connections.
-- `jump_weight::T = T(0.1)`: The weight of jump connections.
-- `jump_size::Int = 3`:  The number of steps between jump connections.
+
+  - `rng::AbstractRNG`: Random number generator.
+  - `T::Type`: Type of the elements in the reservoir matrix.
+  - `dims::Integer...`: Dimensions of the reservoir matrix.
+  - `cycle_weight::T = T(0.1)`:  The weight of cycle connections.
+  - `jump_weight::T = T(0.1)`: The weight of jump connections.
+  - `jump_size::Int = 3`:  The number of steps between jump connections.
 
 # Returns
+
 Reservoir matrix with the specified dimensions, cycle weight, jump weight, and jump size.
 
 # References
+
 [^Rodan2012]: Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs
-with regular jumps." Neural computation 24.7 (2012): 1822-1852.
+    with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
 function cycle_jumps(rng::AbstractRNG,
         ::Type{T},
@@ -163,17 +175,20 @@ end
 Create a simple cycle reservoir with the specified dimensions and weight.
 
 # Arguments
-- `rng::AbstractRNG`: Random number generator.
-- `T::Type`: Type of the elements in the reservoir matrix.
-- `dims::Integer...`: Dimensions of the reservoir matrix.
-- `weight::T = T(0.1)`: Weight of the connections in the reservoir matrix.
+
+  - `rng::AbstractRNG`: Random number generator.
+  - `T::Type`: Type of the elements in the reservoir matrix.
+  - `dims::Integer...`: Dimensions of the reservoir matrix.
+  - `weight::T = T(0.1)`: Weight of the connections in the reservoir matrix.
 
 # Returns
+
 Reservoir matrix with the dimensions specified by `dims` and weights.
 
 # References
+
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
-IEEE transactions on neural networks 22.1 (2010): 131-144.
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG,
         ::Type{T},
@@ -196,15 +211,17 @@ end
     Returns an initializer to build a sparse reservoir matrix with the given `sparsity` by using a pseudo-SVD approach as described in [^yang].
 
 # Arguments
-- `rng::AbstractRNG`: Random number generator.
-- `T::Type`: Type of the elements in the reservoir matrix.
-- `dims::Integer...`: Dimensions of the reservoir matrix.
-- `max_value`: The maximum absolute value of elements in the matrix.
-- `sparsity`: The desired sparsity level of the reservoir matrix.
-- `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
-- `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
+
+  - `rng::AbstractRNG`: Random number generator.
+  - `T::Type`: Type of the elements in the reservoir matrix.
+  - `dims::Integer...`: Dimensions of the reservoir matrix.
+  - `max_value`: The maximum absolute value of elements in the matrix.
+  - `sparsity`: The desired sparsity level of the reservoir matrix.
+  - `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
+  - `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
 
 # Returns
+
 Reservoir matrix with the specified dimensions, max value, and sparsity.
 
 # References

@@ -25,20 +25,23 @@ end
     Hybrid(prior_model, u0, tspan, datasize)
 
 Constructs a `Hybrid` variation of Echo State Networks (ESNs) integrating a knowledge-based model
-(`prior_model`) with ESNs for advanced training and prediction in chaotic systems. 
+(`prior_model`) with ESNs for advanced training and prediction in chaotic systems.
 
 # Parameters
-- `prior_model`: A knowledge-based model function for integration with ESNs.
-- `u0`: Initial conditions for the model.
-- `tspan`: Time span as a tuple, indicating the duration for model operation.
-- `datasize`: The size of the data to be processed.
+
+  - `prior_model`: A knowledge-based model function for integration with ESNs.
+  - `u0`: Initial conditions for the model.
+  - `tspan`: Time span as a tuple, indicating the duration for model operation.
+  - `datasize`: The size of the data to be processed.
 
 # Returns
-- A `Hybrid` struct instance representing the combined ESN and knowledge-based model.
+
+  - A `Hybrid` struct instance representing the combined ESN and knowledge-based model.
 
 This method is effective for chaotic processes as highlighted in [^Pathak].
 
 Reference:
+
 [^Pathak]: Jaideep Pathak et al.
     "Hybrid Forecasting of Chaotic Processes:
     Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).

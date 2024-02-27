@@ -4,18 +4,22 @@
 Create and return a matrix with random values, uniformly distributed within a range defined by `scaling`. This function is useful for initializing matrices, such as the layers of a neural network, with scaled random values.
 
 # Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation.
-- `T`: The data type for the elements of the matrix.
-- `dims`: Dimensions of the matrix. It must be a 2-element tuple specifying the number of rows and columns (e.g., `(res_size, in_size)`).
-- `scaling`: A scaling factor to define the range of the uniform distribution. The matrix elements will be randomly chosen from the range `[-scaling, scaling]`. Defaults to `T(0.1)`.
+
+  - `rng`: An instance of `AbstractRNG` for random number generation.
+  - `T`: The data type for the elements of the matrix.
+  - `dims`: Dimensions of the matrix. It must be a 2-element tuple specifying the number of rows and columns (e.g., `(res_size, in_size)`).
+  - `scaling`: A scaling factor to define the range of the uniform distribution. The matrix elements will be randomly chosen from the range `[-scaling, scaling]`. Defaults to `T(0.1)`.
 
 # Returns
+
 A matrix of type with dimensions specified by `dims`. Each element of the matrix is a random number uniformly distributed between `-scaling` and `scaling`.
 
 # Example
+
 ```julia
 rng = Random.default_rng()
-matrix = scaled_rand(rng, Float64, (100, 50); scaling=0.2)
+matrix = scaled_rand(rng, Float64, (100, 50); scaling = 0.2)
+```
 """
 function scaled_rand(rng::AbstractRNG,
         ::Type{T},
@@ -32,20 +36,25 @@ end
 Create and return a matrix representing a weighted input layer for Echo State Networks (ESNs). This initializer generates a weighted input matrix with random non-zero elements distributed uniformly within the range [-`scaling`, `scaling`], inspired by the approach in [^Lu].
 
 # Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation.
-- `T`: The data type for the elements of the matrix.
-- `dims`: A 2-element tuple specifying the approximate reservoir size and input size (e.g., `(approx_res_size, in_size)`).
-- `scaling`: The scaling factor for the weight distribution. Defaults to `T(0.1)`.
+
+  - `rng`: An instance of `AbstractRNG` for random number generation.
+  - `T`: The data type for the elements of the matrix.
+  - `dims`: A 2-element tuple specifying the approximate reservoir size and input size (e.g., `(approx_res_size, in_size)`).
+  - `scaling`: The scaling factor for the weight distribution. Defaults to `T(0.1)`.
 
 # Returns
+
 A matrix representing the weighted input layer as defined in [^Lu2017]. The matrix dimensions will be adjusted to ensure each input unit connects to an equal number of reservoir units.
 
 # Example
+
 ```julia
 rng = Random.default_rng()
-input_layer = weighted_init(rng, Float64, (3, 300); scaling=0.2)
+input_layer = weighted_init(rng, Float64, (3, 300); scaling = 0.2)
 ```
+
 # References
+
 [^Lu2017]: Lu, Zhixin, et al.
     "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
@@ -76,20 +85,22 @@ Create and return a sparse layer matrix for use in neural network models.
 The matrix will be of size specified by `dims`, with the specified `sparsity` and `scaling`.
 
 # Arguments
-- `rng`: An instance of `AbstractRNG` for random number generation.
-- `T`: The data type for the elements of the matrix.
-- `dims`: Dimensions of the resulting sparse layer matrix.
-- `scaling`: The scaling factor for the sparse layer matrix. Defaults to 0.1.
-- `sparsity`: The sparsity level of the sparse layer matrix, controlling the fraction of zero elements. Defaults to 0.1.
+
+  - `rng`: An instance of `AbstractRNG` for random number generation.
+  - `T`: The data type for the elements of the matrix.
+  - `dims`: Dimensions of the resulting sparse layer matrix.
+  - `scaling`: The scaling factor for the sparse layer matrix. Defaults to 0.1.
+  - `sparsity`: The sparsity level of the sparse layer matrix, controlling the fraction of zero elements. Defaults to 0.1.
 
 # Returns
+
 A sparse layer matrix.
 
-
 # Example
+
 ```julia
 rng = Random.default_rng()
-input_layer = sparse_init(rng, Float64, (3, 300); scaling=0.2, sparsity=0.1)
+input_layer = sparse_init(rng, Float64, (3, 300); scaling = 0.2, sparsity = 0.1)
 ```
 """
 function sparse_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -109,22 +120,25 @@ end
 Create a layer of a neural network.
 
 # Arguments
-- `rng::AbstractRNG`: The random number generator.
-- `T::Type`: The data type.
-- `dims::Integer...`: The dimensions of the layer.
-- `scaling::T = T(0.1)`: The scaling factor for the input matrix.
-- `model_in_size`: The size of the input model.
-- `gamma::T = T(0.5)`: The gamma value.
+
+  - `rng::AbstractRNG`: The random number generator.
+  - `T::Type`: The data type.
+  - `dims::Integer...`: The dimensions of the layer.
+  - `scaling::T = T(0.1)`: The scaling factor for the input matrix.
+  - `model_in_size`: The size of the input model.
+  - `gamma::T = T(0.5)`: The gamma value.
 
 # Returns
-- `input_matrix`: The created input matrix for the layer.
+
+  - `input_matrix`: The created input matrix for the layer.
 
 # Example
+
 ```julia
 rng = Random.default_rng()
 dims = (100, 200)
 model_in_size = 50
-input_matrix = informed_init(rng, Float64, dims; model_in_size=model_in_size)
+input_matrix = informed_init(rng, Float64, dims; model_in_size = model_in_size)
 ```
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -169,21 +183,25 @@ end
 Create a layer matrix using the provided random number generator and sampling parameters.
 
 # Arguments
-- `rng::AbstractRNG`: The random number generator used to generate random numbers.
-- `dims::Integer...`: The dimensions of the layer matrix.
-- `weight`: The weight used to fill the layer matrix. Default is 0.1.
-- `sampling`: The sampling parameters used to generate the input matrix. Default is IrrationalSample(irrational = pi, start = 1).
+
+  - `rng::AbstractRNG`: The random number generator used to generate random numbers.
+  - `dims::Integer...`: The dimensions of the layer matrix.
+  - `weight`: The weight used to fill the layer matrix. Default is 0.1.
+  - `sampling`: The sampling parameters used to generate the input matrix. Default is IrrationalSample(irrational = pi, start = 1).
 
 # Returns
+
 The layer matrix generated using the provided random number generator and sampling parameters.
 
 # Example
+
 ```julia
 using Random
 rng = Random.default_rng()
 dims = (3, 2)
 weight = 0.5
-layer_matrix = irrational_sample_init(rng, Float64, dims; weight = weight, sampling = IrrationalSample(irrational = sqrt(2), start = 1))
+layer_matrix = irrational_sample_init(rng, Float64, dims; weight = weight,
+    sampling = IrrationalSample(irrational = sqrt(2), start = 1))
 ```
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;

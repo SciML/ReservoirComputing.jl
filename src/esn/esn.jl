@@ -18,27 +18,30 @@ end
 Creates an Echo State Network (ESN) using specified parameters and training data, suitable for various machine learning tasks.
 
 # Parameters
-- `train_data`: Matrix of training data (columns as time steps, rows as features).
-- `variation`: Variation of ESN (default: `Default()`).
-- `input_layer`: Input layer of ESN (default: `DenseLayer()`).
-- `reservoir`: Reservoir of the ESN (default: `RandSparseReservoir(100)`).
-- `bias`: Bias vector for each time step (default: `NullLayer()`).
-- `reservoir_driver`: Mechanism for evolving reservoir states (default: `RNN()`).
-- `nla_type`: Non-linear activation type (default: `NLADefault()`).
-- `states_type`: Format for storing states (default: `StandardStates()`).
-- `washout`: Initial time steps to discard (default: `0`).
-- `matrix_type`: Type of matrices used internally (default: type of `train_data`).
+
+  - `train_data`: Matrix of training data (columns as time steps, rows as features).
+  - `variation`: Variation of ESN (default: `Default()`).
+  - `input_layer`: Input layer of ESN (default: `DenseLayer()`).
+  - `reservoir`: Reservoir of the ESN (default: `RandSparseReservoir(100)`).
+  - `bias`: Bias vector for each time step (default: `NullLayer()`).
+  - `reservoir_driver`: Mechanism for evolving reservoir states (default: `RNN()`).
+  - `nla_type`: Non-linear activation type (default: `NLADefault()`).
+  - `states_type`: Format for storing states (default: `StandardStates()`).
+  - `washout`: Initial time steps to discard (default: `0`).
+  - `matrix_type`: Type of matrices used internally (default: type of `train_data`).
 
 # Returns
-- An initialized ESN instance with specified parameters.
+
+  - An initialized ESN instance with specified parameters.
 
 # Examples
+
 ```julia
 using ReservoirComputing
 
 train_data = rand(10, 100)  # 10 features, 100 time steps
 
-esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
+esn = ESN(train_data, reservoir = RandSparseReservoir(200), washout = 10)
 ```
 """
 function ESN(train_data,
@@ -90,15 +93,17 @@ end
 Trains an Echo State Network (ESN) using the provided target data and a specified training method.
 
 # Parameters
-- `esn::AbstractEchoStateNetwork`: The ESN instance to be trained.
-- `target_data`: Supervised training data for the ESN.
-- `training_method`: The method for training the ESN (default: `StandardRidge(0.0)`).
+
+  - `esn::AbstractEchoStateNetwork`: The ESN instance to be trained.
+  - `target_data`: Supervised training data for the ESN.
+  - `training_method`: The method for training the ESN (default: `StandardRidge(0.0)`).
 
 # Returns
-- The trained ESN model. Its type and structure depend on `training_method` and the ESN's implementation.
 
+  - The trained ESN model. Its type and structure depend on `training_method` and the ESN's implementation.
 
 # Returns
+
 The trained ESN model. The exact type and structure of the return value depends on the
 `training_method` and the specific ESN implementation.
 
@@ -106,20 +111,21 @@ The trained ESN model. The exact type and structure of the return value depends 
 using ReservoirComputing
 
 # Initialize an ESN instance and target data
-esn = ESN(train_data, reservoir=RandSparseReservoir(200), washout=10)
+esn = ESN(train_data, reservoir = RandSparseReservoir(200), washout = 10)
 target_data = rand(size(train_data, 2))
 
 # Train the ESN using the default training method
 trained_esn = train(esn, target_data)
 
 # Train the ESN using a custom training method
-trained_esn = train(esn, target_data, training_method=StandardRidge(1.0))
+trained_esn = train(esn, target_data, training_method = StandardRidge(1.0))
 ```
 
 # Notes
-- When using a `Hybrid` variation, the function extends the state matrix with data from the
+
+  - When using a `Hybrid` variation, the function extends the state matrix with data from the
     physical model included in the `variation`.
-- The training is handled by a lower-level `_train` function which takes the new state matrix
+  - The training is handled by a lower-level `_train` function which takes the new state matrix
     and performs the actual training using the specified `training_method`.
 """
 function train(esn::AbstractEchoStateNetwork,
