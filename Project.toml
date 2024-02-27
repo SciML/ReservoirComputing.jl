@@ -38,7 +38,7 @@ SparseArrays = "1.10"
 Statistics = "1.10"
 Test = "1"
 WeightInitializers = "0.1"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
