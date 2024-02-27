@@ -7,7 +7,7 @@ end
     StandardRidge(;regularization_coeff=0.0)
 
 Ridge regression training for all the models in the library. The
-```regularization_coeff``` is the regularization, it can be passed as an arg or kwarg.
+`regularization_coeff` is the regularization, it can be passed as an arg or kwarg.
 """
 function StandardRidge(; regularization_coeff = 0.0)
     return StandardRidge(regularization_coeff)
@@ -29,13 +29,13 @@ struct LinearModel{T, S, K} <: AbstractLinearModel
 end
 
 """
-    LinearModel(;regression=LinearRegression, 
-        solver=Analytical(), 
+    LinearModel(;regression=LinearRegression,
+        solver=Analytical(),
         regression_kwargs=(;))
 
 Linear regression training based on
 [MLJLinearModels](https://juliaai.github.io/MLJLinearModels.jl/stable/) for all the
-models in the library. All the parameters have to be passed into ```regression_kwargs```,
+models in the library. All the parameters have to be passed into `regression_kwargs`,
 apart from the solver choice. MLJLinearModels.jl needs to be called in order
 to use these models.
 """

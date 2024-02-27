@@ -208,6 +208,7 @@ end
 Reservoir matrix with the specified dimensions, max value, and sparsity.
 
 # References
+
 This reservoir initialization method, based on a pseudo-SVD approach, is inspired by the work in [^yang], which focuses on designing polynomial echo state networks for time series prediction.
 
 [^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.

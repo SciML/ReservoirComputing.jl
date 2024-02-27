@@ -16,10 +16,10 @@ end
 """
     StandardStates()
 
-When this struct is employed, the states of the reservoir are not modified. It represents the default behavior 
-in scenarios where no specific state modification is required. This approach is ideal for applications 
-where the inherent dynamics of the reservoir are sufficient, and no external manipulation of the states 
-is necessary. It maintains the original state representation, ensuring that the reservoir's natural properties 
+When this struct is employed, the states of the reservoir are not modified. It represents the default behavior
+in scenarios where no specific state modification is required. This approach is ideal for applications
+where the inherent dynamics of the reservoir are sufficient, and no external manipulation of the states
+is necessary. It maintains the original state representation, ensuring that the reservoir's natural properties
 are preserved and utilized in computations.
 """
 struct StandardStates <: AbstractStates end
@@ -27,9 +27,9 @@ struct StandardStates <: AbstractStates end
 """
     ExtendedStates()
 
-The `ExtendedStates` struct is used to extend the reservoir states by 
-vertically concatenating the input data (during training) and the prediction data (during the prediction phase). 
-This method enriches the state representation by integrating external data, enhancing the model's capability 
+The `ExtendedStates` struct is used to extend the reservoir states by
+vertically concatenating the input data (during training) and the prediction data (during the prediction phase).
+This method enriches the state representation by integrating external data, enhancing the model's capability
 to capture and utilize complex patterns in both training and prediction stages.
 """
 struct ExtendedStates <: AbstractStates end
@@ -103,7 +103,7 @@ end
 """
     NLADefault()
 
-`NLADefault` represents the default non-linear algorithm option. 
+`NLADefault` represents the default non-linear algorithm option.
 When used, it leaves the input array unchanged.
 This option is suitable in cases where no non-linear transformation of the data is required,
 maintaining the original state of the input array for further processing.
@@ -126,7 +126,8 @@ making it a valuable tool in analyzing chaotic systems and improving the perform
 The T₁ transformation's uniqueness lies in its selective approach, allowing for a more nuanced manipulation of the input data.
 
 References:
-[^Chattopadhyay]: Chattopadhyay, Ashesh, et al. 
+
+[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
     hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
 [^Pathak]: Pathak, Jaideep, et al.
@@ -158,6 +159,7 @@ enhancing complex patterns in the data, particularly beneficial in the analysis 
 systems and in improving the dynamics within reservoir computing models.
 
 Reference:
+
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
     hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
@@ -186,6 +188,7 @@ useful for enhancing complex data patterns, thereby improving the modeling and a
 capabilities within reservoir computing, especially for chaotic and dynamic systems.
 
 Reference:
+
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods:
     Reservoir computing, ANN, and RNN-LSTM." (2019).
