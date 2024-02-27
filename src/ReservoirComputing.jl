@@ -9,20 +9,21 @@ using LinearAlgebra
 using MLJLinearModels
 using NNlib
 using Optim
+using PartialFunctions
+using Random
 using SparseArrays
 using Statistics
+using WeightInitializers
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge, LinearModel
-export AbstractLayer, create_layer
-export WeightedLayer, DenseLayer, SparseLayer, MinimumLayer, InformedLayer, NullLayer
-export BernoulliSample, IrrationalSample
-export AbstractReservoir, create_reservoir
-export RandSparseReservoir, PseudoSVDReservoir, DelayLineReservoir
-export DelayLineBackwardReservoir, SimpleCycleReservoir, CycleJumpsReservoir, NullReservoir
+export scaled_rand, weighted_init, sparse_init, informed_init, minimal_init
+export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
-export ESN, Default, Hybrid, train
+export ESN, train
+export HybridESN, KnowledgeModel
+export DeepESN
 export RECA, train
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer
@@ -72,6 +73,31 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
+#fallbacks for initializers
+for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
+    :simple_cycle, :pseudo_svd,
+    :scaled_rand, :weighted_init, :sparse_init, :informed_init, :minimal_init)
+    NType = ifelse(initializer === :rand_sparse, Real, Number)
+    @eval function ($initializer)(dims::Integer...; kwargs...)
+        return $initializer(_default_rng(), Float32, dims...; kwargs...)
+    end
+    @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
+        return $initializer(rng, Float32, dims...; kwargs...)
+    end
+    @eval function ($initializer)(::Type{T},
+            dims::Integer...; kwargs...) where {T <: $NType}
+        return $initializer(_default_rng(), T, dims...; kwargs...)
+    end
+    @eval function ($initializer)(rng::AbstractRNG; kwargs...)
+        return __partial_apply($initializer, (rng, (; kwargs...)))
+    end
+    @eval function ($initializer)(rng::AbstractRNG,
+            ::Type{T}; kwargs...) where {T <: $NType}
+        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
+    end
+    @eval ($initializer)(; kwargs...) = __partial_apply($initializer, (; kwargs...))
+end
+
 #general
 include("states.jl")
 include("predict.jl")
@@ -84,7 +110,9 @@ include("train/supportvector_regression.jl")
 include("esn/esn_input_layers.jl")
 include("esn/esn_reservoirs.jl")
 include("esn/esn_reservoir_drivers.jl")
-include("esn/echostatenetwork.jl")
+include("esn/esn.jl")
+include("esn/deepesn.jl")
+include("esn/hybridesn.jl")
 include("esn/esn_predict.jl")
 
 #reca

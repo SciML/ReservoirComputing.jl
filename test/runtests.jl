@@ -7,12 +7,11 @@ using Test
 end
 
 @testset "Echo State Networks" begin
-    @safetestset "ESN Input Layers" include("esn/test_input_layers.jl")
-    @safetestset "ESN Reservoirs" include("esn/test_reservoirs.jl")
-    @safetestset "ESN States" include("esn/test_states.jl")
+    @safetestset "ESN Input Layers" include("esn/test_inits.jl")
     @safetestset "ESN Train and Predict" include("esn/test_train.jl")
     @safetestset "ESN Drivers" include("esn/test_drivers.jl")
     @safetestset "Hybrid ESN" include("esn/test_hybrid.jl")
+    @safetestset "Deep ESN" include("esn/deepesn.jl")
 end
 
 @testset "CA based Reservoirs" begin

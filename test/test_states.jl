@@ -1,51 +1,33 @@
 using ReservoirComputing
 
-#padding
 test_array = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-standard_array = zeros(length(test_array), 1)
 extension = [0, 0, 0]
-padded_array = zeros(length(test_array) + 1, 1)
-extended_array = zeros(length(test_array) + length(extension), 1)
-padded_extended_array = zeros(length(test_array) + length(extension) + 1, 1)
 padding = 10.0
+test_types = [Float64, Float32, Float16]
 
-#testing non linear algos
-nla_array = ReservoirComputing.nla(NLADefault(), test_array)
-@test nla_array == test_array
+nlas = [(NLADefault(), test_array),
+    (NLAT1(), [1, 2, 9, 4, 25, 6, 49, 8, 81]),
+    (NLAT2(), [1, 2, 2, 4, 12, 6, 30, 8, 9]),
+    (NLAT3(), [1, 2, 8, 4, 24, 6, 48, 8, 9])]
 
-nla_array = ReservoirComputing.nla(NLAT1(), test_array)
-@test nla_array == [1, 2, 9, 4, 25, 6, 49, 8, 81]
+pes = [(StandardStates(), test_array),
+    (PaddedStates(padding = padding),
+        reshape(vcat(padding, test_array), length(test_array) + 1, 1)),
+    (PaddedExtendedStates(padding = padding),
+        reshape(vcat(padding, extension, test_array),
+            length(test_array) + length(extension) + 1,
+            1)),
+    (ExtendedStates(), vcat(extension, test_array))]
 
-nla_array = ReservoirComputing.nla(NLAT2(), test_array)
-@test nla_array == [1, 2, 2, 4, 12, 6, 30, 8, 9]
-
-nla_array = ReservoirComputing.nla(NLAT3(), test_array)
-@test nla_array == [1, 2, 8, 4, 24, 6, 48, 8, 9]
-
-#testing padding and extension
-states_type = StandardStates()
-standard_array = states_type(NLADefault(), test_array, extension)
-@test standard_array == test_array
-
-states_type = PaddedStates(padding = padding)
-padded_array = states_type(NLADefault(), test_array, extension)
-@test padded_array == reshape(vcat(padding, test_array), length(test_array) + 1, 1)
-
-states_type = PaddedStates(padding)
-padded_array = states_type(NLADefault(), test_array, extension)
-@test padded_array == reshape(vcat(padding, test_array), length(test_array) + 1, 1)
-
-states_type = PaddedExtendedStates(padding = padding)
-padded_extended_array = states_type(NLADefault(), test_array, extension)
-@test padded_extended_array == reshape(vcat(padding, extension, test_array),
-    length(test_array) + length(extension) + 1, 1)
-
-states_type = PaddedExtendedStates(padding)
-padded_extended_array = states_type(NLADefault(), test_array, extension)
-@test padded_extended_array == reshape(vcat(padding, extension, test_array),
-    length(test_array) + length(extension) + 1, 1)
-
-states_type = ExtendedStates()
-extended_array = states_type(NLADefault(), test_array, extension)
-@test extended_array == vcat(extension, test_array)
-#reshape(vcat(extension, test_array), length(test_array)+length(extension), 1)
+@testset "States Testing" for T in test_types
+    @testset "Nonlinear Algorithms Testing: $algo $T" for (algo, expected_output) in nlas
+        nla_array = ReservoirComputing.nla(algo, T.(test_array))
+        @test nla_array == expected_output
+        @test eltype(nla_array) == T
+    end
+    @testset "States Testing: $state_type $T" for (state_type, expected_output) in pes
+        states_output = state_type(NLADefault(), T.(test_array), T.(extension))
+        @test states_output == expected_output
+        @test eltype(states_output) == T
+    end
+end

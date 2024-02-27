@@ -1,6 +1,6 @@
 # Lorenz System Forecasting
 
-This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is `Generative`, for a more detailed explanation of the differences between `Generative` and `Predictive` please refer to the other examples given in the documentation. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/lorenz_basic/lorenz_basic.jl). This example was run on Julia v1.7.2.
+This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is `Generative`, for a more detailed explanation of the differences between `Generative` and `Predictive` please refer to the other examples given in the documentation.
 
 ## Generating the data
 
@@ -46,15 +46,15 @@ using ReservoirComputing
 
 #define ESN parameters
 res_size = 300
+in_size = 3
 res_radius = 1.2
 res_sparsity = 6 / 300
 input_scaling = 0.1
 
 #build ESN struct
-esn = ESN(input_data;
-    variation = Default(),
-    reservoir = RandSparseReservoir(res_size, radius = res_radius, sparsity = res_sparsity),
-    input_layer = WeightedLayer(scaling = input_scaling),
+esn = ESN(input_data, in_size, res_size;
+    reservoir = rand_sparse(; radius = res_radius, sparsity = res_sparsity),
+    input_layer = weighted_init(; scaling = input_scaling),
     reservoir_driver = RNN(),
     nla_type = NLADefault(),
     states_type = StandardStates())
@@ -62,9 +62,9 @@ esn = ESN(input_data;
 
 Most of the parameters chosen here mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening, starting from `res_size`: this value determines the dimensions of the reservoir matrix. In this case, a size of 300 has been chosen, so the reservoir matrix will be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case, everything is taken care of internally.
 
-The `res_radius` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the `RandSparseReservoir()` method is 1.0 in accordance with the most commonly followed guidelines found in the literature (see [^2] and references therein). The `sparsity` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course, it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values. In this example, the call to the parameters inside `RandSparseReservoir()` was done explicitly to showcase the meaning of each of them, but it is also possible to simply pass the values directly, like so `RandSparseReservoir(1.2, 6/300)`.
+The `res_radius` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the `rand_sparse` method is 1.0 in accordance with the most commonly followed guidelines found in the literature (see [^2] and references therein). The `sparsity` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course, it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values.
 
-The value of `input_scaling` determines the upper and lower bounds of the uniform distribution of the weights in the `WeightedLayer()`. Like before, this value can be passed either as an argument or as a keyword argument `WeightedLayer(0.1)`. The value of 0.1 represents the default. The default input layer is the `DenseLayer`, a fully connected layer. The details of the weighted version can be found in [^3], for this example, this version returns the best results.
+The value of `input_scaling` determines the upper and lower bounds of the uniform distribution of the weights in the `weighted_init`. The value of 0.1 represents the default. The default input layer is the `scaled_rand`, a dense matrix. The details of the weighted version can be found in [^3], for this example, this version returns the best results.
 
 The reservoir driver represents the dynamics of the reservoir. In the standard ESN definition, these dynamics are obtained through a Recurrent Neural Network (RNN), and this is reflected by calling the `RNN` driver for the `ESN` struct. This option is set as the default, and unless there is the need to change parameters, it is not needed. The full equation is the following:
 

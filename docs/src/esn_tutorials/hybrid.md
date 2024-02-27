@@ -1,6 +1,6 @@
 # Hybrid Echo State Networks
 
-Following the idea of giving physical information to machine learning models, the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example, it is explained how to create and leverage such models in ReservoirComputing.jl. The full script for this example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/hybrid/hybrid.jl). This example was run on Julia v1.7.2.
+Following the idea of giving physical information to machine learning models, the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example, it is explained how to create and leverage such models in ReservoirComputing.jl.
 
 ## Generating the data
 
@@ -47,17 +47,21 @@ function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
 end
 ```
 
-Given the initial condition, time span, and time steps, this function returns the data for the chosen model. Now, using the `Hybrid` method, it is possible to input all this information to the model.
+Given the initial condition, time span, and time steps, this function returns the data for the chosen model. Now, using the `KnowledgeModel` method, it is possible to input all this information to `HybridESN`.
 
 ```@example hybrid
 using ReservoirComputing, Random
 Random.seed!(42)
 
-hybrid = Hybrid(prior_model_data_generator, u0, tspan_train, train_len)
+km = KnowledgeModel(prior_model_data_generator, u0, tspan_train, train_len)
 
-esn = ESN(input_data,
-    reservoir = RandSparseReservoir(300),
-    variation = hybrid)
+in_size = 3
+res_size = 300
+hesn = HybridESN(km,
+    input_data,
+    in_size,
+    res_size;
+    reservoir = rand_sparse)
 ```
 
 ## Training and Prediction
@@ -65,7 +69,7 @@ esn = ESN(input_data,
 The training and prediction of the Hybrid ESN can proceed as usual:
 
 ```@example hybrid
-output_layer = train(esn, target_data, StandardRidge(0.3))
+output_layer = train(hesn, target_data, StandardRidge(0.3))
 output = esn(Generative(predict_len), output_layer)
 ```
 
