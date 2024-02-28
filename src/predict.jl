@@ -42,20 +42,8 @@ function obtain_prediction(rc::AbstractReservoirComputer,
 end
 
 #linear models
-function get_prediction(training_method::AbstractLinearModel, output_layer, x)
+function get_prediction(training_method, output_layer, x)
     return output_layer.output_matrix * x
-end
-
-#support vector regression
-function get_prediction(training_method::LIBSVM.AbstractSVR, output_layer, x)
-    out = zeros(output_layer.out_size)
-
-    for i in 1:(output_layer.out_size)
-        x_new = reshape(x, 1, length(x))
-        out[i] = LIBSVM.predict(output_layer.output_matrix[i], x_new)[1]
-    end
-
-    return out
 end
 
 #single matrix for other training methods

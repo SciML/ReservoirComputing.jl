@@ -114,9 +114,10 @@ end
 
 function train(hesn::HybridESN,
         target_data,
-        training_method = StandardRidge(0.0))
+        training_method = StandardRidge();
+        kwargs...)
     states = vcat(hesn.states, hesn.model.model_data[:, 2:end])
     states_new = hesn.states_type(hesn.nla_type, states, hesn.train_data[:, 1:end])
 
-    return _train(states_new, target_data, training_method)
+    return train(training_method, states_new, target_data; kwargs...)
 end

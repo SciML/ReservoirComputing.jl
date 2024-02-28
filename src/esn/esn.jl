@@ -123,10 +123,11 @@ trained_esn = train(esn, target_data, training_method = StandardRidge(1.0))
 """
 function train(esn::AbstractEchoStateNetwork,
         target_data,
-        training_method = StandardRidge(0.0))
+        training_method = StandardRidge();
+        kwargs...)
     states_new = esn.states_type(esn.nla_type, esn.states, esn.train_data[:, 1:end])
 
-    return _train(states_new, target_data, training_method)
+    return train(training_method, states_new, target_data; kwargs...)
 end
 
 #function pad_esnstate(variation::Hybrid, states_type, x_pad, x, model_prediction_data)

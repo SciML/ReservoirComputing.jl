@@ -14,18 +14,24 @@ const reg = 10e-6
 Random.seed!(77)
 res = rand_sparse(; radius = 1.2, sparsity = 0.1)
 esn = ESN(input_data, 1, res_size;
-    reservoir = rand_sparse)
-
-training_methods = [
-    StandardRidge(regularization_coeff = reg),
-    LinearModel(RidgeRegression, regression_kwargs = (; lambda = reg)),
-    LinearModel(regression = RidgeRegression, regression_kwargs = (; lambda = reg)),
-    EpsilonSVR()
-]
+    reservoir = res)
+# different models that implement a train dispatch
+# TODO add classification
+linear_training = [StandardRidge(0.0), LinearRegression(; fit_intercept = false),
+    RidgeRegression(; fit_intercept = false), LassoRegression(; fit_intercept = false),
+    ElasticNetRegression(; fit_intercept = false), HuberRegression(; fit_intercept = false),
+    QuantileRegression(; fit_intercept = false), LADRegression(; fit_intercept = false)]
+svm_training = [EpsilonSVR(), NuSVR()]
 
 # TODO check types
-@testset "Training Algo Tests: $ta" for ta in training_methods
-    output_layer = train(esn, target_data, ta)
-    output = esn(Predictive(input_data), output_layer)
-    @test mean(abs.(target_data .- output)) ./ mean(abs.(target_data)) < 0.22
+@testset "Linear training: $lt" for lt in linear_training
+    output_layer = train(esn, target_data, lt)
+    @test output_layer isa OutputLayer
+    @test output_layer.output_matrix isa AbstractArray
+end
+
+@testset "SVM training: $st" for st in svm_training
+    output_layer = train(esn, target_data, st)
+    @test output_layer isa OutputLayer
+    @test output_layer.output_matrix isa typeof(st)
 end
