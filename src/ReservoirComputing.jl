@@ -4,9 +4,7 @@ using Adapt
 using CellularAutomata
 using Distances
 using Distributions
-using LIBSVM
 using LinearAlgebra
-using MLJLinearModels
 using NNlib
 using Optim
 using PartialFunctions
@@ -16,7 +14,7 @@ using WeightInitializers
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
-export StandardRidge, LinearModel
+export StandardRidge
 export scaled_rand, weighted_init, informed_init, minimal_init
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
@@ -31,11 +29,7 @@ export Generative, Predictive, OutputLayer
 abstract type AbstractReservoirComputer end
 abstract type AbstractOutputLayer end
 abstract type AbstractPrediction end
-#training methods
-abstract type AbstractLinearModel end
-abstract type AbstractSupportVector end
 #should probably move some of these
-abstract type AbstractVariation end
 abstract type AbstractGRUVariant end
 
 #general output layer struct
@@ -104,7 +98,6 @@ include("predict.jl")
 
 #general training
 include("train/linear_regression.jl")
-include("train/supportvector_regression.jl")
 
 #esn
 include("esn/esn_input_layers.jl")
@@ -118,5 +111,11 @@ include("esn/esn_predict.jl")
 #reca
 include("reca/reca.jl")
 include("reca/reca_input_encodings.jl")
+
+# Julia < 1.9 support 
+if !isdefined(Base, :get_extension)
+    include("../ext/RCMLJLinearModelsExt.jl")
+    include("../ext/RCLIBSVMExt.jl")
+end
 
 end #module
