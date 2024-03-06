@@ -2,48 +2,7 @@
 
 A great deal of effort in the ESNs field is devoted to finding the ideal construction for the reservoir matrices. With a simple interface using ReservoirComputing.jl it is possible to leverage the currently implemented matrix construction methods for both the reservoir and the input layer. On this page, it is showcased how it is possible to change both of these layers.
 
-The `input_init` keyword argument provided with the `ESN` constructor allows for changing the input layer. The layers provided in ReservoirComputing.jl are the following:
-
-  - `WeightedLayer(scaling)`
-  - `DenseLayer(scaling)`
-  - `SparseLayer(scaling, sparsity)`
-  - `MinimumLayer(weight, sampling)`
-  - `InformedLayer(model_in_size; scaling=0.1, gamma=0.5)`
-    In addition, the user can define a custom layer following this workflow:
-
-```julia
-#creation of the new struct for the layer
-struct MyNewLayer <: AbstractLayer
-    #the layer params go here
-end
-
-#dispatch over the function to actually build the layer matrix
-function create_layer(input_layer::MyNewLayer, res_size, in_size)
-    #the new algorithm to build the input layer goes here
-end
-```
-
-Similarly the `reservoir_init` keyword argument provides the possibility to change the construction for the reservoir matrix. The available reservoir are:
-
-  - `RandSparseReservoir(res_size, radius, sparsity)`
-  - `PseudoSVDReservoir(res_size, max_value, sparsity, sorted, reverse_sort)`
-  - `DelayLineReservoir(res_size, weight)`
-  - `DelayLineBackwardReservoir(res_size, weight, fb_weight)`
-  - `SimpleCycleReservoir(res_size, weight)`
-  - `CycleJumpsReservoir(res_size, cycle_weight, jump_weight, jump_size)`
-    And, like before, it is possible to build a custom reservoir by following this workflow:
-
-```julia
-#creation of the new struct for the reservoir
-struct MyNewReservoir <: AbstractReservoir
-    #the reservoir params go here
-end
-
-#dispatch over the function to build the reservoir matrix
-function create_reservoir(reservoir::AbstractReservoir, res_size)
-    #the new algorithm to build the reservoir matrix goes here
-end
-```
+ReservoirComputing.jl follows the standard set by [WeightInitializers.jl](https://github.com/LuxDL/WeightInitializers.jl) to define the initialization functions for both reservoirs and input layers. 
 
 ## Example of a minimally complex ESN
 
@@ -75,14 +34,14 @@ using ReservoirComputing, StatsBase
 
 res_size = 300
 input_layer = [
-    MinimumLayer(0.85, IrrationalSample()),
-    MinimumLayer(0.95, IrrationalSample())
+    minimal_init(;weight=0.85, sampling_type=:irrational),
+    minimal_init(;weight=0.95, sampling_type=:irrational)
 ]
-reservoirs = [SimpleCycleReservoir(res_size, 0.7),
-    CycleJumpsReservoir(res_size, cycle_weight = 0.7, jump_weight = 0.2, jump_size = 5)]
+reservoirs = [simple_cycle(;weight=0.7),
+    cycle_jumps(;cycle_weight = 0.7, jump_weight = 0.2, jump_size = 5)]
 
 for i in 1:length(reservoirs)
-    esn = ESN(training_input;
+    esn = ESN(size(training_input, 1), res_size, training_input;
         input_layer = input_layer[i],
         reservoir = reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))
