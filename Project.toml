@@ -21,13 +21,13 @@ LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 
 [extensions]
-RCMLJLinearModelsExt = "MLJLinearModels"
 RCLIBSVMExt = "LIBSVM"
+RCMLJLinearModelsExt = "MLJLinearModels"
 
 [compat]
 Adapt = "3.3.3, 4"
 Aqua = "0.8"
-CellularAutomata = "0.0.2"
+CellularAutomata = "0.0.2, 0.0.4"
 DifferentialEquations = "7"
 Distances = "0.10"
 Distributions = "0.25.36"
