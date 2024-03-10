@@ -47,7 +47,6 @@ reservoirs = [rand_sparse(;radius = 1.1, sparsity = 0.1),
 esn = ESN(input_data, 3, 200;
     variation = Default(),
     reservoir = reservoirs,
-    input_layer = DenseLayer(),
     reservoir_driver = RNN(),
     nla_type = NLADefault(),
     states_type = StandardStates())

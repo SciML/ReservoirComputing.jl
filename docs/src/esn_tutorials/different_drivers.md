@@ -197,7 +197,7 @@ The default inner reservoir and input layer for the GRU are the same defaults fo
 gru = GRU(reservoir = [rand_sparse,
         rand_sparse],
     inner_layer = [scaled_rand, scaled_rand])
-esn = ESN(training_input 1, res_size;
+esn = ESN(training_input, 1, res_size;
     reservoir = rand_sparse(; radius = res_radius),
     reservoir_driver = gru)
 ```

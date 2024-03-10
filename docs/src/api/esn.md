@@ -4,18 +4,9 @@ The core component of an ESN is the `ESN` type. It represents the entire Echo St
 
 ```@docs
     ESN
+    DeepESN
+    HybridESN
 ```
-
-## Variations
-
-In addition to the standard `ESN` model, there are variations that allow for deeper customization of the underlying model. Currently, there are two available variations: `Default` and `Hybrid`. These variations provide different ways to configure the ESN. Here's the documentation for the variations:
-
-```@docs
-    Default
-    Hybrid
-```
-
-The `Hybrid` variation is the most complex option and offers additional customization. Note that more variations may be added in the future to provide even greater flexibility.
 
 ## Training
 
