@@ -3,14 +3,14 @@ module ReservoirComputing
 using Adapt
 using CellularAutomata
 using Distances
-using Distributions
 using LinearAlgebra
 using NNlib
 using Optim
 using PartialFunctions
 using Random
+using Reexport
 using Statistics
-using WeightInitializers
+@reexport using WeightInitializers
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
