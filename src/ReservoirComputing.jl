@@ -15,8 +15,6 @@ using WeightInitializers
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge
-export scaled_rand, weighted_init, informed_init, minimal_init
-export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export ESN, train
 export HybridESN, KnowledgeModel
@@ -66,32 +64,6 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
-#fallbacks for initializers
-for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
-    :simple_cycle, :pseudo_svd,
-    :scaled_rand, :weighted_init, :informed_init, :minimal_init)
-    NType = ifelse(initializer === :rand_sparse, Real, Number)
-    @eval function ($initializer)(dims::Integer...; kwargs...)
-        return $initializer(WeightInitializers._default_rng(), Float32, dims...; kwargs...)
-    end
-    @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
-        return $initializer(rng, Float32, dims...; kwargs...)
-    end
-    @eval function ($initializer)(::Type{T},
-            dims::Integer...; kwargs...) where {T <: $NType}
-        return $initializer(WeightInitializers._default_rng(), T, dims...; kwargs...)
-    end
-    @eval function ($initializer)(rng::AbstractRNG; kwargs...)
-        return WeightInitializers.__partial_apply($initializer, (rng, (; kwargs...)))
-    end
-    @eval function ($initializer)(rng::AbstractRNG,
-            ::Type{T}; kwargs...) where {T <: $NType}
-        return WeightInitializers.__partial_apply($initializer, ((rng, T), (; kwargs...)))
-    end
-    @eval ($initializer)(; kwargs...) = WeightInitializers.__partial_apply(
-        $initializer, (; kwargs...))
-end
-
 #general
 include("states.jl")
 include("predict.jl")
@@ -100,8 +72,6 @@ include("predict.jl")
 include("train/linear_regression.jl")
 
 #esn
-include("esn/esn_input_layers.jl")
-include("esn/esn_reservoirs.jl")
 include("esn/esn_reservoir_drivers.jl")
 include("esn/esn.jl")
 include("esn/deepesn.jl")
