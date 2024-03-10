@@ -41,7 +41,7 @@ reservoirs = [simple_cycle(;weight=0.7),
     cycle_jumps(;cycle_weight = 0.7, jump_weight = 0.2, jump_size = 5)]
 
 for i in 1:length(reservoirs)
-    esn = ESN(size(training_input, 1), res_size, training_input;
+    esn = ESN(training_input, size(training_input, 1), res_size;
         input_layer = input_layer[i],
         reservoir = reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))
