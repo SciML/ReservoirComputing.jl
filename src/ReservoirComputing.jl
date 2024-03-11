@@ -6,7 +6,6 @@ using Distances
 using LinearAlgebra
 using NNlib
 using Optim
-using PartialFunctions
 using Random
 using Reexport
 using Statistics
