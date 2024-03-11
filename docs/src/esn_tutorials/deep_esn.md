@@ -41,9 +41,9 @@ The construction of the ESN is also really similar. The only difference is that 
 ```@example deep_lorenz
 using ReservoirComputing
 
-reservoirs = [rand_sparse(;radius = 1.1, sparsity = 0.1),
-    rand_sparse(;radius = 1.2, sparsity = 0.1),
-    rand_sparse(;radius = 1.4, sparsity = 0.1)]
+reservoirs = [rand_sparse(; radius = 1.1, sparsity = 0.1),
+    rand_sparse(; radius = 1.2, sparsity = 0.1),
+    rand_sparse(; radius = 1.4, sparsity = 0.1)]
 
 esn = DeepESN(input_data, 3, 200;
     reservoir = reservoirs,
