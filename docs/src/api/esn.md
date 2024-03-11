@@ -4,8 +4,6 @@ The core component of an ESN is the `ESN` type. It represents the entire Echo St
 
 ```@docs
     ESN
-    DeepESN
-    HybridESN
 ```
 
 ## Training

@@ -11,8 +11,8 @@ The data can be read as follows:
 ```@example reca
 using DelimitedFiles
 
-input = readdlm("./5bitinput.txt", ',', Float32)
-output = readdlm("./5bitoutput.txt", ',', Float32)
+input = readdlm("./5bitinput.txt", ',', Float64)
+output = readdlm("./5bitoutput.txt", ',', Float64)
 ```
 
 To use a ReCA model, it is necessary to define the rule one intends to use. To do so, ReservoirComputing.jl leverages [CellularAutomata.jl](https://github.com/MartinuzziFrancesco/CellularAutomata.jl) that needs to be called as well to define the `RECA` struct:

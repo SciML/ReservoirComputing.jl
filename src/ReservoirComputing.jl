@@ -18,10 +18,11 @@ export StandardRidge
 export scaled_rand, weighted_init, informed_init, minimal_init
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
-export ESN, train
+export train
+export ESN
 export HybridESN, KnowledgeModel
 export DeepESN
-export RECA, train
+export RECA
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer
 

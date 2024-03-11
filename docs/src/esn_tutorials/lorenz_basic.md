@@ -19,6 +19,7 @@ end
 #solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
 data = solve(prob, ABM54(), dt = 0.02)
+data = reduce(hcat, data.u)
 ```
 
 After obtaining the data, it is necessary to determine the kind of prediction for the model. Since this example will use the `Generative` prediction type, this means that the target data will be the next step of the input data. In addition, it is important to notice that the Lorenz system just obtained presents a transient period that is not representative of the general behavior of the system. This can easily be discarded by setting a `shift` parameter.

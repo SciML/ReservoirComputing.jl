@@ -70,7 +70,7 @@ The training and prediction of the Hybrid ESN can proceed as usual:
 
 ```@example hybrid
 output_layer = train(hesn, target_data, StandardRidge(0.3))
-output = esn(Generative(predict_len), output_layer)
+output = hesn(Generative(predict_len), output_layer)
 ```
 
 It is now possible to plot the results, leveraging Plots.jl:
