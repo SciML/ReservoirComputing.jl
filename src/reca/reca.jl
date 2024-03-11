@@ -41,7 +41,7 @@ end
 #training dispatch
 function train(reca::AbstractReca, target_data, training_method = StandardRidge; kwargs...)
     states_new = reca.states_type(reca.nla_type, reca.states, reca.train_data)
-    return train(training_method, states_new, target_data; kwargs...)
+    return train(training_method, Float32.(states_new), Float32.(target_data); kwargs...)
 end
 
 #predict dispatch

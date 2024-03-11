@@ -2,14 +2,9 @@
 
 ## Linear Models
 
-```@docs
-    StandardRidge
-    LinearModel
-```
-
 ## Gaussian Regression
 
-Currently, v0.9 is unavailable.
+Currently, v0.10, is unavailable.
 
 ## Support Vector Regression
 

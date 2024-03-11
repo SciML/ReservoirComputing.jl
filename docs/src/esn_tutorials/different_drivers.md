@@ -72,9 +72,9 @@ case5 = MRNN([tanh, f4], 0.9, [0.43, 0.13])
 #tests
 test_cases = [base_case, case3, case4, case5]
 for case in test_cases
-    esn = ESN(training_input,
-        input_layer = WeightedLayer(scaling = 0.3),
-        reservoir = RandSparseReservoir(100, radius = 0.4),
+    esn = ESN(training_input, 1, 100,
+        input_layer = weighted_init(; scaling = 0.3),
+        reservoir = rand_sparse(; radius = 0.4),
         reservoir_driver = case,
         states_type = ExtendedStates())
     wout = train(esn, training_target, StandardRidge(10e-6))
@@ -186,19 +186,19 @@ res_size = 300
 res_radius = 1.4
 
 Random.seed!(42)
-esn = ESN(training_input;
-    reservoir = RandSparseReservoir(res_size, radius = res_radius),
+esn = ESN(training_input, 1, res_size;
+    reservoir = rand_sparse(; radius = res_radius),
     reservoir_driver = GRU())
 ```
 
 The default inner reservoir and input layer for the GRU are the same defaults for the `reservoir` and `input_layer` of the ESN. One can use the explicit call if they choose to.
 
 ```@example gru
-gru = GRU(reservoir = [RandSparseReservoir(res_size),
-        RandSparseReservoir(res_size)],
-    inner_layer = [DenseLayer(), DenseLayer()])
-esn = ESN(training_input;
-    reservoir = RandSparseReservoir(res_size, radius = res_radius),
+gru = GRU(reservoir = [rand_sparse,
+        rand_sparse],
+    inner_layer = [scaled_rand, scaled_rand])
+esn = ESN(training_input, 1, res_size;
+    reservoir = rand_sparse(; radius = res_radius),
     reservoir_driver = gru)
 ```
 
@@ -230,8 +230,8 @@ It is interesting to see a comparison of the GRU driven ESN and the standard RNN
 ```@example gru
 using StatsBase
 
-esn_rnn = ESN(training_input;
-    reservoir = RandSparseReservoir(res_size, radius = res_radius),
+esn_rnn = ESN(training_input, 1, res_size;
+    reservoir = rand_sparse(; radius = res_radius),
     reservoir_driver = RNN())
 
 output_layer = train(esn_rnn, training_target, training_method)

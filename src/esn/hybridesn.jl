@@ -22,7 +22,7 @@ struct KnowledgeModel{T, K, O, I, S, D}
 end
 
 """
-    Hybrid(prior_model, u0, tspan, datasize)
+KnowledgeModel(prior_model, u0, tspan, datasize)
 
 Constructs a `Hybrid` variation of Echo State Networks (ESNs) integrating a knowledge-based model
 (`prior_model`) with ESNs for advanced training and prediction in chaotic systems.
@@ -55,6 +55,66 @@ function KnowledgeModel(prior_model, u0, tspan, datasize)
     return KnowledgeModel(prior_model, u0, tspan, dt, datasize, model_data)
 end
 
+"""
+    HybridESN(model, train_data, in_size, res_size; kwargs...)
+
+Construct a Hybrid Echo State Network (ESN) model that integrates
+traditional Echo State Networks with a predefined knowledge model for
+enhanced performance on chaotic systems or complex datasets. This
+constructor allows for the creation of a customized ESN architecture by
+specifying the reservoir size, input size, and various other parameters that
+influence the network's behavior and learning capacity.
+
+# Parameters
+
+  - `model`: A `KnowledgeModel` instance representing the knowledge-based model
+    to be integrated with the ESN.
+  - `train_data`: The training dataset used for the ESN. This data can be
+    preprocessed or raw data depending on the nature of the problem and the
+    preprocessing steps considered.
+  - `in_size`: The size of the input layer, i.e., the number of input units
+    to the ESN.
+  - `res_size`: The size of the reservoir, i.e., the number of neurons in
+    the hidden layer of the ESN.
+
+# Optional Keyword Arguments
+
+  - `input_layer`: A function to initialize the input matrix. Default is `scaled_rand`.
+  - `reservoir`: A function to initialize the reservoir matrix. Default is `rand_sparse`.
+  - `bias`: A function to initialize the bias vector. Default is `zeros64`.
+  - `reservoir_driver`: The driving system for the reservoir. Default is an RNN model.
+  - `nla_type`: The type of non-linear activation used in the reservoir.
+    Default is `NLADefault()`.
+  - `states_type`: Defines the type of states used in the ESN (e.g., standard states).
+    Default is `StandardStates()`.
+  - `washout`: The number of initial timesteps to be discarded in the ESN's training phase.
+    Default is 0.
+  - `rng`: Random number generator used for initializing weights. Default is the package's
+    default random number generator.
+  - `T`: The data type for the matrices (e.g., `Float32`). Influences computational
+    efficiency and precision.
+  - `matrix_type`: The type of matrix used for storing the training data. Default is
+    inferred from `train_data`.
+
+# Returns
+
+  - A `HybridESN` instance configured according to the provided parameters and
+    suitable for further training and prediction tasks.
+
+# Example
+
+```julia
+# Define a KnowledgeModel
+km = KnowledgeModel(prior_model_function, u0, (0, 100), 1000)
+
+# Create a HybridESN
+hesn = HybridESN(km, train_data, 10, 100; washout = 100)
+
+# Train and predict
+train(hesn, target_data)
+prediction = hesn(prediction_object, output_layer)
+```
+"""
 function HybridESN(model,
         train_data,
         in_size::Int,

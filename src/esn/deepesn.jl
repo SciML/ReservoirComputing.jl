@@ -11,6 +11,73 @@ struct DeepESN{I, S, N, T, O, M, B, ST, W, IS} <: AbstractEchoStateNetwork
     states::IS
 end
 
+"""
+    DeepESN(train_data, in_size, res_size; kwargs...)
+
+Constructs a Deep Echo State Network (ESN) model for
+processing sequential data through a layered architecture of reservoirs.
+This constructor allows for the creation of a deep learning model that
+benefits from the dynamic memory and temporal processing capabilities of ESNs,
+enhanced by the depth provided by multiple reservoir layers. It's particularly
+suited for complex sequential tasks where depth can help capture hierarchical
+temporal features.
+
+# Parameters
+
+  - `train_data`: The training dataset used for the ESN.
+    This should be structured as sequential data where applicable.
+  - `in_size`: The size of the input layer, i.e., the number of
+    input units to the ESN.
+  - `res_size`: The size of each reservoir, i.e., the number of neurons
+    in each hidden layer of the ESN.
+
+# Optional Keyword Arguments
+
+  - `depth`: The number of reservoir layers in the Deep ESN. Default is 2.
+  - `input_layer`: A function or an array of functions to initialize the input
+    matrices for each layer. Default is `scaled_rand` for each layer.
+  - `bias`: A function or an array of functions to initialize the bias vectors
+    for each layer. Default is `zeros64` for each layer.
+  - `reservoir`: A function or an array of functions to initialize the reservoir
+    matrices for each layer. Default is `rand_sparse` for each layer.
+  - `reservoir_driver`: The driving system for the reservoir.
+    Default is an RNN model.
+  - `nla_type`: The type of non-linear activation used in the reservoir.
+    Default is `NLADefault()`.
+  - `states_type`: Defines the type of states used in the ESN (e.g., standard states).
+    Default is `StandardStates()`.
+  - `washout`: The number of initial timesteps to be discarded in the ESN's training phase.
+    Default is 0.
+  - `rng`: Random number generator used for initializing weights. Default is the package's
+    default random number generator.
+  - `T`: The data type for the matrices (e.g., `Float64`). Influences computational
+    efficiency and precision.
+  - `matrix_type`: The type of matrix used for storing the training data.
+    Default is inferred from `train_data`.
+
+# Returns
+
+  - A `DeepESN` instance configured according to the provided parameters
+    and suitable for further training and prediction tasks.
+
+# Example
+
+```julia
+# Prepare your training data
+train_data = [your_training_data_here]
+
+# Create a DeepESN with specific parameters
+deepESN = DeepESN(train_data, 10, 100, depth = 3, washout = 100)
+
+# Proceed with training and prediction (pseudocode)
+train(deepESN, target_data)
+prediction = predict(deepESN, new_data)
+```
+
+The DeepESN model is ideal for tasks requiring the processing of sequences with
+complex temporal dependencies, benefiting from the multiple reservoirs to capture
+different levels of abstraction and temporal dynamics.
+"""
 function DeepESN(train_data,
         in_size::Int,
         res_size::Int;

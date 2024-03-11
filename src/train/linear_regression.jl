@@ -11,8 +11,8 @@ function StandardRidge()
 end
 
 function train(sr::StandardRidge,
-        states::AbstractArray{T},
-        target_data::AbstractArray{T}) where {T <: Number}
+        states,
+        target_data)
     #A = states * states' + sr.reg * I
     #b = states * target_data
     #output_layer = (A \ b)'

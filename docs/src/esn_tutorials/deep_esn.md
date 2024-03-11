@@ -21,6 +21,7 @@ end
 #solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
 data = solve(prob, ABM54(), dt = 0.02)
+data = reduce(hcat, data.u)
 
 #determine shift length, training length and prediction length
 shift = 300
@@ -40,20 +41,18 @@ The construction of the ESN is also really similar. The only difference is that 
 ```@example deep_lorenz
 using ReservoirComputing
 
-reservoirs = [RandSparseReservoir(99, radius = 1.1, sparsity = 0.1),
-    RandSparseReservoir(100, radius = 1.2, sparsity = 0.1),
-    RandSparseReservoir(200, radius = 1.4, sparsity = 0.1)]
+reservoirs = [rand_sparse(; radius = 1.1, sparsity = 0.1),
+    rand_sparse(; radius = 1.2, sparsity = 0.1),
+    rand_sparse(; radius = 1.4, sparsity = 0.1)]
 
-esn = ESN(input_data;
-    variation = Default(),
+esn = DeepESN(input_data, 3, 200;
     reservoir = reservoirs,
-    input_layer = DenseLayer(),
     reservoir_driver = RNN(),
     nla_type = NLADefault(),
     states_type = StandardStates())
 ```
 
-As it is possible to see, different sizes can be chosen for the different reservoirs. The input layer and bias can also be given as vectors, but of course, they have to be of the same size of the reservoirs vector. If they are not passed as a vector, the value passed will be used for all the layers in the deep ESN.
+The input layer and bias can also be given as vectors, but of course, they have to be of the same size of the reservoirs vector. If they are not passed as a vector, the value passed will be used for all the layers in the deep ESN.
 
 In addition to using the provided functions for the construction of the layers, the user can also choose to build their own matrix, or array of matrices, and feed that into the `ESN` in the same way.
 
@@ -88,8 +87,6 @@ plot(p1, p2, p3, plot_title = "Lorenz System Coordinates",
     yguidefontsize = 15,
     legendfontsize = 12, titlefontsize = 20)
 ```
-
-Note that there is a known bug at the moment with using `WeightedLayer` as the input layer with the deep ESN. We are in the process of investigating and solving it. The leak coefficient for the reservoirs has to always be the same in the current implementation. This is also something we are actively looking into expanding.
 
 ## Documentation
 
