@@ -41,7 +41,7 @@ Random = "1.10"
 SafeTestsets = "0.1"
 Statistics = "1.10"
 Test = "1"
-WeightInitializers = "0.1.6"
+WeightInitializers = "0.1.6, 1"
 julia = "1.10"
 
 [extras]
