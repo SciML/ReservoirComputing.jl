@@ -67,6 +67,8 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
+__partial_apply(fn, inp) = fn$inp
+
 #fallbacks for initializers
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd,
@@ -83,13 +85,13 @@ for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jump
         return $initializer(WeightInitializers._default_rng(), T, dims...; kwargs...)
     end
     @eval function ($initializer)(rng::AbstractRNG; kwargs...)
-        return WeightInitializers.__partial_apply($initializer, (rng, (; kwargs...)))
+        return __partial_apply($initializer, (rng, (; kwargs...)))
     end
     @eval function ($initializer)(rng::AbstractRNG,
             ::Type{T}; kwargs...) where {T <: $NType}
-        return WeightInitializers.__partial_apply($initializer, ((rng, T), (; kwargs...)))
+        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
     end
-    @eval ($initializer)(; kwargs...) = WeightInitializers.__partial_apply(
+    @eval ($initializer)(; kwargs...) = __partial_apply(
         $initializer, (; kwargs...))
 end
 
