@@ -35,9 +35,7 @@ function lorenz(du, u, p, t)
 end
 #solve and take data
 prob = ODEProblem(lorenz, u0, tspan, p)
-data = solve(prob, ABM54(), dt = 0.02)
-#hacky workaround
-data = reduce(hcat, data.u)
+data = Array(solve(prob, ABM54(), dt = 0.02))
 
 shift = 300
 train_len = 5000
