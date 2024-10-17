@@ -190,10 +190,10 @@ function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return layer_matrix
 end
 
-function _create_bernoulli(p::T,
+function _create_bernoulli(p::Number,
         res_size::Int,
         in_size::Int,
-        weight::T,
+        weight::Number,
         rng::AbstractRNG,
         ::Type{T}) where {T <: Number}
     input_matrix = zeros(T, res_size, in_size)
@@ -210,7 +210,7 @@ function _create_irrational(irrational::Irrational,
         start::Int,
         res_size::Int,
         in_size::Int,
-        weight::T,
+        weight::Number,
         rng::AbstractRNG,
         ::Type{T}) where {T <: Number}
     setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + start + 1))))
