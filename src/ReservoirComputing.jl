@@ -50,7 +50,8 @@ forecasts by recursively feeding their own outputs back as inputs for
 subsequent prediction steps.
 
 # Parameters
-- `prediction_len::Int`: The number of future steps to predict.
+
+  - `prediction_len::Int`: The number of future steps to predict.
 
 # Description
 
@@ -63,7 +64,6 @@ At each step, the model takes the current input, generates a prediction,
 and then incorporates that prediction into the input for the next step.
 This recursive process continues until the specified
 number of prediction steps (`prediction_len`) is reached.
-
 """
 struct Generative{T} <: AbstractPrediction
     prediction_len::T
@@ -82,8 +82,9 @@ where a model predicts labels based on a provided set
 of input features (`prediction_data`).
 
 # Parameters
-- `prediction_data`: The input data used for prediction, typically structured as a matrix
-   where each column represents a sample, and each row represents a feature.
+
+  - `prediction_data`: The input data used for prediction, typically structured as a matrix
+    where each column represents a sample, and each row represents a feature.
 
 # Description
 
@@ -97,7 +98,6 @@ instead, it operates on fixed input data to produce a single batch of prediction
 This method is suitable for tasks like classification,
 regression, or other use cases where the input features
 and the number of steps are predefined.
-
 """
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)
