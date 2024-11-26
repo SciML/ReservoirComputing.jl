@@ -21,9 +21,9 @@ Creates an Echo State Network (ESN) using specified parameters and training data
 
   - `train_data`: Matrix of training data (columns as time steps, rows as features).
   - `variation`: Variation of ESN (default: `Default()`).
-  - `input_layer`: Input layer of ESN (default: `DenseLayer()`).
-  - `reservoir`: Reservoir of the ESN (default: `RandSparseReservoir(100)`).
-  - `bias`: Bias vector for each time step (default: `NullLayer()`).
+  - `input_layer`: Input layer of ESN.
+  - `reservoir`: Reservoir of the ESN.
+  - `bias`: Bias vector for each time step.
   - `reservoir_driver`: Mechanism for evolving reservoir states (default: `RNN()`).
   - `nla_type`: Non-linear activation type (default: `NLADefault()`).
   - `states_type`: Format for storing states (default: `StandardStates()`).

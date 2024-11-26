@@ -55,11 +55,6 @@ temporal features.
   - `matrix_type`: The type of matrix used for storing the training data.
     Default is inferred from `train_data`.
 
-# Returns
-
-  - A `DeepESN` instance configured according to the provided parameters
-    and suitable for further training and prediction tasks.
-
 # Example
 
 ```julia
@@ -73,10 +68,6 @@ deepESN = DeepESN(train_data, 10, 100, depth = 3, washout = 100)
 train(deepESN, target_data)
 prediction = predict(deepESN, new_data)
 ```
-
-The DeepESN model is ideal for tasks requiring the processing of sequences with
-complex temporal dependencies, benefiting from the multiple reservoirs to capture
-different levels of abstraction and temporal dynamics.
 """
 function DeepESN(train_data,
         in_size::Int,
