@@ -10,7 +10,7 @@ using Optim
 using PartialFunctions
 using Random
 using Statistics
-using WeightInitializers
+using WeightInitializers: WeightInitializers, DeviceAgnostic
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
@@ -106,30 +106,35 @@ end
 
 __partial_apply(fn, inp) = fn$inp
 
-#fallbacks for initializers
+#fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init)
-    NType = ifelse(initializer === :rand_sparse, Real, Number)
-    @eval function ($initializer)(dims::Integer...; kwargs...)
-        return $initializer(WeightInitializers._default_rng(), Float32, dims...; kwargs...)
+    @eval begin
+        function ($initializer)(dims::Integer...; kwargs...)
+            return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
+        end
+        function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
+            return $initializer(rng, Float32, dims...; kwargs...)
+        end
+        function ($initializer)(::Type{T}, dims::Integer...; kwargs...) where {T <: Number}
+            return $initializer(Utils.default_rng(), T, dims...; kwargs...)
+        end
+
+        # Partial application
+        function ($initializer)(rng::AbstractRNG; kwargs...)
+            return PartialFunction.Partial{Nothing}($initializer, rng, kwargs)
+        end
+        function ($initializer)(::Type{T}; kwargs...) where {T <: Number}
+            return PartialFunction.Partial{T}($initializer, nothing, kwargs)
+        end
+        function ($initializer)(rng::AbstractRNG, ::Type{T}; kwargs...) where {T <: Number}
+            return PartialFunction.Partial{T}($initializer, rng, kwargs)
+        end
+        function ($initializer)(; kwargs...)
+            return PartialFunction.Partial{Nothing}($initializer, nothing, kwargs)
+        end
     end
-    @eval function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
-        return $initializer(rng, Float32, dims...; kwargs...)
-    end
-    @eval function ($initializer)(::Type{T},
-            dims::Integer...; kwargs...) where {T <: $NType}
-        return $initializer(WeightInitializers._default_rng(), T, dims...; kwargs...)
-    end
-    @eval function ($initializer)(rng::AbstractRNG; kwargs...)
-        return __partial_apply($initializer, (rng, (; kwargs...)))
-    end
-    @eval function ($initializer)(rng::AbstractRNG,
-            ::Type{T}; kwargs...) where {T <: $NType}
-        return __partial_apply($initializer, ((rng, T), (; kwargs...)))
-    end
-    @eval ($initializer)(; kwargs...) = __partial_apply(
-        $initializer, (; kwargs...))
 end
 
 #general

@@ -66,7 +66,7 @@ function delay_line(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
-    reservoir_matrix = zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
 
     for i in 1:(dims[1] - 1)
@@ -107,7 +107,7 @@ function delay_line_backward(rng::AbstractRNG,
         weight = T(0.1),
         fb_weight = T(0.2)) where {T <: Number}
     res_size = first(dims)
-    reservoir_matrix = zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
 
     for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -148,7 +148,7 @@ function cycle_jumps(rng::AbstractRNG,
         jump_weight::Number = T(0.1),
         jump_size::Int = 3) where {T <: Number}
     res_size = first(dims)
-    reservoir_matrix = zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
 
     for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = cycle_weight
@@ -194,7 +194,7 @@ function simple_cycle(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
-    reservoir_matrix = zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -246,9 +246,9 @@ function pseudo_svd(rng::AbstractRNG,
 
     while tmp_sparsity <= sparsity
         reservoir_matrix *= create_qmatrix(dims[1],
-            rand(1:dims[1]),
-            rand(1:dims[1]),
-            rand(T) * T(2) - T(1),
+            DeviceAgnostic.rand(1:dims[1]),
+            DeviceAgnostic.rand(1:dims[1]),
+            DeviceAgnostic.rand(T) * T(2) - T(1),
             T)
         tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
     end
@@ -258,17 +258,17 @@ end
 
 function create_diag(dim::Number, max_value::Number, ::Type{T};
         sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
-    diagonal_matrix = zeros(T, dim, dim)
+    diagonal_matrix = DeviceAgnostic.zeros(T, dim, dim)
     if sorted == true
         if reverse_sort == true
-            diagonal_values = sort(rand(T, dim) .* max_value, rev = true)
+            diagonal_values = sort(DeviceAgnostic.rand(T, dim) .* max_value, rev = true)
             diagonal_values[1] = max_value
         else
-            diagonal_values = sort(rand(T, dim) .* max_value)
+            diagonal_values = sort(DeviceAgnostic.rand(T, dim) .* max_value)
             diagonal_values[end] = max_value
         end
     else
-        diagonal_values = rand(T, dim) .* max_value
+        diagonal_values = DeviceAgnostic.rand(T, dim) .* max_value
     end
 
     for i in 1:dim
@@ -283,7 +283,7 @@ function create_qmatrix(dim::Number,
         coord_j::Number,
         theta::Number,
         ::Type{T}) where {T <: Number}
-    qmatrix = zeros(T, dim, dim)
+    qmatrix = DeviceAgnostic.zeros(T, dim, dim)
 
     for i in 1:dim
         qmatrix[i, i] = 1.0

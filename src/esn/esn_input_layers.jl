@@ -26,7 +26,7 @@ function scaled_rand(rng::AbstractRNG,
         dims::Integer...;
         scaling = T(0.1)) where {T <: Number}
     res_size, in_size = dims
-    layer_matrix = T.(rand(rng, Uniform(-scaling, scaling), res_size, in_size))
+    layer_matrix = T.(DeviceAgnostic.rand(rng, Uniform(-scaling, scaling), res_size, in_size))
     return layer_matrix
 end
 
@@ -65,11 +65,11 @@ function weighted_init(rng::AbstractRNG,
         scaling = T(0.1)) where {T <: Number}
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
-    layer_matrix = zeros(T, res_size, in_size)
+    layer_matrix = DeviceAgnostic.zeros(T, res_size, in_size)
     q = floor(Int, res_size / in_size)
 
     for i in 1:in_size
-        layer_matrix[((i - 1) * q + 1):((i) * q), i] = rand(rng,
+        layer_matrix[((i - 1) * q + 1):((i) * q), i] = DeviceAgnostic.rand(rng,
             Uniform(-scaling, scaling),
             q)
     end
@@ -113,25 +113,25 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         throw(DimensionMismatch("in_size must be greater than model_in_size"))
     end
 
-    input_matrix = zeros(res_size, in_size)
-    zero_connections = zeros(in_size)
+    input_matrix = DeviceAgnostic.zeros(res_size, in_size)
+    zero_connections = DeviceAgnostic.zeros(in_size)
     num_for_state = floor(Int, res_size * gamma)
     num_for_model = floor(Int, res_size * (1 - gamma))
 
     for i in 1:num_for_state
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
-        random_row_idx = idxs[rand(rng, 1:end)]
-        random_clm_idx = range(1, state_size, step = 1)[rand(rng, 1:end)]
-        input_matrix[random_row_idx, random_clm_idx] = rand(rng, Uniform(-scaling, scaling))
+        random_row_idx = idxs[DeviceAgnostic.rand(rng, 1:end)]
+        random_clm_idx = range(1, state_size, step = 1)[DeviceAgnostic.rand(rng, 1:end)]
+        input_matrix[random_row_idx, random_clm_idx] = DeviceAgnostic.rand(rng, Uniform(-scaling, scaling))
     end
 
     for i in 1:num_for_model
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
-        random_row_idx = idxs[rand(rng, 1:end)]
-        random_clm_idx = range(state_size + 1, in_size, step = 1)[rand(rng, 1:end)]
-        input_matrix[random_row_idx, random_clm_idx] = rand(rng, Uniform(-scaling, scaling))
+        random_row_idx = idxs[DeviceAgnostic.rand(rng, 1:end)]
+        random_clm_idx = range(state_size + 1, in_size, step = 1)[DeviceAgnostic.rand(rng, 1:end)]
+        input_matrix[random_row_idx, random_clm_idx] = DeviceAgnostic.rand(rng, Uniform(-scaling, scaling))
     end
 
     return input_matrix
@@ -196,10 +196,10 @@ function _create_bernoulli(p::Number,
         weight::Number,
         rng::AbstractRNG,
         ::Type{T}) where {T <: Number}
-    input_matrix = zeros(T, res_size, in_size)
+    input_matrix = DeviceAgnostic.zeros(T, res_size, in_size)
     for i in 1:res_size
         for j in 1:in_size
-            rand(rng, Bernoulli(p)) ? (input_matrix[i, j] = weight) :
+            DeviceAgnostic.rand(rng, Bernoulli(p)) ? (input_matrix[i, j] = weight) :
             (input_matrix[i, j] = -weight)
         end
     end
@@ -216,8 +216,8 @@ function _create_irrational(irrational::Irrational,
     setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + start + 1))))
     ir_string = string(BigFloat(irrational)) |> collect
     deleteat!(ir_string, findall(x -> x == '.', ir_string))
-    ir_array = zeros(length(ir_string))
-    input_matrix = zeros(T, res_size, in_size)
+    ir_array = DeviceAgnostic.zeros(length(ir_string))
+    input_matrix = DeviceAgnostic.zeros(T, res_size, in_size)
 
     for i in 1:length(ir_string)
         ir_array[i] = parse(Int, ir_string[i])
@@ -225,7 +225,7 @@ function _create_irrational(irrational::Irrational,
 
     for i in 1:res_size
         for j in 1:in_size
-            random_number = rand(rng, T)
+            random_number = DeviceAgnostic.rand(rng, T)
             input_matrix[i, j] = random_number < 0.5 ? -weight : weight
         end
     end
