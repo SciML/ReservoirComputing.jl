@@ -66,7 +66,7 @@ function delay_line(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
-    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
 
     for i in 1:(dims[1] - 1)
@@ -107,7 +107,7 @@ function delay_line_backward(rng::AbstractRNG,
         weight = T(0.1),
         fb_weight = T(0.2)) where {T <: Number}
     res_size = first(dims)
-    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -148,7 +148,7 @@ function cycle_jumps(rng::AbstractRNG,
         jump_weight::Number = T(0.1),
         jump_size::Int = 3) where {T <: Number}
     res_size = first(dims)
-    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(res_size - 1)
         reservoir_matrix[i + 1, i] = cycle_weight
@@ -194,7 +194,7 @@ function simple_cycle(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
         weight = T(0.1)) where {T <: Number}
-    reservoir_matrix = DeviceAgnostic.zeros(T, dims...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -237,38 +237,42 @@ function pseudo_svd(rng::AbstractRNG,
         sparsity::Number = 0.1,
         sorted::Bool = true,
         reverse_sort::Bool = false) where {T <: Number}
-    reservoir_matrix = create_diag(dims[1],
-        max_value,
-        T;
+    reservoir_matrix = create_diag(rng, T, dims[1],
+        max_value;
         sorted = sorted,
         reverse_sort = reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
 
     while tmp_sparsity <= sparsity
-        reservoir_matrix *= create_qmatrix(dims[1],
-            DeviceAgnostic.rand(1:dims[1]),
-            DeviceAgnostic.rand(1:dims[1]),
-            DeviceAgnostic.rand(T) * T(2) - T(1),
-            T)
+        reservoir_matrix *= create_qmatrix(rng, T, dims[1],
+            rand_range(rng, T, dims[1]),
+            rand_range(rng, T, dims[1]),
+            DeviceAgnostic.rand(rng, T) * T(2) - T(1))
         tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
     end
 
     return reservoir_matrix
 end
 
-function create_diag(dim::Number, max_value::Number, ::Type{T};
+#hacky workaround for the moment
+function rand_range(rng, T, n::Int)
+    return Int(1 + floor(DeviceAgnostic.rand(rng, T) * n))
+end
+
+function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number;
         sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
-    diagonal_matrix = DeviceAgnostic.zeros(T, dim, dim)
+    diagonal_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
     if sorted == true
         if reverse_sort == true
-            diagonal_values = sort(DeviceAgnostic.rand(T, dim) .* max_value, rev = true)
+            diagonal_values = sort(
+                DeviceAgnostic.rand(rng, T, dim) .* max_value, rev = true)
             diagonal_values[1] = max_value
         else
-            diagonal_values = sort(DeviceAgnostic.rand(T, dim) .* max_value)
+            diagonal_values = sort(DeviceAgnostic.rand(rng, T, dim) .* max_value)
             diagonal_values[end] = max_value
         end
     else
-        diagonal_values = DeviceAgnostic.rand(T, dim) .* max_value
+        diagonal_values = DeviceAgnostic.rand(rng, T, dim) .* max_value
     end
 
     for i in 1:dim
@@ -278,12 +282,11 @@ function create_diag(dim::Number, max_value::Number, ::Type{T};
     return diagonal_matrix
 end
 
-function create_qmatrix(dim::Number,
+function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
         coord_i::Number,
         coord_j::Number,
-        theta::Number,
-        ::Type{T}) where {T <: Number}
-    qmatrix = DeviceAgnostic.zeros(T, dim, dim)
+        theta::Number) where {T <: Number}
+    qmatrix = DeviceAgnostic.zeros(rng, T, dim, dim)
 
     for i in 1:dim
         qmatrix[i, i] = 1.0
