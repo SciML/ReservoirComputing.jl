@@ -5,11 +5,11 @@ using CellularAutomata
 using Distances
 using LinearAlgebra
 using NNlib
-using Optim
 using PartialFunctions
 using Random
 using Reexport: Reexport, @reexport
 using Statistics
+using StatsBase: sample
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 
@@ -160,7 +160,7 @@ export train
 export ESN
 export HybridESN, KnowledgeModel
 export DeepESN
-export RECA
+export RECA, sample
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer
 

@@ -54,7 +54,7 @@ function ESN(train_data,
         nla_type = NLADefault(),
         states_type = StandardStates(),
         washout = 0,
-        rng = WeightInitializers._default_rng(),
+        rng = Utils.default_rng(),
         T = Float32,
         matrix_type = typeof(train_data))
     if states_type isa AbstractPaddedStates
