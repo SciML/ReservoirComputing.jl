@@ -126,7 +126,7 @@ function HybridESN(model,
         nla_type = NLADefault(),
         states_type = StandardStates(),
         washout = 0,
-        rng = WeightInitializers._default_rng(),
+        rng = Utils.default_rng(),
         T = Float32,
         matrix_type = typeof(train_data))
     train_data = vcat(train_data, model.model_data[:, 1:(end - 1)])
