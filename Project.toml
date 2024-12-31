@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 authors = ["Francesco Martinuzzi"]
-version = "0.10.4"
+version = "0.10.5"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -38,7 +38,7 @@ PartialFunctions = "1.2"
 Random = "1.10"
 Reexport = "1.2.2"
 SafeTestsets = "0.1"
-Statistics = "1.10"
+Statistics = "1.11"
 StatsBase = "0.34.4"
 Test = "1"
 WeightInitializers = "1.0.4"
