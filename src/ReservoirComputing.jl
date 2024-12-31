@@ -10,22 +10,8 @@ using PartialFunctions
 using Random
 using Reexport: Reexport, @reexport
 using Statistics
-@reexport using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction,
-                                    Utils, sparse_init
-
-export NLADefault, NLAT1, NLAT2, NLAT3
-export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
-export StandardRidge
-export scaled_rand, weighted_init, informed_init, minimal_init
-export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
-export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
-export train
-export ESN
-export HybridESN, KnowledgeModel
-export DeepESN
-export RECA
-export RandomMapping, RandomMaps
-export Generative, Predictive, OutputLayer
+using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
+@reexport using WeightInitializers
 
 #define global types
 abstract type AbstractReservoirComputer end
@@ -105,7 +91,6 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
-__partial_apply(fn, inp) = fn$inp
 
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
@@ -138,6 +123,7 @@ for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jump
     end
 end
 
+
 #general
 include("states.jl")
 include("predict.jl")
@@ -163,5 +149,19 @@ if !isdefined(Base, :get_extension)
     include("../ext/RCMLJLinearModelsExt.jl")
     include("../ext/RCLIBSVMExt.jl")
 end
+
+export NLADefault, NLAT1, NLAT2, NLAT3
+export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
+export StandardRidge
+export scaled_rand, weighted_init, informed_init, minimal_init
+export rand_sparse, delay_line, delay_line_backward, cycle_jumps, simple_cycle, pseudo_svd
+export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
+export train
+export ESN
+export HybridESN, KnowledgeModel
+export DeepESN
+export RECA
+export RandomMapping, RandomMaps
+export Generative, Predictive, OutputLayer
 
 end #module
