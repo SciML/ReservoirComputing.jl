@@ -1,6 +1,6 @@
 # Using different layers
 
-A great deal of efforts in the ESNs field are devoted to finding an ideal construction for the reservoir matrices. ReservoirComputing.jl offers multiple implementation of reservoir and input matrices initializations found in the literature. The API is standardized, and follows by [WeightInitializers.jl](https://github.com/LuxDL/WeightInitializers.jl):
+A great deal of efforts in the ESNs field are devoted to finding an ideal construction for the reservoir matrices. ReservoirComputing.jl offers multiple implementation of reservoir and input matrices initializations found in the literature. The API is standardized, and follows by [WeightInitializers.jl](https://github.com/LuxDL/Lux.jl/tree/main/lib/WeightInitializers):
 
 ```julia
 weights = init(rng, dims...)
@@ -49,15 +49,15 @@ Now it is possible to define the input layers and reservoirs we want to compare 
 using ReservoirComputing, StatsBase
 
 res_size = 300
-input_layer = [minimal_init(; weight = 0.85, sampling_type = :irrational),
-    minimal_init(; weight = 0.95, sampling_type = :irrational)]
-reservoirs = [simple_cycle(; weight = 0.7),
-    cycle_jumps(; cycle_weight = 0.7, jump_weight = 0.2, jump_size = 5)]
+input_layer = [minimal_init(; weight=0.85, sampling_type=:irrational),
+    minimal_init(; weight=0.95, sampling_type=:irrational)]
+reservoirs = [simple_cycle(; weight=0.7),
+    cycle_jumps(; cycle_weight=0.7, jump_weight=0.2, jump_size=5)]
 
 for i in 1:length(reservoirs)
     esn = ESN(training_input, 2, res_size;
-        input_layer = input_layer[i],
-        reservoir = reservoirs[i])
+        input_layer=input_layer[i],
+        reservoir=reservoirs[i])
     wout = train(esn, training_target, StandardRidge(0.001))
     output = esn(Predictive(testing_input), wout)
     println(msd(testing_target, output))

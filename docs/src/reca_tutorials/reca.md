@@ -27,8 +27,8 @@ To define the ReCA model, it suffices to call:
 
 ```@example reca
 reca = RECA(input, ca;
-    generations = 16,
-    input_encoding = RandomMapping(16, 40))
+    generations=16,
+    input_encoding=RandomMapping(16, 40))
 ```
 
 After this, the training can be performed with the chosen method.

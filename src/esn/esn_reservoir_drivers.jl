@@ -114,7 +114,7 @@ Returns a Recurrent Neural Network (RNN) initializer for the Echo State Network 
 This function creates an RNN object with the specified activation function and leaky coefficient,
 which can be used as a reservoir driver in the ESN.
 """
-function RNN(; activation_function = NNlib.fast_act(tanh), leaky_coefficient = 1.0)
+function RNN(; activation_function=NNlib.fast_act(tanh), leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
 end
 
@@ -185,9 +185,9 @@ This function creates an MRNN object with the specified activation functions, le
     "_A novel model of leaky integrator echo state network for
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
-function MRNN(; activation_function = [tanh, sigmoid],
-        leaky_coefficient = 1.0,
-        scaling_factor = fill(leaky_coefficient, length(activation_function)))
+function MRNN(; activation_function=[tanh, sigmoid],
+        leaky_coefficient=1.0,
+        scaling_factor=fill(leaky_coefficient, length(activation_function)))
     @assert length(activation_function) == length(scaling_factor)
     return MRNN(activation_function, leaky_coefficient, scaling_factor)
 end
@@ -290,11 +290,11 @@ A GRUParams object containing the parameters needed for the GRU-based reservoir 
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
-function GRU(; activation_function = [NNlib.sigmoid, NNlib.sigmoid, tanh],
-        inner_layer = fill(scaled_rand, 2),
-        reservoir = fill(rand_sparse, 2),
-        bias = fill(scaled_rand, 2),
-        variant = FullyGated())
+function GRU(; activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh],
+        inner_layer=fill(scaled_rand, 2),
+        reservoir=fill(rand_sparse, 2),
+        bias=fill(scaled_rand, 2),
+        variant=FullyGated())
     return GRU(activation_function, inner_layer, reservoir, bias, variant)
 end
 

@@ -22,11 +22,11 @@ This type of reservoir initialization is commonly used in ESNs for capturing tem
 function rand_sparse(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        radius = T(1.0),
-        sparsity = T(0.1),
-        std = T(1.0)) where {T <: Number}
+        radius=T(1.0),
+        sparsity=T(0.1),
+        std=T(1.0)) where {T <: Number}
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
-    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
+    reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
@@ -54,7 +54,7 @@ A delay line reservoir matrix with dimensions specified by `dims`. The matrix is
 # Example
 
 ```julia
-reservoir = delay_line(Float64, 100, 100; weight = 0.2)
+reservoir = delay_line(Float64, 100, 100; weight=0.2)
 ```
 
 # References
@@ -65,7 +65,7 @@ Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE Transa
 function delay_line(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        weight = T(0.1)) where {T <: Number}
+        weight=T(0.1)) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
 
@@ -104,8 +104,8 @@ Reservoir matrix with the dimensions specified by `dims` and weights.
 function delay_line_backward(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        weight = T(0.1),
-        fb_weight = T(0.2)) where {T <: Number}
+        weight=T(0.1),
+        fb_weight=T(0.2)) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -144,9 +144,9 @@ Reservoir matrix with the specified dimensions, cycle weight, jump weight, and j
 function cycle_jumps(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        cycle_weight::Number = T(0.1),
-        jump_weight::Number = T(0.1),
-        jump_size::Int = 3) where {T <: Number}
+        cycle_weight::Number=T(0.1),
+        jump_weight::Number=T(0.1),
+        jump_size::Int=3) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -193,7 +193,7 @@ Reservoir matrix with the dimensions specified by `dims` and weights.
 function simple_cycle(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        weight = T(0.1)) where {T <: Number}
+        weight=T(0.1)) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(dims[1] - 1)
@@ -233,14 +233,14 @@ This reservoir initialization method, based on a pseudo-SVD approach, is inspire
 function pseudo_svd(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        max_value::Number = T(1.0),
-        sparsity::Number = 0.1,
-        sorted::Bool = true,
-        reverse_sort::Bool = false) where {T <: Number}
+        max_value::Number=T(1.0),
+        sparsity::Number=0.1,
+        sorted::Bool=true,
+        reverse_sort::Bool=false) where {T <: Number}
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
-        sorted = sorted,
-        reverse_sort = reverse_sort)
+        sorted=sorted,
+        reverse_sort=reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
 
     while tmp_sparsity <= sparsity
@@ -260,12 +260,12 @@ function rand_range(rng, T, n::Int)
 end
 
 function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number;
-        sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
+        sorted::Bool=true, reverse_sort::Bool=false) where {T <: Number}
     diagonal_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
     if sorted == true
         if reverse_sort == true
             diagonal_values = sort(
-                DeviceAgnostic.rand(rng, T, dim) .* max_value, rev = true)
+                DeviceAgnostic.rand(rng, T, dim) .* max_value; rev=true)
             diagonal_values[1] = max_value
         else
             diagonal_values = sort(DeviceAgnostic.rand(rng, T, dim) .* max_value)

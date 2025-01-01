@@ -2,7 +2,7 @@
 
 Deep Echo State Network architectures started to gain some traction recently. In this guide, we illustrate how it is possible to use ReservoirComputing.jl to build a deep ESN.
 
-The network implemented in this library is taken from [^1]. It works by stacking reservoirs on top of each other, feeding the output from one into the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in-depth explanation, refer to the paper linked above. The full script for this example can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/deep-esn/deepesn.jl). This example was run on Julia v1.7.2.
+The network implemented in this library is taken from [^1]. It works by stacking reservoirs on top of each other, feeding the output from one into the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in-depth explanation, refer to the paper linked above. 
 
 ## Lorenz Example
 
@@ -20,7 +20,7 @@ end
 
 #solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
-data = solve(prob, ABM54(), dt = 0.02)
+data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
 
 #determine shift length, training length and prediction length
@@ -41,15 +41,15 @@ The construction of the ESN is also really similar. The only difference is that 
 ```@example deep_lorenz
 using ReservoirComputing
 
-reservoirs = [rand_sparse(; radius = 1.1, sparsity = 0.1),
-    rand_sparse(; radius = 1.2, sparsity = 0.1),
-    rand_sparse(; radius = 1.4, sparsity = 0.1)]
+reservoirs = [rand_sparse(; radius=1.1, sparsity=0.1),
+    rand_sparse(; radius=1.2, sparsity=0.1),
+    rand_sparse(; radius=1.4, sparsity=0.1)]
 
 esn = DeepESN(input_data, 3, 200;
-    reservoir = reservoirs,
-    reservoir_driver = RNN(),
-    nla_type = NLADefault(),
-    states_type = StandardStates())
+    reservoir=reservoirs,
+    reservoir_driver=RNN(),
+    nla_type=NLADefault(),
+    states_type=StandardStates())
 ```
 
 The input layer and bias can also be given as vectors, but of course, they have to be of the same size of the reservoirs vector. If they are not passed as a vector, the value passed will be used for all the layers in the deep ESN.
@@ -75,17 +75,17 @@ lorenz_maxlyap = 0.9056
 predict_ts = ts[(shift + train_len + 1):(shift + train_len + predict_len)]
 lyap_time = (predict_ts .- predict_ts[1]) * (1 / lorenz_maxlyap)
 
-p1 = plot(lyap_time, [test_data[1, :] output[1, :]], label = ["actual" "predicted"],
-    ylabel = "x(t)", linewidth = 2.5, xticks = false, yticks = -15:15:15);
-p2 = plot(lyap_time, [test_data[2, :] output[2, :]], label = ["actual" "predicted"],
-    ylabel = "y(t)", linewidth = 2.5, xticks = false, yticks = -20:20:20);
-p3 = plot(lyap_time, [test_data[3, :] output[3, :]], label = ["actual" "predicted"],
-    ylabel = "z(t)", linewidth = 2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+p1 = plot(lyap_time, [test_data[1, :] output[1, :]]; label=["actual" "predicted"],
+    ylabel="x(t)", linewidth=2.5, xticks=false, yticks=-15:15:15);
+p2 = plot(lyap_time, [test_data[2, :] output[2, :]]; label=["actual" "predicted"],
+    ylabel="y(t)", linewidth=2.5, xticks=false, yticks=-20:20:20);
+p3 = plot(lyap_time, [test_data[3, :] output[3, :]]; label=["actual" "predicted"],
+    ylabel="z(t)", linewidth=2.5, xlabel="max(λ)*t", yticks=10:15:40);
 
-plot(p1, p2, p3, plot_title = "Lorenz System Coordinates",
-    layout = (3, 1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize = 15,
-    yguidefontsize = 15,
-    legendfontsize = 12, titlefontsize = 20)
+plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
+    layout=(3, 1), xtickfontsize=12, ytickfontsize=12, xguidefontsize=15,
+    yguidefontsize=15,
+    legendfontsize=12, titlefontsize=20)
 ```
 
 ## Documentation

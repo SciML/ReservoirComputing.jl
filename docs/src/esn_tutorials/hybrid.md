@@ -12,7 +12,7 @@ using DifferentialEquations
 u0 = [1.0, 0.0, 0.0]
 tspan = (0.0, 1000.0)
 datasize = 100000
-tsteps = range(tspan[1], tspan[2], length = datasize)
+tsteps = range(tspan[1], tspan[2]; length=datasize)
 
 function lorenz(du, u, p, t)
     p = [10.0, 28.0, 8 / 3]
@@ -22,7 +22,7 @@ function lorenz(du, u, p, t)
 end
 
 ode_prob = ODEProblem(lorenz, u0, tspan)
-ode_sol = solve(ode_prob, saveat = tsteps)
+ode_sol = solve(ode_prob; saveat=tsteps)
 ode_data = Array(ode_sol)
 
 train_len = 10000
@@ -40,9 +40,9 @@ tspan_train = (tspan[1], ode_sol.t[train_len])
 To feed the data to the ESN, it is necessary to create a suitable function.
 
 ```@example hybrid
-function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
+function prior_model_data_generator(u0, tspan, tsteps, model=lorenz)
     prob = ODEProblem(lorenz, u0, tspan)
-    sol = Array(solve(prob, saveat = tsteps))
+    sol = Array(solve(prob; saveat=tsteps))
     return sol
 end
 ```
@@ -61,7 +61,7 @@ hesn = HybridESN(km,
     input_data,
     in_size,
     res_size;
-    reservoir = rand_sparse)
+    reservoir=rand_sparse)
 ```
 
 ## Training and Prediction
@@ -81,17 +81,17 @@ lorenz_maxlyap = 0.9056
 predict_ts = tsteps[(train_len + 1):(train_len + predict_len)]
 lyap_time = (predict_ts .- predict_ts[1]) * (1 / lorenz_maxlyap)
 
-p1 = plot(lyap_time, [test_data[1, :] output[1, :]], label = ["actual" "predicted"],
-    ylabel = "x(t)", linewidth = 2.5, xticks = false, yticks = -15:15:15);
-p2 = plot(lyap_time, [test_data[2, :] output[2, :]], label = ["actual" "predicted"],
-    ylabel = "y(t)", linewidth = 2.5, xticks = false, yticks = -20:20:20);
-p3 = plot(lyap_time, [test_data[3, :] output[3, :]], label = ["actual" "predicted"],
-    ylabel = "z(t)", linewidth = 2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+p1 = plot(lyap_time, [test_data[1, :] output[1, :]]; label=["actual" "predicted"],
+    ylabel="x(t)", linewidth=2.5, xticks=false, yticks=-15:15:15);
+p2 = plot(lyap_time, [test_data[2, :] output[2, :]]; label=["actual" "predicted"],
+    ylabel="y(t)", linewidth=2.5, xticks=false, yticks=-20:20:20);
+p3 = plot(lyap_time, [test_data[3, :] output[3, :]]; label=["actual" "predicted"],
+    ylabel="z(t)", linewidth=2.5, xlabel="max(λ)*t", yticks=10:15:40);
 
-plot(p1, p2, p3, plot_title = "Lorenz System Coordinates",
-    layout = (3, 1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize = 15,
-    yguidefontsize = 15,
-    legendfontsize = 12, titlefontsize = 20)
+plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
+    layout=(3, 1), xtickfontsize=12, ytickfontsize=12, xguidefontsize=15,
+    yguidefontsize=15,
+    legendfontsize=12, titlefontsize=20)
 ```
 
 ## Bibliography

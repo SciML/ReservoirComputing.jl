@@ -3,8 +3,8 @@ function obtain_esn_prediction(esn,
         x,
         output_layer,
         args...;
-        initial_conditions = output_layer.last_value,
-        save_states = false)
+        initial_conditions=output_layer.last_value,
+        save_states=false)
     out_size = output_layer.out_size
     training_method = output_layer.training_method
     prediction_len = prediction.prediction_len
@@ -33,8 +33,8 @@ function obtain_esn_prediction(esn,
         x,
         output_layer,
         args...;
-        initial_conditions = output_layer.last_value,
-        save_states = false)
+        initial_conditions=output_layer.last_value,
+        save_states=false)
     out_size = output_layer.out_size
     training_method = output_layer.training_method
     prediction_len = prediction.prediction_len

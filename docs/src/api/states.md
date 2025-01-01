@@ -17,3 +17,9 @@
     NLAT2
     NLAT3
 ```
+
+## Internals
+
+```@docs
+    ReservoirComputing.create_states
+```
