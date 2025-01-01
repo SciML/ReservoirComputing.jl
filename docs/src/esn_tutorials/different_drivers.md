@@ -14,7 +14,7 @@ where ``D`` is the number of activation functions and respective parameters chos
 
 The method to call to use the multiple activation function ESN is `MRNN(activation_function, leaky_coefficient, scaling_factor)`. The arguments can be used as both `args` and `kwargs`. `activation_function` and `scaling_factor` have to be vectors (or tuples) containing the chosen activation functions and respective scaling factors (``f_1,...,f_D`` and ``\lambda_1,...,\lambda_D`` following the nomenclature introduced above). The `leaky_coefficient` represents ``\alpha`` and it is a single value.
 
-Starting with the example, the data used is based on the following function based on the DAFESN paper [^1]. A full script of the example is available [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/mrnn/mrnn.jl). This example was run on Julia v1.7.2.
+Starting with the example, the data used is based on the following function based on the DAFESN paper [^1].
 
 ```@example mrnn
 u(t) = sin(t) + sin(0.51 * t) + sin(0.22 * t) + sin(0.1002 * t) + sin(0.05343 * t)
@@ -36,7 +36,7 @@ testing_target = reduce(hcat,
     data[(shift + train_len + 1):(shift + train_len + predict_len)])
 ```
 
-To follow the paper more closely, it is necessary to define a couple of activation functions. The numbering of them follows the ones in the paper. Of course, one can also use any custom-defined function, available in the base language or any activation function from [NNlib](https://fluxml.ai/Flux.jl/stable/models/nnlib/#Activation-Functions).
+To follow the paper more closely, it is necessary to define a couple of activation functions. The numbering of them follows the ones in the paper. Of course, one can also use any custom-defined function, available in the base language or any activation function from [NNlib](https://fluxml.ai/NNlib.jl/stable/reference/#Activation-Functions).
 
 ```@example mrnn
 f2(x) = (1 - exp(-x)) / (2 * (1 + exp(-x)))
@@ -57,14 +57,14 @@ base_case = RNN(tanh, 0.85)
 
 #MRNN() test cases
 #Parameter given as kwargs
-case3 = MRNN(activation_function = [tanh, f2],
-    leaky_coefficient = 0.85,
-    scaling_factor = [0.5, 0.3])
+case3 = MRNN(; activation_function=[tanh, f2],
+    leaky_coefficient=0.85,
+    scaling_factor=[0.5, 0.3])
 
 #Parameter given as kwargs
-case4 = MRNN(activation_function = [tanh, f3],
-    leaky_coefficient = 0.9,
-    scaling_factor = [0.45, 0.35])
+case4 = MRNN(; activation_function=[tanh, f3],
+    leaky_coefficient=0.9,
+    scaling_factor=[0.45, 0.35])
 
 #Parameter given as args
 case5 = MRNN([tanh, f4], 0.9, [0.43, 0.13])
@@ -72,14 +72,14 @@ case5 = MRNN([tanh, f4], 0.9, [0.43, 0.13])
 #tests
 test_cases = [base_case, case3, case4, case5]
 for case in test_cases
-    esn = ESN(training_input, 1, 100,
-        input_layer = weighted_init(; scaling = 0.3),
-        reservoir = rand_sparse(; radius = 0.4),
-        reservoir_driver = case,
-        states_type = ExtendedStates())
+    esn = ESN(training_input, 1, 100;
+        input_layer=weighted_init(; scaling=0.3),
+        reservoir=rand_sparse(; radius=0.4),
+        reservoir_driver=case,
+        states_type=ExtendedStates())
     wout = train(esn, training_target, StandardRidge(10e-6))
     output = esn(Predictive(testing_input), wout)
-    println(rmsd(testing_target, output, normalize = true))
+    println(rmsd(testing_target, output; normalize=true))
 end
 ```
 
@@ -159,7 +159,7 @@ This variation can be obtained by setting `variation=Minimal()`. The `inner_laye
 
 ### Examples
 
-To showcase the use of the `GRU()` method, this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/blob/main/change_drivers/gru/).
+To showcase the use of the `GRU()` method, this section will only illustrate the standard `FullyGated()` version. The full script for this example with the data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/tree/main/change_drivers/gru).
 
 The data used for this example is the Santa Fe laser dataset [^7] retrieved from [here](https://web.archive.org/web/20160427182805/http://www-psych.stanford.edu/%7Eandreas/Time-Series/SantaFe.html). The data is split to account for a next step prediction.
 
@@ -187,19 +187,19 @@ res_radius = 1.4
 
 Random.seed!(42)
 esn = ESN(training_input, 1, res_size;
-    reservoir = rand_sparse(; radius = res_radius),
-    reservoir_driver = GRU())
+    reservoir=rand_sparse(; radius=res_radius),
+    reservoir_driver=GRU())
 ```
 
 The default inner reservoir and input layer for the GRU are the same defaults for the `reservoir` and `input_layer` of the ESN. One can use the explicit call if they choose to.
 
 ```@example gru
-gru = GRU(reservoir = [rand_sparse,
+gru = GRU(; reservoir=[rand_sparse,
         rand_sparse],
-    inner_layer = [scaled_rand, scaled_rand])
+    inner_layer=[scaled_rand, scaled_rand])
 esn = ESN(training_input, 1, res_size;
-    reservoir = rand_sparse(; radius = res_radius),
-    reservoir_driver = gru)
+    reservoir=rand_sparse(; radius=res_radius),
+    reservoir_driver=gru)
 ```
 
 The training and prediction can proceed as usual:
@@ -215,14 +215,14 @@ The results can be plotted using Plots.jl
 ```@example gru
 using Plots
 
-plot([testing_target' output'], label = ["actual" "predicted"],
-    plot_title = "Santa Fe Laser",
-    titlefontsize = 20,
-    legendfontsize = 12,
-    linewidth = 2.5,
-    xtickfontsize = 12,
-    ytickfontsize = 12,
-    size = (1080, 720))
+plot([testing_target' output']; label=["actual" "predicted"],
+    plot_title="Santa Fe Laser",
+    titlefontsize=20,
+    legendfontsize=12,
+    linewidth=2.5,
+    xtickfontsize=12,
+    ytickfontsize=12,
+    size=(1080, 720))
 ```
 
 It is interesting to see a comparison of the GRU driven ESN and the standard RNN driven ESN. Using the same parameters defined before it is possible to do the following
@@ -231,8 +231,8 @@ It is interesting to see a comparison of the GRU driven ESN and the standard RNN
 using StatsBase
 
 esn_rnn = ESN(training_input, 1, res_size;
-    reservoir = rand_sparse(; radius = res_radius),
-    reservoir_driver = RNN())
+    reservoir=rand_sparse(; radius=res_radius),
+    reservoir_driver=RNN())
 
 output_layer = train(esn_rnn, training_target, training_method)
 output_rnn = esn_rnn(Predictive(testing_input), output_layer)

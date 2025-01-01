@@ -17,7 +17,8 @@ pages = [
         "States Modifications" => "api/states.md",
         "Prediction Types" => "api/predict.md",
         "Echo State Networks" => "api/esn.md",
-        #"ESN Layers" => "api/esn_layers.md",
+        "ESN Layers" => "api/inits.md",
         "ESN Drivers" => "api/esn_drivers.md",
+        "ESN variatoins" => "api/esn_variations.md",
         "ReCA" => "api/reca.md"]
 ]

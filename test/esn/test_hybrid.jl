@@ -3,7 +3,7 @@ using ReservoirComputing, DifferentialEquations, Statistics, Random
 u0 = [1.0, 0.0, 0.0]
 tspan = (0.0, 1000.0)
 datasize = 100000
-tsteps = range(tspan[1], tspan[2], length = datasize)
+tsteps = range(tspan[1], tspan[2]; length=datasize)
 
 function lorenz(du, u, p, t)
     p = [10.0, 28.0, 8 / 3]
@@ -12,16 +12,16 @@ function lorenz(du, u, p, t)
     du[3] = u[1] * u[2] - p[3] * u[3]
 end
 
-function prior_model_data_generator(u0, tspan, tsteps, model = lorenz)
+function prior_model_data_generator(u0, tspan, tsteps, model=lorenz)
     prob = ODEProblem(lorenz, u0, tspan)
-    sol = Array(solve(prob, saveat = tsteps))
+    sol = Array(solve(prob; saveat=tsteps))
     return sol
 end
 
 train_len = 10000
 
 ode_prob = ODEProblem(lorenz, u0, tspan)
-ode_sol = solve(ode_prob, saveat = tsteps)
+ode_sol = solve(ode_prob; saveat=tsteps)
 ode_data = Array(ode_sol)
 input_data = ode_data[:, 1:train_len]
 target_data = ode_data[:, 2:(train_len + 1)]
@@ -37,7 +37,7 @@ hesn = HybridESN(km,
     input_data,
     3,
     300;
-    reservoir = rand_sparse)
+    reservoir=rand_sparse)
 
 output_layer = train(hesn, target_data, StandardRidge(0.3))
 

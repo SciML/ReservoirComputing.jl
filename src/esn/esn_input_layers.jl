@@ -18,13 +18,13 @@ A matrix of type with dimensions specified by `dims`. Each element of the matrix
 
 ```julia
 rng = Random.default_rng()
-matrix = scaled_rand(rng, Float64, (100, 50); scaling = 0.2)
+matrix = scaled_rand(rng, Float64, (100, 50); scaling=0.2)
 ```
 """
 function scaled_rand(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        scaling = T(0.1)) where {T <: Number}
+        scaling=T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = (DeviceAgnostic.rand(rng, T, res_size, in_size) .- T(0.5)) .*
                    (T(2) * scaling)
@@ -51,7 +51,7 @@ A matrix representing the weighted input layer as defined in [^Lu2017]. The matr
 
 ```julia
 rng = Random.default_rng()
-input_layer = weighted_init(rng, Float64, (3, 300); scaling = 0.2)
+input_layer = weighted_init(rng, Float64, (3, 300); scaling=0.2)
 ```
 
 # References
@@ -63,7 +63,7 @@ input_layer = weighted_init(rng, Float64, (3, 300); scaling = 0.2)
 function weighted_init(rng::AbstractRNG,
         ::Type{T},
         dims::Integer...;
-        scaling = T(0.1)) where {T <: Number}
+        scaling=T(0.1)) where {T <: Number}
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
@@ -101,11 +101,11 @@ Create a layer of a neural network.
 rng = Random.default_rng()
 dims = (100, 200)
 model_in_size = 50
-input_matrix = informed_init(rng, Float64, dims; model_in_size = model_in_size)
+input_matrix = informed_init(rng, Float64, dims; model_in_size=model_in_size)
 ```
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling = T(0.1), model_in_size, gamma = T(0.5)) where {T <: Number}
+        scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
     res_size, in_size = dims
     state_size = in_size - model_in_size
 
@@ -122,7 +122,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(1, state_size, step = 1)[DeviceAgnostic.rand(rng, T, 1:end)]
+        random_clm_idx = range(1, state_size; step=1)[DeviceAgnostic.rand(rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * scaling)
     end
@@ -131,7 +131,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(state_size + 1, in_size, step = 1)[DeviceAgnostic.rand(
+        random_clm_idx = range(state_size + 1, in_size; step=1)[DeviceAgnostic.rand(
             rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * scaling)
@@ -166,16 +166,16 @@ using Random
 rng = Random.default_rng()
 dims = (3, 2)
 weight = 0.5
-layer_matrix = irrational_sample_init(rng, Float64, dims; weight = weight,
-    sampling = IrrationalSample(irrational = sqrt(2), start = 1))
+layer_matrix = irrational_sample_init(rng, Float64, dims; weight=weight,
+    sampling=IrrationalSample(; irrational=sqrt(2), start=1))
 ```
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        sampling_type::Symbol = :bernoulli,
-        weight::Number = T(0.1),
-        irrational::Real = pi,
-        start::Int = 1,
-        p::Number = T(0.5)) where {T <: Number}
+        sampling_type::Symbol=:bernoulli,
+        weight::Number=T(0.1),
+        irrational::Real=pi,
+        start::Int=1,
+        p::Number=T(0.5)) where {T <: Number}
     res_size, in_size = dims
     if sampling_type == :bernoulli
         layer_matrix = _create_bernoulli(p, res_size, in_size, weight, rng, T)

@@ -41,22 +41,22 @@ using ReservoirComputing
 
 train_data = rand(10, 100)  # 10 features, 100 time steps
 
-esn = ESN(train_data, reservoir = RandSparseReservoir(200), washout = 10)
+esn = ESN(train_data; reservoir=RandSparseReservoir(200), washout=10)
 ```
 """
 function ESN(train_data,
         in_size::Int,
         res_size::Int;
-        input_layer = scaled_rand,
-        reservoir = rand_sparse,
-        bias = zeros64,
-        reservoir_driver = RNN(),
-        nla_type = NLADefault(),
-        states_type = StandardStates(),
-        washout = 0,
-        rng = Utils.default_rng(),
-        T = Float32,
-        matrix_type = typeof(train_data))
+        input_layer=scaled_rand,
+        reservoir=rand_sparse,
+        bias=zeros64,
+        reservoir_driver=RNN(),
+        nla_type=NLADefault(),
+        states_type=StandardStates(),
+        washout=0,
+        rng=Utils.default_rng(),
+        T=Float32,
+        matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
@@ -78,7 +78,7 @@ end
 
 function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
         output_layer::AbstractOutputLayer;
-        last_state = esn.states[:, [end]],
+        last_state=esn.states[:, [end]],
         kwargs...)
     pred_len = prediction.prediction_len
 
@@ -111,19 +111,19 @@ The trained ESN model. The exact type and structure of the return value depends 
 using ReservoirComputing
 
 # Initialize an ESN instance and target data
-esn = ESN(train_data, reservoir = RandSparseReservoir(200), washout = 10)
+esn = ESN(train_data; reservoir=RandSparseReservoir(200), washout=10)
 target_data = rand(size(train_data, 2))
 
 # Train the ESN using the default training method
 trained_esn = train(esn, target_data)
 
 # Train the ESN using a custom training method
-trained_esn = train(esn, target_data, training_method = StandardRidge(1.0))
+trained_esn = train(esn, target_data; training_method=StandardRidge(1.0))
 ```
 """
 function train(esn::AbstractEchoStateNetwork,
         target_data,
-        training_method = StandardRidge();
+        training_method=StandardRidge();
         kwargs...)
     states_new = esn.states_type(esn.nla_type, esn.states, esn.train_data[:, 1:end])
 

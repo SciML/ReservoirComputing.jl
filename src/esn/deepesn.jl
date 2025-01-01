@@ -62,7 +62,7 @@ temporal features.
 train_data = [your_training_data_here]
 
 # Create a DeepESN with specific parameters
-deepESN = DeepESN(train_data, 10, 100, depth = 3, washout = 100)
+deepESN = DeepESN(train_data, 10, 100; depth=3, washout=100)
 
 # Proceed with training and prediction (pseudocode)
 train(deepESN, target_data)
@@ -72,17 +72,17 @@ prediction = predict(deepESN, new_data)
 function DeepESN(train_data,
         in_size::Int,
         res_size::Int;
-        depth::Int = 2,
-        input_layer = fill(scaled_rand, depth),
-        bias = fill(zeros64, depth),
-        reservoir = fill(rand_sparse, depth),
-        reservoir_driver = RNN(),
-        nla_type = NLADefault(),
-        states_type = StandardStates(),
-        washout::Int = 0,
-        rng = Utils.default_rng(),
-        T = Float64,
-        matrix_type = typeof(train_data))
+        depth::Int=2,
+        input_layer=fill(scaled_rand, depth),
+        bias=fill(zeros64, depth),
+        reservoir=fill(rand_sparse, depth),
+        reservoir_driver=RNN(),
+        nla_type=NLADefault(),
+        states_type=StandardStates(),
+        washout::Int=0,
+        rng=Utils.default_rng(),
+        T=Float64,
+        matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),

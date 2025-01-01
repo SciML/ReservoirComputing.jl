@@ -91,7 +91,6 @@ function Predictive(prediction_data)
     Predictive(prediction_data, prediction_len)
 end
 
-
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd,
@@ -122,7 +121,6 @@ for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jump
         end
     end
 end
-
 
 #general
 include("states.jl")

@@ -53,7 +53,7 @@ enhancing the dimensionality and potentially improving the performance of the re
 This function is particularly useful in scenarios where adding a constant baseline to the states is necessary
 for the desired computational task.
 """
-function PaddedStates(; padding = 1.0)
+function PaddedStates(; padding=1.0)
     return PaddedStates(padding)
 end
 
@@ -68,7 +68,7 @@ This function is particularly useful for enhancing the reservoir's state represe
 where both extended contextual information and consistent baseline padding are crucial for the computational
 effectiveness of the reservoir computing model.
 """
-function PaddedExtendedStates(; padding = 1.0)
+function PaddedExtendedStates(; padding=1.0)
     return PaddedExtendedStates(padding)
 end
 

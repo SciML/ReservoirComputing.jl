@@ -10,10 +10,10 @@ const weight = 0.2
 const jump_size = 3
 const rng = Random.default_rng()
 
-function check_radius(matrix, target_radius; tolerance = 1e-5)
+function check_radius(matrix, target_radius; tolerance=1e-5)
     eigenvalues = eigvals(matrix)
     spectral_radius = maximum(abs.(eigenvalues))
-    return isapprox(spectral_radius, target_radius, atol = tolerance)
+    return isapprox(spectral_radius, target_radius; atol=tolerance)
 end
 
 ft = [Float16, Float32, Float64]
@@ -29,7 +29,7 @@ input_inits = [
     scaled_rand,
     weighted_init,
     minimal_init,
-    minimal_init(; sampling_type = :irrational)
+    minimal_init(; sampling_type=:irrational)
 ]
 
 @testset "Reservoir Initializers" begin
@@ -81,7 +81,7 @@ end
 
     @testset "Minimum complexity: $init" for init in [
         minimal_init,
-        minimal_init(; sampling_type = :irrational)
+        minimal_init(; sampling_type=:irrational)
     ]
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])

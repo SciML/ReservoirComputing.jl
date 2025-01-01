@@ -18,7 +18,7 @@ end
 
 #solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
-data = solve(prob, ABM54(), dt = 0.02)
+data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
 ```
 
@@ -54,11 +54,11 @@ input_scaling = 0.1
 
 #build ESN struct
 esn = ESN(input_data, in_size, res_size;
-    reservoir = rand_sparse(; radius = res_radius, sparsity = res_sparsity),
-    input_layer = weighted_init(; scaling = input_scaling),
-    reservoir_driver = RNN(),
-    nla_type = NLADefault(),
-    states_type = StandardStates())
+    reservoir=rand_sparse(; radius=res_radius, sparsity=res_sparsity),
+    input_layer=weighted_init(; scaling=input_scaling),
+    reservoir_driver=RNN(),
+    nla_type=NLADefault(),
+    states_type=StandardStates())
 ```
 
 Most of the parameters chosen here mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening, starting from `res_size`: this value determines the dimensions of the reservoir matrix. In this case, a size of 300 has been chosen, so the reservoir matrix will be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case, everything is taken care of internally.
@@ -113,17 +113,17 @@ lorenz_maxlyap = 0.9056
 predict_ts = ts[(shift + train_len + 1):(shift + train_len + predict_len)]
 lyap_time = (predict_ts .- predict_ts[1]) * (1 / lorenz_maxlyap)
 
-p1 = plot(lyap_time, [test_data[1, :] output[1, :]], label = ["actual" "predicted"],
-    ylabel = "x(t)", linewidth = 2.5, xticks = false, yticks = -15:15:15);
-p2 = plot(lyap_time, [test_data[2, :] output[2, :]], label = ["actual" "predicted"],
-    ylabel = "y(t)", linewidth = 2.5, xticks = false, yticks = -20:20:20);
-p3 = plot(lyap_time, [test_data[3, :] output[3, :]], label = ["actual" "predicted"],
-    ylabel = "z(t)", linewidth = 2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+p1 = plot(lyap_time, [test_data[1, :] output[1, :]]; label=["actual" "predicted"],
+    ylabel="x(t)", linewidth=2.5, xticks=false, yticks=-15:15:15);
+p2 = plot(lyap_time, [test_data[2, :] output[2, :]]; label=["actual" "predicted"],
+    ylabel="y(t)", linewidth=2.5, xticks=false, yticks=-20:20:20);
+p3 = plot(lyap_time, [test_data[3, :] output[3, :]]; label=["actual" "predicted"],
+    ylabel="z(t)", linewidth=2.5, xlabel="max(λ)*t", yticks=10:15:40);
 
-plot(p1, p2, p3, plot_title = "Lorenz System Coordinates",
-    layout = (3, 1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize = 15,
-    yguidefontsize = 15,
-    legendfontsize = 12, titlefontsize = 20)
+plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
+    layout=(3, 1), xtickfontsize=12, ytickfontsize=12, xguidefontsize=15,
+    yguidefontsize=15,
+    legendfontsize=12, titlefontsize=20)
 ```
 
 ## Bibliography

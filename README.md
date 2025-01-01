@@ -11,11 +11,11 @@
 [![Build status](https://badge.buildkite.com/db8f91b89a10ad79bbd1d9fdb1340e6f6602a1c0ed9496d4d0.svg)](https://buildkite.com/julialang/reservoircomputing-dot-jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor%27s%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
-
 </div>
 
 # ReservoirComputing.jl
 ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](https://docs.sciml.ai/ReservoirComputing/stable/). Use the [in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/) to take a look at at not yet released features.
+
 ## Quick Example
 
 To illustrate the workflow of this library we will showcase how it is possible to train an ESN to learn the dynamics of the Lorenz system. As a first step we will need to gather the data. For the `Generative` prediction we need the target data to be one step ahead of the training data:
@@ -36,7 +36,7 @@ function lorenz(du, u, p, t)
 end
 #solve and take data
 prob = ODEProblem(lorenz, u0, tspan, p)
-data = Array(solve(prob, ABM54(), dt = 0.02))
+data = Array(solve(prob, ABM54(); dt=0.02))
 
 shift = 300
 train_len = 5000
@@ -55,9 +55,9 @@ Now that we have the data we can initialize the ESN with the chosen parameters. 
 input_size = 3
 res_size = 300
 esn = ESN(input_data, input_size, res_size;
-    reservoir = rand_sparse(; radius = 1.2, sparsity = 6 / res_size),
-    input_layer = weighted_init,
-    nla_type = NLAT2())
+    reservoir=rand_sparse(; radius=1.2, sparsity=6 / res_size),
+    input_layer=weighted_init,
+    nla_type=NLAT2())
 ```
 
 The echo state network can now be trained and tested. If not specified, the training will always be ordinary least squares regression. The full range of training methods is detailed in the documentation.
@@ -71,8 +71,8 @@ The data is returned as a matrix, `output` in the code above, that contains the 
 
 ```julia
 using Plots
-plot(transpose(output), layout = (3, 1), label = "predicted")
-plot!(transpose(test), layout = (3, 1), label = "actual")
+plot(transpose(output); layout=(3, 1), label="predicted")
+plot!(transpose(test); layout=(3, 1), label="actual")
 ```
 
 ![lorenz_basic](https://user-images.githubusercontent.com/10376688/166227371-8bffa318-5c49-401f-9c64-9c71980cb3f7.png)
@@ -82,9 +82,9 @@ One can also visualize the phase space of the attractor and the comparison with 
 ```julia
 plot(transpose(output)[:, 1],
     transpose(output)[:, 2],
-    transpose(output)[:, 3],
-    label = "predicted")
-plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3], label = "actual")
+    transpose(output)[:, 3];
+    label="predicted")
+plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3]; label="actual")
 ```
 
 ![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)

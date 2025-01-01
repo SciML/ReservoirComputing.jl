@@ -47,7 +47,7 @@ Reference:
     Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function KnowledgeModel(prior_model, u0, tspan, datasize)
-    trange = collect(range(tspan[1], tspan[2], length = datasize))
+    trange = collect(range(tspan[1], tspan[2]; length=datasize))
     dt = trange[2] - trange[1]
     tsteps = push!(trange, dt + trange[end])
     tspan_new = (tspan[1], dt + tspan[2])
@@ -108,7 +108,7 @@ influence the network's behavior and learning capacity.
 km = KnowledgeModel(prior_model_function, u0, (0, 100), 1000)
 
 # Create a HybridESN
-hesn = HybridESN(km, train_data, 10, 100; washout = 100)
+hesn = HybridESN(km, train_data, 10, 100; washout=100)
 
 # Train and predict
 train(hesn, target_data)
@@ -119,16 +119,16 @@ function HybridESN(model,
         train_data,
         in_size::Int,
         res_size::Int;
-        input_layer = scaled_rand,
-        reservoir = rand_sparse,
-        bias = zeros64,
-        reservoir_driver = RNN(),
-        nla_type = NLADefault(),
-        states_type = StandardStates(),
-        washout = 0,
-        rng = Utils.default_rng(),
-        T = Float32,
-        matrix_type = typeof(train_data))
+        input_layer=scaled_rand,
+        reservoir=rand_sparse,
+        bias=zeros64,
+        reservoir_driver=RNN(),
+        nla_type=NLADefault(),
+        states_type=StandardStates(),
+        washout=0,
+        rng=Utils.default_rng(),
+        T=Float32,
+        matrix_type=typeof(train_data))
     train_data = vcat(train_data, model.model_data[:, 1:(end - 1)])
 
     if states_type isa AbstractPaddedStates
@@ -155,7 +155,7 @@ end
 
 function (hesn::HybridESN)(prediction::AbstractPrediction,
         output_layer::AbstractOutputLayer;
-        last_state = hesn.states[:, [end]],
+        last_state=hesn.states[:, [end]],
         kwargs...)
     km = hesn.model
     pred_len = prediction.prediction_len
@@ -174,7 +174,7 @@ end
 
 function train(hesn::HybridESN,
         target_data,
-        training_method = StandardRidge();
+        training_method=StandardRidge();
         kwargs...)
     states = vcat(hesn.states, hesn.model.model_data[:, 2:end])
     states_new = hesn.states_type(hesn.nla_type, states, hesn.train_data[:, 1:end])
