@@ -33,7 +33,7 @@ jobs:
           version: ${{ matrix.version }}
       - uses: julia-actions/julia-downgrade-compat@v1
         with:
-          skip: Pkg, TOML, Random, LinearAlgebra
+          skip: Pkg, TOML, Random, LinearAlgebra, Statistics
       - uses: julia-actions/cache@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
