@@ -25,7 +25,7 @@ RCLIBSVMExt = "LIBSVM"
 RCMLJLinearModelsExt = "MLJLinearModels"
 
 [compat]
-Adapt = "3.3.3, 4"
+Adapt = "4.1.1"
 Aqua = "0.8"
 CellularAutomata = "0.0.2"
 DifferentialEquations = "7"
