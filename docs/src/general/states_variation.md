@@ -6,7 +6,7 @@ In ReservoirComputing models, it's possible to perform alterations on the reserv
 
 ### Extending States
 
-Extending the states involves appending the corresponding input values to the reservoir states. If $\textbf{x}(t)$ represents the reservoir state at time $t$ corresponding to the input $\textbf{u}(t)$, the extended state is represented as $[\textbf{x}(t); \textbf{u}(t)]$, where $[;]$ denotes vertical concatenation. This procedure is commonly used in Echo State Networks and is described in [Jaeger's Scholarpedia](http://www.scholarpedia.org/article/Echo_state_network). You can extend the states in every ReservoirComputing.jl model by using the `states_type` keyword argument and calling the `ExtendedStates()` method. No additional arguments are needed.
+Extending the states involves appending the corresponding input values to the reservoir states. If $\textbf{x}(t)$ represents the reservoir state at time $t$ corresponding to the input $\textbf{u}(t)$, the extended state is represented as $[\textbf{x}(t); \textbf{u}(t)]$, where $[;]$ denotes vertical concatenation. This procedure is commonly used in Echo State Networks. You can extend the states in every ReservoirComputing.jl model by using the `states_type` keyword argument and calling the `ExtendedStates()` method. No additional arguments are needed.
 
 ### Padding States
 
