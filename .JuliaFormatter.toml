@@ -1,5 +1,5 @@
 style = "sciml"
-format_markdown = true
+format_markdown = false
 whitespace_in_kwargs = false
 margin = 92
 indent = 4
