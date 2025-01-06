@@ -13,7 +13,7 @@ const reg = 10e-6
 test_types = [Float64, Float32, Float16]
 zeros_types = [zeros64, zeros32, zeros16]
 
-for (tidx,t) in enumerate(test_types)
+for (tidx, t) in enumerate(test_types)
     Random.seed!(77)
     res = rand_sparse(; radius=1.2, sparsity=0.1)
     esn = DeepESN(t.(input_data), 1, res_size;
