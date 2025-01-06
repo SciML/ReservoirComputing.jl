@@ -37,7 +37,7 @@ temporal features.
   - `input_layer`: A function or an array of functions to initialize the input
     matrices for each layer. Default is `scaled_rand` for each layer.
   - `bias`: A function or an array of functions to initialize the bias vectors
-    for each layer. Default is `zeros64` for each layer.
+    for each layer. Default is `zeros32` for each layer.
   - `reservoir`: A function or an array of functions to initialize the reservoir
     matrices for each layer. Default is `rand_sparse` for each layer.
   - `reservoir_driver`: The driving system for the reservoir.
@@ -50,8 +50,6 @@ temporal features.
     Default is 0.
   - `rng`: Random number generator used for initializing weights. Default is the package's
     default random number generator.
-  - `T`: The data type for the matrices (e.g., `Float64`). Influences computational
-    efficiency and precision.
   - `matrix_type`: The type of matrix used for storing the training data.
     Default is inferred from `train_data`.
 
@@ -74,14 +72,13 @@ function DeepESN(train_data,
         res_size::Int;
         depth::Int=2,
         input_layer=fill(scaled_rand, depth),
-        bias=fill(zeros64, depth),
+        bias=fill(zeros32, depth),
         reservoir=fill(rand_sparse, depth),
         reservoir_driver=RNN(),
         nla_type=NLADefault(),
         states_type=StandardStates(),
         washout::Int=0,
         rng=Utils.default_rng(),
-        T=Float64,
         matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
@@ -89,6 +86,7 @@ function DeepESN(train_data,
             train_data)
     end
 
+    T = eltype(train_data)
     reservoir_matrix = [reservoir[i](rng, T, res_size, res_size) for i in 1:depth]
     input_matrix = [i == 1 ? input_layer[i](rng, T, res_size, in_size) :
                     input_layer[i](rng, T, res_size, res_size) for i in 1:depth]

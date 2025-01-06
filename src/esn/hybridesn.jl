@@ -121,7 +121,7 @@ function HybridESN(model,
         res_size::Int;
         input_layer=scaled_rand,
         reservoir=rand_sparse,
-        bias=zeros64,
+        bias=zeros32,
         reservoir_driver=RNN(),
         nla_type=NLADefault(),
         states_type=StandardStates(),
