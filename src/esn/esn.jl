@@ -49,13 +49,12 @@ function ESN(train_data,
         res_size::Int;
         input_layer=scaled_rand,
         reservoir=rand_sparse,
-        bias=zeros64,
+        bias=zeros32,
         reservoir_driver=RNN(),
         nla_type=NLADefault(),
         states_type=StandardStates(),
         washout=0,
         rng=Utils.default_rng(),
-        T=Float32,
         matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
@@ -63,6 +62,7 @@ function ESN(train_data,
             train_data)
     end
 
+    T = eltype(train_data)
     reservoir_matrix = reservoir(rng, T, res_size, res_size)
     input_matrix = input_layer(rng, T, res_size, in_size)
     bias_vector = bias(rng, res_size)
