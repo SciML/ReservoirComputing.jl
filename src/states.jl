@@ -177,31 +177,38 @@ function nla(::NLAT2, x_old)
     return x_new
 end
 
-"""
+@doc raw"""
     NLAT3()
 
-The `NLAT3` struct implements the T₃ transformation algorithm as detailed in [^Chattopadhyay].
-This algorithm modifies the reservoir's states by multiplying each odd-indexed row
-(beginning from the second row) with the product of the immediately preceding and the
-immediately following rows. T₃'s unique approach to data transformation makes it particularly
-useful for enhancing complex data patterns, thereby improving the modeling and analysis
-capabilities within reservoir computing, especially for chaotic and dynamic systems.
+The `NLAT3` struct implements the T₃ transformation algorithm as detailed
+in [^Chattopadhyay]. This algorithm modifies the reservoir's states by
+multiplying each odd-indexed row (beginning from the second row) with the
+product of the immediately preceding and the immediately following rows.
 
-Reference:
+```math
+\tilde{r}_{i,j} =
+\begin{cases}
+r_{i,j-1} \times r_{i,j+1}, & \text{if } j > 1 \text{ is odd}; \\
+r_{i,j}, & \text{if } j = 1 \text{ or even.}
+\end{cases}
+```
+
+# Reference:
 
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
-    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods:
-    Reservoir computing, ANN, and RNN-LSTM." (2019).
+    "Data-driven predictions of a multiscale Lorenz 96 chaotic system using
+    machine-learning methods: reservoir computing, artificial neural network,
+    and long short-term memory network." (2019).
 """
 struct NLAT3 <: NonLinearAlgorithm end
 
 function nla(::NLAT3, x_old)
     x_new = copy(x_old)
     for i in 2:(size(x_new, 1) - 1)
-        if mod(i, 2) != 0
-            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i + 1, :])
+        if isodd(i)
+            x_new[i, :] .= x_old[i - 1, :] .* x_old[i + 1, :]  # Element-wise update
         end
     end
-
+    
     return x_new
 end
