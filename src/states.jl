@@ -16,21 +16,100 @@ end
 """
     StandardStates()
 
-When this struct is employed, the states of the reservoir are not modified. It represents the default behavior
-in scenarios where no specific state modification is required. This approach is ideal for applications
-where the inherent dynamics of the reservoir are sufficient, and no external manipulation of the states
-is necessary. It maintains the original state representation, ensuring that the reservoir's natural properties
-are preserved and utilized in computations.
+When this struct is employed, the states of the reservoir are not modified.
+
+# Example
+
+```jldoctest
+julia> states = StandardStates()
+StandardStates()
+
+julia> test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia> new_vec = states(test_vec)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia> test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> new_mat = states(test_mat)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+```
 """
 struct StandardStates <: AbstractStates end
 
 """
     ExtendedStates()
 
-The `ExtendedStates` struct is used to extend the reservoir states by
-vertically concatenating the input data (during training) and the prediction data (during the prediction phase).
-This method enriches the state representation by integrating external data, enhancing the model's capability
-to capture and utilize complex patterns in both training and prediction stages.
+The `ExtendedStates` struct is used to extend the reservoir
+states by vertically concatenating the input data (during training)
+and the prediction data (during the prediction phase).
+
+# Example
+
+```jldoctest
+julia> states = ExtendedStates()
+ExtendedStates()
+
+julia> test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia> new_vec = states(test_vec, fill(3.0f0, 3))
+8-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 3.0
+ 3.0
+ 3.0
+
+julia> test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> new_mat = states(test_mat, fill(3.0f0, 3))
+8×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+```
 """
 struct ExtendedStates <: AbstractStates end
 
@@ -46,12 +125,50 @@ end
     PaddedStates(padding)
     PaddedStates(;padding=1.0)
 
-Creates an instance of the `PaddedStates` struct with specified padding value.
-This padding is typically set to 1.0 by default but can be customized.
-The states of the reservoir are padded by vertically concatenating this padding value,
-enhancing the dimensionality and potentially improving the performance of the reservoir computing model.
-This function is particularly useful in scenarios where adding a constant baseline to the states is necessary
-for the desired computational task.
+Creates an instance of the `PaddedStates` struct with specified
+padding value (default 1.0). The states of the reservoir are padded
+by vertically concatenating the padding value.
+
+# Example
+
+```jldoctest
+julia> states = PaddedStates(1.0)
+PaddedStates{Float64}(1.0)
+
+julia> test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia> new_vec = states(test_vec)
+6-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 1.0
+
+julia> test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> new_mat = states(test_mat)
+6×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  1.0
+```
 """
 function PaddedStates(; padding=1.0)
     return PaddedStates(padding)
@@ -61,49 +178,118 @@ end
     PaddedExtendedStates(padding)
     PaddedExtendedStates(;padding=1.0)
 
-Constructs a `PaddedExtendedStates` struct, which first extends the reservoir states with training or prediction data,
-then pads them with a specified value (defaulting to 1.0). This process is achieved through vertical concatenation,
-combining the padding value, data, and states.
-This function is particularly useful for enhancing the reservoir's state representation in more complex scenarios,
-where both extended contextual information and consistent baseline padding are crucial for the computational
-effectiveness of the reservoir computing model.
+Constructs a `PaddedExtendedStates` struct, which first extends
+the reservoir states with training or prediction data,then pads them
+with a specified value (defaulting to 1.0).
+
+# Example
+
+```jldoctest
+julia> states = PaddedExtendedStates(1.0)
+PaddedExtendedStates{Float64}(1.0)
+
+julia> test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia> new_vec = states(test_vec, fill(3.0f0, 3))
+9-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 1.0
+ 3.0
+ 3.0
+ 3.0
+
+julia> test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> new_mat = states(test_mat, fill(3.0f0, 3))
+9×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  1.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+```
 """
 function PaddedExtendedStates(; padding=1.0)
     return PaddedExtendedStates(padding)
 end
 
 #functions of the states to apply modifications
-function (::StandardStates)(nla_type, x, y)
-    return nla(nla_type, x)
+function (::StandardStates)(nla_type::NonLinearAlgorithm,
+        state, inp)
+    return nla(nla_type, state)
 end
 
-function (::ExtendedStates)(nla_type, x, y)
-    x_tmp = vcat(y, x)
-    return nla(nla_type, x_tmp)
+(::StandardStates)(state) = state
+
+function (states_type::ExtendedStates)(nla_type::NonLinearAlgorithm,
+        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    return nla(nla_type, states_type(state, inp))
 end
 
-#check matrix/vector
-function (states_type::PaddedStates)(nla_type, x, y)
-    tt = typeof(first(x))
-    x_tmp = vcat(fill(tt(states_type.padding), (1, size(x, 2))), x)
-    #x_tmp = reduce(vcat, x_tmp)
-    return nla(nla_type, x_tmp)
+function (states_type::PaddedStates)(nla_type::NonLinearAlgorithm,
+        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    return nla(nla_type, states_type(state))
 end
 
-#check matrix/vector
-function (states_type::PaddedExtendedStates)(nla_type, x, y)
-    tt = typeof(first(x))
-    x_tmp = vcat(y, x)
-    x_tmp = vcat(fill(tt(states_type.padding), (1, size(x, 2))), x_tmp)
-    #x_tmp = reduce(vcat, x_tmp)
-    return nla(nla_type, x_tmp)
+function (states_type::PaddedExtendedStates)(nla_type::NonLinearAlgorithm,
+        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    return nla(nla_type, states_type(state, inp))
 end
 
-#non linear algorithms
-## conform to current (0.10.5) approach
-nla(nlat::NonLinearAlgorithm, x_old) = nlat(x_old)
+function (states_type::PaddedExtendedStates)(state::AbstractVecOrMat,
+        inp::AbstractVecOrMat)
+    x_pad = PaddedStates(states_type.padding)(state)
+    x_ext = ExtendedStates()(x_pad, inp)
+    return x_ext
+end
 
-## dispatch over matrices for all nonlin algorithms
+function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractVector)
+    results = Vector{Vector{eltype(mat)}}(undef, size(mat, 2))
+    for (idx, col) in enumerate(eachcol(mat))
+        results[idx] = states_type(col, inp)
+    end
+    return hcat(results...)
+end
+
+function (::ExtendedStates)(vect::AbstractVector, inp::AbstractVector)
+    return x_tmp = vcat(vect, inp)
+end
+
+function (states_type::PaddedStates)(mat::AbstractMatrix)
+    results = states_type.(eachcol(mat))
+    return hcat(results...)
+end
+
+function (states_type::PaddedStates)(vect::AbstractVector)
+    tt = eltype(vect)
+    return vcat(vect, tt(states_type.padding))
+end
+
+#### non linear algorithms ###
+## to conform to current (0.10.5) approach
+nla(nlat::NonLinearAlgorithm, x_old::AbstractVecOrMat) = nlat(x_old)
+
+# dispatch over matrices for all nonlin algorithms
 function (nlat::NonLinearAlgorithm)(x_old::AbstractMatrix)
     results = nlat.(eachcol(x_old))
     return hcat(results...)
@@ -272,17 +458,6 @@ function (::NLAT1)(x_old::AbstractVector)
     for idx in eachindex(x_old)
         if isodd(idx)
             x_new[idx] = x_old[idx] * x_old[idx]
-        end
-    end
-
-    return x_new
-end
-
-function nla(::NLAT1, x_old)
-    x_new = copy(x_old)
-    for i in 1:size(x_new, 1)
-        if mod(i, 2) != 0
-            x_new[i, :] = copy(x_old[i, :] .* x_old[i, :])
         end
     end
 
