@@ -1,7 +1,7 @@
 using Documenter, ReservoirComputing
 
-cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force=true)
-cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force=true)
+#cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force=true)
+#cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force=true)
 
 ENV["PLOTS_TEST"] = "true"
 ENV["GKSwstype"] = "100"
@@ -15,8 +15,8 @@ makedocs(; modules=[ReservoirComputing],
         mathengine,
         assets=["assets/favicon.ico"],
         canonical="https://docs.sciml.ai/ReservoirComputing/stable/"),
-        pages=pages
-    )
+    pages=pages
+)
 
 deploydocs(; repo="github.com/SciML/ReservoirComputing.jl.git",
     push_preview=true)

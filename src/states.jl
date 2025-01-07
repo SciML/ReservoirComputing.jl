@@ -100,42 +100,183 @@ function (states_type::PaddedExtendedStates)(nla_type, x, y)
 end
 
 #non linear algorithms
+## conform to current (0.10.5) approach
+nla(nlat::NonLinearAlgorithm, x_old) = nlat(x_old)
+
+## dispatch over matrices for all nonlin algorithms
+function (nlat::NonLinearAlgorithm)(x_old::AbstractMatrix)
+    results = nlat.(eachcol(x_old))
+    return hcat(results...)
+end
+
 """
     NLADefault()
 
 `NLADefault` represents the default non-linear algorithm option.
 When used, it leaves the input array unchanged.
-This option is suitable in cases where no non-linear transformation of the data is required,
-maintaining the original state of the input array for further processing.
-It's the go-to choice for preserving the raw data integrity within the computational pipeline
-of the reservoir computing model.
+
+# Example
+
+```jldoctest
+julia> nlat = NLADefault()
+NLADefault()
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> n_new = nlat(x_old)
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> mat_old = [1 2 3;
+                  4 5 6;
+                  7 8 9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia> mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+```
 """
 struct NLADefault <: NonLinearAlgorithm end
 
-function nla(::NLADefault, x)
-    return x
-end
+(::NLADefault)(x::AbstractVector) = x
+(::NLADefault)(x::AbstractMatrix) = x
 
-"""
+@doc raw"""
     NLAT1()
 
-`NLAT1` implements the T₁ transformation algorithm introduced in [^Chattopadhyay] and [^Pathak].
-The T₁ algorithm selectively squares elements of the input array,
-specifically targeting every second row. This non-linear transformation enhances certain data characteristics,
-making it a valuable tool in analyzing chaotic systems and improving the performance of reservoir computing models.
-The T₁ transformation's uniqueness lies in its selective approach, allowing for a more nuanced manipulation of the input data.
+`NLAT1` implements the T₁ transformation algorithm introduced
+in [^Chattopadhyay] and [^Pathak]. The T₁ algorithm squares
+elements of the input array, targeting every second row.
 
-References:
+
+```math
+\tilde{r}_{i,j} =
+\begin{cases}
+    r_{i,j} \times r_{i,j}, & \text{if } j \text{ is odd}; \\
+    r_{i,j}, & \text{if } j \text{ is even}.
+\end{cases}
+```
+# Example
+
+```jldoctest
+julia> nlat = NLAT1()
+NLAT1()
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  4
+  3
+ 16
+  5
+ 36
+  7
+ 64
+  9
+
+julia> mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia> mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+   1    4    9
+   4    5    6
+  49   64   81
+  10   11   12
+ 169  196  225
+  16   17   18
+ 361  400  441
+
+```
 
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
-    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
+    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM."
+    (2019).
+
 [^Pathak]: Pathak, Jaideep, et al.
-    "Model-free prediction of large spatiotemporally chaotic systems from data:
-    A reservoir computing approach."
+    "Model-free prediction of large spatiotemporally chaotic systems
+    from data: A reservoir computing approach."
     Physical review letters 120.2 (2018): 024102.
 """
 struct NLAT1 <: NonLinearAlgorithm end
+
+function (::NLAT1)(x_old::AbstractVector)
+    x_new = copy(x_old)
+
+    for idx in eachindex(x_old)
+        if isodd(idx)
+            x_new[idx] = x_old[idx] * x_old[idx]
+        end
+    end
+
+    return x_new
+end
 
 function nla(::NLAT1, x_old)
     x_new = copy(x_old)
@@ -148,29 +289,94 @@ function nla(::NLAT1, x_old)
     return x_new
 end
 
-"""
+@doc raw"""
     NLAT2()
 
-`NLAT2` implements the T₂ transformation algorithm as defined in [^Chattopadhyay].
-This transformation algorithm modifies the reservoir states by multiplying each odd-indexed
-row (starting from the second row) with the product of its two preceding rows.
-This specific approach to non-linear transformation is useful for capturing and
-enhancing complex patterns in the data, particularly beneficial in the analysis of chaotic
-systems and in improving the dynamics within reservoir computing models.
+`NLAT2` implements the T₂ transformation algorithm as defined
+in [^Chattopadhyay]. This transformation algorithm modifies the
+reservoir states by multiplying each odd-indexed row
+(starting from the second row) with the product of its two preceding rows.
 
-Reference:
+```math
+\tilde{r}_{i,j} =
+\begin{cases}
+    r_{i,j-1} \times r_{i,j-2}, & \text{if } j > 1 \text{ is odd}; \\
+    r_{i,j}, & \text{if } j \text{ is 1 or even}.
+\end{cases}
+```
+# Example
+
+```jldoctest
+julia> nlat = NLAT2()
+NLAT2()
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  0
+  3
+  6
+  5
+ 20
+  7
+ 42
+  9
+
+julia> mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia> mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+  1   2    3
+  4   5    6
+  4  10   18
+ 10  11   12
+ 70  88  108
+ 16  17   18
+ 19  20   21
+
+```
 
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
-    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM." (2019).
+    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM."
+    (2019).
 """
 struct NLAT2 <: NonLinearAlgorithm end
 
-function nla(::NLAT2, x_old)
+function (::NLAT2)(x_old::AbstractVector)
     x_new = copy(x_old)
-    for i in 2:(size(x_new, 1) - 1)
-        if mod(i, 2) != 0
-            x_new[i, :] = copy(x_old[i - 1, :] .* x_old[i - 2, :])
+
+    for idx in eachindex(x_old)
+        if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
+            x_new[idx, :] .= x_old[idx - 1, :] .* x_old[idx - 2, :]
         end
     end
 
@@ -180,7 +386,7 @@ end
 @doc raw"""
     NLAT3()
 
-The `NLAT3` struct implements the T₃ transformation algorithm as detailed
+Implements the T₃ transformation algorithm as detailed
 in [^Chattopadhyay]. This algorithm modifies the reservoir's states by
 multiplying each odd-indexed row (beginning from the second row) with the
 product of the immediately preceding and the immediately following rows.
@@ -192,8 +398,65 @@ r_{i,j-1} \times r_{i,j+1}, & \text{if } j > 1 \text{ is odd}; \\
 r_{i,j}, & \text{if } j = 1 \text{ or even.}
 \end{cases}
 ```
+# Example
 
-# Reference:
+```jldoctest
+julia> nlat = NLAT3()
+NLAT3()
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  3
+  3
+ 15
+  5
+ 35
+  7
+ 63
+  9
+
+julia> mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia> mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+   1    2    3
+   4    5    6
+  40   55   72
+  10   11   12
+ 160  187  216
+  16   17   18
+  19   20   21
+
+```
 
 [^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
     "Data-driven predictions of a multiscale Lorenz 96 chaotic system using
@@ -202,13 +465,14 @@ r_{i,j}, & \text{if } j = 1 \text{ or even.}
 """
 struct NLAT3 <: NonLinearAlgorithm end
 
-function nla(::NLAT3, x_old)
+function (::NLAT3)(x_old::AbstractVector)
     x_new = copy(x_old)
-    for i in 2:(size(x_new, 1) - 1)
-        if isodd(i)
-            x_new[i, :] .= x_old[i - 1, :] .* x_old[i + 1, :]  # Element-wise update
+
+    for idx in eachindex(x_old)
+        if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
+            x_new[idx] = x_old[idx - 1] * x_old[idx + 1]
         end
     end
-    
+
     return x_new
 end
