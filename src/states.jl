@@ -59,6 +59,12 @@ julia> new_mat = states(test_mat)
 """
 struct StandardStates <: AbstractStates end
 
+function (::StandardStates)(nla_type::NonLinearAlgorithm,
+        state, inp)
+    return nla(nla_type, state)
+end
+
+(::StandardStates)(state) = state
 """
     ExtendedStates()
 
@@ -113,12 +119,21 @@ julia> new_mat = states(test_mat, fill(3.0f0, 3))
 """
 struct ExtendedStates <: AbstractStates end
 
-struct PaddedStates{T} <: AbstractPaddedStates
-    padding::T
+function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractVector)
+    results = Vector{Vector{eltype(mat)}}(undef, size(mat, 2))
+    for (idx, col) in enumerate(eachcol(mat))
+        results[idx] = states_type(col, inp)
+    end
+    return hcat(results...)
 end
 
-struct PaddedExtendedStates{T} <: AbstractPaddedStates
-    padding::T
+function (::ExtendedStates)(vect::AbstractVector, inp::AbstractVector)
+    return x_tmp = vcat(vect, inp)
+end
+
+function (states_type::ExtendedStates)(nla_type::NonLinearAlgorithm,
+        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    return nla(nla_type, states_type(state, inp))
 end
 
 """
@@ -170,8 +185,27 @@ julia> new_mat = states(test_mat)
  1.0  1.0  1.0  1.0  1.0
 ```
 """
+struct PaddedStates{T} <: AbstractPaddedStates
+    padding::T
+end
+
 function PaddedStates(; padding=1.0)
     return PaddedStates(padding)
+end
+
+function (states_type::PaddedStates)(mat::AbstractMatrix)
+    results = states_type.(eachcol(mat))
+    return hcat(results...)
+end
+
+function (states_type::PaddedStates)(vect::AbstractVector)
+    tt = eltype(vect)
+    return vcat(vect, tt(states_type.padding))
+end
+
+function (states_type::PaddedStates)(nla_type::NonLinearAlgorithm,
+        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    return nla(nla_type, states_type(state))
 end
 
 """
@@ -229,26 +263,12 @@ julia> new_mat = states(test_mat, fill(3.0f0, 3))
  3.0  3.0  3.0  3.0  3.0
 ```
 """
+struct PaddedExtendedStates{T} <: AbstractPaddedStates
+    padding::T
+end
+
 function PaddedExtendedStates(; padding=1.0)
     return PaddedExtendedStates(padding)
-end
-
-#functions of the states to apply modifications
-function (::StandardStates)(nla_type::NonLinearAlgorithm,
-        state, inp)
-    return nla(nla_type, state)
-end
-
-(::StandardStates)(state) = state
-
-function (states_type::ExtendedStates)(nla_type::NonLinearAlgorithm,
-        state::AbstractVecOrMat, inp::AbstractVecOrMat)
-    return nla(nla_type, states_type(state, inp))
-end
-
-function (states_type::PaddedStates)(nla_type::NonLinearAlgorithm,
-        state::AbstractVecOrMat, inp::AbstractVecOrMat)
-    return nla(nla_type, states_type(state))
 end
 
 function (states_type::PaddedExtendedStates)(nla_type::NonLinearAlgorithm,
@@ -261,28 +281,6 @@ function (states_type::PaddedExtendedStates)(state::AbstractVecOrMat,
     x_pad = PaddedStates(states_type.padding)(state)
     x_ext = ExtendedStates()(x_pad, inp)
     return x_ext
-end
-
-function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractVector)
-    results = Vector{Vector{eltype(mat)}}(undef, size(mat, 2))
-    for (idx, col) in enumerate(eachcol(mat))
-        results[idx] = states_type(col, inp)
-    end
-    return hcat(results...)
-end
-
-function (::ExtendedStates)(vect::AbstractVector, inp::AbstractVector)
-    return x_tmp = vcat(vect, inp)
-end
-
-function (states_type::PaddedStates)(mat::AbstractMatrix)
-    results = states_type.(eachcol(mat))
-    return hcat(results...)
-end
-
-function (states_type::PaddedStates)(vect::AbstractVector)
-    tt = eltype(vect)
-    return vcat(vect, tt(states_type.padding))
 end
 
 #### non linear algorithms ###
