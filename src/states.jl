@@ -119,6 +119,11 @@ julia> new_mat = states(test_mat, fill(3.0f0, 3))
 """
 struct ExtendedStates <: AbstractStates end
 
+function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractMatrix)
+    results = states_type.(eachcol(mat), eachcol(inp))
+    return hcat(results...)
+end
+
 function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractVector)
     results = Vector{Vector{eltype(mat)}}(undef, size(mat, 2))
     for (idx, col) in enumerate(eachcol(mat))

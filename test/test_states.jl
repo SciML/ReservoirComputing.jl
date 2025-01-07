@@ -12,12 +12,10 @@ nlas = [(NLADefault(), test_array),
 
 pes = [(StandardStates(), test_array),
     (PaddedStates(; padding=padding),
-        reshape(vcat(padding, test_array), length(test_array) + 1, 1)),
+        vcat(test_array, padding)),
     (PaddedExtendedStates(; padding=padding),
-        reshape(vcat(padding, extension, test_array),
-            length(test_array) + length(extension) + 1,
-            1)),
-    (ExtendedStates(), vcat(extension, test_array))]
+        vcat(test_array, padding, extension)),
+    (ExtendedStates(), vcat(test_array, extension))]
 
 @testset "States Testing" for T in test_types
     @testset "Nonlinear Algorithms Testing: $algo $T" for (algo, expected_output) in nlas
