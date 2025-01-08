@@ -94,7 +94,7 @@ end
     informed_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
-Create an input layer for informed echo state networks.
+Create an input layer for informed echo state networks [^Pathak2018].
 
 # Arguments
 
@@ -109,6 +109,10 @@ Create an input layer for informed echo state networks.
   - `gamma`: The gamma value. Default is 0.5.
 
 # Examples
+
+[^Pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
+    Using machine learning in conjunction with a knowledge-based model."
+    Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}

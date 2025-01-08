@@ -222,6 +222,7 @@ function allocate_tmp(::MRNN, tmp_type, res_size)
     return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
 
+abstract type AbstractGRUVariant end
 #GRU-based driver
 struct GRU{F, L, R, V, B} #not an abstractreservoirdriver
     activation_function::F
