@@ -12,37 +12,6 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 
 abstract type AbstractReservoirComputer end
 
-#fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
-for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
-    :simple_cycle, :pseudo_svd,
-    :scaled_rand, :weighted_init, :informed_init, :minimal_init)
-    @eval begin
-        function ($initializer)(dims::Integer...; kwargs...)
-            return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
-        end
-        function ($initializer)(rng::AbstractRNG, dims::Integer...; kwargs...)
-            return $initializer(rng, Float32, dims...; kwargs...)
-        end
-        function ($initializer)(::Type{T}, dims::Integer...; kwargs...) where {T <: Number}
-            return $initializer(Utils.default_rng(), T, dims...; kwargs...)
-        end
-
-        # Partial application
-        function ($initializer)(rng::AbstractRNG; kwargs...)
-            return PartialFunction.Partial{Nothing}($initializer, rng, kwargs)
-        end
-        function ($initializer)(::Type{T}; kwargs...) where {T <: Number}
-            return PartialFunction.Partial{T}($initializer, nothing, kwargs)
-        end
-        function ($initializer)(rng::AbstractRNG, ::Type{T}; kwargs...) where {T <: Number}
-            return PartialFunction.Partial{T}($initializer, rng, kwargs)
-        end
-        function ($initializer)(; kwargs...)
-            return PartialFunction.Partial{Nothing}($initializer, nothing, kwargs)
-        end
-    end
-end
-
 #general
 include("states.jl")
 include("predict.jl")
@@ -51,8 +20,7 @@ include("predict.jl")
 include("train/linear_regression.jl")
 
 #esn
-include("esn/esn_input_layers.jl")
-include("esn/esn_reservoirs.jl")
+include("esn/esn_inits.jl")
 include("esn/esn_reservoir_drivers.jl")
 include("esn/esn.jl")
 include("esn/deepesn.jl")
