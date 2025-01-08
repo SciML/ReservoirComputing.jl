@@ -92,7 +92,7 @@ plot([testing_target&#39; output&#39;]; label=[&quot;actual&quot; &quot;predicte
     linewidth=2.5,
     xtickfontsize=12,
     ytickfontsize=12,
-    size=(1080, 720))</code></pre><img src="333e023c.svg" alt="Example block output"/><p>It is interesting to see a comparison of the GRU driven ESN and the standard RNN driven ESN. Using the same parameters defined before it is possible to do the following</p><pre><code class="language-julia hljs">using StatsBase
+    size=(1080, 720))</code></pre><img src="225addc1.svg" alt="Example block output"/><p>It is interesting to see a comparison of the GRU driven ESN and the standard RNN driven ESN. Using the same parameters defined before it is possible to do the following</p><pre><code class="language-julia hljs">using StatsBase
 
 esn_rnn = ESN(training_input, 1, res_size;
     reservoir=rand_sparse(; radius=res_radius),
