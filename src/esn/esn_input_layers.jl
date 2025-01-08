@@ -1,29 +1,37 @@
 """
-    scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(0.1)) where {T <: Number}
+    scaled_rand([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        scaling=0.1)
 
-Create and return a matrix with random values, uniformly distributed within a range defined by `scaling`. This function is useful for initializing matrices, such as the layers of a neural network, with scaled random values.
+Create and return a matrix with random values, uniformly distributed within
+a range defined by `scaling`.
 
 # Arguments
 
-  - `rng`: An instance of `AbstractRNG` for random number generation.
-  - `T`: The data type for the elements of the matrix.
-  - `dims`: Dimensions of the matrix. It must be a 2-element tuple specifying the number of rows and columns (e.g., `(res_size, in_size)`).
-  - `scaling`: A scaling factor to define the range of the uniform distribution. The matrix elements will be randomly chosen from the range `[-scaling, scaling]`. Defaults to `T(0.1)`.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
+  - `scaling`: A scaling factor to define the range of the uniform distribution.
+    The matrix elements will be randomly chosen from the
+    range `[-scaling, scaling]`. Defaults to `0.1`.
 
-# Returns
+# Examples
 
-A matrix of type with dimensions specified by `dims`. Each element of the matrix is a random number uniformly distributed between `-scaling` and `scaling`.
-
-# Example
-
-```julia
-rng = Random.default_rng()
-matrix = scaled_rand(rng, Float64, (100, 50); scaling=0.2)
+```jldoctest
+julia> res_input = scaled_rand(8, 3)
+8×3 Matrix{Float32}:
+ -0.0669356  -0.0292692  -0.0188943
+  0.0159724   0.004071   -0.0737949
+  0.026355   -0.0191563   0.0714962
+ -0.0177412   0.0279123   0.0892906
+ -0.0184405   0.0567368   0.0190222
+  0.0944272   0.0679244   0.0148647
+ -0.0799005  -0.0891089  -0.0444782
+ -0.0970182   0.0934286   0.03553
 ```
 """
-function scaled_rand(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
+function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = (DeviceAgnostic.rand(rng, T, res_size, in_size) .- T(0.5)) .*
@@ -32,37 +40,42 @@ function scaled_rand(rng::AbstractRNG,
 end
 
 """
-    weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(0.1)) where {T <: Number}
+    weighted_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        scaling=0.1)
 
-Create and return a matrix representing a weighted input layer for Echo State Networks (ESNs). This initializer generates a weighted input matrix with random non-zero elements distributed uniformly within the range [-`scaling`, `scaling`], inspired by the approach in [^Lu].
+Create and return a matrix representing a weighted input layer.
+This initializer generates a weighted input matrix with random non-zero
+elements distributed uniformly within the range [-`scaling`, `scaling`] [^Lu2017].
 
 # Arguments
 
-  - `rng`: An instance of `AbstractRNG` for random number generation.
-  - `T`: The data type for the elements of the matrix.
-  - `dims`: A 2-element tuple specifying the approximate reservoir size and input size (e.g., `(approx_res_size, in_size)`).
-  - `scaling`: The scaling factor for the weight distribution. Defaults to `T(0.1)`.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
+  - `scaling`: The scaling factor for the weight distribution.
+    Defaults to `0.1`.
 
-# Returns
+# Examples
 
-A matrix representing the weighted input layer as defined in [^Lu2017]. The matrix dimensions will be adjusted to ensure each input unit connects to an equal number of reservoir units.
-
-# Example
-
-```julia
-rng = Random.default_rng()
-input_layer = weighted_init(rng, Float64, (3, 300); scaling=0.2)
+```jldoctest
+julia> res_input = weighted_init(8, 3)
+6×3 Matrix{Float32}:
+  0.0452399   0.0          0.0
+ -0.0348047   0.0          0.0
+  0.0        -0.0386004    0.0
+  0.0         0.00981022   0.0
+  0.0         0.0          0.0577838
+  0.0         0.0         -0.0562827
 ```
 
-# References
-
 [^Lu2017]: Lu, Zhixin, et al.
-    "Reservoir observers: Model-free inference of unmeasured variables in chaotic systems."
+    "Reservoir observers: Model-free inference of unmeasured variables in
+    chaotic systems."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
-function weighted_init(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
+function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1)) where {T <: Number}
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -78,31 +91,24 @@ function weighted_init(rng::AbstractRNG,
 end
 
 """
-    informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...; scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
+    informed_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        scaling=0.1, model_in_size, gamma=0.5)
 
-Create a layer of a neural network.
+Create an input layer for informed echo state networks.
 
 # Arguments
 
-  - `rng::AbstractRNG`: The random number generator.
-  - `T::Type`: The data type.
-  - `dims::Integer...`: The dimensions of the layer.
-  - `scaling::T = T(0.1)`: The scaling factor for the input matrix.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
+  - `scaling`: The scaling factor for the input matrix.
+    Default is 0.1.
   - `model_in_size`: The size of the input model.
-  - `gamma::T = T(0.5)`: The gamma value.
+  - `gamma`: The gamma value. Default is 0.5.
 
-# Returns
-
-  - `input_matrix`: The created input matrix for the layer.
-
-# Example
-
-```julia
-rng = Random.default_rng()
-dims = (100, 200)
-model_in_size = 50
-input_matrix = informed_init(rng, Float64, dims; model_in_size=model_in_size)
-```
+# Examples
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
@@ -141,41 +147,79 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    irrational_sample_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-    weight = 0.1,
-    sampling = IrrationalSample(; irrational = pi, start = 1)
-    ) where {T <: Number}
+    minimal_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        sampling_type=:bernoulli, weight=0.1, irrational=pi, start=1, p=0.5)
 
-Create a layer matrix using the provided random number generator and sampling parameters.
+Create a layer matrix with uniform weights determined by `weight`. The sign difference
+is randomly determined by the `sampling` chosen.
 
 # Arguments
 
-  - `rng::AbstractRNG`: The random number generator used to generate random numbers.
-  - `dims::Integer...`: The dimensions of the layer matrix.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
   - `weight`: The weight used to fill the layer matrix. Default is 0.1.
-  - `sampling`: The sampling parameters used to generate the input matrix. Default is IrrationalSample(irrational = pi, start = 1).
+  - `sampling_type`: The sampling parameters used to generate the input matrix.
+    Default is `:bernoulli`.
+  - `irrational`: Irrational number chosen for sampling if `sampling_type=:irrational`.
+    Default is `pi`.
+  - `start`: Starting value for the irrational sample. Default is 1
+  - `p`: Probability for the Bernoulli sampling. Lower probability increases negative
+    value. Higher probability increases positive values. Default is 0.5
 
-# Returns
+# Examples
 
-The layer matrix generated using the provided random number generator and sampling parameters.
+```jldoctest
+julia> res_input = minimal_init(8, 3)
+8×3 Matrix{Float32}:
+  0.1  -0.1   0.1
+ -0.1   0.1   0.1
+ -0.1  -0.1   0.1
+ -0.1  -0.1  -0.1
+  0.1   0.1   0.1
+ -0.1  -0.1  -0.1
+ -0.1  -0.1   0.1
+  0.1  -0.1   0.1
 
-# Example
+julia> res_input = minimal_init(8, 3; sampling_type=:irrational)
+8×3 Matrix{Float32}:
+ -0.1   0.1  -0.1
+  0.1  -0.1  -0.1
+  0.1   0.1  -0.1
+  0.1   0.1   0.1
+ -0.1  -0.1  -0.1
+  0.1   0.1   0.1
+  0.1   0.1  -0.1
+ -0.1   0.1  -0.1
 
-```julia
-using Random
-rng = Random.default_rng()
-dims = (3, 2)
-weight = 0.5
-layer_matrix = irrational_sample_init(rng, Float64, dims; weight=weight,
-    sampling=IrrationalSample(; irrational=sqrt(2), start=1))
+julia> res_input = minimal_init(8, 3; p=0.1) # lower p -> more negative signs
+8×3 Matrix{Float32}:
+ -0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+  0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+ -0.1  -0.1  -0.1
+
+julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
+8×3 Matrix{Float32}:
+  0.1   0.1  0.1
+ -0.1   0.1  0.1
+ -0.1   0.1  0.1
+  0.1   0.1  0.1
+  0.1   0.1  0.1
+  0.1  -0.1  0.1
+ -0.1   0.1  0.1
+  0.1   0.1  0.1
 ```
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        sampling_type::Symbol=:bernoulli,
-        weight::Number=T(0.1),
-        irrational::Real=pi,
-        start::Int=1,
-        p::Number=T(0.5)) where {T <: Number}
+        sampling_type::Symbol=:bernoulli, weight::Number=T(0.1), irrational::Real=pi,
+        start::Int=1, p::Number=T(0.5)) where {T <: Number}
     res_size, in_size = dims
     if sampling_type == :bernoulli
         layer_matrix = _create_bernoulli(p, res_size, in_size, weight, rng, T)
@@ -193,12 +237,8 @@ function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return layer_matrix
 end
 
-function _create_bernoulli(p::Number,
-        res_size::Int,
-        in_size::Int,
-        weight::Number,
-        rng::AbstractRNG,
-        ::Type{T}) where {T <: Number}
+function _create_bernoulli(p::Number, res_size::Int, in_size::Int, weight::Number,
+        rng::AbstractRNG, ::Type{T}) where {T <: Number}
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     for i in 1:res_size
         for j in 1:in_size
@@ -212,12 +252,8 @@ function _create_bernoulli(p::Number,
     return input_matrix
 end
 
-function _create_irrational(irrational::Irrational,
-        start::Int,
-        res_size::Int,
-        in_size::Int,
-        weight::Number,
-        rng::AbstractRNG,
+function _create_irrational(irrational::Irrational, start::Int, res_size::Int,
+        in_size::Int, weight::Number, rng::AbstractRNG,
         ::Type{T}) where {T <: Number}
     setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + start + 1))))
     ir_string = string(BigFloat(irrational)) |> collect

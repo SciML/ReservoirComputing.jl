@@ -1,30 +1,37 @@
 """
-    rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...; radius=1.0, sparsity=0.1)
+    rand_sparse([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        radius=1.0, sparsity=0.1, std=1.0)
 
-Create and return a random sparse reservoir matrix for use in Echo State Networks (ESNs). The matrix will be of size specified by `dims`, with specified `sparsity` and scaled spectral radius according to `radius`.
+Create and return a random sparse reservoir matrix.
+The matrix will be of size specified by `dims`, with specified `sparsity`
+and scaled spectral radius according to `radius`.
 
 # Arguments
 
-  - `rng`: An instance of `AbstractRNG` for random number generation.
-  - `T`: The data type for the elements of the matrix.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
-  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
-  - `sparsity`: The sparsity level of the reservoir matrix, controlling the fraction of zero elements. Defaults to 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    Defaults to 1.0.
+  - `sparsity`: The sparsity level of the reservoir matrix,
+    controlling the fraction of zero elements. Defaults to 0.1.
 
-# Returns
+# Examples
 
-A matrix representing the random sparse reservoir.
-
-# References
-
-This type of reservoir initialization is commonly used in ESNs for capturing temporal dependencies in data.
+```jldoctest
+julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
+5×5 Matrix{Float32}:
+ 0.0        0.0        0.0        0.0      0.0
+ 0.0        0.794565   0.0        0.26164  0.0
+ 0.0        0.0       -0.931294   0.0      0.553706
+ 0.723235  -0.524727   0.0        0.0      0.0
+ 1.23723    0.0        0.181824  -1.5478   0.465328
+```
 """
-function rand_sparse(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
-        radius=T(1.0),
-        sparsity=T(0.1),
-        std=T(1.0)) where {T <: Number}
+function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius=T(1.0), sparsity=T(0.1), std=T(1.0)) where {T <: Number}
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
@@ -36,38 +43,49 @@ function rand_sparse(rng::AbstractRNG,
 end
 
 """
-    delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...; weight=0.1) where {T <: Number}
+    delay_line([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        weight=0.1)
 
-Create and return a delay line reservoir matrix for use in Echo State Networks (ESNs). A delay line reservoir is a deterministic structure where each unit is connected only to its immediate predecessor with a specified weight. This method is particularly useful for tasks that require specific temporal processing.
+Create and return a delay line reservoir matrix [^Rodan2010].
 
 # Arguments
 
-  - `rng`: An instance of `AbstractRNG` for random number generation. This argument is not used in the current implementation but is included for consistency with other initialization functions.
-  - `T`: The data type for the elements of the matrix.
-  - `dims`: Dimensions of the reservoir matrix. Typically, this should be a tuple of two equal integers representing a square matrix.
-  - `weight`: The weight determines the absolute value of all connections in the reservoir. Defaults to 0.1.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+  - `weight`: Determines the value of all connections in the reservoir.
+    Default is 0.1.
 
-# Returns
+# Examples
 
-A delay line reservoir matrix with dimensions specified by `dims`. The matrix is initialized such that each element in the `i+1`th row and `i`th column is set to `weight`, and all other elements are zeros.
+```jldoctest
+julia> res_matrix = delay_line(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
 
-# Example
-
-```julia
-reservoir = delay_line(Float64, 100, 100; weight=0.2)
+julia> res_matrix = delay_line(5, 5; weight=1)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  0.0  0.0  0.0  0.0
+ 0.0  1.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  1.0  0.0
 ```
 
-# References
-
-This type of reservoir initialization is described in:
-Rodan, Ali, and Peter Tino. "Minimum complexity echo state network." IEEE Transactions on Neural Networks 22.1 (2010): 131-144.
+[^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function delay_line(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
+function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1)) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions must define a square matrix (e.g., (100, 100))"
+    @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions
+    must define a square matrix (e.g., (100, 100))"
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -77,35 +95,49 @@ function delay_line(rng::AbstractRNG,
 end
 
 """
-    delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight = T(0.1), fb_weight = T(0.2)) where {T <: Number}
+    delay_line_backward([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+        weight = 0.1, fb_weight = 0.2)
 
-Create a delay line backward reservoir with the specified by `dims` and weights. Creates a matrix with backward connections
-as described in [^Rodan2010]. The `weight` and `fb_weight` can be passed as either arguments or
-keyword arguments, and they determine the absolute values of the connections in the reservoir.
+Create a delay line backward reservoir with the specified by `dims` and weights.
+Creates a matrix with backward connections as described in [^Rodan2010].
 
 # Arguments
 
-  - `rng::AbstractRNG`: Random number generator.
-  - `T::Type`: Type of the elements in the reservoir matrix.
-  - `dims::Integer...`: Dimensions of the reservoir matrix.
-  - `weight::T`: The weight determines the absolute value of forward connections in the reservoir, and is set to 0.1 by default.
-  - `fb_weight::T`: The `fb_weight` determines the absolute value of backward connections in the reservoir, and is set to 0.2 by default.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+  - `weight`: The weight determines the absolute value of
+    forward connections in the reservoir. Default is 0.1
+  - `fb_weight`: Determines the absolute value of backward connections
+    in the reservoir. Default is 0.2
 
-# Returns
+# Examples
 
-Reservoir matrix with the dimensions specified by `dims` and weights.
+```jldoctest
+julia> res_matrix = delay_line_backward(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.2  0.0  0.0  0.0
+ 0.1  0.0  0.2  0.0  0.0
+ 0.0  0.1  0.0  0.2  0.0
+ 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.0  0.0  0.1  0.0
 
-# References
+julia> res_matrix = delay_line_backward(Float16, 5, 5)
+5×5 Matrix{Float16}:
+ 0.0  0.2  0.0  0.0  0.0
+ 0.1  0.0  0.2  0.0  0.0
+ 0.0  0.1  0.0  0.2  0.0
+ 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.0  0.0  0.1  0.0
+```
 
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function delay_line_backward(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
-        weight=T(0.1),
-        fb_weight=T(0.2)) where {T <: Number}
+function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight=T(0.1), fb_weight=T(0.2)) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -118,34 +150,51 @@ function delay_line_backward(rng::AbstractRNG,
 end
 
 """
-    cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight = T(0.1), jump_weight = T(0.1), jump_size = 3) where {T <: Number}
+    cycle_jumps([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
+        cycle_weight = 0.1, jump_weight = 0.1, jump_size = 3)
 
-Create a cycle jumps reservoir with the specified dimensions, cycle weight, jump weight, and jump size.
+Create a cycle jumps reservoir with the specified dimensions,
+cycle weight, jump weight, and jump size.
 
 # Arguments
 
-  - `rng::AbstractRNG`: Random number generator.
-  - `T::Type`: Type of the elements in the reservoir matrix.
-  - `dims::Integer...`: Dimensions of the reservoir matrix.
-  - `cycle_weight::T = T(0.1)`:  The weight of cycle connections.
-  - `jump_weight::T = T(0.1)`: The weight of jump connections.
-  - `jump_size::Int = 3`:  The number of steps between jump connections.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+  - `cycle_weight`:  The weight of cycle connections.
+    Default is 0.1.
+  - `jump_weight`: The weight of jump connections.
+    Default is 0.1.
+  - `jump_size`:  The number of steps between jump connections.
+    Default is 3.
 
-# Returns
+# Examples
 
-Reservoir matrix with the specified dimensions, cycle weight, jump weight, and jump size.
+```jldoctest
+julia> res_matrix = cycle_jumps(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.1  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
 
-# References
+julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.1  0.1  0.0  0.0  0.1
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.1  0.1  0.0
+```
 
 [^Rodan2012]: Rodan, Ali, and Peter Tiňo. "Simple deterministically constructed cycle reservoirs
     with regular jumps." Neural computation 24.7 (2012): 1822-1852.
 """
-function cycle_jumps(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
-        cycle_weight::Number=T(0.1),
-        jump_weight::Number=T(0.1),
+function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        cycle_weight::Number=T(0.1), jump_weight::Number=T(0.1),
         jump_size::Int=3) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -169,30 +218,44 @@ function cycle_jumps(rng::AbstractRNG,
 end
 
 """
-    simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight = T(0.1)) where {T <: Number}
+    simple_cycle([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
+        weight = 0.1)
 
 Create a simple cycle reservoir with the specified dimensions and weight.
 
 # Arguments
 
-  - `rng::AbstractRNG`: Random number generator.
-  - `T::Type`: Type of the elements in the reservoir matrix.
-  - `dims::Integer...`: Dimensions of the reservoir matrix.
-  - `weight::T = T(0.1)`: Weight of the connections in the reservoir matrix.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+  - `weight`: Weight of the connections in the reservoir matrix.
+    Default is 0.1.
 
-# Returns
+# Examples
 
-Reservoir matrix with the dimensions specified by `dims` and weights.
+```jldoctest
+julia> res_matrix = simple_cycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
 
-# References
+julia> res_matrix = simple_cycle(5, 5; weight=11)
+5×5 Matrix{Float32}:
+  0.0   0.0   0.0   0.0  11.0
+ 11.0   0.0   0.0   0.0   0.0
+  0.0  11.0   0.0   0.0   0.0
+  0.0   0.0  11.0   0.0   0.0
+  0.0   0.0   0.0  11.0   0.0
+```
 
 [^Rodan2010]: Rodan, Ali, and Peter Tino. "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
-function simple_cycle(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
+function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1)) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -205,37 +268,44 @@ function simple_cycle(rng::AbstractRNG,
 end
 
 """
-    pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
-        max_value, sparsity, sorted = true, reverse_sort = false) where {T <: Number}
+    pseudo_svd([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
+        max_value=1.0, sparsity=0.1, sorted = true, reverse_sort = false)
 
-    Returns an initializer to build a sparse reservoir matrix with the given `sparsity` by using a pseudo-SVD approach as described in [^yang].
+Returns an initializer to build a sparse reservoir matrix with the given
+`sparsity` by using a pseudo-SVD approach as described in [^yang].
 
 # Arguments
 
-  - `rng::AbstractRNG`: Random number generator.
-  - `T::Type`: Type of the elements in the reservoir matrix.
-  - `dims::Integer...`: Dimensions of the reservoir matrix.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
   - `max_value`: The maximum absolute value of elements in the matrix.
+    Default is 1.0
   - `sparsity`: The desired sparsity level of the reservoir matrix.
-  - `sorted`: A boolean indicating whether to sort the singular values before creating the diagonal matrix. By default, it is set to `true`.
-  - `reverse_sort`: A boolean indicating whether to reverse the sorted singular values. By default, it is set to `false`.
+    Default is 0.1
+  - `sorted`: A boolean indicating whether to sort the singular values before
+    creating the diagonal matrix. Default is `true`.
+  - `reverse_sort`: A boolean indicating whether to reverse the sorted
+    singular values. Default is `false`.
 
-# Returns
+# Examples
 
-Reservoir matrix with the specified dimensions, max value, and sparsity.
-
-# References
-
-This reservoir initialization method, based on a pseudo-SVD approach, is inspired by the work in [^yang], which focuses on designing polynomial echo state networks for time series prediction.
+```jldoctest
+julia> res_matrix = pseudo_svd(5, 5)
+5×5 Matrix{Float32}:
+ 0.306998  0.0       0.0       0.0       0.0
+ 0.0       0.325977  0.0       0.0       0.0
+ 0.0       0.0       0.549051  0.0       0.0
+ 0.0       0.0       0.0       0.726199  0.0
+ 0.0       0.0       0.0       0.0       1.0
+```
 
 [^yang]: Yang, Cuili, et al. "_Design of polynomial echo state networks for time series prediction._" Neurocomputing 290 (2018): 148-160.
 """
-function pseudo_svd(rng::AbstractRNG,
-        ::Type{T},
-        dims::Integer...;
-        max_value::Number=T(1.0),
-        sparsity::Number=0.1,
-        sorted::Bool=true,
+function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
         reverse_sort::Bool=false) where {T <: Number}
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
@@ -283,9 +353,7 @@ function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number
 end
 
 function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
-        coord_i::Number,
-        coord_j::Number,
-        theta::Number) where {T <: Number}
+        coord_i::Number, coord_j::Number, theta::Number) where {T <: Number}
     qmatrix = DeviceAgnostic.zeros(rng, T, dim, dim)
 
     for i in 1:dim
