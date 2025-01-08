@@ -9,6 +9,9 @@ struct OutputLayer{T, I, S, L} <: AbstractOutputLayer
     last_value::L
 end
 
+Base.show(io::IO, ol::OutputLayer) = 
+    print(io, "OutputLayer successfully trained with output size: ", ol.out_size)
+
 #prediction types
 """
     Generative(prediction_len)
@@ -19,14 +22,12 @@ subsequent prediction steps.
 
 # Parameters
 
-  - `prediction_len::Int`: The number of future steps to predict.
+  - `prediction_len`: The number of future steps to predict.
 
 # Description
 
 The `Generative` prediction method allows a model to perform multi-step
 forecasting by using its own previous predictions as inputs for future predictions.
-This approach is especially useful in time series analysis, where each prediction
-depends on the preceding data points.
 
 At each step, the model takes the current input, generates a prediction,
 and then incorporates that prediction into the input for the next step.
@@ -51,21 +52,13 @@ of input features (`prediction_data`).
 
 # Parameters
 
-  - `prediction_data`: The input data used for prediction, typically structured as a matrix
-    where each column represents a sample, and each row represents a feature.
+  - `prediction_data`: The input data used for prediction, `feature` x `sample`
 
 # Description
 
-The `Predictive` prediction method is a standard approach
-in supervised machine learning tasks. It uses the provided input data
+The `Predictive` prediction method uses the provided input data
 (`prediction_data`) to produce corresponding labels or outputs based
-on the learned relationships in the model. Unlike generative prediction,
-this method does not recursively feed predictions into the model;
-instead, it operates on fixed input data to produce a single batch of predictions.
-
-This method is suitable for tasks like classification,
-regression, or other use cases where the input features
-and the number of steps are predefined.
+on the learned relationships in the model. 
 """
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)

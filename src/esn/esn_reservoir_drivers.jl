@@ -1,31 +1,26 @@
 abstract type AbstractReservoirDriver end
 
 """
-    create_states(
-        reservoir_driver::AbstractReservoirDriver,
-        train_data,
-        washout,
-        reservoir_matrix,
-        input_matrix,
-        bias_vector
-    )
+    create_states(reservoir_driver::AbstractReservoirDriver, train_data, washout,
+        reservoir_matrix, input_matrix, bias_vector)
 
-Create and return the trained Echo State Network (ESN) states according to the specified reservoir driver.
+Create and return the trained Echo State Network (ESN) states according to the
+specified reservoir driver.
 
 # Arguments
 
-  - `reservoir_driver::AbstractReservoirDriver`: The reservoir driver that determines how the ESN states evolve over time.
+  - `reservoir_driver`: The reservoir driver that determines how the ESN states evolve
+    over time.
   - `train_data`: The training data used to train the ESN.
-  - `washout::Int`: The number of initial time steps to discard during training to allow the reservoir dynamics to wash out the initial conditions.
-  - `reservoir_matrix`: The reservoir matrix representing the dynamic, recurrent part of the ESN.
-  - `input_matrix`: The input matrix that defines the connections between input features and reservoir nodes.
-  - `bias_vector`: The bias vector to be added at each time step during the reservoir update.
+  - `washout`: The number of initial time steps to discard during training to allow the
+    reservoir dynamics to wash out the initial conditions.
+  - `reservoir_matrix`: The reservoir matrix representing the dynamic, recurrent part of
+    the ESN.
+  - `input_matrix`: The input matrix that defines the connections between input features
+    and reservoir nodes.
+  - `bias_vector`: The bias vector to be added at each time step during the reservoir
+    update.
 
-# Returns
-
-  - A matrix of trained ESN states, where each column represents the state at a specific time step.
-
-This function is responsible for creating and returning the states of the ESN during training based on the provided training data and parameters.
 """
 function create_states(reservoir_driver::AbstractReservoirDriver,
         train_data,
@@ -99,7 +94,8 @@ end
     RNN(activation_function, leaky_coefficient)
     RNN(;activation_function=tanh, leaky_coefficient=1.0)
 
-Returns a Recurrent Neural Network (RNN) initializer for the Echo State Network (ESN).
+Returns a Recurrent Neural Network (RNN) initializer for
+echo state networks (`ESN`).
 
 # Arguments
 
@@ -108,11 +104,12 @@ Returns a Recurrent Neural Network (RNN) initializer for the Echo State Network 
 
 # Keyword Arguments
 
-  - `activation_function`: The activation function used in the RNN. Defaults to `tanh`.
-  - `leaky_coefficient`: The leaky coefficient used in the RNN. Defaults to 1.0.
+  - `activation_function`: The activation function used in the RNN.
+    Defaults to `tanh_fast`.
+  - `leaky_coefficient`: The leaky coefficient used in the RNN.
+    Defaults to 1.0.
 
-This function creates an RNN object with the specified activation function and leaky coefficient,
-which can be used as a reservoir driver in the ESN.
+
 """
 function RNN(; activation_function=NNlib.fast_act(tanh), leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
@@ -163,25 +160,33 @@ end
     MRNN(;activation_function=[tanh, sigmoid], leaky_coefficient=1.0,
         scaling_factor=fill(leaky_coefficient, length(activation_function)))
 
-Returns a Multiple RNN (MRNN) initializer for the Echo State Network (ESN), introduced in [^lun].
+Returns a Multiple RNN (MRNN) initializer for the Echo State Network (ESN),
+introduced in [^Lun2015].
 
 # Arguments
 
-  - `activation_function`: A vector of activation functions used in the MRNN.
+  - `activation_function`: A vector of activation functions used
+    in the MRNN.
   - `leaky_coefficient`: The leaky coefficient used in the MRNN.
-  - `scaling_factor`: A vector of scaling factors for combining activation functions.
+  - `scaling_factor`: A vector of scaling factors for combining activation
+    functions.
 
 # Keyword Arguments
 
-  - `activation_function`: A vector of activation functions used in the MRNN. Defaults to `[tanh, sigmoid]`.
-  - `leaky_coefficient`: The leaky coefficient used in the MRNN. Defaults to 1.0.
-  - `scaling_factor`: A vector of scaling factors for combining activation functions. Defaults to an array of the same size as `activation_function` with all elements set to `leaky_coefficient`.
+  - `activation_function`: A vector of activation functions used in the MRNN.
+    Defaults to `[tanh, sigmoid]`.
+  - `leaky_coefficient`: The leaky coefficient used in the MRNN.
+    Defaults to 1.0.
+  - `scaling_factor`: A vector of scaling factors for combining activation functions.
+    Defaults to an array of the same size as `activation_function` with all
+    elements set to `leaky_coefficient`.
 
-This function creates an MRNN object with the specified activation functions, leaky coefficient, and scaling factors, which can be used as a reservoir driver in the ESN.
+This function creates an MRNN object with the specified activation functions,
+leaky coefficient, and scaling factors, which can be used as a reservoir driver
+in the ESN.
 
-# Reference:
 
-[^lun]: Lun, Shu-Xian, et al.
+[^Lun2015]: Lun, Shu-Xian, et al.
     "_A novel model of leaky integrator echo state network for
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
@@ -208,16 +213,6 @@ function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
     return out
 end
 
-#=
-function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
-    rnn_next_state = (1-mrnn.leaky_coefficient).*x
-    for i=1:length(mrnn.scaling_factor)
-        rnn_next_state += mrnn.scaling_factor[i]*mrnn.activation_function[i].((W*x).+(W_in*y).+b)
-    end
-    rnn_next_state
-end
-=#
-
 function allocate_tmp(::MRNN, tmp_type, res_size)
     return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
@@ -236,19 +231,16 @@ end
 """
     FullyGated()
 
-Returns a Fully Gated Recurrent Unit (FullyGated) initializer for the Echo State Network (ESN).
+Returns a Fully Gated Recurrent Unit (FullyGated) initializer
+for the Echo State Network (ESN).
 
-This function creates a FullyGated object, which can be used as a reservoir driver in the ESN.
-The FullyGated variant is described in the literature reference [^cho].
+Returns the standard gated recurrent unit [^Cho2014] as a driver for the 
+echo state network (`ESN`).
 
-# Returns
 
-  - `FullyGated`: A FullyGated reservoir driver.
-
-# Reference
-
-[^cho]: Cho, Kyunghyun, et al.
-    "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
+[^Cho2014]: Cho, Kyunghyun, et al.
+    "_Learning phrase representations using RNN encoder-decoder
+    for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
 struct FullyGated <: AbstractGRUVariant end
@@ -256,9 +248,10 @@ struct FullyGated <: AbstractGRUVariant end
 """
     Minimal()
 
-Returns a minimal GRU ESN initializer as described in [^Zhou].
+Returns a minimal GRU ESN initializer as described in [^Zhou2016].
 
-[^Zhou]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent neural networks._"
+[^Zhou2016]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent
+    neural networks._"
     International Journal of Automation and Computing 13.3 (2016): 226-234.
 """
 struct Minimal <: AbstractGRUVariant end
@@ -271,23 +264,25 @@ struct Minimal <: AbstractGRUVariant end
         bias = fill(DenseLayer(), 2),
         variant = FullyGated())
 
-Returns a Gated Recurrent Unit (GRU) reservoir driver for Echo State Networks (ESNs). This driver is based on the GRU architecture [^Cho], which is designed to capture temporal dependencies in data and is commonly used in various machine learning applications.
+Returns a Gated Recurrent Unit (GRU) reservoir driver for Echo State Network (`ESN`).
+This driver is based on the GRU architecture [^Cho2014].
 
 # Arguments
 
-  - `activation_function`: An array of activation functions for the GRU layers. By default, it uses sigmoid activation functions for the update gate, reset gate, and tanh for the hidden state.
-  - `inner_layer`: An array of inner layers used in the GRU architecture. By default, it uses two dense layers.
-  - `reservoir`: An array of reservoir layers. By default, it uses two random sparse reservoirs.
-  - `bias`: An array of bias layers for the GRU. By default, it uses two dense layers.
-  - `variant`: The GRU variant to use. By default, it uses the "FullyGated" variant.
+  - `activation_function`: An array of activation functions for the GRU layers.
+    By default, it uses sigmoid activation functions for the update gate, reset gate,
+    and tanh for the hidden state.
+  - `inner_layer`: An array of inner layers used in the GRU architecture.
+    By default, it uses two dense layers.
+  - `reservoir`: An array of reservoir layers.
+    By default, it uses two random sparse reservoirs.
+  - `bias`: An array of bias layers for the GRU.
+    By default, it uses two dense layers.
+  - `variant`: The GRU variant to use.
+    By default, it uses the "FullyGated" variant.
 
-# Returns
 
-A GRUParams object containing the parameters needed for the GRU-based reservoir driver.
-
-# References
-
-[^Cho]: Cho, Kyunghyun, et al.
+[^Cho2014]: Cho, Kyunghyun, et al.
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
