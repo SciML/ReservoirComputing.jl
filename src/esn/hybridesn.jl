@@ -24,8 +24,8 @@ end
 """
 KnowledgeModel(prior_model, u0, tspan, datasize)
 
-Constructs a `Hybrid` variation of Echo State Networks (ESNs) integrating a knowledge-based model
-(`prior_model`) with ESNs for advanced training and prediction in chaotic systems.
+Constructs a `Hybrid` variation of Echo State Networks (ESNs) [^Pathak2018]
+integrating a knowledge-based model (`prior_model`) with ESNs.
 
 # Parameters
 
@@ -34,15 +34,7 @@ Constructs a `Hybrid` variation of Echo State Networks (ESNs) integrating a know
   - `tspan`: Time span as a tuple, indicating the duration for model operation.
   - `datasize`: The size of the data to be processed.
 
-# Returns
-
-  - A `Hybrid` struct instance representing the combined ESN and knowledge-based model.
-
-This method is effective for chaotic processes as highlighted in [^Pathak].
-
-Reference:
-
-[^Pathak]: Jaideep Pathak et al.
+[^Pathak2018]: Jaideep Pathak et al.
     "Hybrid Forecasting of Chaotic Processes:
     Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
@@ -59,11 +51,7 @@ end
     HybridESN(model, train_data, in_size, res_size; kwargs...)
 
 Construct a Hybrid Echo State Network (ESN) model that integrates
-traditional Echo State Networks with a predefined knowledge model for
-enhanced performance on chaotic systems or complex datasets. This
-constructor allows for the creation of a customized ESN architecture by
-specifying the reservoir size, input size, and various other parameters that
-influence the network's behavior and learning capacity.
+traditional Echo State Networks with a predefined knowledge model [^Pathak2018].
 
 # Parameters
 
@@ -79,41 +67,29 @@ influence the network's behavior and learning capacity.
 
 # Optional Keyword Arguments
 
-  - `input_layer`: A function to initialize the input matrix. Default is `scaled_rand`.
-  - `reservoir`: A function to initialize the reservoir matrix. Default is `rand_sparse`.
-  - `bias`: A function to initialize the bias vector. Default is `zeros64`.
-  - `reservoir_driver`: The driving system for the reservoir. Default is an RNN model.
+  - `input_layer`: A function to initialize the input matrix.
+    Default is `scaled_rand`.
+  - `reservoir`: A function to initialize the reservoir matrix.
+    Default is `rand_sparse`.
+  - `bias`: A function to initialize the bias vector.
+    Default is `zeros32`.
+  - `reservoir_driver`: The driving system for the reservoir.
+    Default is an RNN model.
   - `nla_type`: The type of non-linear activation used in the reservoir.
     Default is `NLADefault()`.
-  - `states_type`: Defines the type of states used in the ESN (e.g., standard states).
-    Default is `StandardStates()`.
-  - `washout`: The number of initial timesteps to be discarded in the ESN's training phase.
-    Default is 0.
-  - `rng`: Random number generator used for initializing weights. Default is the package's
-    default random number generator.
-  - `T`: The data type for the matrices (e.g., `Float32`). Influences computational
-    efficiency and precision.
-  - `matrix_type`: The type of matrix used for storing the training data. Default is
-    inferred from `train_data`.
+  - `states_type`: Defines the type of states used in the
+    ESN. Default is `StandardStates()`.
+  - `washout`: The number of initial timesteps to be
+    discarded in the ESN's training phase. Default is 0.
+  - `rng`: Random number generator used for initializing weights.
+    Default is `Utils.default_rng()`.
+  - `T`: The data type for the matrices (e.g., `Float32`).
+  - `matrix_type`: The type of matrix used for storing the training data.
+    Default is inferred from `train_data`.
 
-# Returns
-
-  - A `HybridESN` instance configured according to the provided parameters and
-    suitable for further training and prediction tasks.
-
-# Example
-
-```julia
-# Define a KnowledgeModel
-km = KnowledgeModel(prior_model_function, u0, (0, 100), 1000)
-
-# Create a HybridESN
-hesn = HybridESN(km, train_data, 10, 100; washout=100)
-
-# Train and predict
-train(hesn, target_data)
-prediction = hesn(prediction_object, output_layer)
-```
+[^Pathak2018]: Jaideep Pathak et al.
+    "Hybrid Forecasting of Chaotic Processes:
+    Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function HybridESN(model,
         train_data,
@@ -133,7 +109,7 @@ function HybridESN(model,
 
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
-        train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
+        train_data = vcat(adapt(matrix_type, ones(1, size(train_data, 2))),
             train_data)
     else
         in_size = size(train_data, 1)

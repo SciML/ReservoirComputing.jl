@@ -1,3 +1,71 @@
+abstract type AbstractOutputLayer end
+abstract type AbstractPrediction end
+
+#general output layer struct
+struct OutputLayer{T, I, S, L} <: AbstractOutputLayer
+    training_method::T
+    output_matrix::I
+    out_size::S
+    last_value::L
+end
+
+function Base.show(io::IO, ol::OutputLayer)
+    print(io, "OutputLayer successfully trained with output size: ", ol.out_size)
+end
+
+#prediction types
+"""
+    Generative(prediction_len)
+
+A prediction strategy that enables models to generate autonomous multi-step
+forecasts by recursively feeding their own outputs back as inputs for
+subsequent prediction steps.
+
+# Parameters
+
+  - `prediction_len`: The number of future steps to predict.
+
+# Description
+
+The `Generative` prediction method allows a model to perform multi-step
+forecasting by using its own previous predictions as inputs for future predictions.
+
+At each step, the model takes the current input, generates a prediction,
+and then incorporates that prediction into the input for the next step.
+This recursive process continues until the specified
+number of prediction steps (`prediction_len`) is reached.
+"""
+struct Generative{T} <: AbstractPrediction
+    prediction_len::T
+end
+
+struct Predictive{I, T} <: AbstractPrediction
+    prediction_data::I
+    prediction_len::T
+end
+
+"""
+    Predictive(prediction_data)
+
+A prediction strategy for supervised learning tasks,
+where a model predicts labels based on a provided set
+of input features (`prediction_data`).
+
+# Parameters
+
+  - `prediction_data`: The input data used for prediction, `feature` x `sample`
+
+# Description
+
+The `Predictive` prediction method uses the provided input data
+(`prediction_data`) to produce corresponding labels or outputs based
+on the learned relationships in the model.
+"""
+function Predictive(prediction_data)
+    prediction_len = size(prediction_data, 2)
+    Predictive(prediction_data, prediction_len)
+end
+
 function obtain_prediction(rc::AbstractReservoirComputer,
         prediction::Generative,
         x,
@@ -48,7 +116,7 @@ end
 
 #single matrix for other training methods
 function output_storing(training_method, out_size, prediction_len, storing_type)
-    return Adapt.adapt(storing_type, zeros(out_size, prediction_len))
+    return adapt(storing_type, zeros(out_size, prediction_len))
 end
 
 #general storing -> single matrix

@@ -44,27 +44,22 @@ temporal features.
     Default is an RNN model.
   - `nla_type`: The type of non-linear activation used in the reservoir.
     Default is `NLADefault()`.
-  - `states_type`: Defines the type of states used in the ESN (e.g., standard states).
-    Default is `StandardStates()`.
-  - `washout`: The number of initial timesteps to be discarded in the ESN's training phase.
-    Default is 0.
-  - `rng`: Random number generator used for initializing weights. Default is the package's
-    default random number generator.
+  - `states_type`: Defines the type of states used in the ESN
+    (e.g., standard states). Default is `StandardStates()`.
+  - `washout`: The number of initial timesteps to be discarded
+    in the ESN's training phase. Default is 0.
+  - `rng`: Random number generator used for initializing weights.
+    Default is `Utils.default_rng()`.
   - `matrix_type`: The type of matrix used for storing the training data.
     Default is inferred from `train_data`.
 
 # Example
 
 ```julia
-# Prepare your training data
-train_data = [your_training_data_here]
+train_data = rand(Float32, 3, 100)
 
 # Create a DeepESN with specific parameters
-deepESN = DeepESN(train_data, 10, 100; depth=3, washout=100)
-
-# Proceed with training and prediction (pseudocode)
-train(deepESN, target_data)
-prediction = predict(deepESN, new_data)
+deepESN = DeepESN(train_data, 3, 100; depth=3, washout=100)
 ```
 """
 function DeepESN(train_data,
@@ -82,7 +77,7 @@ function DeepESN(train_data,
         matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
-        train_data = vcat(Adapt.adapt(matrix_type, ones(1, size(train_data, 2))),
+        train_data = vcat(adapt(matrix_type, ones(1, size(train_data, 2))),
             train_data)
     end
 
