@@ -1,14 +1,11 @@
 module ReservoirComputing
 
-using Adapt
-using CellularAutomata
-using Distances
-using LinearAlgebra
-using NNlib
-using PartialFunctions
-using Random
+using Adapt: adapt
+using CellularAutomata: CellularAutomaton
+using LinearAlgebra: eigvals, mul!, I
+using NNlib: fast_act, sigmoid
+using Random: Random, AbstractRNG
 using Reexport: Reexport, @reexport
-using Statistics
 using StatsBase: sample
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers

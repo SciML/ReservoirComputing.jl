@@ -93,16 +93,16 @@ end
 
 function allocate_outpad(hesn::HybridESN, states_type, out)
     pad_length = length(out) + size(hesn.model.model_data[:, 1], 1)
-    out_tmp = Adapt.adapt(typeof(out), zeros(pad_length))
+    out_tmp = adapt(typeof(out), zeros(pad_length))
     return allocate_singlepadding(states_type, out_tmp)
 end
 
 function allocate_singlepadding(::AbstractPaddedStates, out)
-    Adapt.adapt(typeof(out), zeros(size(out, 1) + 1))
+    adapt(typeof(out), zeros(size(out, 1) + 1))
 end
 function allocate_singlepadding(::StandardStates, out)
-    Adapt.adapt(typeof(out), zeros(size(out, 1)))
+    adapt(typeof(out), zeros(size(out, 1)))
 end
 function allocate_singlepadding(::ExtendedStates, out)
-    Adapt.adapt(typeof(out), zeros(size(out, 1)))
+    adapt(typeof(out), zeros(size(out, 1)))
 end

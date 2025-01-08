@@ -30,9 +30,9 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
     train_len = size(train_data, 2) - washout
     res_size = size(reservoir_matrix, 1)
 
-    states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
+    states = adapt(typeof(train_data), zeros(res_size, train_len))
     tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
-    _state = Adapt.adapt(typeof(train_data), zeros(res_size, 1))
+    _state = adapt(typeof(train_data), zeros(res_size, 1))
 
     for i in 1:washout
         yv = @view train_data[:, i]
@@ -59,9 +59,9 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
     train_len = size(train_data, 2) - washout
     res_size = sum([size(reservoir_matrix[i], 1) for i in 1:length(reservoir_matrix)])
 
-    states = Adapt.adapt(typeof(train_data), zeros(res_size, train_len))
+    states = adapt(typeof(train_data), zeros(res_size, train_len))
     tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
-    _state = Adapt.adapt(typeof(train_data), zeros(res_size))
+    _state = adapt(typeof(train_data), zeros(res_size))
 
     for i in 1:washout
         for j in 1:length(reservoir_matrix)
@@ -108,7 +108,7 @@ echo state networks (`ESN`).
   - `leaky_coefficient`: The leaky coefficient used in the RNN.
     Defaults to 1.0.
 """
-function RNN(; activation_function=NNlib.fast_act(tanh), leaky_coefficient=1.0)
+function RNN(; activation_function=fast_act(tanh), leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
 end
 
@@ -142,7 +142,7 @@ function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
 end
 
 function allocate_tmp(::RNN, tmp_type, res_size)
-    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
+    return [adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
 
 #multiple RNN driver
@@ -210,7 +210,7 @@ function next_state!(out, mrnn::MRNN, x, y, W, W_in, b, tmp_array)
 end
 
 function allocate_tmp(::MRNN, tmp_type, res_size)
-    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
+    return [adapt(tmp_type, zeros(res_size, 1)) for i in 1:2]
 end
 
 abstract type AbstractGRUVariant end
@@ -280,7 +280,7 @@ This driver is based on the GRU architecture [^Cho2014].
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
-function GRU(; activation_function=[NNlib.sigmoid, NNlib.sigmoid, tanh],
+function GRU(; activation_function=[sigmoid, sigmoid, tanh],
         inner_layer=fill(scaled_rand, 2),
         reservoir=fill(rand_sparse, 2),
         bias=fill(scaled_rand, 2),
@@ -344,7 +344,7 @@ function next_state!(out, gru::GRUParams, x, y, W, W_in, b, tmp_array)
 end
 
 function allocate_tmp(::GRUParams, tmp_type, res_size)
-    return [Adapt.adapt(tmp_type, zeros(res_size, 1)) for i in 1:9]
+    return [adapt(tmp_type, zeros(res_size, 1)) for i in 1:9]
 end
 
 #W=U, W_in=W in papers. x=h, and y=x. I know, it's confusing. ( on the left our notation)

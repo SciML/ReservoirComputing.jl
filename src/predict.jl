@@ -116,7 +116,7 @@ end
 
 #single matrix for other training methods
 function output_storing(training_method, out_size, prediction_len, storing_type)
-    return Adapt.adapt(storing_type, zeros(out_size, prediction_len))
+    return adapt(storing_type, zeros(out_size, prediction_len))
 end
 
 #general storing -> single matrix
