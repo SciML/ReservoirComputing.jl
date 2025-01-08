@@ -50,7 +50,6 @@ julia> train_data = rand(Float32, 10, 100)  # 10 features, 100 time steps
 
 julia> esn = ESN(train_data, 10, 300; washout=10)
 ESN(10 => 300)
-
 ```
 """
 function ESN(train_data,
@@ -95,8 +94,9 @@ function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
         kwargs...)
 end
 
-Base.show(io::IO, esn::ESN) =
+function Base.show(io::IO, esn::ESN)
     print(io, "ESN(", size(esn.train_data, 1), " => ", size(esn.reservoir_matrix, 1), ")")
+end
 
 #training dispatch on esn
 """
@@ -109,7 +109,6 @@ Trains an Echo State Network (ESN) using the provided target data and a specifie
   - `esn::AbstractEchoStateNetwork`: The ESN instance to be trained.
   - `target_data`: Supervised training data for the ESN.
   - `training_method`: The method for training the ESN (default: `StandardRidge(0.0)`).
-
 
 # Example
 
@@ -132,7 +131,6 @@ ESN(10 => 300)
 
 julia> output_layer = train(esn, rand(Float32, 3, 90))
 OutputLayer successfully trained with output size: 3
-
 ```
 """
 function train(esn::AbstractEchoStateNetwork,

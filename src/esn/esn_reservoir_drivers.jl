@@ -20,7 +20,6 @@ specified reservoir driver.
     and reservoir nodes.
   - `bias_vector`: The bias vector to be added at each time step during the reservoir
     update.
-
 """
 function create_states(reservoir_driver::AbstractReservoirDriver,
         train_data,
@@ -108,8 +107,6 @@ echo state networks (`ESN`).
     Defaults to `tanh_fast`.
   - `leaky_coefficient`: The leaky coefficient used in the RNN.
     Defaults to 1.0.
-
-
 """
 function RNN(; activation_function=NNlib.fast_act(tanh), leaky_coefficient=1.0)
     RNN(activation_function, leaky_coefficient)
@@ -185,7 +182,6 @@ This function creates an MRNN object with the specified activation functions,
 leaky coefficient, and scaling factors, which can be used as a reservoir driver
 in the ESN.
 
-
 [^Lun2015]: Lun, Shu-Xian, et al.
     "_A novel model of leaky integrator echo state network for
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
@@ -234,9 +230,8 @@ end
 Returns a Fully Gated Recurrent Unit (FullyGated) initializer
 for the Echo State Network (ESN).
 
-Returns the standard gated recurrent unit [^Cho2014] as a driver for the 
+Returns the standard gated recurrent unit [^Cho2014] as a driver for the
 echo state network (`ESN`).
-
 
 [^Cho2014]: Cho, Kyunghyun, et al.
     "_Learning phrase representations using RNN encoder-decoder
@@ -280,7 +275,6 @@ This driver is based on the GRU architecture [^Cho2014].
     By default, it uses two dense layers.
   - `variant`: The GRU variant to use.
     By default, it uses the "FullyGated" variant.
-
 
 [^Cho2014]: Cho, Kyunghyun, et al.
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"

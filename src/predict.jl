@@ -9,8 +9,9 @@ struct OutputLayer{T, I, S, L} <: AbstractOutputLayer
     last_value::L
 end
 
-Base.show(io::IO, ol::OutputLayer) = 
+function Base.show(io::IO, ol::OutputLayer)
     print(io, "OutputLayer successfully trained with output size: ", ol.out_size)
+end
 
 #prediction types
 """
@@ -58,13 +59,12 @@ of input features (`prediction_data`).
 
 The `Predictive` prediction method uses the provided input data
 (`prediction_data`) to produce corresponding labels or outputs based
-on the learned relationships in the model. 
+on the learned relationships in the model.
 """
 function Predictive(prediction_data)
     prediction_len = size(prediction_data, 2)
     Predictive(prediction_data, prediction_len)
 end
-
 
 function obtain_prediction(rc::AbstractReservoirComputer,
         prediction::Generative,
