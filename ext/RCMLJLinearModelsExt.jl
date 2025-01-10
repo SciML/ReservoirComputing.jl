@@ -3,8 +3,7 @@ using ReservoirComputing
 using MLJLinearModels
 
 function ReservoirComputing.train(regressor::MLJLinearModels.GeneralizedLinearRegression,
-        states::AbstractArray{T},
-        target::AbstractArray{T};
+        states::AbstractArray{T}, target::AbstractArray{T};
         kwargs...) where {T <: Number}
     out_size = size(target, 1)
     output_layer = similar(target, size(target, 1), size(states, 1))

@@ -11,6 +11,8 @@ struct DeepESN{I, S, N, T, O, M, B, ST, W, IS} <: AbstractEchoStateNetwork
     states::IS
 end
 
+const AbstractDriver = Union{AbstractReservoirDriver, GRU}
+
 """
     DeepESN(train_data, in_size, res_size; kwargs...)
 
@@ -18,9 +20,7 @@ Constructs a Deep Echo State Network (ESN) model for
 processing sequential data through a layered architecture of reservoirs.
 This constructor allows for the creation of a deep learning model that
 benefits from the dynamic memory and temporal processing capabilities of ESNs,
-enhanced by the depth provided by multiple reservoir layers. It's particularly
-suited for complex sequential tasks where depth can help capture hierarchical
-temporal features.
+enhanced by the depth provided by multiple reservoir layers.
 
 # Parameters
 
@@ -62,19 +62,12 @@ train_data = rand(Float32, 3, 100)
 deepESN = DeepESN(train_data, 3, 100; depth=3, washout=100)
 ```
 """
-function DeepESN(train_data,
-        in_size::Int,
-        res_size::Int;
-        depth::Int=2,
-        input_layer=fill(scaled_rand, depth),
-        bias=fill(zeros32, depth),
-        reservoir=fill(rand_sparse, depth),
-        reservoir_driver=RNN(),
-        nla_type=NLADefault(),
-        states_type=StandardStates(),
-        washout::Int=0,
-        rng=Utils.default_rng(),
-        matrix_type=typeof(train_data))
+function DeepESN(train_data::AbstractArray, in_size::Int, res_size::Int; depth::Int=2,
+        input_layer=fill(scaled_rand, depth), bias=fill(zeros32, depth),
+        reservoir=fill(rand_sparse, depth), reservoir_driver::AbstractDriver=RNN(),
+        nla_type::NonLinearAlgorithm=NLADefault(),
+        states_type::AbstractStates=StandardStates(), washout::Int=0,
+        rng::AbstractRNG=Utils.default_rng(), matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(adapt(matrix_type, ones(1, size(train_data, 2))),
