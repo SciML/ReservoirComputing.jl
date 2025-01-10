@@ -61,16 +61,13 @@ The `Predictive` prediction method uses the provided input data
 (`prediction_data`) to produce corresponding labels or outputs based
 on the learned relationships in the model.
 """
-function Predictive(prediction_data)
+function Predictive(prediction_data::AbstractArray)
     prediction_len = size(prediction_data, 2)
     Predictive(prediction_data, prediction_len)
 end
 
-function obtain_prediction(rc::AbstractReservoirComputer,
-        prediction::Generative,
-        x,
-        output_layer,
-        args...;
+function obtain_prediction(rc::AbstractReservoirComputer, prediction::Generative,
+        x, output_layer::AbstractOutputLayer, args...;
         initial_conditions=output_layer.last_value)
     #x = last_state
     prediction_len = prediction.prediction_len
@@ -88,12 +85,8 @@ function obtain_prediction(rc::AbstractReservoirComputer,
     return output
 end
 
-function obtain_prediction(rc::AbstractReservoirComputer,
-        prediction::Predictive,
-        x,
-        output_layer,
-        args...;
-        kwargs...)
+function obtain_prediction(rc::AbstractReservoirComputer, prediction::Predictive,
+        x, output_layer::AbstractOutputLayer, args...; kwargs...)
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method
     out_size = output_layer.out_size
@@ -110,7 +103,7 @@ function obtain_prediction(rc::AbstractReservoirComputer,
 end
 
 #linear models
-function get_prediction(training_method, output_layer, x)
+function get_prediction(training_method, output_layer::AbstractOutputLayer, x)
     return output_layer.output_matrix * x
 end
 

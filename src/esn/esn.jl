@@ -12,6 +12,8 @@ struct ESN{I, S, N, T, O, M, B, ST, W, IS} <: AbstractEchoStateNetwork
     states::IS
 end
 
+const AbstractDriver = Union{AbstractReservoirDriver, GRU}
+
 """
     ESN(train_data; kwargs...) -> ESN
 
@@ -52,17 +54,12 @@ julia> esn = ESN(train_data, 10, 300; washout=10)
 ESN(10 => 300)
 ```
 """
-function ESN(train_data,
-        in_size::Int,
-        res_size::Int;
-        input_layer=scaled_rand,
-        reservoir=rand_sparse,
-        bias=zeros32,
-        reservoir_driver=RNN(),
-        nla_type=NLADefault(),
-        states_type=StandardStates(),
-        washout=0,
-        rng=Utils.default_rng(),
+function ESN(train_data::AbstractArray, in_size::Int, res_size::Int;
+        input_layer=scaled_rand, reservoir=rand_sparse, bias=zeros32,
+        reservoir_driver::AbstractDriver=RNN(),
+        nla_type::NonLinearAlgorithm=NLADefault(),
+        states_type::AbstractStates=StandardStates(),
+        washout::Int=0, rng::AbstractRNG=Utils.default_rng(),
         matrix_type=typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
@@ -85,11 +82,9 @@ function ESN(train_data,
 end
 
 function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
-        output_layer::AbstractOutputLayer;
-        last_state=esn.states[:, [end]],
+        output_layer::AbstractOutputLayer; last_state=esn.states[:, [end]],
         kwargs...)
     pred_len = prediction.prediction_len
-
     return obtain_esn_prediction(esn, prediction, last_state, output_layer;
         kwargs...)
 end
@@ -133,12 +128,9 @@ julia> output_layer = train(esn, rand(Float32, 3, 90))
 OutputLayer successfully trained with output size: 3
 ```
 """
-function train(esn::AbstractEchoStateNetwork,
-        target_data,
-        training_method=StandardRidge();
-        kwargs...)
+function train(esn::AbstractEchoStateNetwork, target_data::AbstractArray,
+        training_method=StandardRidge(); kwargs...)
     states_new = esn.states_type(esn.nla_type, esn.states, esn.train_data[:, 1:end])
-
     return train(training_method, states_new, target_data; kwargs...)
 end
 

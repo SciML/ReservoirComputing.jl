@@ -2,7 +2,8 @@ module RCLIBSVMExt
 using ReservoirComputing
 using LIBSVM
 
-function ReservoirComputing.train(svr::LIBSVM.AbstractSVR, states, target)
+function ReservoirComputing.train(svr::LIBSVM.AbstractSVR,
+        states::AbstractArray, target::AbstractArray)
     out_size = size(target, 1)
     output_matrix = []
 
@@ -17,8 +18,8 @@ function ReservoirComputing.train(svr::LIBSVM.AbstractSVR, states, target)
     return OutputLayer(svr, output_matrix, out_size, target[:, end])
 end
 
-function ReservoirComputing.get_prediction(
-        training_method::LIBSVM.AbstractSVR, output_layer, x)
+function ReservoirComputing.get_prediction(training_method::LIBSVM.AbstractSVR,
+        output_layer::AbstractArray, x::AbstractArray)
     out = zeros(output_layer.out_size)
 
     for i in 1:(output_layer.out_size)

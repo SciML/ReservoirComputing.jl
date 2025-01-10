@@ -22,14 +22,10 @@ specified reservoir driver.
     update.
 """
 function create_states(reservoir_driver::AbstractReservoirDriver,
-        train_data,
-        washout,
-        reservoir_matrix,
-        input_matrix,
-        bias_vector)
+        train_data::AbstractArray, washout::Int, reservoir_matrix::AbstractMatrix,
+        input_matrix::AbstractMatrix, bias_vector::AbstractArray)
     train_len = size(train_data, 2) - washout
     res_size = size(reservoir_matrix, 1)
-
     states = adapt(typeof(train_data), zeros(res_size, train_len))
     tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
     _state = adapt(typeof(train_data), zeros(res_size, 1))
@@ -51,14 +47,10 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
 end
 
 function create_states(reservoir_driver::AbstractReservoirDriver,
-        train_data,
-        washout,
-        reservoir_matrix::Vector,
-        input_matrix,
-        bias_vector)
+        train_data::AbstractArray, washout::Int, reservoir_matrix::Vector,
+        input_matrix::AbstractArray, bias_vector::AbstractArray)
     train_len = size(train_data, 2) - washout
     res_size = sum([size(reservoir_matrix[i], 1) for i in 1:length(reservoir_matrix)])
-
     states = adapt(typeof(train_data), zeros(res_size, train_len))
     tmp_array = allocate_tmp(reservoir_driver, typeof(train_data), res_size)
     _state = adapt(typeof(train_data), zeros(res_size))
