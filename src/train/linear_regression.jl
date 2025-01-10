@@ -76,11 +76,11 @@ function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractAr
 
     if size(states, 2) != size(target_data, 2)
         throw(DimensionMismatch("\n" *
-            "\n" *
-            "  - Number of columns in `states`: $(size(states, 2))\n" *
-            "  - Number of columns in `target_data`: $(size(target_data, 2))\n" *
-            "The dimensions of `states` and `target_data` must align for training." *
-            "\n"
+                                "\n" *
+                                "  - Number of columns in `states`: $(size(states, 2))\n" *
+                                "  - Number of columns in `target_data`: $(size(target_data, 2))\n" *
+                                "The dimensions of `states` and `target_data` must align for training." *
+                                "\n"
         ))
     end
 
