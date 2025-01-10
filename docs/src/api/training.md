@@ -2,6 +2,10 @@
 
 ## Linear Models
 
+```@docs
+    StandardRidge
+```
+
 ## Gaussian Regression
 
 Currently, v0.10, is unavailable.
