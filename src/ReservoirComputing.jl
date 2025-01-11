@@ -2,6 +2,7 @@ module ReservoirComputing
 
 using Adapt: adapt
 using CellularAutomata: CellularAutomaton
+using Compat: @compat
 using LinearAlgebra: eigvals, mul!, I
 using NNlib: fast_act, sigmoid
 using Random: Random, AbstractRNG
@@ -11,6 +12,8 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 
 abstract type AbstractReservoirComputer end
+
+@compat(public, (create_states))
 
 #general
 include("states.jl")
@@ -30,12 +33,6 @@ include("esn/esn_predict.jl")
 #reca
 include("reca/reca.jl")
 include("reca/reca_input_encodings.jl")
-
-# Julia < 1.9 support 
-if !isdefined(Base, :get_extension)
-    include("../ext/RCMLJLinearModelsExt.jl")
-    include("../ext/RCLIBSVMExt.jl")
-end
 
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
