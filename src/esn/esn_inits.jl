@@ -315,7 +315,8 @@ julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
 ```
 """
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        radius=T(1.0), sparsity=T(0.1), std=T(1.0)) where {T <: Number}
+        radius=T(1.0), sparsity=T(0.1), std=T(1.0),
+        return_sparse::Bool=false) where {T <: Number}
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
@@ -323,7 +324,8 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
         error("Sparsity too low for size of the matrix. Increase res_size or increase sparsity")
     end
-    return reservoir_matrix
+
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 """
@@ -366,7 +368,7 @@ julia> res_matrix = delay_line(5, 5; weight=1)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1)) where {T <: Number}
+        weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions
     must define a square matrix (e.g., (100, 100))"
@@ -375,7 +377,7 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         reservoir_matrix[i + 1, i] = weight
     end
 
-    return reservoir_matrix
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 """
@@ -421,7 +423,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), fb_weight=T(0.2)) where {T <: Number}
+        weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=false) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -430,7 +432,7 @@ function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         reservoir_matrix[i, i + 1] = fb_weight
     end
 
-    return reservoir_matrix
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 """
@@ -479,7 +481,7 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Number=T(0.1), jump_weight::Number=T(0.1),
-        jump_size::Int=3) where {T <: Number}
+        jump_size::Int=3, return_sparse::Bool=false) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -498,7 +500,7 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         reservoir_matrix[tmp, i] = jump_weight
     end
 
-    return reservoir_matrix
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 """
@@ -540,7 +542,7 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1)) where {T <: Number}
+        weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(dims[1] - 1)
@@ -548,7 +550,7 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
 
     reservoir_matrix[1, dims[1]] = weight
-    return reservoir_matrix
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 """
@@ -590,7 +592,7 @@ julia> res_matrix = pseudo_svd(5, 5)
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
-        reverse_sort::Bool=false) where {T <: Number}
+        reverse_sort::Bool=false, return_sparse::Bool=false) where {T <: Number}
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
         sorted=sorted,
@@ -605,7 +607,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
     end
 
-    return reservoir_matrix
+    return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
 end
 
 #hacky workaround for the moment
