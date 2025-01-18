@@ -1,6 +1,4 @@
-using ReservoirComputing
-using LinearAlgebra
-using Random
+using ReservoirComputing, LinearAlgebra, Random, SparseArrays
 
 const res_size = 30
 const in_size = 3
@@ -11,6 +9,9 @@ const jump_size = 3
 const rng = Random.default_rng()
 
 function check_radius(matrix, target_radius; tolerance=1e-5)
+    if matrix isa SparseArrays.SparseMatrixCSC
+        matrix = Matrix(matrix)
+    end
     eigenvalues = eigvals(matrix)
     spectral_radius = maximum(abs.(eigenvalues))
     return isapprox(spectral_radius, target_radius; atol=tolerance)

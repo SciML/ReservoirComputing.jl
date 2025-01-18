@@ -1,6 +1,6 @@
 ### input layers
 """
-    scaled_rand([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+    scaled_rand([rng], [T], dims...;
         scaling=0.1)
 
 Create and return a matrix with random values, uniformly distributed within
@@ -41,8 +41,8 @@ function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    weighted_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
-        scaling=0.1)
+    weighted_init([rng], [T], dims...;
+        scaling=0.1, return_sparse=true)
 
 Create and return a matrix representing a weighted input layer.
 This initializer generates a weighted input matrix with random non-zero
@@ -57,6 +57,8 @@ elements distributed uniformly within the range [-`scaling`, `scaling`] [^Lu2017
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
   - `scaling`: The scaling factor for the weight distribution.
     Defaults to `0.1`.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -77,7 +79,7 @@ julia> res_input = weighted_init(8, 3)
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling=T(0.1)) where {T <: Number}
+        scaling=T(0.1), return_sparse::Bool=true) where {T <: Number}
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
@@ -88,11 +90,11 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
                                                         T(0.5)) .* (T(2) * scaling)
     end
 
-    return layer_matrix
+    return return_sparse ? sparse(layer_matrix) : layer_matrix
 end
 
 """
-    informed_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+    informed_init([rng], [T], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
 Create an input layer for informed echo state networks [^Pathak2018].
@@ -152,7 +154,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    minimal_init([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
+    minimal_init([rng], [T], dims...;
         sampling_type=:bernoulli, weight=0.1, irrational=pi, start=1, p=0.5)
 
 Create a layer matrix with uniform weights determined by `weight`. The sign difference
@@ -283,8 +285,8 @@ end
 ### reservoirs
 
 """
-    rand_sparse([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
-        radius=1.0, sparsity=0.1, std=1.0)
+    rand_sparse([rng], [T], dims...;
+        radius=1.0, sparsity=0.1, std=1.0, return_sparse=true)
 
 Create and return a random sparse reservoir matrix.
 The matrix will be of size specified by `dims`, with specified `sparsity`
@@ -301,6 +303,8 @@ and scaled spectral radius according to `radius`.
     Defaults to 1.0.
   - `sparsity`: The sparsity level of the reservoir matrix,
     controlling the fraction of zero elements. Defaults to 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -316,7 +320,7 @@ julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
 """
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius=T(1.0), sparsity=T(0.1), std=T(1.0),
-        return_sparse::Bool=false) where {T <: Number}
+        return_sparse::Bool=true) where {T <: Number}
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
@@ -329,8 +333,8 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    delay_line([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
-        weight=0.1)
+    delay_line([rng], [T], dims...;
+        weight=0.1, return_sparse=true)
 
 Create and return a delay line reservoir matrix [^Rodan2010].
 
@@ -343,6 +347,8 @@ Create and return a delay line reservoir matrix [^Rodan2010].
   - `dims`: Dimensions of the reservoir matrix.
   - `weight`: Determines the value of all connections in the reservoir.
     Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -368,7 +374,7 @@ julia> res_matrix = delay_line(5, 5; weight=1)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
+        weight=T(0.1), return_sparse::Bool=true) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions
     must define a square matrix (e.g., (100, 100))"
@@ -381,8 +387,8 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    delay_line_backward([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...;
-        weight = 0.1, fb_weight = 0.2)
+    delay_line_backward([rng], [T], dims...;
+        weight = 0.1, fb_weight = 0.2, return_sparse=true)
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
 Creates a matrix with backward connections as described in [^Rodan2010].
@@ -398,6 +404,8 @@ Creates a matrix with backward connections as described in [^Rodan2010].
     forward connections in the reservoir. Default is 0.1
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir. Default is 0.2
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -423,7 +431,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=false) where {T <: Number}
+        weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=true) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -436,8 +444,8 @@ function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    cycle_jumps([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
-        cycle_weight = 0.1, jump_weight = 0.1, jump_size = 3)
+    cycle_jumps([rng], [T], dims...; 
+        cycle_weight = 0.1, jump_weight = 0.1, jump_size = 3, return_sparse=true)
 
 Create a cycle jumps reservoir with the specified dimensions,
 cycle weight, jump weight, and jump size.
@@ -455,6 +463,8 @@ cycle weight, jump weight, and jump size.
     Default is 0.1.
   - `jump_size`:  The number of steps between jump connections.
     Default is 3.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -481,7 +491,7 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Number=T(0.1), jump_weight::Number=T(0.1),
-        jump_size::Int=3, return_sparse::Bool=false) where {T <: Number}
+        jump_size::Int=3, return_sparse::Bool=true) where {T <: Number}
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -504,8 +514,8 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    simple_cycle([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
-        weight = 0.1)
+    simple_cycle([rng], [T], dims...; 
+        weight = 0.1, return_sparse=true)
 
 Create a simple cycle reservoir with the specified dimensions and weight.
 
@@ -517,6 +527,8 @@ Create a simple cycle reservoir with the specified dimensions and weight.
   - `dims`: Dimensions of the reservoir matrix.
   - `weight`: Weight of the connections in the reservoir matrix.
     Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -542,7 +554,7 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
+        weight=T(0.1), return_sparse::Bool=true) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(dims[1] - 1)
@@ -554,8 +566,9 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    pseudo_svd([rng::AbstractRNG=Utils.default_rng()], [T=Float32], dims...; 
-        max_value=1.0, sparsity=0.1, sorted = true, reverse_sort = false)
+    pseudo_svd([rng], [T], dims...; 
+        max_value=1.0, sparsity=0.1, sorted = true, reverse_sort = false,
+        return_sparse=true)
 
 Returns an initializer to build a sparse reservoir matrix with the given
 `sparsity` by using a pseudo-SVD approach as described in [^yang].
@@ -575,6 +588,8 @@ Returns an initializer to build a sparse reservoir matrix with the given
     creating the diagonal matrix. Default is `true`.
   - `reverse_sort`: A boolean indicating whether to reverse the sorted
     singular values. Default is `false`.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `true`.
 
 # Examples
 
@@ -592,7 +607,7 @@ julia> res_matrix = pseudo_svd(5, 5)
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
-        reverse_sort::Bool=false, return_sparse::Bool=false) where {T <: Number}
+        reverse_sort::Bool=false, return_sparse::Bool=true) where {T <: Number}
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
         sorted=sorted,
