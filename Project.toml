@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 authors = ["Francesco Martinuzzi"]
-version = "0.10.7"
+version = "0.10.8"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -11,6 +11,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 WeightInitializers = "d49dbf32-c5c2-4618-8acc-27bb2598ef2d"
 
@@ -35,6 +36,7 @@ NNlib = "0.9.26"
 Random = "1.10"
 Reexport = "1.2.2"
 SafeTestsets = "0.1"
+SparseArrays = "1.10"
 Statistics = "1.10"
 StatsBase = "0.34.4"
 Test = "1"
@@ -46,10 +48,10 @@ Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test", "SafeTestsets", "Random", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "Statistics"]
+test = ["Aqua", "Test", "SafeTestsets", "DifferentialEquations",
+    "MLJLinearModels", "LIBSVM", "Statistics"]
