@@ -7,6 +7,7 @@
     weighted_init
     informed_init
     minimal_init
+    chebyshev_mapping
 ```
 
 ## Reservoirs
@@ -18,4 +19,5 @@
     cycle_jumps
     simple_cycle
     pseudo_svd
+    chaotic_init
 ```

@@ -1,7 +1,7 @@
 using ReservoirComputing, LinearAlgebra, Random, SparseArrays
 
-const res_size = 30
-const in_size = 3
+const res_size = 16
+const in_size = 4
 const radius = 1.0
 const sparsity = 0.1
 const weight = 0.2
@@ -24,13 +24,15 @@ reservoir_inits = [
     delay_line_backward,
     cycle_jumps,
     simple_cycle,
-    pseudo_svd
+    pseudo_svd,
+    chaotic_init
 ]
 input_inits = [
     scaled_rand,
     weighted_init,
     minimal_init,
-    minimal_init(; sampling_type=:irrational)
+    minimal_init(; sampling_type=:irrational),
+    chebyshev_mapping
 ]
 
 @testset "Reservoir Initializers" begin
