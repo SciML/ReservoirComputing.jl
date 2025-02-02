@@ -40,7 +40,7 @@ export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge
 export scaled_rand, weighted_init, informed_init, minimal_init, chebyshev_mapping
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
-    simple_cycle, pseudo_svd, chaotic_init
+       simple_cycle, pseudo_svd, chaotic_init
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
