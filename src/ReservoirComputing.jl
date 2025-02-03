@@ -38,7 +38,8 @@ include("reca/reca_input_encodings.jl")
 export NLADefault, NLAT1, NLAT2, NLAT3
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge
-export scaled_rand, weighted_init, informed_init, minimal_init, chebyshev_mapping
+export scaled_rand, weighted_init, informed_init, minimal_init, chebyshev_mapping,
+       logistic_mapping, modified_lm
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
        simple_cycle, pseudo_svd, chaotic_init
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
