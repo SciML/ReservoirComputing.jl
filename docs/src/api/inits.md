@@ -8,6 +8,8 @@
     informed_init
     minimal_init
     chebyshev_mapping
+    logistic_mapping
+    modified_lm
 ```
 
 ## Reservoirs

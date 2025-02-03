@@ -421,9 +421,9 @@ julia> logistic_mapping(8, 3)
     Neurocomputing 489 (2022): 196-210.
 """
 function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
-        logistic_parameter::AbstractFloat = 3.7,
-        return_sparse::Bool = false) where {T <: Number}
+        amplitude::AbstractFloat=0.3, sine_divisor::AbstractFloat=5.9,
+        logistic_parameter::AbstractFloat=3.7,
+        return_sparse::Bool=false) where {T <: Number}
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     num_rows, num_columns = dims[1], dims[2]
     for col in 1:num_columns
@@ -432,13 +432,13 @@ function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for row in 2:num_rows
         for col in 1:num_columns
             previous_value = input_matrix[row - 1, col]
-            input_matrix[row, col] = logistic_parameter * previous_value * (1 - previous_value)
+            input_matrix[row, col] = logistic_parameter * previous_value *
+                                     (1 - previous_value)
         end
     end
-  
+
     return return_sparse ? sparse(input_matrix) : input_matrix
 end
-
 
 @doc raw"""
     modified_lm([rng], [T], dims...;
@@ -519,10 +519,9 @@ julia> modified_lm(12, 4; factor=3)
     arXiv preprint arXiv:2501.15615 (2025).
 """
 function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        factor::Integer, amplitude::AbstractFloat = 0.3,
-        sine_divisor::AbstractFloat = 5.9, logistic_parameter::AbstractFloat = 2.35,
-        return_sparse::Bool = true) where {T <: Number}
-    
+        factor::Integer, amplitude::AbstractFloat=0.3,
+        sine_divisor::AbstractFloat=5.9, logistic_parameter::AbstractFloat=2.35,
+        return_sparse::Bool=true) where {T <: Number}
     num_columns = dims[2]
     expected_num_rows = factor * num_columns
     if dims[1] != expected_num_rows
@@ -534,11 +533,13 @@ function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     output_matrix = DeviceAgnostic.zeros(rng, T, expected_num_rows, num_columns)
     for col in 1:num_columns
         base_row = (col - 1) * factor + 1
-        output_matrix[base_row, col] = amplitude * sin(((col - 1) * pi) / (factor * num_columns * sine_divisor))
+        output_matrix[base_row, col] = amplitude * sin(((col - 1) * pi) /
+                                           (factor * num_columns * sine_divisor))
         for j in 1:(factor - 1)
             current_row = base_row + j
             previous_value = output_matrix[current_row - 1, col]
-            output_matrix[current_row, col] = logistic_parameter * previous_value * (1 - previous_value)
+            output_matrix[current_row, col] = logistic_parameter * previous_value *
+                                              (1 - previous_value)
         end
     end
 
@@ -1028,7 +1029,7 @@ end
 function digital_chaotic_adjacency(rng::AbstractRNG, bit_precision::Integer;
         extra_edge_probability::AbstractFloat=0.1)
     matrix_order = 2^(2 * bit_precision)
-    adjacency_matrix = DeviceAgnostic.zeros(Int, matrix_order, matrix_order)
+    adjacency_matrix = DeviceAgnostic.zeros(rng, Int, matrix_order, matrix_order)
     for row_index in 1:(matrix_order - 1)
         adjacency_matrix[row_index, row_index + 1] = 1
     end

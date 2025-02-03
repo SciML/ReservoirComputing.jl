@@ -32,7 +32,9 @@ input_inits = [
     weighted_init,
     minimal_init,
     minimal_init(; sampling_type=:irrational),
-    chebyshev_mapping
+    chebyshev_mapping,
+    logistic_mapping,
+    modified_lm(; factor=4)
 ]
 
 @testset "Reservoir Initializers" begin
