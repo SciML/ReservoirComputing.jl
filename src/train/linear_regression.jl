@@ -30,21 +30,11 @@ function StandardRidge()
 end
 
 function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractArray)
-    #A = states * states' + sr.reg * I
-    #b = states * target_data
-    #output_layer = (A \ b)'
-
-    if size(states, 2) != size(target_data, 2)
-        throw(DimensionMismatch("\n" *
-                                "\n" *
-                                "  - Number of columns in `states`: $(size(states, 2))\n" *
-                                "  - Number of columns in `target_data`: $(size(target_data, 2))\n" *
-                                "The dimensions of `states` and `target_data` must align for training." *
-                                "\n"
-        ))
-    end
-
-    output_layer = Matrix(((states * states' + sr.reg * I) \
-                           (states * target_data'))')
+    n_states = size(states, 1)
+    A = [states'; sqrt(sr.reg) * I(n_states)]
+    b = [target_data'; zeros(n_states, size(target_data, 1))]
+    F = qr(A)
+    Wt = F \ b
+    output_layer = Matrix(Wt')
     return OutputLayer(sr, output_layer, size(target_data, 1), target_data[:, end])
 end
