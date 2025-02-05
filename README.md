@@ -17,11 +17,21 @@
 
 # ReservoirComputing.jl
 
-ReservoirComputing.jl provides an efficient, modular and easy to use implementation of Reservoir Computing models such as Echo State Networks (ESNs). For information on using this package please refer to the [stable documentation](https://docs.sciml.ai/ReservoirComputing/stable/). Use the [in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/) to take a look at at not yet released features.
+ReservoirComputing.jl provides an efficient, modular and easy to use
+implementation of Reservoir Computing models such as Echo State Networks (ESNs).
+For information on using this package please refer to the
+[stable documentation](https://docs.sciml.ai/ReservoirComputing/stable/).
+Use the
+[in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/)
+to take a look at not yet released features.
 
 ## Quick Example
 
-To illustrate the workflow of this library we will showcase how it is possible to train an ESN to learn the dynamics of the Lorenz system. As a first step we will need to gather the data. For the `Generative` prediction we need the target data to be one step ahead of the training data:
+To illustrate the workflow of this library we will showcase
+how it is possible to train an ESN to learn the dynamics of the
+Lorenz system. As a first step we gather the data.
+For the `Generative` prediction we need the target data
+to be one step ahead of the training data:
 
 ```julia
 using ReservoirComputing, OrdinaryDiffEq
@@ -52,7 +62,9 @@ target_data = data[:, (shift + 1):(shift + train_len)]
 test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 ```
 
-Now that we have the data we can initialize the ESN with the chosen parameters. Given that this is a quick example we are going to change the least amount of possible parameters. For more detailed examples and explanations of the functions please refer to the documentation.
+Now that we have the data we can initialize the ESN with the chosen parameters.
+Given that this is a quick example we are going to change the least amount of
+possible parameters:
 
 ```julia
 input_size = 3
@@ -63,14 +75,17 @@ esn = ESN(input_data, input_size, res_size;
     nla_type=NLAT2())
 ```
 
-The echo state network can now be trained and tested. If not specified, the training will always be ordinary least squares regression. The full range of training methods is detailed in the documentation.
+The echo state network can now be trained and tested.
+If not specified, the training will always be ordinary least squares regression:
 
 ```julia
 output_layer = train(esn, target_data)
 output = esn(Generative(predict_len), output_layer)
 ```
 
-The data is returned as a matrix, `output` in the code above, that contains the predicted trajectories. The results can now be easily plotted (for the actual script used to obtain this plot please refer to the documentation):
+The data is returned as a matrix, `output` in the code above,
+that contains the predicted trajectories.
+The results can now be easily plotted:
 
 ```julia
 using Plots
@@ -80,7 +95,8 @@ plot!(transpose(test); layout=(3, 1), label="actual")
 
 ![lorenz_basic](https://user-images.githubusercontent.com/10376688/166227371-8bffa318-5c49-401f-9c64-9c71980cb3f7.png)
 
-One can also visualize the phase space of the attractor and the comparison with the actual one:
+One can also visualize the phase space of the attractor and the
+comparison with the actual one:
 
 ```julia
 plot(transpose(output)[:, 1],
@@ -111,4 +127,8 @@ If you use this library in your work, please cite:
 
 ## Acknowledgements
 
-This project was possible thanks to initial funding through the [Google summer of code](https://summerofcode.withgoogle.com/) 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/) and [RSC4Earth](https://rsc4earth.de/) for supporting the current progress on the library.
+This project was possible thanks to initial funding through
+the [Google summer of code](https://summerofcode.withgoogle.com/)
+2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/)
+and [RSC4Earth](https://rsc4earth.de/) for supporting the current progress
+on the library.
