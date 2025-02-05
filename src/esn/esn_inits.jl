@@ -251,7 +251,10 @@ function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
             rng,
             T)
     else
-        error("Sampling type not allowed. Please use one of :bernoulli or :irrational")
+        error("""\n
+            Sampling type not allowed. 
+            Please use one of :bernoulli or :irrational\n
+        """)
     end
     return layer_matrix
 end
@@ -580,6 +583,7 @@ and scaled spectral radius according to `radius`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
+
 # Keyword arguments
 
   - `radius`: The desired spectral radius of the reservoir.
@@ -609,7 +613,10 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
-        error("Sparsity too low for size of the matrix. Increase res_size or increase sparsity")
+        error("""\n
+            Sparsity too low for size of the matrix.
+            Increase res_size or increase sparsity.\n
+          """)
     end
 
     return return_sparse ? sparse(reservoir_matrix) : reservoir_matrix
@@ -662,8 +669,10 @@ julia> res_matrix = delay_line(5, 5; weight=1)
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), return_sparse::Bool=true) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    @assert length(dims) == 2&&dims[1] == dims[2] "The dimensions
-    must define a square matrix (e.g., (100, 100))"
+    @assert length(dims) == 2&&dims[1] == dims[2] """\n
+        The dimensions must define a square matrix
+        (e.g., (100, 100))
+      """
 
     for i in 1:(dims[1] - 1)
         reservoir_matrix[i + 1, i] = weight
@@ -687,7 +696,7 @@ Creates a matrix with backward connections as described in [^Rodan2010].
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-  # Keyword arguments
+# Keyword arguments
 
   - `weight`: The weight determines the absolute value of
     forward connections in the reservoir. Default is 0.1
@@ -818,7 +827,7 @@ Create a simple cycle reservoir with the specified dimensions and weight.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-  # Keyword arguments
+# Keyword arguments
 
   - `weight`: Weight of the connections in the reservoir matrix.
     Default is 0.1.
@@ -876,7 +885,7 @@ Returns an initializer to build a sparse reservoir matrix with the given
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-  # Keyword arguments
+# Keyword arguments
 
   - `max_value`: The maximum absolute value of elements in the matrix.
     Default is 1.0
