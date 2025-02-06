@@ -25,7 +25,7 @@ function obtain_esn_prediction(esn,
         states[:, i] = x
     end
 
-    save_states ? (output, states) : output
+    return save_states ? (output, states) : output
 end
 
 function obtain_esn_prediction(esn,
@@ -55,7 +55,7 @@ function obtain_esn_prediction(esn,
         states[:, i] = x
     end
 
-    save_states ? (output, states) : output
+    return save_states ? (output, states) : output
 end
 
 #prediction dispatch on esn 
@@ -98,11 +98,11 @@ function allocate_outpad(hesn::HybridESN, states_type, out)
 end
 
 function allocate_singlepadding(::AbstractPaddedStates, out)
-    adapt(typeof(out), zeros(size(out, 1) + 1))
+    return adapt(typeof(out), zeros(size(out, 1) + 1))
 end
 function allocate_singlepadding(::StandardStates, out)
-    adapt(typeof(out), zeros(size(out, 1)))
+    return adapt(typeof(out), zeros(size(out, 1)))
 end
 function allocate_singlepadding(::ExtendedStates, out)
-    adapt(typeof(out), zeros(size(out, 1)))
+    return adapt(typeof(out), zeros(size(out, 1)))
 end

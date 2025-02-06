@@ -84,7 +84,7 @@ function DeepESN(train_data::AbstractArray, in_size::Int, res_size::Int; depth::
         input_matrix, bias_vector)
     train_data = train_data[:, (washout + 1):end]
 
-    DeepESN(res_size, train_data, nla_type, input_matrix,
+    return DeepESN(res_size, train_data, nla_type, input_matrix,
         inner_res_driver, reservoir_matrix, bias_vector, states_type, washout,
         states)
 end

@@ -101,11 +101,11 @@ echo state networks (`ESN`).
     Defaults to 1.0.
 """
 function RNN(; activation_function=fast_act(tanh), leaky_coefficient=1.0)
-    RNN(activation_function, leaky_coefficient)
+    return RNN(activation_function, leaky_coefficient)
 end
 
 function reservoir_driver_params(rnn::RNN, args...)
-    rnn
+    return rnn
 end
 
 function next_state!(out, rnn::RNN, x, y, W, W_in, b, tmp_array)
@@ -113,7 +113,7 @@ function next_state!(out, rnn::RNN, x, y, W, W_in, b, tmp_array)
     mul!(tmp_array[2], W_in, y)
     @. tmp_array[1] = rnn.activation_function(tmp_array[1] + tmp_array[2] + b) *
                       rnn.leaky_coefficient
-    @. out = (1 - rnn.leaky_coefficient) * x + tmp_array[1]
+    return @. out = (1 - rnn.leaky_coefficient) * x + tmp_array[1]
 end
 
 function next_state!(out, rnn::RNN, x, y, W::Vector, W_in, b, tmp_array)
@@ -353,7 +353,7 @@ function obtain_gru_state!(out, variant::FullyGated, gru, x, y, W, W_in, b, tmp_
     mul!(tmp_array[7], W_in, y)
     mul!(tmp_array[8], W, tmp_array[6] .* x)
     @. tmp_array[9] = gru.activation_function[3](tmp_array[7] + tmp_array[8] + b)
-    @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[9]
+    return @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[9]
 end
 
 #minimal
@@ -366,5 +366,5 @@ function obtain_gru_state!(out, variant::Minimal, gru, x, y, W, W_in, b, tmp_arr
     mul!(tmp_array[5], W, tmp_array[3] .* x)
     @. tmp_array[6] = gru.activation_function[2](tmp_array[4] + tmp_array[5] + b)
 
-    @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
+    return @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
 end
