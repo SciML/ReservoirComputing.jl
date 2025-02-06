@@ -237,30 +237,15 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
 ```
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        sampling_type::Symbol=:bernoulli, weight::Number=T(0.1), irrational::Real=pi,
-        start::Int=1, p::Number=T(0.5)) where {T <: Number}
+        sampling_type::Symbol=:bernoulli, kwargs...) where {T <: Number}
     res_size, in_size = dims
-    if sampling_type == :bernoulli
-        layer_matrix = _create_bernoulli(p, res_size, in_size, weight, rng, T)
-    elseif sampling_type == :irrational
-        layer_matrix = _create_irrational(irrational,
-            start,
-            res_size,
-            in_size,
-            weight,
-            rng,
-            T)
-    else
-        error("""\n
-            Sampling type not allowed. 
-            Please use one of :bernoulli or :irrational\n
-        """)
-    end
+    f_sample = getfield(@__MODULE__, sampling_type)
+    layer_matrix = f_sample(rng, T, res_size, in_size; kwargs...)
     return layer_matrix
 end
 
-function _create_bernoulli(p::Number, res_size::Int, in_size::Int, weight::Number,
-        rng::AbstractRNG, ::Type{T}) where {T <: Number}
+function bernoulli(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
+        weight::Number=T(0.1), p::Number=T(0.5)) where {T <: Number}
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     for i in 1:res_size
         for j in 1:in_size
@@ -274,9 +259,9 @@ function _create_bernoulli(p::Number, res_size::Int, in_size::Int, weight::Numbe
     return input_matrix
 end
 
-function _create_irrational(irrational::Irrational, start::Int, res_size::Int,
-        in_size::Int, weight::Number, rng::AbstractRNG,
-        ::Type{T}) where {T <: Number}
+function irrational(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
+        irrational::Irrational=pi, start::Int=1,
+        weight::Number=T(0.1)) where {T <: Number}
     setprecision(BigFloat, Int(ceil(log2(10) * (res_size * in_size + start + 1))))
     ir_string = string(BigFloat(irrational)) |> collect
     deleteat!(ir_string, findall(x -> x == '.', ir_string))

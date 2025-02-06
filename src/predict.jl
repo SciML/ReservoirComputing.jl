@@ -63,7 +63,7 @@ on the learned relationships in the model.
 """
 function Predictive(prediction_data::AbstractArray)
     prediction_len = size(prediction_data, 2)
-    Predictive(prediction_data, prediction_len)
+    return Predictive(prediction_data, prediction_len)
 end
 
 function obtain_prediction(rc::AbstractReservoirComputer, prediction::Generative,

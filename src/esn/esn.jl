@@ -76,7 +76,7 @@ function ESN(train_data::AbstractArray, in_size::Int, res_size::Int;
         input_matrix, bias_vector)
     train_data = train_data[:, (washout + 1):end]
 
-    ESN(res_size, train_data, nla_type, input_matrix,
+    return ESN(res_size, train_data, nla_type, input_matrix,
         inner_res_driver, reservoir_matrix, bias_vector, states_type, washout,
         states)
 end
@@ -84,7 +84,6 @@ end
 function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
         output_layer::AbstractOutputLayer; last_state=esn.states[:, [end]],
         kwargs...)
-    pred_len = prediction.prediction_len
     return obtain_esn_prediction(esn, prediction, last_state, output_layer;
         kwargs...)
 end

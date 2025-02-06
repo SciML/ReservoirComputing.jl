@@ -119,7 +119,7 @@ function HybridESN(model::KnowledgeModel, train_data::AbstractArray,
         input_matrix, bias_vector)
     train_data = train_data[:, (washout + 1):end]
 
-    HybridESN(res_size, train_data, model, nla_type, input_matrix,
+    return HybridESN(res_size, train_data, model, nla_type, input_matrix,
         inner_res_driver, reservoir_matrix, bias_vector, states_type, washout,
         states)
 end
