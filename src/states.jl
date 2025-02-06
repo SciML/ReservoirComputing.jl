@@ -3,13 +3,13 @@ abstract type AbstractPaddedStates <: AbstractStates end
 abstract type NonLinearAlgorithm end
 
 function pad_state!(states_type::AbstractPaddedStates, x_pad, x)
-    x_pad = vcat(fill(states_type.padding, (1, size(x, 2))), x)
+    x_pad[1, :] .= states_type.padding
+    x_pad[2:end, :] .= x
     return x_pad
 end
 
 function pad_state!(states_type, x_pad, x)
-    x_pad = x
-    return x_pad
+    return x
 end
 
 #states types
