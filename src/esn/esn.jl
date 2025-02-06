@@ -84,7 +84,6 @@ end
 function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
         output_layer::AbstractOutputLayer; last_state=esn.states[:, [end]],
         kwargs...)
-    pred_len = prediction.prediction_len
     return obtain_esn_prediction(esn, prediction, last_state, output_layer;
         kwargs...)
 end
