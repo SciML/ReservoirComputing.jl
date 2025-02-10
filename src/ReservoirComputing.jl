@@ -3,11 +3,10 @@ module ReservoirComputing
 using Adapt: adapt
 using CellularAutomata: CellularAutomaton
 using Compat: @compat
-using LinearAlgebra: eigvals, mul!, I, qr
+using LinearAlgebra: eigvals, mul!, I, qr, Diagonal
 using NNlib: fast_act, sigmoid
 using Random: Random, AbstractRNG
 using Reexport: Reexport, @reexport
-using SparseArrays: sparse
 using StatsBase: sample
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
