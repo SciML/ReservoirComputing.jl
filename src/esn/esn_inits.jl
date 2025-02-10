@@ -892,6 +892,9 @@ Returns an initializer to build a sparse reservoir matrix with the given
     singular values. Default is `false`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `return_diag`: flag for returning a `Diagonal` matrix. If both `return_diag`
+    and `return_sparse` are set to `true` priority is given to `return_diag`.
+    Default is `false`.
 
 # Examples
 
@@ -911,7 +914,8 @@ julia> res_matrix = pseudo_svd(5, 5)
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
-        reverse_sort::Bool=false, return_sparse::Bool=false) where {T <: Number}
+        reverse_sort::Bool=false, return_sparse::Bool=false,
+        return_diag::Bool=false) where {T <: Number}
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
         sorted=sorted,
@@ -926,7 +930,11 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
     end
 
-    return return_init_as(Val(return_sparse), reservoir_matrix)
+    if return_diag
+        return Diagonal(reservoir_matrix)
+    else
+        return return_init_as(Val(return_sparse), reservoir_matrix)
+    end
 end
 
 #hacky workaround for the moment
