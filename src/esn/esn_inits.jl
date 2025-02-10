@@ -908,7 +908,7 @@ julia> res_matrix = pseudo_svd(5, 5)
  0.0       0.0       0.0       0.0       1.0
 ```
 
-[^yang]: Yang, Cuili, et al. 
+[^yang]: Yang, Cuili, et al.
     "_Design of polynomial echo state networks for time series prediction._"
     Neurocomputing 290 (2018): 148-160.
 """
