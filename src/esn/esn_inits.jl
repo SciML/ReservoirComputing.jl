@@ -3,6 +3,19 @@ function return_init_as(::Val{false}, layer_matrix::AbstractVecOrMat)
     return layer_matrix
 end
 
+# error for sparse inits with no SparseArrays.jl call
+
+function throw_sparse_error(return_sparse)
+    if return_sparse && !haskey(Base.loaded_modules, :SparseArrays)
+      error("""\n
+          Sparse output requested but SparseArrays.jl is not loaded.
+          Please load it with:
+
+              using SparseArrays\n
+          """)
+    end
+end
+
 ### input layers
 """
     scaled_rand([rng], [T], dims...;
@@ -91,6 +104,7 @@ julia> res_input = weighted_init(8, 3)
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1), return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
@@ -354,6 +368,7 @@ function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat=one(T), sine_divisor::AbstractFloat=one(T),
         chebyshev_parameter::AbstractFloat=one(T),
         return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     n_rows, n_cols = dims[1], dims[2]
 
@@ -433,6 +448,7 @@ function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat=0.3, sine_divisor::AbstractFloat=5.9,
         logistic_parameter::AbstractFloat=3.7,
         return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     num_rows, num_columns = dims[1], dims[2]
     for col in 1:num_columns
@@ -533,6 +549,7 @@ function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         factor::Integer, amplitude::AbstractFloat=0.3,
         sine_divisor::AbstractFloat=5.9, logistic_parameter::AbstractFloat=2.35,
         return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     num_columns = dims[2]
     expected_num_rows = factor * num_columns
     if dims[1] != expected_num_rows
@@ -599,6 +616,7 @@ julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius=T(1.0), sparsity=T(0.1), std=T(1.0),
         return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
@@ -660,6 +678,7 @@ julia> res_matrix = delay_line(5, 5; weight=1)
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] """\n
         The dimensions must define a square matrix
@@ -723,6 +742,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -787,6 +807,7 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Number=T(0.1), jump_weight::Number=T(0.1),
         jump_size::Int=3, return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
@@ -854,6 +875,7 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for i in 1:(dims[1] - 1)
@@ -916,6 +938,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
         reverse_sort::Bool=false, return_sparse::Bool=false,
         return_diag::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
         sorted=sorted,
@@ -1039,6 +1062,7 @@ julia> res_matrix = chaotic_init(8, 8)
 function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         extra_edge_probability::AbstractFloat=T(0.1), spectral_radius::AbstractFloat=one(T),
         return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
     requested_order = first(dims)
     if length(dims) > 1 && dims[2] != requested_order
         @warn """\n
