@@ -102,5 +102,6 @@ function init_maps(input_size, permutations, mapped_vector_size)
 end
 
 function mapping(input_size, mapped_vector_size)
-    return sample(1:mapped_vector_size, input_size; replace=false)
+    #sample(1:mapped_vector_size, input_size; replace=false)
+    return randperm(mapped_vector_size)[1:input_size]
 end

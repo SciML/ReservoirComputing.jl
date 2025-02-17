@@ -3,12 +3,10 @@ module ReservoirComputing
 using Adapt: adapt
 using CellularAutomata: CellularAutomaton
 using Compat: @compat
-using LinearAlgebra: eigvals, mul!, I, qr
+using LinearAlgebra: eigvals, mul!, I, qr, Diagonal
 using NNlib: fast_act, sigmoid
-using Random: Random, AbstractRNG
+using Random: Random, AbstractRNG, randperm
 using Reexport: Reexport, @reexport
-using SparseArrays: sparse
-using StatsBase: sample
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 
@@ -45,7 +43,7 @@ export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
-export RECA, sample
+export RECA
 export RandomMapping, RandomMaps
 export Generative, Predictive, OutputLayer
 
