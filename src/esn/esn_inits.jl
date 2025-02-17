@@ -7,12 +7,12 @@ end
 
 function throw_sparse_error(return_sparse)
     if return_sparse && !haskey(Base.loaded_modules, :SparseArrays)
-      error("""\n
-          Sparse output requested but SparseArrays.jl is not loaded.
-          Please load it with:
+        error("""\n
+            Sparse output requested but SparseArrays.jl is not loaded.
+            Please load it with:
 
-              using SparseArrays\n
-          """)
+                using SparseArrays\n
+            """)
     end
 end
 
