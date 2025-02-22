@@ -5,7 +5,7 @@ using CellularAutomata: CellularAutomaton
 using Compat: @compat
 using LinearAlgebra: eigvals, mul!, I, qr, Diagonal
 using NNlib: fast_act, sigmoid
-using Random: Random, AbstractRNG, randperm
+using Random: Random, AbstractRNG, randperm, rand
 using Reexport: Reexport, @reexport
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
@@ -40,7 +40,7 @@ export scaled_rand, weighted_init, informed_init, minimal_init, chebyshev_mappin
        logistic_mapping, modified_lm
 export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
        simple_cycle, pseudo_svd, chaotic_init
-export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
+export RNN, MRNN, GRU, GRUParams, FullyGated
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
 export RECA

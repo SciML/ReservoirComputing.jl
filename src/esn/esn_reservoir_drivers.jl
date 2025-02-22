@@ -313,13 +313,13 @@ end
 
 #check this one, not sure
 function create_gru_layers(gru, variant::Minimal, res_size, in_size)
-    Wz_in = gru.inner_layer(res_size, in_size)
-    Wz = gru.reservoir(res_size, res_size)
-    bz = gru.bias(res_size, 1)
+    Wz_in = gru.inner_layer[1](res_size, in_size)
+    Wz = gru.reservoir[1](res_size, res_size)
+    bz = gru.bias[1](res_size, 1)
 
-    Wr_in = nothing
-    Wr = nothing
-    br = nothing
+    Wr_in = gru.inner_layer[2](res_size, in_size)
+    Wr = gru.reservoir[2](res_size, res_size)
+    br = gru.bias[2](res_size, 1)
 
     return GRUParams(gru.activation_function, variant, Wz_in, Wz, bz, Wr_in, Wr, br)
 end
@@ -362,9 +362,9 @@ function obtain_gru_state!(out, variant::Minimal, gru, x, y, W, W_in, b, tmp_arr
     mul!(tmp_array[2], gru.Wz, x)
     @. tmp_array[3] = gru.activation_function[1](tmp_array[1] + tmp_array[2] + gru.bz)
 
-    mul!(tmp_array[4], W_in, y)
-    mul!(tmp_array[5], W, tmp_array[3] .* x)
-    @. tmp_array[6] = gru.activation_function[2](tmp_array[4] + tmp_array[5] + b)
+    mul!(tmp_array[7], W_in, y)
+    mul!(tmp_array[8], W, tmp_array[6] .* x)
+    @. tmp_array[9] = gru.activation_function[2](tmp_array[7] + tmp_array[8] + b)
 
     return @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
 end

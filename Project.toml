@@ -29,6 +29,7 @@ Aqua = "0.8"
 CellularAutomata = "0.0.2"
 Compat = "4.16.0"
 DifferentialEquations = "7.15.0"
+JET = "0.9.18"
 LIBSVM = "0.8"
 LinearAlgebra = "1.10"
 MLJLinearModels = "0.9.2, 0.10"
@@ -46,6 +47,7 @@ julia = "1.10"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
@@ -53,4 +55,4 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test", "SafeTestsets", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "Statistics", "SparseArrays"]
+test = ["Aqua", "Test", "SafeTestsets", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "Statistics", "SparseArrays", "JET"]

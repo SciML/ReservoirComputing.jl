@@ -199,7 +199,7 @@ function PaddedStates(; padding=1.0)
 end
 
 function (states_type::PaddedStates)(mat::AbstractMatrix)
-    results = states_type.(eachcol(mat))
+    results = map(states_type, eachcol(mat))
     return hcat(results...)
 end
 
@@ -294,7 +294,7 @@ nla(nlat::NonLinearAlgorithm, x_old::AbstractVecOrMat) = nlat(x_old)
 
 # dispatch over matrices for all nonlin algorithms
 function (nlat::NonLinearAlgorithm)(x_old::AbstractMatrix)
-    results = nlat.(eachcol(x_old))
+    results = map(nlat, eachcol(x_old))
     return hcat(results...)
 end
 
