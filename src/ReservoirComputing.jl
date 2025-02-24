@@ -1,7 +1,7 @@
 module ReservoirComputing
 
 using Adapt: adapt
-using CellularAutomata: CellularAutomaton
+using CellularAutomata: CellularAutomaton, AbstractCA
 using Compat: @compat
 using LinearAlgebra: eigvals, mul!, I, qr, Diagonal
 using NNlib: fast_act, sigmoid

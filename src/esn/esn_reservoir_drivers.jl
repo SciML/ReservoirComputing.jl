@@ -22,8 +22,8 @@ specified reservoir driver.
     update.
 """
 function create_states(reservoir_driver::AbstractReservoirDriver,
-        train_data::AbstractArray, washout::Int, reservoir_matrix::AbstractMatrix,
-        input_matrix::AbstractMatrix, bias_vector::AbstractArray)
+        train_data::AbstractArray{T,2}, washout::Int, reservoir_matrix::AbstractMatrix,
+        input_matrix::AbstractMatrix, bias_vector::AbstractArray) where {T<:Number}
     train_len = size(train_data, 2) - washout
     res_size = size(reservoir_matrix, 1)
     states = adapt(typeof(train_data), zeros(res_size, train_len))
@@ -32,6 +32,7 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
 
     for i in 1:washout
         yv = @view train_data[:, i]
+        @show typeof(yv)
         _state = next_state!(_state, reservoir_driver, _state, yv, reservoir_matrix,
             input_matrix, bias_vector, tmp_array)
     end
@@ -47,8 +48,8 @@ function create_states(reservoir_driver::AbstractReservoirDriver,
 end
 
 function create_states(reservoir_driver::AbstractReservoirDriver,
-        train_data::AbstractArray, washout::Int, reservoir_matrix::Vector,
-        input_matrix::AbstractArray, bias_vector::AbstractArray)
+        train_data::AbstractArray{T,2}, washout::Int, reservoir_matrix::Vector,
+        input_matrix::AbstractArray, bias_vector::AbstractArray) where {T<:Number}
     train_len = size(train_data, 2) - washout
     res_size = sum([size(reservoir_matrix[i], 1) for i in 1:length(reservoir_matrix)])
     states = adapt(typeof(train_data), zeros(res_size, train_len))
@@ -357,14 +358,19 @@ function obtain_gru_state!(out, variant::FullyGated, gru, x, y, W, W_in, b, tmp_
 end
 
 #minimal
+#=
 function obtain_gru_state!(out, variant::Minimal, gru, x, y, W, W_in, b, tmp_array)
     mul!(tmp_array[1], gru.Wz_in, y)
     mul!(tmp_array[2], gru.Wz, x)
     @. tmp_array[3] = gru.activation_function[1](tmp_array[1] + tmp_array[2] + gru.bz)
 
+    mul!(tmp_array[4], gru.Wr_in, y)
+    mul!(tmp_array[5], gru.Wr, x)
+    @. tmp_array[6] = gru.activation_function[2](tmp_array[4] + tmp_array[5] + gru.br)
+
     mul!(tmp_array[7], W_in, y)
     mul!(tmp_array[8], W, tmp_array[6] .* x)
-    @. tmp_array[9] = gru.activation_function[2](tmp_array[7] + tmp_array[8] + b)
-
-    return @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[6]
+    @. tmp_array[9] = gru.activation_function[3](tmp_array[7] + tmp_array[8] + b)
+    return @. out = (1 - tmp_array[3]) * x + tmp_array[3] * tmp_array[9]
 end
+=#

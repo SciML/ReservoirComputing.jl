@@ -25,8 +25,8 @@ arXiv preprint arXiv:1410.0162 (2014).
 automata._” arXiv preprint arXiv:1703.02806 (2017).
 """
 function RECA(train_data,
-        automata;
-        generations=8,
+        automata::AbstractCA;
+        generations::Int=8,
         input_encoding=RandomMapping(),
         nla_type=NLADefault(),
         states_type=StandardStates())
