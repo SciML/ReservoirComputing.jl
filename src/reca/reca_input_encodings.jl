@@ -36,7 +36,7 @@ struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     ca_size::S
 end
 
-function create_encoding(rm::RandomMapping, input_data, generations)
+function create_encoding(rm::RandomMapping, input_data::Int, generations::Int)
     maps = init_maps(size(input_data, 1), rm.permutations, rm.expansion_size)
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations

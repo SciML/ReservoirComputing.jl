@@ -146,7 +146,7 @@ Create an input layer for informed echo state networks [^Pathak2018].
     Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
+        scaling=T(0.1), model_in_size::Int, gamma=T(0.5)) where {T <: Number}
     res_size, in_size = dims
     state_size = in_size - model_in_size
 
@@ -162,8 +162,8 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for i in 1:num_for_state
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(1, state_size; step=1)[DeviceAgnostic.rand(rng, T, 1:end)]
+        random_row_idx = idxs[rand(1:length(idxs))]
+        random_clm_idx = rand(state_size+1:in_size)
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * scaling)
     end
@@ -171,9 +171,8 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for i in 1:num_for_model
         idxs = findall(Bool[zero_connections .== input_matrix[i, :]
                             for i in 1:size(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(state_size + 1, in_size; step=1)[DeviceAgnostic.rand(
-            rng, T, 1:end)]
+        random_row_idx = idxs[rand(1:length(idxs))]
+        random_clm_idx = rand(state_size+1:in_size)
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * scaling)
     end
@@ -298,7 +297,7 @@ function irrational(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
         end
     end
 
-    return T.(input_matrix)
+    return map(T, input_matrix)
 end
 
 @doc raw"""
@@ -888,8 +887,8 @@ end
 
 """
     pseudo_svd([rng], [T], dims...; 
-        max_value=1.0, sparsity=0.1, sorted=true, reverse_sort=false,
-        return_sparse=false)
+        max_value=1.0, sparsity=0.1, sorted=true,
+        return_sparse=false, return_diag=false)
 
 Returns an initializer to build a sparse reservoir matrix with the given
 `sparsity` by using a pseudo-SVD approach as described in [^yang].
@@ -910,8 +909,6 @@ Returns an initializer to build a sparse reservoir matrix with the given
     Default is 0.1
   - `sorted`: A boolean indicating whether to sort the singular values before
     creating the diagonal matrix. Default is `true`.
-  - `reverse_sort`: A boolean indicating whether to reverse the sorted
-    singular values. Default is `false`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `return_diag`: flag for returning a `Diagonal` matrix. If both `return_diag`
@@ -936,13 +933,12 @@ julia> res_matrix = pseudo_svd(5, 5)
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
-        reverse_sort::Bool=false, return_sparse::Bool=false,
+        return_sparse::Bool=false,
         return_diag::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = create_diag(rng, T, dims[1],
         max_value;
-        sorted=sorted,
-        reverse_sort=reverse_sort)
+        sorted=sorted)
     tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
 
     while tmp_sparsity <= sparsity
@@ -960,25 +956,17 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
 end
 
-#hacky workaround for the moment
-function rand_range(rng, T, n::Int)
-    return Int(1 + floor(DeviceAgnostic.rand(rng, T) * n))
-end
-
-function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number;
-        sorted::Bool=true, reverse_sort::Bool=false) where {T <: Number}
+function create_diag(rng::AbstractRNG, ::Type{T}, dim::Integer, max_value::Number;
+                     sorted::Bool=true) where {T <: Number}
     diagonal_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
-    if sorted == true
-        if reverse_sort == true
-            diagonal_values = sort(
-                DeviceAgnostic.rand(rng, T, dim) .* max_value; rev=true)
-            diagonal_values[1] = max_value
-        else
-            diagonal_values = sort(DeviceAgnostic.rand(rng, T, dim) .* max_value)
-            diagonal_values[end] = max_value
-        end
-    else
-        diagonal_values = DeviceAgnostic.rand(rng, T, dim) .* max_value
+    diagonal_values = Array(DeviceAgnostic.rand(rng, T, dim) .* T(max_value))
+    if sorted
+        #if reverse_sort
+        #    Base.sort!(diagonal_values; rev=true)
+        #    diagonal_values[1] = T(max_value)
+        #else
+        Base.sort!(diagonal_values)
+        diagonal_values[end] = T(max_value)
     end
 
     for i in 1:dim
@@ -1001,6 +989,11 @@ function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
     qmatrix[coord_i, coord_j] = -sin(theta)
     qmatrix[coord_j, coord_i] = sin(theta)
     return qmatrix
+end
+
+#hacky workaround for the moment
+function rand_range(rng, T, n::Int)
+    return Int(1 + floor(DeviceAgnostic.rand(rng, T) * n))
 end
 
 function get_sparsity(M, dim)
