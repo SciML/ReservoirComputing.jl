@@ -16,6 +16,19 @@ function throw_sparse_error(return_sparse)
     end
 end
 
+## scale spectral radius
+
+function scale_radius!(reservoir_matrix, radius)
+    rho_w = maximum(abs.(eigvals(reservoir_matrix)))
+    reservoir_matrix .*= radius / rho_w
+    if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
+        error("""\n
+            Sparsity too low for size of the matrix.
+            Increase res_size or increase sparsity.\n
+          """)
+    end
+end
+
 ### input layers
 """
     scaled_rand([rng], [T], dims...;
@@ -619,15 +632,7 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
-    rho_w = maximum(abs.(eigvals(reservoir_matrix)))
-    reservoir_matrix .*= radius / rho_w
-    if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
-        error("""\n
-            Sparsity too low for size of the matrix.
-            Increase res_size or increase sparsity.\n
-          """)
-    end
-
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1115,12 +1120,114 @@ function digital_chaotic_adjacency(rng::AbstractRNG, bit_precision::Integer;
     return adjacency_matrix
 end
 
+"""
+    low_connectivity([rng], [T], dims...;
+                     return_sparse = false, connected=false,
+                     in_degree = 1, radius = 1.0, cut_cycle = false)
+
+Construct an internal reservoir connectivity matrix with low connectivity.
+
+This function creates a square reservoir matrix with the specified in-degree
+for each node [^griffith2019]. When `in_degree` is 1, the function can enforce
+a fully connected cycle if `connected` is `true`;
+otherwise, it generates a random connectivity pattern.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword Arguments
+
+  - `return_sparse`: If `true`, the function returns the
+    reservoir matrix as a sparse matrix. Default is `false`.
+  - `connected`: For `in_degree == 1`, if `true` a connected cycle is enforced.
+    Default is `false`.
+  - `in_degree`: The number of incoming connections per node.
+    Must not exceed the number of nodes. Default is 1.
+  - `radius`: The desired spectral radius of the reservoir.
+    Defaults to 1.0.
+  - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
+    Default is `false`.
+
+[^griffith2019]: Griffith, Aaron, Andrew Pomerance, and Daniel J. Gauthier.
+    "Forecasting chaotic systems with very low connectivity reservoir computers."
+    Chaos: An Interdisciplinary Journal of Nonlinear Science 29.12 (2019).
+"""
+function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        return_sparse::Bool=false, connected::Bool=false,
+        in_degree::Int=1, kwargs...) where {T <: Number}
+    res_size = dims[1]
+    if length(dims) != 2 || dims[1] != dims[2]
+        error("""
+            Internal reservoir matrix must be square. Got dims = $(dims)
+        """)
+    end
+    if in_degree > res_size
+        error("""
+            In-degree k (got k=$(in_degree)) cannot exceed number of nodes N=$(res_size)
+        """)
+    end
+    if in_degree == 1
+        reservoir_matrix = build_cycle(
+            Val(connected), rng, T, res_size; in_degree=in_degree, kwargs...)
+    else
+        reservoir_matrix = build_cycle(
+            Val(false), rng, T, res_size; in_degree=in_degree, kwargs...)
+    end
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
+        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+    for i in 1:res_size
+        selected = randperm(rng, res_size)[1:in_degree]
+        for j in selected
+            reservoir_matrix[i, j] = T(randn(rng))
+        end
+    end
+    scale_radius!(reservoir_matrix, radius)
+    return reservoir_matrix
+end
+
+function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
+        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+    perm = randperm(rng, res_size)
+    for i in 1:(res_size - 1)
+        reservoir_matrix[perm[i], perm[i + 1]] = T(randn(rng))
+    end
+    reservoir_matrix[perm[res_size], perm[1]] = T(randn(rng))
+    scale_radius!(reservoir_matrix, radius)
+    if cut_cycle
+        cut_cycle_edge!(reservoir_matrix, rng)
+    end
+    return reservoir_matrix
+end
+
+function cut_cycle_edge!(
+        reservoir_matrix::AbstractMatrix{T}, rng::AbstractRNG) where {T <: Number}
+    res_size = size(reservoir_matrix, 1)
+    row = rand(rng, 1:res_size)
+    for j in 1:res_size
+        if reservoir_matrix[row, j] != zero(T)
+            reservoir_matrix[row, j] = zero(T)
+            break
+        end
+    end
+    return reservoir_matrix
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
-    :logistic_mapping, :modified_lm)
+    :logistic_mapping, :modified_lm, :low_connectivity)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
