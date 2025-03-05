@@ -1127,12 +1127,13 @@ end
 
 Construct an internal reservoir connectivity matrix with low connectivity.
 
-This function creates a square reservoir matrix with the specified in-degree 
+This function creates a square reservoir matrix with the specified in-degree
 for each node [^griffith2019]. When `in_degree` is 1, the function can enforce
 a fully connected cycle if `connected` is `true`;
 otherwise, it generates a random connectivity pattern.
 
 # Arguments
+
   - `rng`: Random number generator. Default is `Utils.default_rng()`
     from WeightInitializers.
   - `T`: Type of the elements in the reservoir matrix.
@@ -1140,12 +1141,13 @@ otherwise, it generates a random connectivity pattern.
   - `dims`: Dimensions of the reservoir matrix.
 
 # Keyword Arguments
+
   - `return_sparse`: If `true`, the function returns the
     reservoir matrix as a sparse matrix. Default is `false`.
   - `connected`: For `in_degree == 1`, if `true` a connected cycle is enforced.
     Default is `false`.
   - `in_degree`: The number of incoming connections per node.
-  Must not exceed the number of nodes. Default is 1.
+    Must not exceed the number of nodes. Default is 1.
   - `radius`: The desired spectral radius of the reservoir.
     Defaults to 1.0.
   - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
@@ -1156,8 +1158,8 @@ otherwise, it generates a random connectivity pattern.
     Chaos: An Interdisciplinary Journal of Nonlinear Science 29.12 (2019).
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        return_sparse::Bool = false, connected::Bool=false,
-        in_degree::Int = 1, kwargs...) where {T <: Number}
+        return_sparse::Bool=false, connected::Bool=false,
+        in_degree::Int=1, kwargs...) where {T <: Number}
     res_size = dims[1]
     if length(dims) != 2 || dims[1] != dims[2]
         error("""
@@ -1170,15 +1172,17 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         """)
     end
     if in_degree == 1
-        reservoir_matrix = build_cycle(Val(connected), rng, T, res_size; in_degree=in_degree, kwargs...)
+        reservoir_matrix = build_cycle(
+            Val(connected), rng, T, res_size; in_degree=in_degree, kwargs...)
     else
-        reservoir_matrix = build_cycle(Val(false), rng, T, res_size; in_degree=in_degree, kwargs...)
+        reservoir_matrix = build_cycle(
+            Val(false), rng, T, res_size; in_degree=in_degree, kwargs...)
     end
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-  in_degree::Integer=1, radius::T = T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for i in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -1191,11 +1195,11 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
 end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-  in_degree::Integer=1, radius::T = T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for i in 1:(res_size - 1)
-        reservoir_matrix[perm[i], perm[i+1]] = T(randn(rng))
+        reservoir_matrix[perm[i], perm[i + 1]] = T(randn(rng))
     end
     reservoir_matrix[perm[res_size], perm[1]] = T(randn(rng))
     scale_radius!(reservoir_matrix, radius)
@@ -1205,7 +1209,8 @@ function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
     return reservoir_matrix
 end
 
-function cut_cycle_edge!(reservoir_matrix::AbstractMatrix{T}, rng::AbstractRNG) where {T <: Number}
+function cut_cycle_edge!(
+        reservoir_matrix::AbstractMatrix{T}, rng::AbstractRNG) where {T <: Number}
     res_size = size(reservoir_matrix, 1)
     row = rand(rng, 1:res_size)
     for j in 1:res_size
@@ -1216,7 +1221,6 @@ function cut_cycle_edge!(reservoir_matrix::AbstractMatrix{T}, rng::AbstractRNG) 
     end
     return reservoir_matrix
 end
-
 
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
