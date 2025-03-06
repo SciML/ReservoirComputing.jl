@@ -10,7 +10,7 @@ nlas = [(NLADefault(), test_array),
     (NLAT2(), [1, 2, 2, 4, 12, 6, 30, 8, 9]),
     (NLAT3(), [1, 2, 8, 4, 24, 6, 48, 8, 9]),
     (PartialSquare(0.6), [1, 4, 9, 16, 25, 6, 7, 8, 9]),
-    (ExtendedSquare(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 4, 9, 16, 25, 36, 49, 64, 91])]
+    (ExtendedSquare(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 4, 9, 16, 25, 36, 49, 64, 81])]
 
 pes = [(StandardStates(), test_array),
     (PaddedStates(; padding=padding),
