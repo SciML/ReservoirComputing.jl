@@ -17,6 +17,7 @@
     NLAT2
     NLAT3
     PartialSquare
+    ExtendedSquare
 ```
 
 ## Internals
