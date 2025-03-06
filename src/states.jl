@@ -654,3 +654,75 @@ function (::NLAT3)(x_old::AbstractVector)
 
     return x_new
 end
+
+@doc raw"""
+    PartialSquare(eta)
+
+Implement a partial squaring of the states as described in [^barbosa2021].
+
+# Equations
+
+```math
+    \begin{equation}
+    g(r_i) =
+    \begin{cases} 
+        r_i^2, & \text{if } i \leq \eta_r N, \\
+        r_i, & \text{if } i > \eta_r N.
+    \end{cases}
+    \end{equation}
+```
+
+# Examples
+
+```jldoctest
+julia> ps = PartialSquare(0.6)
+PartialSquare(0.6)
+
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> x_new = ps(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  4
+  9
+ 16
+ 25
+  6
+  7
+  8
+  9
+
+
+[^barbosa2021]: Barbosa, Wendson AS, et al.
+    "Symmetry-aware reservoir computing."
+    Physical Review E 104.4 (2021): 045307.
+"""
+struct PartialSquare <: NonLinearAlgorithm
+    eta::Number
+end
+
+function (ps::PartialSquare)(x_old::AbstractVector)
+    x_new = copy(x_old)
+    n_length = length(x_old)
+    threshold = floor(Int, ps.eta * n_length)
+    for idx in eachindex(x_old)
+        if idx <= threshold
+            x_new[idx] = x_old[idx]^2
+        end
+    end
+
+    return x_new
+end
