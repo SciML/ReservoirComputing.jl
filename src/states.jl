@@ -654,3 +654,20 @@ function (::NLAT3)(x_old::AbstractVector)
 
     return x_new
 end
+
+struct PartialSquare <: NonLinearAlgorithm
+    eta::Number
+end
+
+function (ps::PartialSquare)(x_old::AbstractVector)
+    x_new = copy(x_old)
+    n_length = length(x_old)
+    threshold = floor(Int, ps.eta * n_length)
+    for idx in eachindex(x_old)
+        if idx <= threshold
+            x_new[idx] = x_old[idx]^2
+        end
+    end
+    
+    return x_new
+end

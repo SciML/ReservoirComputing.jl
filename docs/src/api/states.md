@@ -16,6 +16,7 @@
     NLAT1
     NLAT2
     NLAT3
+    PartialSquare
 ```
 
 ## Internals

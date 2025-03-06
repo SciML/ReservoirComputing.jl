@@ -33,7 +33,7 @@ include("esn/esn_predict.jl")
 include("reca/reca.jl")
 include("reca/reca_input_encodings.jl")
 
-export NLADefault, NLAT1, NLAT2, NLAT3
+export NLADefault, NLAT1, NLAT2, NLAT3, PartialSquare
 export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
 export StandardRidge
 export scaled_rand, weighted_init, informed_init, minimal_init, chebyshev_mapping,
