@@ -1248,7 +1248,7 @@ Creates a double cycle reservoir[^fu2023] with the specified dimensions and weig
 # Examples
 
 ```jldoctest
-julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+julia> reservoir_matrix = double_cycle(5, 5; cycle_weight=0.1, second_cycle_weight=0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.3
  0.1  0.0  0.3  0.0  0.0
