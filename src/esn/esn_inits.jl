@@ -80,7 +80,7 @@ end
 
 Create and return a matrix representing a weighted input layer.
 This initializer generates a weighted input matrix with random non-zero
-elements distributed uniformly within the range [-`scaling`, `scaling`] [^Lu2017].
+elements distributed uniformly within the range [-`scaling`, `scaling`] [^lu2017].
 
 # Arguments
 
@@ -110,7 +110,7 @@ julia> res_input = weighted_init(8, 3)
   0.0         0.0         -0.0562827
 ```
 
-[^Lu2017]: Lu, Zhixin, et al.
+[^lu2017]: Lu, Zhixin, et al.
     "Reservoir observers: Model-free inference of unmeasured variables in
     chaotic systems."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
@@ -123,9 +123,10 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     q = floor(Int, res_size / in_size)
 
-    for i in 1:in_size
-        layer_matrix[((i - 1) * q + 1):((i) * q), i] = (DeviceAgnostic.rand(rng, T, q) .-
-                                                        T(0.5)) .* (T(2) * scaling)
+    for idx in 1:in_size
+        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = (DeviceAgnostic.rand(
+            rng, T, q) .-
+                                                              T(0.5)) .* (T(2) * scaling)
     end
 
     return return_init_as(Val(return_sparse), layer_matrix)
@@ -135,7 +136,7 @@ end
     informed_init([rng], [T], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
-Create an input layer for informed echo state networks [^Pathak2018].
+Create an input layer for informed echo state networks [^pathak2018].
 
 # Arguments
 
@@ -154,7 +155,7 @@ Create an input layer for informed echo state networks [^Pathak2018].
 
 # Examples
 
-[^Pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
+[^pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
     Using machine learning in conjunction with a knowledge-based model."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
@@ -172,18 +173,18 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     num_for_state = floor(Int, res_size * gamma)
     num_for_model = floor(Int, res_size * (1 - gamma))
 
-    for i in 1:num_for_state
-        idxs = findall(Bool[zero_connections .== input_matrix[i, :]
-                            for i in 1:size(input_matrix, 1)])
+    for idx in 1:num_for_state
+        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
+                            for jdx in axes(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
         random_clm_idx = range(1, state_size; step=1)[DeviceAgnostic.rand(rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * scaling)
     end
 
-    for i in 1:num_for_model
-        idxs = findall(Bool[zero_connections .== input_matrix[i, :]
-                            for i in 1:size(input_matrix, 1)])
+    for idx in 1:num_for_model
+        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
+                            for jdx in axes(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
         random_clm_idx = range(state_size + 1, in_size; step=1)[DeviceAgnostic.rand(
             rng, T, 1:end)]
@@ -198,8 +199,8 @@ end
     minimal_init([rng], [T], dims...;
         sampling_type=:bernoulli, weight=0.1, irrational=pi, start=1, p=0.5)
 
-Create a layer matrix with uniform weights determined by `weight`. The sign difference
-is randomly determined by the `sampling` chosen.
+Create a layer matrix with uniform weights determined by `weight` [^rodan2010].
+The sign difference is randomly determined by the `sampling` chosen.
 
 # Arguments
 
@@ -267,6 +268,10 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
  -0.1   0.1  0.1
   0.1   0.1  0.1
 ```
+
+[^rodan2010]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network."
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         sampling_type::Symbol=:bernoulli, kwargs...) where {T <: Number}
@@ -279,12 +284,12 @@ end
 function bernoulli(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
         weight::Number=T(0.1), p::Number=T(0.5)) where {T <: Number}
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    for i in 1:res_size
-        for j in 1:in_size
+    for idx in 1:res_size
+        for jdx in 1:in_size
             if DeviceAgnostic.rand(rng, T) < p
-                input_matrix[i, j] = weight
+                input_matrix[idx, jdx] = weight
             else
-                input_matrix[i, j] = -weight
+                input_matrix[idx, jdx] = -weight
             end
         end
     end
@@ -300,14 +305,14 @@ function irrational(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
     ir_array = DeviceAgnostic.zeros(rng, T, length(ir_string))
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
 
-    for i in 1:length(ir_string)
-        ir_array[i] = parse(Int, ir_string[i])
+    for idx in eachindex(ir_string)
+        ir_array[idx] = parse(Int, ir_string[idx])
     end
 
-    for i in 1:res_size
-        for j in 1:in_size
+    for idx in 1:res_size
+        for jdx in 1:in_size
             random_number = DeviceAgnostic.rand(rng, T)
-            input_matrix[i, j] = random_number < 0.5 ? -weight : weight
+            input_matrix[idx, jdx] = random_number < 0.5 ? -weight : weight
         end
     end
 
@@ -464,14 +469,15 @@ function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     num_rows, num_columns = dims[1], dims[2]
-    for col in 1:num_columns
-        input_matrix[1, col] = amplitude * sin(col * pi / (sine_divisor * num_columns))
+    for idx_col in 1:num_columns
+        input_matrix[1, idx_col] = amplitude *
+                                   sin(idx_col * pi / (sine_divisor * num_columns))
     end
-    for row in 2:num_rows
-        for col in 1:num_columns
-            previous_value = input_matrix[row - 1, col]
-            input_matrix[row, col] = logistic_parameter * previous_value *
-                                     (1 - previous_value)
+    for idx_row in 2:num_rows
+        for idx_col in 1:num_columns
+            previous_value = input_matrix[idx_row - 1, idx_col]
+            input_matrix[idx_row, idx_col] = logistic_parameter * previous_value *
+                                             (1 - previous_value)
         end
     end
 
@@ -572,15 +578,15 @@ function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         """
     end
     output_matrix = DeviceAgnostic.zeros(rng, T, expected_num_rows, num_columns)
-    for col in 1:num_columns
-        base_row = (col - 1) * factor + 1
-        output_matrix[base_row, col] = amplitude * sin(((col - 1) * pi) /
-                                           (factor * num_columns * sine_divisor))
-        for j in 1:(factor - 1)
-            current_row = base_row + j
-            previous_value = output_matrix[current_row - 1, col]
-            output_matrix[current_row, col] = logistic_parameter * previous_value *
-                                              (1 - previous_value)
+    for idx_col in 1:num_columns
+        base_row = (idx_col - 1) * factor + 1
+        output_matrix[base_row, idx_col] = amplitude * sin(((idx_col - 1) * pi) /
+                                               (factor * num_columns * sine_divisor))
+        for jdx in 1:(factor - 1)
+            current_row = base_row + jdx
+            previous_value = output_matrix[current_row - 1, idx_col]
+            output_matrix[current_row, idx_col] = logistic_parameter * previous_value *
+                                                  (1 - previous_value)
         end
     end
 
@@ -640,7 +646,7 @@ end
     delay_line([rng], [T], dims...;
         weight=0.1, return_sparse=false)
 
-Create and return a delay line reservoir matrix [^Rodan2010].
+Create and return a delay line reservoir matrix [^rodan2010].
 
 # Arguments
 
@@ -677,7 +683,7 @@ julia> res_matrix = delay_line(5, 5; weight=1)
  0.0  0.0  0.0  1.0  0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -690,8 +696,8 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         (e.g., (100, 100))
       """
 
-    for i in 1:(dims[1] - 1)
-        reservoir_matrix[i + 1, i] = weight
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = weight
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -702,7 +708,7 @@ end
         weight=0.1, fb_weight=0.2, return_sparse=false)
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
-Creates a matrix with backward connections as described in [^Rodan2010].
+Creates a matrix with backward connections as described in [^rodan2010].
 
 # Arguments
 
@@ -741,21 +747,18 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
  0.0  0.0  0.0  0.1  0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
-    res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-
-    for i in 1:(res_size - 1)
-        reservoir_matrix[i + 1, i] = weight
-        reservoir_matrix[i, i + 1] = fb_weight
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = weight
+        reservoir_matrix[idx, idx + 1] = fb_weight
     end
-
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -763,8 +766,7 @@ end
     cycle_jumps([rng], [T], dims...; 
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false)
 
-Create a cycle jumps reservoir with the specified dimensions,
-cycle weight, jump weight, and jump size.
+Create a cycle jumps reservoir [^Rodan2012].
 
 # Arguments
 
@@ -805,7 +807,7 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
  0.0  0.0  0.1  0.1  0.0
 ```
 
-[^Rodan2012]: Rodan, Ali, and Peter Tiňo.
+[^rodan2012]: Rodan, Ali, and Peter Tiňo.
     "Simple deterministically constructed cycle reservoirs with regular jumps."
     Neural computation 24.7 (2012): 1822-1852.
 """
@@ -816,19 +818,19 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
-    for i in 1:(res_size - 1)
-        reservoir_matrix[i + 1, i] = cycle_weight
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = cycle_weight
     end
 
     reservoir_matrix[1, res_size] = cycle_weight
 
-    for i in 1:jump_size:(res_size - jump_size)
-        tmp = (i + jump_size) % res_size
+    for idx in 1:jump_size:(res_size - jump_size)
+        tmp = (idx + jump_size) % res_size
         if tmp == 0
             tmp = res_size
         end
-        reservoir_matrix[i, tmp] = jump_weight
-        reservoir_matrix[tmp, i] = jump_weight
+        reservoir_matrix[idx, tmp] = jump_weight
+        reservoir_matrix[tmp, idx] = jump_weight
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -838,7 +840,7 @@ end
     simple_cycle([rng], [T], dims...; 
         weight=0.1, return_sparse=false)
 
-Create a simple cycle reservoir with the specified dimensions and weight.
+Create a simple cycle reservoir [^rodan2010].
 
 # Arguments
 
@@ -874,7 +876,7 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
   0.0   0.0   0.0  11.0   0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -883,8 +885,8 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
-    for i in 1:(dims[1] - 1)
-        reservoir_matrix[i + 1, i] = weight
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = weight
     end
 
     reservoir_matrix[1, dims[1]] = weight
@@ -897,7 +899,7 @@ end
         return_sparse=false)
 
 Returns an initializer to build a sparse reservoir matrix with the given
-`sparsity` by using a pseudo-SVD approach as described in [^yang].
+`sparsity` by using a pseudo-SVD approach as described in [^yang2018].
 
 # Arguments
 
@@ -935,7 +937,7 @@ julia> res_matrix = pseudo_svd(5, 5)
  0.0       0.0       0.0       0.0       1.0
 ```
 
-[^yang]: Yang, Cuili, et al.
+[^yang2018]: Yang, Cuili, et al.
     "_Design of polynomial echo state networks for time series prediction._"
     Neurocomputing 290 (2018): 148-160.
 """
@@ -986,8 +988,8 @@ function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number
         diagonal_values = DeviceAgnostic.rand(rng, T, dim) .* max_value
     end
 
-    for i in 1:dim
-        diagonal_matrix[i, i] = diagonal_values[i]
+    for idx in 1:dim
+        diagonal_matrix[idx, idx] = diagonal_values[idx]
     end
 
     return diagonal_matrix
@@ -997,8 +999,8 @@ function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
         coord_i::Number, coord_j::Number, theta::Number) where {T <: Number}
     qmatrix = DeviceAgnostic.zeros(rng, T, dim, dim)
 
-    for i in 1:dim
-        qmatrix[i, i] = 1.0
+    for idx in 1:dim
+        qmatrix[idx, idx] = 1.0
     end
 
     qmatrix[coord_i, coord_i] = cos(theta)
@@ -1184,10 +1186,10 @@ end
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
         in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
-    for i in 1:res_size
+    for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
-        for j in selected
-            reservoir_matrix[i, j] = T(randn(rng))
+        for jdx in selected
+            reservoir_matrix[idx, jdx] = T(randn(rng))
         end
     end
     scale_radius!(reservoir_matrix, radius)
@@ -1198,8 +1200,8 @@ function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
         in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
-    for i in 1:(res_size - 1)
-        reservoir_matrix[perm[i], perm[i + 1]] = T(randn(rng))
+    for idx in 1:(res_size - 1)
+        reservoir_matrix[perm[idx], perm[idx + 1]] = T(randn(rng))
     end
     reservoir_matrix[perm[res_size], perm[1]] = T(randn(rng))
     scale_radius!(reservoir_matrix, radius)
@@ -1213,9 +1215,9 @@ function cut_cycle_edge!(
         reservoir_matrix::AbstractMatrix{T}, rng::AbstractRNG) where {T <: Number}
     res_size = size(reservoir_matrix, 1)
     row = rand(rng, 1:res_size)
-    for j in 1:res_size
-        if reservoir_matrix[row, j] != zero(T)
-            reservoir_matrix[row, j] = zero(T)
+    for idx in 1:res_size
+        if reservoir_matrix[row, idx] != zero(T)
+            reservoir_matrix[row, idx] = zero(T)
             break
         end
     end
@@ -1227,7 +1229,7 @@ end
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
 
-Creates a double cycle reservoir[^fu2023] with the specified dimensions and weights.
+Creates a double cycle reservoir [^fu2023].
 
 # Arguments
 
@@ -1267,10 +1269,10 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
-    for uidx in 1:(dims[1] - 1)
+    for uidx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
         reservoir_matrix[uidx + 1, uidx] = cycle_weight
     end
-    for lidx in 2:dims[1]
+    for lidx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
         reservoir_matrix[lidx - 1, lidx] = second_cycle_weight
     end
 
