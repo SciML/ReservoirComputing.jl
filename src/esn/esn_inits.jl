@@ -80,7 +80,7 @@ end
 
 Create and return a matrix representing a weighted input layer.
 This initializer generates a weighted input matrix with random non-zero
-elements distributed uniformly within the range [-`scaling`, `scaling`] [^Lu2017].
+elements distributed uniformly within the range [-`scaling`, `scaling`] [^lu2017].
 
 # Arguments
 
@@ -110,7 +110,7 @@ julia> res_input = weighted_init(8, 3)
   0.0         0.0         -0.0562827
 ```
 
-[^Lu2017]: Lu, Zhixin, et al.
+[^lu2017]: Lu, Zhixin, et al.
     "Reservoir observers: Model-free inference of unmeasured variables in
     chaotic systems."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
@@ -136,7 +136,7 @@ end
     informed_init([rng], [T], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
-Create an input layer for informed echo state networks [^Pathak2018].
+Create an input layer for informed echo state networks [^pathak2018].
 
 # Arguments
 
@@ -155,7 +155,7 @@ Create an input layer for informed echo state networks [^Pathak2018].
 
 # Examples
 
-[^Pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
+[^pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
     Using machine learning in conjunction with a knowledge-based model."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
@@ -199,7 +199,7 @@ end
     minimal_init([rng], [T], dims...;
         sampling_type=:bernoulli, weight=0.1, irrational=pi, start=1, p=0.5)
 
-Create a layer matrix with uniform weights determined by `weight` [^Rodan2010].
+Create a layer matrix with uniform weights determined by `weight` [^rodan2010].
 The sign difference is randomly determined by the `sampling` chosen.
 
 # Arguments
@@ -269,7 +269,7 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
   0.1   0.1  0.1
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -646,7 +646,7 @@ end
     delay_line([rng], [T], dims...;
         weight=0.1, return_sparse=false)
 
-Create and return a delay line reservoir matrix [^Rodan2010].
+Create and return a delay line reservoir matrix [^rodan2010].
 
 # Arguments
 
@@ -683,7 +683,7 @@ julia> res_matrix = delay_line(5, 5; weight=1)
  0.0  0.0  0.0  1.0  0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -708,7 +708,7 @@ end
         weight=0.1, fb_weight=0.2, return_sparse=false)
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
-Creates a matrix with backward connections as described in [^Rodan2010].
+Creates a matrix with backward connections as described in [^rodan2010].
 
 # Arguments
 
@@ -747,7 +747,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
  0.0  0.0  0.0  0.1  0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -766,8 +766,7 @@ end
     cycle_jumps([rng], [T], dims...; 
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false)
 
-Create a cycle jumps reservoir with the specified dimensions,
-cycle weight, jump weight, and jump size.
+Create a cycle jumps reservoir [^Rodan2012].
 
 # Arguments
 
@@ -808,7 +807,7 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
  0.0  0.0  0.1  0.1  0.0
 ```
 
-[^Rodan2012]: Rodan, Ali, and Peter Tiňo.
+[^rodan2012]: Rodan, Ali, and Peter Tiňo.
     "Simple deterministically constructed cycle reservoirs with regular jumps."
     Neural computation 24.7 (2012): 1822-1852.
 """
@@ -841,7 +840,7 @@ end
     simple_cycle([rng], [T], dims...; 
         weight=0.1, return_sparse=false)
 
-Create a simple cycle reservoir with the specified dimensions and weight.
+Create a simple cycle reservoir [^rodan2010].
 
 # Arguments
 
@@ -877,7 +876,7 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
   0.0   0.0   0.0  11.0   0.0
 ```
 
-[^Rodan2010]: Rodan, Ali, and Peter Tino.
+[^rodan2010]: Rodan, Ali, and Peter Tino.
     "Minimum complexity echo state network."
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
@@ -900,7 +899,7 @@ end
         return_sparse=false)
 
 Returns an initializer to build a sparse reservoir matrix with the given
-`sparsity` by using a pseudo-SVD approach as described in [^yang].
+`sparsity` by using a pseudo-SVD approach as described in [^yang2018].
 
 # Arguments
 
@@ -938,7 +937,7 @@ julia> res_matrix = pseudo_svd(5, 5)
  0.0       0.0       0.0       0.0       1.0
 ```
 
-[^yang]: Yang, Cuili, et al.
+[^yang2018]: Yang, Cuili, et al.
     "_Design of polynomial echo state networks for time series prediction._"
     Neurocomputing 290 (2018): 148-160.
 """
@@ -1230,7 +1229,7 @@ end
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
 
-Creates a double cycle reservoir[^fu2023] with the specified dimensions and weights.
+Creates a double cycle reservoir [^fu2023].
 
 # Arguments
 
