@@ -26,7 +26,8 @@ reservoir_inits = [
     simple_cycle,
     pseudo_svd,
     chaotic_init,
-    low_connectivity
+    low_connectivity,
+    double_cycle
 ]
 input_inits = [
     scaled_rand,

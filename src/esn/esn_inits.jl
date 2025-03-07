@@ -1222,12 +1222,69 @@ function cut_cycle_edge!(
     return reservoir_matrix
 end
 
+"""
+    double_cycle([rng], [T], dims...; 
+        cycle_weight=0.1, second_cycle_weight=0.1,
+        return_sparse=false)
+
+Creates a double cycle reservoir[^fu2023] with the specified dimensions and weights.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+5×5 Matrix{Float32}:
+ 0.0  0.3  0.0  0.0  0.3
+ 0.1  0.0  0.3  0.0  0.0
+ 0.0  0.1  0.0  0.3  0.0
+ 0.0  0.0  0.1  0.0  0.3
+ 0.1  0.0  0.0  0.1  0.0
+```
+
+[^fu2023]: Fu, Jun, et al.
+    "A double-cycle echo state network topology for time series prediction."
+    Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
+"""
+function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        cycle_weight=T(0.1), second_cycle_weight=T(0.1),
+        return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+
+    for uidx in 1:(dims[1] - 1)
+        reservoir_matrix[uidx + 1, uidx] = cycle_weight
+    end
+    for lidx in 2:dims[1]
+        reservoir_matrix[lidx - 1, lidx] = second_cycle_weight
+    end
+
+    reservoir_matrix[1, dims[1]] = second_cycle_weight
+    reservoir_matrix[dims[1], 1] = cycle_weight
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
-    :logistic_mapping, :modified_lm, :low_connectivity)
+    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)

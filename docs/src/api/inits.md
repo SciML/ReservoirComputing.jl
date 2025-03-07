@@ -23,4 +23,5 @@
     pseudo_svd
     chaotic_init
     low_connectivity
+    double_cycle
 ```
