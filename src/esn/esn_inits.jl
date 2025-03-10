@@ -886,10 +886,10 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = weight
+        reservoir_matrix[idx + 1, idx] = T(weight)
     end
 
-    reservoir_matrix[1, dims[1]] = weight
+    reservoir_matrix[1, dims[1]] = T(weight)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1281,12 +1281,69 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+"""
+    self_loop_cycle([rng], [T], dims...; 
+        cycle_weight=0.1, self_loop_weight=0.1,
+        return_sparse=false)
+
+Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019].
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `self_loop_weight`: Weight of the self loops in the reservoir matrix.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+julia> reservoir_matrix = self_loop_cycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.0  0.0  0.1
+ 0.1  0.1  0.0  0.0  0.0
+ 0.0  0.1  0.1  0.0  0.0
+ 0.0  0.0  0.1  0.1  0.0
+ 0.0  0.0  0.0  0.1  0.1
+
+julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, self_loop_weight=0.5)
+5×5 Matrix{Float32}:
+ 0.5  0.0  0.0  0.0  0.2
+ 0.2  0.5  0.0  0.0  0.0
+ 0.0  0.2  0.5  0.0  0.0
+ 0.0  0.0  0.2  0.5  0.0
+ 0.0  0.0  0.0  0.2  0.5
+```
+
+[^elsarraj2019]: Elsarraj, Duaa, et al.
+    "Demystifying echo state network with deterministic simple topologies."
+    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
+"""
+function self_loop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight=T(0.1f0), self_loop_weight=T(0.1f0),
+        return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = simple_cycle(rng, T, dims...;
+        weight=weight, return_sparse=false)
+    reservoir_matrix += T(self_loop_weight) .* I(dims[1])
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
-    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle)
+    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)

@@ -24,4 +24,5 @@
     chaotic_init
     low_connectivity
     double_cycle
+    self_loop_cycle
 ```
