@@ -1283,10 +1283,12 @@ end
 
 """
     self_loop_cycle([rng], [T], dims...; 
-        cycle_weight=0.1, self_loop_weight=0.1,
+        cycle_weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
 
 Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019].
+
+This architecture is referred to as TP1 in the original paper.
 
 # Arguments
 
@@ -1297,9 +1299,9 @@ Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019]
 
 # Keyword arguments
 
-  - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
+  - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
     Default is 0.1.
-  - `self_loop_weight`: Weight of the self loops in the reservoir matrix.
+  - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
@@ -1315,7 +1317,7 @@ julia> reservoir_matrix = self_loop_cycle(5, 5)
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
 
-julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, self_loop_weight=0.5)
+julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
 5×5 Matrix{Float32}:
  0.5  0.0  0.0  0.0  0.2
  0.2  0.5  0.0  0.0  0.0
@@ -1329,12 +1331,81 @@ julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, self_loop_weight=0.5
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function self_loop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1f0), self_loop_weight=T(0.1f0),
+        cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=weight, return_sparse=false)
-    reservoir_matrix += T(self_loop_weight) .* I(dims[1])
+        weight=cycle_weight, return_sparse=false)
+    reservoir_matrix += T(selfloop_weight) .* I(dims[1])
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
+    selfloop_feedback_cycle([rng], [T], dims...; 
+        cycle_weight=0.1, selfloop_weight=0.1,
+        return_sparse=false)
+
+Creates a cycle reservoir with feedback connections on even neurons and
+self loops on odd neurons [^elsarraj2019].
+
+This architecture is referred to as TP2 in the original paper.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+julia> reservoir_matrix = selfloop_feedback_cycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.1  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.1  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.1
+
+julia> reservoir_matrix = selfloop_feedback_cycle(5, 5; self_loop_weight=0.5)
+5×5 Matrix{Float32}:
+ 0.5  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.5  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.5
+```
+
+[^elsarraj2019]: Elsarraj, Duaa, et al.
+    "Demystifying echo state network with deterministic simple topologies."
+    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
+"""
+function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
+        return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = simple_cycle(rng, T, dims...;
+        weight=T(cycle_weight), return_sparse=false)
+    for idx in axes(reservoir_matrix, 1)
+        if isodd(idx)
+            reservoir_matrix[idx, idx] = T(selfloop_weight)
+        end
+    end
+    for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
+        if iseven(idx)
+            reservoir_matrix[idx - 1, idx] = T(cycle_weight)
+        end
+    end
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1343,7 +1414,8 @@ end
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
-    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle)
+    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle,
+    :selfloop_feedback_cycle)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)

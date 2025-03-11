@@ -25,4 +25,5 @@
     low_connectivity
     double_cycle
     self_loop_cycle
+    selfloop_feedback_cycle
 ```
