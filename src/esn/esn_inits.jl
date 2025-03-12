@@ -1409,13 +1409,78 @@ function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+"""
+    selfloop_delayline_backward([rng], [T], dims...; 
+        cycle_weight=0.1, selfloop_weight=0.1,
+        return_sparse=false)
+
+Creates a reservoir based on a delay line with the addition of self loops and
+backward connections shifted by one [^elsarraj2019].
+
+This architecture is referred to as TP3 in the original paper.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `weight`: Weight of the cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+julia> reservoir_matrix = selfloop_delayline_backward(5, 5)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.1  0.0  0.0
+ 0.1  0.1  0.0  0.1  0.0
+ 0.0  0.1  0.1  0.0  0.1
+ 0.0  0.0  0.1  0.1  0.0
+ 0.0  0.0  0.0  0.1  0.1
+
+julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.3  0.0  0.0
+ 0.3  0.1  0.0  0.3  0.0
+ 0.0  0.3  0.1  0.0  0.3
+ 0.0  0.0  0.3  0.1  0.0
+ 0.0  0.0  0.0  0.3  0.1
+```
+
+[^elsarraj2019]: Elsarraj, Duaa, et al.
+    "Demystifying echo state network with deterministic simple topologies."
+    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
+"""
+function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight=T(0.1f0), selfloop_weight=T(0.1f0),
+        return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    reservoir_matrix += T(selfloop_weight) .* I(dims[1])
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = T(weight)
+    end
+    for idx in (first(axes(reservoir_matrix, 1))):(last(axes(reservoir_matrix, 1)) - 2)
+        reservoir_matrix[idx, idx + 2] = T(weight)
+    end
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle,
-    :selfloop_feedback_cycle)
+    :selfloop_feedback_cycle, :selfloop_delayline_backward)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)

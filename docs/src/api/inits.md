@@ -26,4 +26,5 @@
     double_cycle
     self_loop_cycle
     selfloop_feedback_cycle
+    selfloop_delayline_backward
 ```
