@@ -5,7 +5,7 @@ end
 
 # error for sparse inits with no SparseArrays.jl call
 
-function throw_sparse_error(return_sparse)
+function throw_sparse_error(return_sparse::Bool)
     if return_sparse && !haskey(Base.loaded_modules, :SparseArrays)
         error("""\n
             Sparse output requested but SparseArrays.jl is not loaded.
@@ -18,7 +18,7 @@ end
 
 ## scale spectral radius
 
-function scale_radius!(reservoir_matrix, radius)
+function scale_radius!(reservoir_matrix::AbstractMatrix, radius::AbstractFloat)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
@@ -27,6 +27,7 @@ function scale_radius!(reservoir_matrix, radius)
             Increase res_size or increase sparsity.\n
           """)
     end
+    return reservoir_matrix
 end
 
 ### input layers
@@ -70,7 +71,7 @@ function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling=T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = (DeviceAgnostic.rand(rng, T, res_size, in_size) .- T(0.5)) .*
-                   (T(2) * scaling)
+                   (T(2) * T(scaling))
     return layer_matrix
 end
 
@@ -124,9 +125,8 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     q = floor(Int, res_size / in_size)
 
     for idx in 1:in_size
-        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = (DeviceAgnostic.rand(
-            rng, T, q) .-
-                                                              T(0.5)) .* (T(2) * scaling)
+        sc_rand = (DeviceAgnostic.rand(rng, T, q) .- T(0.5)) .* (T(2) * T(scaling))
+        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = sc_rand
     end
 
     return return_init_as(Val(return_sparse), layer_matrix)
@@ -179,7 +179,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
         random_clm_idx = range(1, state_size; step=1)[DeviceAgnostic.rand(rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * scaling)
+                                                        T(0.5)) .* (T(2) * T(scaling))
     end
 
     for idx in 1:num_for_model
@@ -189,7 +189,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         random_clm_idx = range(state_size + 1, in_size; step=1)[DeviceAgnostic.rand(
             rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * scaling)
+                                                        T(0.5)) .* (T(2) * T(scaling))
     end
 
     return input_matrix
@@ -287,9 +287,9 @@ function bernoulli(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
     for idx in 1:res_size
         for jdx in 1:in_size
             if DeviceAgnostic.rand(rng, T) < p
-                input_matrix[idx, jdx] = weight
+                input_matrix[idx, jdx] = T(weight)
             else
-                input_matrix[idx, jdx] = -weight
+                input_matrix[idx, jdx] = -T(weight)
             end
         end
     end
@@ -312,7 +312,7 @@ function irrational(rng::AbstractRNG, ::Type{T}, res_size::Int, in_size::Int;
     for idx in 1:res_size
         for jdx in 1:in_size
             random_number = DeviceAgnostic.rand(rng, T)
-            input_matrix[idx, jdx] = random_number < 0.5 ? -weight : weight
+            input_matrix[idx, jdx] = random_number < 0.5 ? -T(weight) : T(weight)
         end
     end
 
@@ -638,7 +638,7 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
-    scale_radius!(reservoir_matrix, radius)
+    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -697,7 +697,7 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
       """
 
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = weight
+        reservoir_matrix[idx + 1, idx] = T(weight)
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -756,8 +756,8 @@ function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = weight
-        reservoir_matrix[idx, idx + 1] = fb_weight
+        reservoir_matrix[idx + 1, idx] = T(weight)
+        reservoir_matrix[idx, idx + 1] = T(fb_weight)
     end
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -819,18 +819,18 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = cycle_weight
+        reservoir_matrix[idx + 1, idx] = T(cycle_weight)
     end
 
-    reservoir_matrix[1, res_size] = cycle_weight
+    reservoir_matrix[1, res_size] = T(cycle_weight)
 
     for idx in 1:jump_size:(res_size - jump_size)
         tmp = (idx + jump_size) % res_size
         if tmp == 0
             tmp = res_size
         end
-        reservoir_matrix[idx, tmp] = jump_weight
-        reservoir_matrix[tmp, idx] = jump_weight
+        reservoir_matrix[idx, tmp] = T(cycle_weight)
+        reservoir_matrix[tmp, idx] = T(cycle_weight)
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -947,7 +947,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_diag::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = create_diag(rng, T, dims[1],
-        max_value;
+        T(max_value);
         sorted=sorted,
         reverse_sort=reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
@@ -1003,10 +1003,10 @@ function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
         qmatrix[idx, idx] = 1.0
     end
 
-    qmatrix[coord_i, coord_i] = cos(theta)
-    qmatrix[coord_j, coord_j] = cos(theta)
-    qmatrix[coord_i, coord_j] = -sin(theta)
-    qmatrix[coord_j, coord_i] = sin(theta)
+    qmatrix[coord_i, coord_i] = cos(T(theta))
+    qmatrix[coord_j, coord_j] = cos(T(theta))
+    qmatrix[coord_i, coord_j] = -sin(T(theta))
+    qmatrix[coord_j, coord_i] = sin(T(theta))
     return qmatrix
 end
 
@@ -1192,7 +1192,7 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
             reservoir_matrix[idx, jdx] = T(randn(rng))
         end
     end
-    scale_radius!(reservoir_matrix, radius)
+    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     return reservoir_matrix
 end
 
@@ -1204,7 +1204,7 @@ function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
         reservoir_matrix[perm[idx], perm[idx + 1]] = T(randn(rng))
     end
     reservoir_matrix[perm[res_size], perm[1]] = T(randn(rng))
-    scale_radius!(reservoir_matrix, radius)
+    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     if cut_cycle
         cut_cycle_edge!(reservoir_matrix, rng)
     end
@@ -1270,14 +1270,14 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for uidx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[uidx + 1, uidx] = cycle_weight
+        reservoir_matrix[uidx + 1, uidx] = T(cycle_weight)
     end
     for lidx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
-        reservoir_matrix[lidx - 1, lidx] = second_cycle_weight
+        reservoir_matrix[lidx - 1, lidx] = T(second_cycle_weight)
     end
 
-    reservoir_matrix[1, dims[1]] = second_cycle_weight
-    reservoir_matrix[dims[1], 1] = cycle_weight
+    reservoir_matrix[1, dims[1]] = T(second_cycle_weight)
+    reservoir_matrix[dims[1], 1] = T(cycle_weight)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1347,7 +1347,7 @@ function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=cycle_weight, return_sparse=false)
+        weight=T(cycle_weight), return_sparse=false)
     reservoir_matrix += T(selfloop_weight) .* I(dims[1])
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
