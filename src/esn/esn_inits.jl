@@ -1518,7 +1518,6 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
  0.5  0.0  0.1  0.0  0.0
  0.0  0.5  0.0  0.1  0.0
  0.0  0.0  0.5  0.0  0.1
-
 ```
 
 [^elsarraj2019]: Elsarraj, Duaa, et al.
@@ -1537,13 +1536,71 @@ function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer.
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+"""
+    forward_connection([rng], [T], dims...; 
+        weight=0.1, selfloop_weight=0.1,
+        return_sparse=false)
+
+Creates a reservoir based on a forward connection of weights [^elsarraj2019].
+
+This architecture is referred to as TP5 in the original paper.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `weight`: Weight of the cycle connections in the reservoir matrix.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+julia> reservoir_matrix = forward_connection(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+
+julia> reservoir_matrix = forward_connection(5, 5; weight=0.5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.5  0.0  0.0  0.0  0.0
+ 0.0  0.5  0.0  0.0  0.0
+ 0.0  0.0  0.5  0.0  0.0
+```
+
+[^elsarraj2019]: Elsarraj, Duaa, et al.
+    "Demystifying echo state network with deterministic simple topologies."
+    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
+"""
+function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight=T(0.1f0), return_sparse::Bool=false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 2)
+        reservoir_matrix[idx + 2, idx] = T(weight)
+    end
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle,
-    :selfloop_feedback_cycle, :selfloop_delayline_backward, :selfloop_forward_connection)
+    :selfloop_feedback_cycle, :selfloop_delayline_backward, :selfloop_forward_connection,
+    :forward_connection)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
