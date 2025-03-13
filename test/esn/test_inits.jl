@@ -28,7 +28,7 @@ reservoir_inits = [
     chaotic_init,
     low_connectivity,
     double_cycle,
-    self_loop_cycle,
+    selfloop_cycle,
     selfloop_feedback_cycle,
     selfloop_delayline_backward,
     selfloop_forward_connection,

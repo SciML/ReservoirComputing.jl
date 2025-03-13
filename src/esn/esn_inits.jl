@@ -1281,14 +1281,26 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
-    self_loop_cycle([rng], [T], dims...; 
+@doc raw"""
+    selfloop_cycle([rng], [T], dims...; 
         cycle_weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
 
 Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019].
 
 This architecture is referred to as TP1 in the original paper.
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    ll, & \text{if } i = j \\
+    r, & \text{if } j = i - 1 \text{ for } i = 2 \dots N \\
+    r, & \text{if } i = 1, j = N \\
+    0, & \text{otherwise}
+\end{cases}
+```
 
 # Arguments
 
@@ -1309,7 +1321,7 @@ This architecture is referred to as TP1 in the original paper.
 # Examples
 
 ```jldoctest
-julia> reservoir_matrix = self_loop_cycle(5, 5)
+julia> reservoir_matrix = selfloop_cycle(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.0  0.0  0.1
  0.1  0.1  0.0  0.0  0.0
@@ -1317,7 +1329,7 @@ julia> reservoir_matrix = self_loop_cycle(5, 5)
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
 
-julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
+julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
 5×5 Matrix{Float32}:
  0.5  0.0  0.0  0.0  0.2
  0.2  0.5  0.0  0.0  0.0
@@ -1330,7 +1342,7 @@ julia> reservoir_matrix = self_loop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
     "Demystifying echo state network with deterministic simple topologies."
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
-function self_loop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1340,7 +1352,7 @@ function self_loop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     selfloop_feedback_cycle([rng], [T], dims...; 
         cycle_weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
@@ -1349,6 +1361,19 @@ Creates a cycle reservoir with feedback connections on even neurons and
 self loops on odd neurons [^elsarraj2019].
 
 This architecture is referred to as TP2 in the original paper.
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    r, & \text{if } j = i - 1 \text{ for } i = 2 \dots N \\
+    r, & \text{if } i = 1, j = N \\
+    ll, & \text{if } i = j \text{ and } i \text{ is odd} \\
+    r, & \text{if } j = i + 1 \text{ and } i \text{ is even}, i \neq N \\
+    0, & \text{otherwise}
+\end{cases}
+```
 
 # Arguments
 
@@ -1409,7 +1434,7 @@ function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     selfloop_delayline_backward([rng], [T], dims...; 
         weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
@@ -1418,6 +1443,18 @@ Creates a reservoir based on a delay line with the addition of self loops and
 backward connections shifted by one [^elsarraj2019].
 
 This architecture is referred to as TP3 in the original paper.
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    ll, & \text{if } i = j \text{ for } i = 1 \dots N \\
+    r, & \text{if } j = i - 1 \text{ for } i = 2 \dots N \\
+    r, & \text{if } j = i - 2 \text{ for } i = 3 \dots N \\
+    0, & \text{otherwise}
+\end{cases}
+```
 
 # Arguments
 
@@ -1474,7 +1511,7 @@ function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer.
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     selfloop_forward_connection([rng], [T], dims...; 
         weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
@@ -1483,6 +1520,17 @@ Creates a reservoir based on a forward connection of weights between even nodes
 with the addition of self loops [^elsarraj2019].
 
 This architecture is referred to as TP4 in the original paper.
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    ll, & \text{if } i = j \text{ for } i = 1 \dots N \\
+    r, & \text{if } j = i - 2 \text{ for } i = 3 \dots N \\
+    0, & \text{otherwise}
+\end{cases}
+```
 
 # Arguments
 
@@ -1536,7 +1584,7 @@ function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer.
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     forward_connection([rng], [T], dims...; 
         weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
@@ -1544,6 +1592,16 @@ end
 Creates a reservoir based on a forward connection of weights [^elsarraj2019].
 
 This architecture is referred to as TP5 in the original paper.
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    r, & \text{if } j = i - 2 \text{ for } i = 3 \dots N \\
+    0, & \text{otherwise}
+\end{cases}
+```
 
 # Arguments
 
@@ -1598,7 +1656,7 @@ end
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
     :simple_cycle, :pseudo_svd, :chaotic_init,
     :scaled_rand, :weighted_init, :informed_init, :minimal_init, :chebyshev_mapping,
-    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :self_loop_cycle,
+    :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
     :selfloop_feedback_cycle, :selfloop_delayline_backward, :selfloop_forward_connection,
     :forward_connection)
     @eval begin
