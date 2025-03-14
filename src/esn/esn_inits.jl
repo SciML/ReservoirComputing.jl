@@ -660,6 +660,7 @@ Create and return a delay line reservoir matrix [^rodan2010].
 
   - `weight`: Determines the value of all connections in the reservoir.
     Default is 0.1.
+  - `shift`: delay line shift. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
 
@@ -688,19 +689,29 @@ julia> res_matrix = delay_line(5, 5; weight=1)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
+        weight=T(0.1), shift::Int=1, return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     @assert length(dims) == 2&&dims[1] == dims[2] """\n
         The dimensions must define a square matrix
         (e.g., (100, 100))
-      """
-
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = T(weight)
-    end
-
+    """
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    delay_line!(reservoir_matrix, weight, shift)
     return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+function delay_line!(reservoir_matrix::AbstractMatrix, weight::Number,
+        shift::Int)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
+        reservoir_matrix[idx + shift, idx] = weight
+    end
+end
+
+function delay_line!(reservoir_matrix::AbstractMatrix, weight::AbstractVector,
+        shift::Int)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
+        reservoir_matrix[idx + shift, idx] = weight[idx]
+    end
 end
 
 """
@@ -752,14 +763,27 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), fb_weight=T(0.2), return_sparse::Bool=false) where {T <: Number}
+        weight=T(0.1), fb_weight=T(0.2), shift::Int=1, fb_shift::Int=1,
+        return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = T(weight)
-        reservoir_matrix[idx, idx + 1] = T(fb_weight)
-    end
+    delay_line!(reservoir_matrix, weight, shift)
+    backward_connection!(reservoir_matrix, fb_weight, fb_shift)
     return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+function backward_connection!(reservoir_matrix::AbstractMatrix, weight::Number,
+        shift::Int)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
+        reservoir_matrix[idx, idx + shift] = weight
+    end
+end
+
+function backward_connection!(reservoir_matrix::AbstractMatrix, weight::AbstractVector,
+        shift::Int)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
+        reservoir_matrix[idx, idx + shift] = weight[idx]
+    end
 end
 
 """
@@ -817,12 +841,7 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = T(cycle_weight)
-    end
-
-    reservoir_matrix[1, res_size] = T(cycle_weight)
+    simple_cycle!(reservoir_matrix, cycle_weight)
 
     for idx in 1:jump_size:(res_size - jump_size)
         tmp = (idx + jump_size) % res_size
@@ -884,13 +903,22 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1), return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = T(weight)
-    end
-
-    reservoir_matrix[1, dims[1]] = T(weight)
+    simple_cycle!(reservoir_matrix, weight)
     return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+function simple_cycle!(reservoir_matrix::AbstractMatrix, weight::Number)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = weight
+    end
+    reservoir_matrix[1, end] = weight
+end
+
+function simple_cycle!(reservoir_matrix::AbstractMatrix, weight::AbstractVector)
+    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
+        reservoir_matrix[idx + 1, idx] = weight[idx]
+    end
+    reservoir_matrix[1, end] = weight[end]
 end
 
 """
@@ -1497,17 +1525,13 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1f0), selfloop_weight=T(0.1f0),
-        return_sparse::Bool=false) where {T <: Number}
+        shift::Int=1, fb_shift::Int=2, weight=T(0.1f0), fb_weight=weight,
+        selfloop_weight=T(0.1f0), return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     reservoir_matrix += T(selfloop_weight) .* I(dims[1])
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = T(weight)
-    end
-    for idx in (first(axes(reservoir_matrix, 1))):(last(axes(reservoir_matrix, 1)) - 2)
-        reservoir_matrix[idx, idx + 2] = T(weight)
-    end
+    delay_line!(reservoir_matrix, weight, shift)
+    backward_connection!(reservoir_matrix, fb_weight, fb_shift)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1573,14 +1597,12 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1f0), selfloop_weight=T(0.1f0),
+        weight=T(0.1f0), selfloop_weight=T(0.1f0), shift::Int=2,
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     reservoir_matrix += T(selfloop_weight) .* I(dims[1])
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 2)
-        reservoir_matrix[idx + 2, idx] = T(weight)
-    end
+    delay_line!(reservoir_matrix, weight, shift)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1645,9 +1667,7 @@ function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1f0), return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 2)
-        reservoir_matrix[idx + 2, idx] = T(weight)
-    end
+    delay_line!(reservoir_matrix, weight, 2)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
