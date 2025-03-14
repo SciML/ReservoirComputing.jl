@@ -702,9 +702,8 @@ end
 
 function delay_line!(reservoir_matrix::AbstractMatrix, weight::Number,
         shift::Int)
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
-        reservoir_matrix[idx + shift, idx] = weight
-    end
+    weights = fill(weight, size(reservoir_matrix, 1) - shift)
+    delay_line!(reservoir_matrix, weights, shift)
 end
 
 function delay_line!(reservoir_matrix::AbstractMatrix, weight::AbstractVector,
@@ -774,9 +773,8 @@ end
 
 function backward_connection!(reservoir_matrix::AbstractMatrix, weight::Number,
         shift::Int)
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
-        reservoir_matrix[idx, idx + shift] = weight
-    end
+    weights = fill(weight, size(reservoir_matrix, 1) - shift)
+    backward_connection!(reservoir_matrix, weights, shift)
 end
 
 function backward_connection!(reservoir_matrix::AbstractMatrix, weight::AbstractVector,
@@ -842,17 +840,19 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(reservoir_matrix, cycle_weight)
-
-    for idx in 1:jump_size:(res_size - jump_size)
-        tmp = (idx + jump_size) % res_size
-        if tmp == 0
-            tmp = res_size
-        end
-        reservoir_matrix[idx, tmp] = T(cycle_weight)
-        reservoir_matrix[tmp, idx] = T(cycle_weight)
-    end
-
+    add_jumps!(reservoir_matrix, cycle_weight, jump_size)
     return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+function add_jumps!(reservoir_matrix::AbstractMatrix, weight::Number, jump_size::Int)
+    for idx in 1:jump_size:(size(reservoir_matrix, 1) - jump_size)
+        tmp = (idx + jump_size) % size(reservoir_matrix, 1)
+        if tmp == 0
+            tmp = size(reservoir_matrix, 1)
+        end
+        reservoir_matrix[idx, tmp] = weight
+        reservoir_matrix[tmp, idx] = weight
+    end
 end
 
 """
@@ -908,10 +908,8 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function simple_cycle!(reservoir_matrix::AbstractMatrix, weight::Number)
-    for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[idx + 1, idx] = weight
-    end
-    reservoir_matrix[1, end] = weight
+    weights = fill(weight, size(reservoir_matrix, 1))
+    simple_cycle!(reservoir_matrix, weights)
 end
 
 function simple_cycle!(reservoir_matrix::AbstractMatrix, weight::AbstractVector)
