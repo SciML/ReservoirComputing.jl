@@ -22,6 +22,7 @@ include("predict.jl")
 include("train/linear_regression.jl")
 
 #esn
+include("esn/inits_components.jl")
 include("esn/esn_inits.jl")
 include("esn/esn_reservoir_drivers.jl")
 include("esn/esn.jl")
