@@ -38,7 +38,7 @@ input_inits = [
     scaled_rand,
     weighted_init,
     minimal_init,
-    minimal_init(; sampling_type=:irrational),
+    minimal_init(; sampling_type=:irrational!),
     chebyshev_mapping,
     logistic_mapping,
     modified_lm(; factor=4)
@@ -93,7 +93,7 @@ end
 
     @testset "Minimum complexity: $init" for init in [
         minimal_init,
-        minimal_init(; sampling_type=:irrational)
+        minimal_init(; sampling_type=:irrational!)
     ]
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
