@@ -242,7 +242,7 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number=T(0.1), sampling_type::Symbol=:bernoulli!, kwargs...) where {T <:
+        weight::Number=T(0.1), sampling_type::Symbol=:bernoulli_sample!, kwargs...) where {T <:
                                                                                     Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
@@ -596,6 +596,18 @@ Create and return a delay line reservoir matrix [^rodan2010].
   - `shift`: delay line shift. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
+    set to `:bernoulli_sample!`. Default is 0.5
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+
 
 # Examples
 
@@ -1258,11 +1270,11 @@ julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
-        return_sparse::Bool=false) where {T <: Number}
+        return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = simple_cycle(rng, T, dims...;
         weight=T(cycle_weight), return_sparse=false)
-    reservoir_matrix += T(selfloop_weight) .* I(dims[1])
+    self_loop!(rng, reservoir_matrix, selfloop_weight; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1413,11 +1425,11 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         shift::Int=1, fb_shift::Int=2, weight=T(0.1f0), fb_weight=weight,
         selfloop_weight=T(0.1f0), return_sparse::Bool=false,
-        delay_kwargs::NamedTuple=NamedTuple(), fb_kwargs::NamedTuple=NamedTuple()) where {T <:
-                                                                                          Number}
+        delay_kwargs::NamedTuple=NamedTuple(), fb_kwargs::NamedTuple=NamedTuple(),
+        selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    reservoir_matrix += T(selfloop_weight) .* I(dims[1])
+    self_loop!(rng, reservoir_matrix, selfloop_weight; selfloop_kwargs...)
     delay_line!(rng, reservoir_matrix, weight, shift; delay_kwargs...)
     backward_connection!(rng, reservoir_matrix, fb_weight, fb_shift; fb_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -1486,11 +1498,12 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
 """
 function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight=T(0.1f0), selfloop_weight=T(0.1f0), shift::Int=2,
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
+        return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
+        selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    reservoir_matrix += T(selfloop_weight) .* I(dims[1])
-    delay_line!(rng, reservoir_matrix, weight, shift; kwargs...)
+    self_loop!(rng, reservoir_matrix, selfloop_weight; selfloop_kwargs...)
+    delay_line!(rng, reservoir_matrix, weight, shift; delay_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 

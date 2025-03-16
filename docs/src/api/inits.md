@@ -30,3 +30,14 @@
     selfloop_forward_connection
     forward_connection
 ```
+
+## Building functions
+
+```@docs
+    scale_radius!
+    delay_line!
+    backward_connection!
+    simple_cycle!
+    self_loop!
+    add_jumps!
+```
