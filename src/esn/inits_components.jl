@@ -43,7 +43,8 @@ function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
     return vecormat
 end
 
-function bernoulli_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number=0.5)
+function bernoulli_sample!(
+        rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number=0.5)
     for idx in eachindex(vecormat)
         if rand(rng) > positive_prob
             vecormat[idx] = -vecormat[idx]
@@ -328,7 +329,7 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
 
-# Examples 
+# Examples
 
 ```jldoctest
 julia> matrix = zeros(Float32, 5, 5)
@@ -423,7 +424,6 @@ julia> self_loop!(matrix, 1.0)
   0.0  0.0   0.0   0.0   1.0
 ```
 """
-
 function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
         weight::Number; kwargs...)
     weights = fill(weight, size(reservoir_matrix, 1))

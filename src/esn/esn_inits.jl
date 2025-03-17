@@ -243,7 +243,7 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number=T(0.1), sampling_type::Symbol=:bernoulli_sample!, kwargs...) where {T <:
-                                                                                    Number}
+                                                                                           Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     input_matrix .+= T(weight)
@@ -577,7 +577,8 @@ end
 
 """
     delay_line([rng], [T], dims...;
-        weight=0.1, return_sparse=false)
+        weight=0.1, return_sparse=false,
+        kwargs...)
 
 Create and return a delay line reservoir matrix [^rodan2010].
 
@@ -607,7 +608,6 @@ Create and return a delay line reservoir matrix [^rodan2010].
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
-
 
 # Examples
 
@@ -648,7 +648,8 @@ end
 
 """
     delay_line_backward([rng], [T], dims...;
-        weight=0.1, fb_weight=0.2, return_sparse=false)
+        weight=0.1, fb_weight=0.2, return_sparse=false,
+        delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
 Creates a matrix with backward connections as described in [^rodan2010].
@@ -669,6 +670,19 @@ Creates a matrix with backward connections as described in [^rodan2010].
     in the reservoir. Default is 0.2
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the 
+    delay line weight and feedback weights respectively. The kwargs are as follows:
+    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+      `weight` can be positive with a probability set by `positive_prob`. If set to
+      `:irrational_sample!` the `weight` is negative if the decimal number of the
+      irrational number chosen is odd. Default is `:no_sample`.
+    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+      set to `:bernoulli_sample!`. Default is 0.5
+    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+      Default is `pi`.
+    + `start`: Which place after the decimal point the counting starts for the `irrational`
+      sign counting. Default is 1.
 
 # Examples
 
@@ -707,7 +721,8 @@ end
 
 """
     cycle_jumps([rng], [T], dims...; 
-        cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false)
+        cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
+        cycle_kwargs=(), jump_kwargs=())
 
 Create a cycle jumps reservoir [^Rodan2012].
 
@@ -729,6 +744,19 @@ Create a cycle jumps reservoir [^Rodan2012].
     Default is 3.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the 
+    cycle and jump weights respectively. The kwargs are as follows:
+    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+      `weight` can be positive with a probability set by `positive_prob`. If set to
+      `:irrational_sample!` the `weight` is negative if the decimal number of the
+      irrational number chosen is odd. Default is `:no_sample`.
+    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+      set to `:bernoulli_sample!`. Default is 0.5
+    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+      Default is `pi`.
+    + `start`: Which place after the decimal point the counting starts for the `irrational`
+      sign counting. Default is 1.
 
 # Examples
 
@@ -769,7 +797,8 @@ end
 
 """
     simple_cycle([rng], [T], dims...; 
-        weight=0.1, return_sparse=false)
+        weight=0.1, return_sparse=false,
+        kwargs...)
 
 Create a simple cycle reservoir [^rodan2010].
 
@@ -786,6 +815,17 @@ Create a simple cycle reservoir [^rodan2010].
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
 
 # Examples
 
@@ -1210,7 +1250,7 @@ end
 @doc raw"""
     selfloop_cycle([rng], [T], dims...; 
         cycle_weight=0.1, selfloop_weight=0.1,
-        return_sparse=false)
+        return_sparse=false, kwargs...)
 
 Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019].
 
@@ -1243,6 +1283,17 @@ W_{i,j} =
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
 
 # Examples
 
@@ -1363,7 +1414,8 @@ end
 @doc raw"""
     selfloop_delayline_backward([rng], [T], dims...; 
         weight=0.1, selfloop_weight=0.1,
-        return_sparse=false)
+        return_sparse=false, fb_kwargs=(), selfloop_kwargs=(),
+        delay_kwargs=())
 
 Creates a reservoir based on a delay line with the addition of self loops and
 backward connections shifted by one [^elsarraj2019].
@@ -1397,6 +1449,19 @@ W_{i,j} =
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
+    for the weights generation. The kwargs are as follows:
+    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+      `weight` can be positive with a probability set by `positive_prob`. If set to
+      `:irrational_sample!` the `weight` is negative if the decimal number of the
+      irrational number chosen is odd. Default is `:no_sample`.
+    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+      set to `:bernoulli_sample!`. Default is 0.5
+    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+      Default is `pi`.
+    + `start`: Which place after the decimal point the counting starts for the `irrational`
+      sign counting. Default is 1.
 
 # Examples
 
@@ -1438,7 +1503,8 @@ end
 @doc raw"""
     selfloop_forward_connection([rng], [T], dims...; 
         weight=0.1, selfloop_weight=0.1,
-        return_sparse=false)
+        return_sparse=false, selfloop_kwargs=(),
+        delay_kwargs=())
 
 Creates a reservoir based on a forward connection of weights between even nodes
 with the addition of self loops [^elsarraj2019].
@@ -1471,6 +1537,19 @@ W_{i,j} =
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
+  - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the 
+    delay line weight and self loop weights respectively. The kwargs are as follows:
+    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+      `weight` can be positive with a probability set by `positive_prob`. If set to
+      `:irrational_sample!` the `weight` is negative if the decimal number of the
+      irrational number chosen is odd. Default is `:no_sample`.
+    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+      set to `:bernoulli_sample!`. Default is 0.5
+    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+      Default is `pi`.
+    + `start`: Which place after the decimal point the counting starts for the `irrational`
+      sign counting. Default is 1.
 
 # Examples
 
