@@ -666,23 +666,25 @@ Creates a matrix with backward connections as described in [^rodan2010].
 
   - `weight`: The weight determines the absolute value of
     forward connections in the reservoir. Default is 0.1
+
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir. Default is 0.2
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
-  - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the 
+  - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
     delay line weight and feedback weights respectively. The kwargs are as follows:
-    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-      `weight` can be positive with a probability set by `positive_prob`. If set to
-      `:irrational_sample!` the `weight` is negative if the decimal number of the
-      irrational number chosen is odd. Default is `:no_sample`.
-    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-      set to `:bernoulli_sample!`. Default is 0.5
-    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-      Default is `pi`.
-    + `start`: Which place after the decimal point the counting starts for the `irrational`
-      sign counting. Default is 1.
+
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
 
 # Examples
 
@@ -738,25 +740,27 @@ Create a cycle jumps reservoir [^Rodan2012].
 
   - `cycle_weight`:  The weight of cycle connections.
     Default is 0.1.
+
   - `jump_weight`: The weight of jump connections.
     Default is 0.1.
   - `jump_size`:  The number of steps between jump connections.
     Default is 3.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
-  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the 
+  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
-    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-      `weight` can be positive with a probability set by `positive_prob`. If set to
-      `:irrational_sample!` the `weight` is negative if the decimal number of the
-      irrational number chosen is odd. Default is `:no_sample`.
-    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-      set to `:bernoulli_sample!`. Default is 0.5
-    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-      Default is `pi`.
-    + `start`: Which place after the decimal point the counting starts for the `irrational`
-      sign counting. Default is 1.
+
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
 
 # Examples
 

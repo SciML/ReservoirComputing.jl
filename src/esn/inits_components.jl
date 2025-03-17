@@ -404,7 +404,7 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
 
-# Examples 
+# Examples
 
 ```jldoctest
 julia> matrix = zeros(Float32, 5, 5)
