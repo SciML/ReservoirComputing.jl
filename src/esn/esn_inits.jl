@@ -668,11 +668,12 @@ Creates a matrix with backward connections as described in [^rodan2010].
 # Keyword arguments
 
   - `weight`: The weight determines the absolute value of
-    forward connections in the reservoir. 
+    forward connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the lenght of the array matches the lenght of the sub-diagonal
     you want to populate.
     Default is 0.1
+
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -753,6 +754,7 @@ Create a cycle jumps reservoir [^Rodan2012].
     array please make sure that the lenght of the array matches the lenght of the cycle
     you want to populate.
     Default is 0.1.
+
   - `jump_weight`: The weight of jump connections.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the lenght of the array matches the lenght of the jumps
