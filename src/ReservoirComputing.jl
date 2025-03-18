@@ -22,6 +22,7 @@ include("predict.jl")
 include("train/linear_regression.jl")
 
 #esn
+include("esn/inits_components.jl")
 include("esn/esn_inits.jl")
 include("esn/esn_reservoir_drivers.jl")
 include("esn/esn.jl")
@@ -42,6 +43,8 @@ export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
        simple_cycle, pseudo_svd, chaotic_init, low_connectivity, double_cycle,
        selfloop_cycle, selfloop_feedback_cycle, selfloop_delayline_backward,
        selfloop_forward_connection, forward_connection
+export scale_radius!, delay_line!, backward_connection!, simple_cycle!, add_jumps!,
+       self_loop!
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
