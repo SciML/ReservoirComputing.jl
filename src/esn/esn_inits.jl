@@ -89,6 +89,14 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
+    if res_size != approx_res_size
+        @warn """Reservoir size has changed!\n
+            Computed reservoir size ($res_size) does not equal the \
+            provided reservoir size ($approx_res_size). \n 
+            Using computed value ($res_size). Make sure to modify the \
+            reservoir initializer accordingly. \n
+        """
+    end
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     q = floor(Int, res_size / in_size)
 
