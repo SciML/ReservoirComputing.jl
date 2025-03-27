@@ -1187,7 +1187,8 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <:
+                                                                                   Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -1200,7 +1201,8 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
 end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <:
+                                                                                   Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for idx in 1:(res_size - 1)
