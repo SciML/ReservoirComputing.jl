@@ -147,7 +147,6 @@ warning.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
-  
 
 # Examples
 
@@ -191,7 +190,6 @@ julia> res_input = weighted_minimal(9, 3; sampling_type=:bernoulli_sample!)
  -0.0  -0.0  -0.1
  -0.0  -0.0   0.1
   0.0  -0.0   0.1
-
 ```
 
 [^lu2017]: Lu, Zhixin, et al.
