@@ -137,14 +137,14 @@ julia> delay_line!(matrix, 5.0, 2)
 ```
 """
 function delay_line!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number,
-        shift::Int; kwargs...)
+        shift::Integer; kwargs...)
     weights = fill(weight, size(reservoir_matrix, 1) - shift)
     return delay_line!(rng, reservoir_matrix, weights, shift; kwargs...)
 end
 
 function delay_line!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Int; sampling_type=:no_sample, kwargs...)
+        shift::Integer; sampling_type=:no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -214,14 +214,14 @@ julia> backward_connection!(matrix, 3.0, 1; sampling_type=:bernoulli_sample!)
 """
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number,
-        shift::Int; kwargs...)
+        shift::Integer; kwargs...)
     weights = fill(weight, size(reservoir_matrix, 1) - shift)
     return backward_connection!(rng, reservoir_matrix, weights, shift; kwargs...)
 end
 
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Int; sampling_type=:no_sample, kwargs...)
+        shift::Integer; sampling_type=:no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -350,14 +350,14 @@ julia> add_jumps!(matrix, 1.0)
 ```
 """
 function add_jumps!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::Number, jump_size::Int; kwargs...)
+        weight::Number, jump_size::Integer; kwargs...)
     weights = fill(
         weight, length(collect(1:jump_size:(size(reservoir_matrix, 1) - jump_size))))
     return add_jumps!(rng, reservoir_matrix, weights, jump_size; kwargs...)
 end
 
 function add_jumps!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::AbstractVector, jump_size::Int;
+        weight::AbstractVector, jump_size::Integer;
         sampling_type=:no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
