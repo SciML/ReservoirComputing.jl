@@ -36,7 +36,7 @@ julia> res_input = scaled_rand(8, 3)
 ```
 """
 function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling=T(0.1)) where {T <: Number}
+        scaling::Number=T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = (DeviceAgnostic.rand(rng, T, res_size, in_size) .- T(0.5)) .*
                    (T(2) * T(scaling))
@@ -85,7 +85,7 @@ julia> res_input = weighted_init(8, 3)
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling=T(0.1), return_sparse::Bool=false) where {T <: Number}
+        scaling::Number=T(0.1), return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -136,7 +136,8 @@ Create an input layer for informed echo state networks [^pathak2018].
     Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling=T(0.1), model_in_size, gamma=T(0.5)) where {T <: Number}
+        scaling::Number=T(0.1), model_in_size::Integer,
+        gamma::Number=T(0.5)) where {T <: Number}
     res_size, in_size = dims
     state_size = in_size - model_in_size
 
@@ -250,8 +251,8 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number=T(0.1), sampling_type::Symbol=:bernoulli_sample!, kwargs...) where {T <:
-                                                                                           Number}
+        weight::Number=T(0.1), sampling_type::Symbol=:bernoulli_sample!,
+        kwargs...) where {T <: Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     input_matrix .+= T(weight)
@@ -574,7 +575,7 @@ julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
 ```
 """
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        radius=T(1.0), sparsity=T(0.1), std=T(1.0),
+        radius::Number=T(1.0), sparsity::Number=T(0.1), std::Number=T(1.0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
@@ -645,15 +646,15 @@ julia> res_matrix = delay_line(5, 5; weight=1)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), shift::Int=1, return_sparse::Bool=false,
-        kwargs...) where {T <: Number}
+        weight::Union{Number, AbstractVector}=T(0.1), shift::Integer=1,
+        return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     @assert length(dims) == 2&&dims[1] == dims[2] """\n
         The dimensions must define a square matrix
         (e.g., (100, 100))
     """
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, weight, shift; kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -730,13 +731,15 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), fb_weight=T(0.2), shift::Int=1, fb_shift::Int=1,
-        return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
+        weight::Union{Number, AbstractVector}=T(0.1),
+        fb_weight::Union{Number, AbstractVector}=T(0.2), shift::Integer=1,
+        fb_shift::Integer=1, return_sparse::Bool=false,
+        delay_kwargs::NamedTuple=NamedTuple(),
         fb_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, weight, shift; delay_kwargs...)
-    backward_connection!(rng, reservoir_matrix, fb_weight, fb_shift; fb_kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
+    backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -812,15 +815,16 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
     Neural computation 24.7 (2012): 1822-1852.
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Number=T(0.1), jump_weight::Number=T(0.1),
-        jump_size::Int=3, return_sparse::Bool=false,
-        cycle_kwargs::NamedTuple=NamedTuple(), jump_kwargs::NamedTuple=NamedTuple()) where {T <:
-                                                                                            Number}
+        cycle_weight::Union{Number, AbstractVector}=T(0.1),
+        jump_weight::Union{Number, AbstractVector}=T(0.1),
+        jump_size::Integer=3, return_sparse::Bool=false,
+        cycle_kwargs::NamedTuple=NamedTuple(),
+        jump_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, cycle_weight; cycle_kwargs...)
-    add_jumps!(rng, reservoir_matrix, cycle_weight, jump_size; jump_kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
+    add_jumps!(rng, reservoir_matrix, T.(jump_weight), jump_size; jump_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -884,10 +888,11 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1), return_sparse::Bool=false, kwargs...) where {T <: Number}
+        weight::Union{Number, AbstractVector}=T(0.1),
+        return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, weight; kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(weight); kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1159,7 +1164,7 @@ otherwise, it generates a random connectivity pattern.
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool=false, connected::Bool=false,
-        in_degree::Int=1, kwargs...) where {T <: Number}
+        in_degree::Integer=1, kwargs...) where {T <: Number}
     res_size = dims[1]
     if length(dims) != 2 || dims[1] != dims[2]
         error("""
@@ -1182,7 +1187,7 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -1195,7 +1200,7 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
 end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::T=T(1.0), cut_cycle::Bool=false) where {T <: Number}
+        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for idx in 1:(res_size - 1)
@@ -1262,20 +1267,21 @@ julia> reservoir_matrix = double_cycle(5, 5; cycle_weight=0.1, second_cycle_weig
     Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
 """
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight=T(0.1), second_cycle_weight=T(0.1),
+        cycle_weight::Union{Number, AbstractVector}=T(0.1),
+        second_cycle_weight::Union{Number, AbstractVector}=T(0.1),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for uidx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[uidx + 1, uidx] = T(cycle_weight)
+        reservoir_matrix[uidx + 1, uidx] = T.(cycle_weight)
     end
     for lidx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
-        reservoir_matrix[lidx - 1, lidx] = T(second_cycle_weight)
+        reservoir_matrix[lidx - 1, lidx] = T.(second_cycle_weight)
     end
 
-    reservoir_matrix[1, dims[1]] = T(second_cycle_weight)
-    reservoir_matrix[dims[1], 1] = T(cycle_weight)
+    reservoir_matrix[1, dims[1]] = T.(second_cycle_weight)
+    reservoir_matrix[dims[1], 1] = T.(cycle_weight)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1358,12 +1364,13 @@ julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
+        cycle_weight::Union{Number, AbstractVector}=T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
         return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=T(cycle_weight), return_sparse=false)
-    self_loop!(rng, reservoir_matrix, selfloop_weight; kwargs...)
+        weight=T.(cycle_weight), return_sparse=false)
+    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1434,19 +1441,20 @@ julia> reservoir_matrix = selfloop_feedback_cycle(5, 5; self_loop_weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight=T(0.1f0), selfloop_weight=T(0.1f0),
+        cycle_weight::Union{Number, AbstractVector}=T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=T(cycle_weight), return_sparse=false)
+        weight=T.(cycle_weight), return_sparse=false)
     for idx in axes(reservoir_matrix, 1)
         if isodd(idx)
-            reservoir_matrix[idx, idx] = T(selfloop_weight)
+            reservoir_matrix[idx, idx] = T.(selfloop_weight)
         end
     end
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
         if iseven(idx)
-            reservoir_matrix[idx - 1, idx] = T(cycle_weight)
+            reservoir_matrix[idx - 1, idx] = T.(cycle_weight)
         end
     end
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -1535,15 +1543,18 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        shift::Int=1, fb_shift::Int=2, weight=T(0.1f0), fb_weight=weight,
-        selfloop_weight=T(0.1f0), return_sparse::Bool=false,
-        delay_kwargs::NamedTuple=NamedTuple(), fb_kwargs::NamedTuple=NamedTuple(),
+        shift::Integer=1, fb_shift::Integer=2,
+        weight::Union{Number, AbstractVector}=T(0.1f0),
+        fb_weight::Union{Number, AbstractVector}=weight,
+        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
+        return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
+        fb_kwargs::NamedTuple=NamedTuple(),
         selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    self_loop!(rng, reservoir_matrix, selfloop_weight; selfloop_kwargs...)
-    delay_line!(rng, reservoir_matrix, weight, shift; delay_kwargs...)
-    backward_connection!(rng, reservoir_matrix, fb_weight, fb_shift; fb_kwargs...)
+    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
+    backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1629,13 +1640,14 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1f0), selfloop_weight=T(0.1f0), shift::Int=2,
+        weight::Union{Number, AbstractVector}=T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0), shift::Integer=2,
         return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
         selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    self_loop!(rng, reservoir_matrix, selfloop_weight; selfloop_kwargs...)
-    delay_line!(rng, reservoir_matrix, weight, shift; delay_kwargs...)
+    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1711,10 +1723,11 @@ julia> reservoir_matrix = forward_connection(5, 5; weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight=T(0.1f0), return_sparse::Bool=false, kwargs...) where {T <: Number}
+        weight::Union{Number, AbstractVector}=T(0.1f0), return_sparse::Bool=false,
+        kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, weight, 2; kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(weight), 2; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
