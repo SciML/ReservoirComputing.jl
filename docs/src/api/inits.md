@@ -5,6 +5,7 @@
 ```@docs
     scaled_rand
     weighted_init
+    weighted_minimal
     informed_init
     minimal_init
     chebyshev_mapping

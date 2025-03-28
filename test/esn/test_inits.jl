@@ -37,6 +37,7 @@ reservoir_inits = [
 input_inits = [
     scaled_rand,
     weighted_init,
+    weighted_minimal,
     minimal_init,
     minimal_init(; sampling_type=:irrational_sample!),
     chebyshev_mapping,
