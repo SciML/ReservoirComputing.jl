@@ -43,6 +43,33 @@ function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
     return vecormat
 end
 
+function regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
+        strides::Union{Integer, AbstractVector{<:Integer}}=2)
+    return _regular_sample!(rng, vecormat, strides)
+end
+
+function _regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::Integer)
+    for idx in eachindex(vecormat)
+        if idx % strides == 0
+            vecormat[idx] = -vecormat[idx]
+        end
+    end
+end
+
+function _regular_sample!(
+        rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::AbstractVector{<:Integer})
+    next_flip = strides[1]
+    strides_idx = 1
+
+    for idx in eachindex(vecormat)
+        if idx == next_flip
+            vecormat[idx] = -vecormat[idx]
+            strides_idx = (strides_idx % length(strides)) + 1
+            next_flip += strides[strides_idx]
+        end
+    end
+end
+
 function bernoulli_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number=0.5)
     for idx in eachindex(vecormat)
