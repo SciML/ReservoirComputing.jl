@@ -310,7 +310,7 @@ The sign difference is randomly determined by the `sampling` chosen.
   - `irrational`: Irrational number chosen for sampling if `sampling_type=:irrational`.
     Default is `pi`.
   - `start`: Starting value for the irrational sample. Default is 1
-  - `p`: Probability for the Bernoulli sampling. Lower probability increases negative
+  - `positive_prob`: Probability for the Bernoulli sampling. Lower probability increases negative
     value. Higher probability increases positive values. Default is 0.5
 
 # Examples
