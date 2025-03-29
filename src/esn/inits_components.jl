@@ -5,7 +5,7 @@ end
 
 # error for sparse inits with no SparseArrays.jl call
 function throw_sparse_error(return_sparse::Bool)
-    if return_sparse && !haskey(Base.loaded_modules, :SparseArrays)
+    if return_sparse && !isdefined(Main, :SparseArrays)
         error("""\n
             Sparse output requested but SparseArrays.jl is not loaded.
             Please load it with:
