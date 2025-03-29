@@ -140,13 +140,17 @@ warning.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
     set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -305,13 +309,21 @@ The sign difference is randomly determined by the `sampling` chosen.
 # Keyword arguments
 
   - `weight`: The weight used to fill the layer matrix. Default is 0.1.
-  - `sampling_type`: The sampling parameters used to generate the input matrix.
-    Default is `:bernoulli_sample!`.
-  - `irrational`: Irrational number chosen for sampling if `sampling_type=:irrational`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
-  - `start`: Starting value for the irrational sample. Default is 1
-  - `positive_prob`: Probability for the Bernoulli sampling. Lower probability increases negative
-    value. Higher probability increases positive values. Default is 0.5
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -1061,13 +1073,17 @@ Create and return a delay line reservoir matrix [^rodan2010].
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
-    set to `:bernoulli_sample!`. Default is 0.5
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -1148,13 +1164,17 @@ Creates a matrix with backward connections as described in [^rodan2010].
         If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
         `weight` can be positive with a probability set by `positive_prob`. If set to
         `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. Default is `:no_sample`.
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
       + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5
+        set to `:bernoulli_sample!`. Default is 0.5.
       + `irrational`: Irrational number whose decimals decide the sign of `weight`.
         Default is `pi`.
       + `start`: Which place after the decimal point the counting starts for the `irrational`
         sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
 # Examples
 
@@ -1232,13 +1252,17 @@ Create a cycle jumps reservoir [^Rodan2012].
         If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
         `weight` can be positive with a probability set by `positive_prob`. If set to
         `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. Default is `:no_sample`.
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
       + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5
+        set to `:bernoulli_sample!`. Default is 0.5.
       + `irrational`: Irrational number whose decimals decide the sign of `weight`.
         Default is `pi`.
       + `start`: Which place after the decimal point the counting starts for the `irrational`
         sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
 # Examples
 
@@ -1305,13 +1329,17 @@ Create a simple cycle reservoir [^rodan2010].
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -1450,13 +1478,17 @@ W_{i,j} =
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -1633,16 +1665,20 @@ W_{i,j} =
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
     + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-      `weight` can be positive with a probability set by `positive_prob`. If set to
-      `:irrational_sample!` the `weight` is negative if the decimal number of the
-      irrational number chosen is odd. Default is `:no_sample`.
-    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-      set to `:bernoulli_sample!`. Default is 0.5
-    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-      Default is `pi`.
-    + `start`: Which place after the decimal point the counting starts for the `irrational`
-      sign counting. Default is 1.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5.
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
 # Examples
 
@@ -1730,16 +1766,20 @@ W_{i,j} =
   - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the 
     delay line weight and self loop weights respectively. The kwargs are as follows:
     + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-      `weight` can be positive with a probability set by `positive_prob`. If set to
-      `:irrational_sample!` the `weight` is negative if the decimal number of the
-      irrational number chosen is odd. Default is `:no_sample`.
-    + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-      set to `:bernoulli_sample!`. Default is 0.5
-    + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-      Default is `pi`.
-    + `start`: Which place after the decimal point the counting starts for the `irrational`
-      sign counting. Default is 1.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5.
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
 # Examples
 
@@ -1813,16 +1853,20 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-      If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-      `weight` can be positive with a probability set by `positive_prob`. If set to
-      `:irrational_sample!` the `weight` is negative if the decimal number of the
-      irrational number chosen is odd. Default is `:no_sample`.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-      set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-      Default is `pi`.
+    Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
-      sign counting. Default is 1.
+    sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
