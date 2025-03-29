@@ -700,318 +700,6 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    delay_line([rng], [T], dims...;
-        weight=0.1, return_sparse=false,
-        kwargs...)
-
-Create and return a delay line reservoir matrix [^rodan2010].
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the reservoir matrix.
-
-# Keyword arguments
-
-  - `weight`: Determines the value of all connections in the reservoir.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
-    you want to populate.
-    Default is 0.1.
-  - `shift`: delay line shift. Default is 1.
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
-    set to `:bernoulli_sample!`. Default is 0.5
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-
-# Examples
-
-```jldoctest
-julia> res_matrix = delay_line(5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.0  0.0  0.1  0.0  0.0
- 0.0  0.0  0.0  0.1  0.0
-
-julia> res_matrix = delay_line(5, 5; weight=1)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  0.0  0.0
- 0.0  1.0  0.0  0.0  0.0
- 0.0  0.0  1.0  0.0  0.0
- 0.0  0.0  0.0  1.0  0.0
-```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
-"""
-function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1), shift::Integer=1,
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    @assert length(dims) == 2&&dims[1] == dims[2] """\n
-        The dimensions must define a square matrix
-        (e.g., (100, 100))
-    """
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, T.(weight), shift; kwargs...)
-    return return_init_as(Val(return_sparse), reservoir_matrix)
-end
-
-"""
-    delay_line_backward([rng], [T], dims...;
-        weight=0.1, fb_weight=0.2, return_sparse=false,
-        delay_kwargs=(), fb_kwargs=())
-
-Create a delay line backward reservoir with the specified by `dims` and weights.
-Creates a matrix with backward connections as described in [^rodan2010].
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the reservoir matrix.
-
-# Keyword arguments
-
-  - `weight`: The weight determines the absolute value of
-    forward connections in the reservoir.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
-    you want to populate.
-    Default is 0.1
-
-  - `fb_weight`: Determines the absolute value of backward connections
-    in the reservoir.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
-    you want to populate.
-    Default is 0.2
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-  - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
-    delay line weight and feedback weights respectively. The kwargs are as follows:
-
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-
-# Examples
-
-```jldoctest
-julia> res_matrix = delay_line_backward(5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
- 0.0  0.0  0.0  0.1  0.0
-
-julia> res_matrix = delay_line_backward(Float16, 5, 5)
-5×5 Matrix{Float16}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
- 0.0  0.0  0.0  0.1  0.0
-```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
-"""
-function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1),
-        fb_weight::Union{Number, AbstractVector}=T(0.2), shift::Integer=1,
-        fb_shift::Integer=1, return_sparse::Bool=false,
-        delay_kwargs::NamedTuple=NamedTuple(),
-        fb_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
-    backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
-    return return_init_as(Val(return_sparse), reservoir_matrix)
-end
-
-"""
-    cycle_jumps([rng], [T], dims...; 
-        cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
-        cycle_kwargs=(), jump_kwargs=())
-
-Create a cycle jumps reservoir [^Rodan2012].
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the reservoir matrix.
-
-# Keyword arguments
-
-  - `cycle_weight`:  The weight of cycle connections.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
-    you want to populate.
-    Default is 0.1.
-
-  - `jump_weight`: The weight of jump connections.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the jumps
-    you want to populate.
-    Default is 0.1.
-  - `jump_size`:  The number of steps between jump connections.
-    Default is 3.
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
-    cycle and jump weights respectively. The kwargs are as follows:
-
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-
-# Examples
-
-```jldoctest
-julia> res_matrix = cycle_jumps(5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.1  0.1
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.1  0.0  0.1  0.0  0.0
- 0.0  0.0  0.0  0.1  0.0
-
-julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.1  0.0  0.1
- 0.1  0.0  0.0  0.0  0.0
- 0.1  0.1  0.0  0.0  0.1
- 0.0  0.0  0.1  0.0  0.0
- 0.0  0.0  0.1  0.1  0.0
-```
-
-[^rodan2012]: Rodan, Ali, and Peter Tiňo.
-    "Simple deterministically constructed cycle reservoirs with regular jumps."
-    Neural computation 24.7 (2012): 1822-1852.
-"""
-function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        jump_weight::Union{Number, AbstractVector}=T(0.1),
-        jump_size::Integer=3, return_sparse::Bool=false,
-        cycle_kwargs::NamedTuple=NamedTuple(),
-        jump_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    res_size = first(dims)
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
-    add_jumps!(rng, reservoir_matrix, T.(jump_weight), jump_size; jump_kwargs...)
-    return return_init_as(Val(return_sparse), reservoir_matrix)
-end
-
-"""
-    simple_cycle([rng], [T], dims...; 
-        weight=0.1, return_sparse=false,
-        kwargs...)
-
-Create a simple cycle reservoir [^rodan2010].
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
-  - `dims`: Dimensions of the reservoir matrix.
-
-# Keyword arguments
-
-  - `weight`: Weight of the connections in the reservoir matrix.
-    This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
-    you want to populate.
-    Default is 0.1.
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-
-# Examples
-
-```jldoctest
-julia> res_matrix = simple_cycle(5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.1
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.0  0.0  0.1  0.0  0.0
- 0.0  0.0  0.0  0.1  0.0
-
-julia> res_matrix = simple_cycle(5, 5; weight=11)
-5×5 Matrix{Float32}:
-  0.0   0.0   0.0   0.0  11.0
- 11.0   0.0   0.0   0.0   0.0
-  0.0  11.0   0.0   0.0   0.0
-  0.0   0.0  11.0   0.0   0.0
-  0.0   0.0   0.0  11.0   0.0
-```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
-"""
-function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1),
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, T.(weight); kwargs...)
-    return return_init_as(Val(return_sparse), reservoir_matrix)
-end
-
-"""
     pseudo_svd([rng], [T], dims...; 
         max_value=1.0, sparsity=0.1, sorted=true, reverse_sort=false,
         return_sparse=false)
@@ -1345,6 +1033,320 @@ function cut_cycle_edge!(
 end
 
 """
+    delay_line([rng], [T], dims...;
+        weight=0.1, return_sparse=false,
+        kwargs...)
+
+Create and return a delay line reservoir matrix [^rodan2010].
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `weight`: Determines the value of all connections in the reservoir.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    you want to populate.
+    Default is 0.1.
+  - `shift`: delay line shift. Default is 1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
+    set to `:bernoulli_sample!`. Default is 0.5
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+
+# Examples
+
+```jldoctest
+julia> res_matrix = delay_line(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+
+julia> res_matrix = delay_line(5, 5; weight=1)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  0.0  0.0  0.0  0.0
+ 0.0  1.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  1.0  0.0
+```
+
+[^rodan2010]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network."
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
+function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight::Union{Number, AbstractVector}=T(0.1), shift::Integer=1,
+        return_sparse::Bool=false, kwargs...) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    @assert length(dims) == 2&&dims[1] == dims[2] """\n
+        The dimensions must define a square matrix
+        (e.g., (100, 100))
+    """
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; kwargs...)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
+    delay_line_backward([rng], [T], dims...;
+        weight=0.1, fb_weight=0.2, return_sparse=false,
+        delay_kwargs=(), fb_kwargs=())
+
+Create a delay line backward reservoir with the specified by `dims` and weights.
+Creates a matrix with backward connections as described in [^rodan2010].
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `weight`: The weight determines the absolute value of
+    forward connections in the reservoir.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    you want to populate.
+    Default is 0.1
+
+  - `fb_weight`: Determines the absolute value of backward connections
+    in the reservoir.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    you want to populate.
+    Default is 0.2.
+  - `fb_shift`: How far the backward connection will be from the diagonal.
+    Default is 2.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+  - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
+    delay line weight and feedback weights respectively. The kwargs are as follows:
+
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+
+# Examples
+
+```jldoctest
+julia> res_matrix = delay_line_backward(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.2  0.0  0.0  0.0
+ 0.1  0.0  0.2  0.0  0.0
+ 0.0  0.1  0.0  0.2  0.0
+ 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.0  0.0  0.1  0.0
+
+julia> res_matrix = delay_line_backward(Float16, 5, 5)
+5×5 Matrix{Float16}:
+ 0.0  0.2  0.0  0.0  0.0
+ 0.1  0.0  0.2  0.0  0.0
+ 0.0  0.1  0.0  0.2  0.0
+ 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.0  0.0  0.1  0.0
+```
+
+[^rodan2010]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network."
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
+function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight::Union{Number, AbstractVector}=T(0.1),
+        fb_weight::Union{Number, AbstractVector}=T(0.2), shift::Integer=1,
+        fb_shift::Integer=1, return_sparse::Bool=false,
+        delay_kwargs::NamedTuple=NamedTuple(),
+        fb_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
+    backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
+    cycle_jumps([rng], [T], dims...; 
+        cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
+        cycle_kwargs=(), jump_kwargs=())
+
+Create a cycle jumps reservoir [^Rodan2012].
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `cycle_weight`:  The weight of cycle connections.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the cycle
+    you want to populate.
+    Default is 0.1.
+
+  - `jump_weight`: The weight of jump connections.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the jumps
+    you want to populate.
+    Default is 0.1.
+  - `jump_size`:  The number of steps between jump connections.
+    Default is 3.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
+    cycle and jump weights respectively. The kwargs are as follows:
+
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+
+# Examples
+
+```jldoctest
+julia> res_matrix = cycle_jumps(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.1  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+
+julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.1  0.1  0.0  0.0  0.1
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.1  0.1  0.0
+```
+
+[^rodan2012]: Rodan, Ali, and Peter Tiňo.
+    "Simple deterministically constructed cycle reservoirs with regular jumps."
+    Neural computation 24.7 (2012): 1822-1852.
+"""
+function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        cycle_weight::Union{Number, AbstractVector}=T(0.1),
+        jump_weight::Union{Number, AbstractVector}=T(0.1),
+        jump_size::Integer=3, return_sparse::Bool=false,
+        cycle_kwargs::NamedTuple=NamedTuple(),
+        jump_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    res_size = first(dims)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
+    add_jumps!(rng, reservoir_matrix, T.(jump_weight), jump_size; jump_kwargs...)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
+    simple_cycle([rng], [T], dims...; 
+        weight=0.1, return_sparse=false,
+        kwargs...)
+
+Create a simple cycle reservoir [^rodan2010].
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+# Keyword arguments
+
+  - `weight`: Weight of the connections in the reservoir matrix.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the cycle
+    you want to populate.
+    Default is 0.1.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+
+# Examples
+
+```jldoctest
+julia> res_matrix = simple_cycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+
+julia> res_matrix = simple_cycle(5, 5; weight=11)
+5×5 Matrix{Float32}:
+  0.0   0.0   0.0   0.0  11.0
+ 11.0   0.0   0.0   0.0   0.0
+  0.0  11.0   0.0   0.0   0.0
+  0.0   0.0  11.0   0.0   0.0
+  0.0   0.0   0.0  11.0   0.0
+```
+
+[^rodan2010]: Rodan, Ali, and Peter Tino.
+    "Minimum complexity echo state network."
+    IEEE transactions on neural networks 22.1 (2010): 131-144.
+"""
+function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight::Union{Number, AbstractVector}=T(0.1),
+        return_sparse::Bool=false, kwargs...) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    simple_cycle!(rng, reservoir_matrix, T.(weight); kwargs...)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
     double_cycle([rng], [T], dims...; 
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
@@ -1579,9 +1581,9 @@ end
 
 @doc raw"""
     selfloop_delayline_backward([rng], [T], dims...; 
-        weight=0.1, selfloop_weight=0.1,
-        return_sparse=false, fb_kwargs=(), selfloop_kwargs=(),
-        delay_kwargs=())
+        weight=0.1, selfloop_weight=0.1, fb_weight=0.1,
+        fb_shift=2, return_sparse=false, fb_kwargs=(),
+        selfloop_kwargs=(), delay_kwargs=())
 
 Creates a reservoir based on a delay line with the addition of self loops and
 backward connections shifted by one [^elsarraj2019].
@@ -1619,6 +1621,13 @@ W_{i,j} =
     array please make sure that the lenght of the array matches the lenght of the diagonal
     you want to populate.
     Default is 0.1.
+  - `fb_weight`: Weight of the feedback in the reservoir matrix.
+    This can be provided as a single value or an array. In case it is provided as an
+    array please make sure that the lenght of the array matches the lenght of the diagonal
+    you want to populate.
+    Default is 0.1.
+  - `fb_shift`: How far the backward connection will be from the diagonal.
+    Default is 2.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
