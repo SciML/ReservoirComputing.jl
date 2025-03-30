@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>States Modifications · ReservoirComputing.jl</title><meta name="title" content="States Modifications · ReservoirComputing.jl"/><meta property="og:title" content="States Modifications · ReservoirComputing.jl"/><meta property="twitter:title" content="States Modifications · ReservoirComputing.jl"/><meta name="description" content="Documentation for ReservoirComputing.jl."/><meta property="og:description" content="Documentation for ReservoirComputing.jl."/><meta property="twitter:description" content="Documentation for ReservoirComputing.jl."/><meta property="og:url" content="https://docs.sciml.ai/ReservoirComputing/stable/api/states/"/><meta property="twitter:url" content="https://docs.sciml.ai/ReservoirComputing/stable/api/states/"/><link rel="canonical" href="https://docs.sciml.ai/ReservoirComputing/stable/api/states/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ReservoirComputing.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ReservoirComputing.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><span class="tocitem">General Settings</span><ul><li><a class="tocitem" href="../../general/different_training/">Changing Training Algorithms</a></li><li><a class="tocitem" href="../../general/states_variation/">Altering States</a></li><li><a class="tocitem" href="../../general/predictive_generative/">Generative vs Predictive</a></li></ul></li><li><span class="tocitem">Echo State Network Tutorials</span><ul><li><a class="tocitem" href="../../esn_tutorials/lorenz_basic/">Lorenz System Forecasting</a></li><li><a class="tocitem" href="../../esn_tutorials/change_layers/">Using Different Layers</a></li><li><a class="tocitem" href="../../esn_tutorials/different_drivers/">Using Different Reservoir Drivers</a></li><li><a class="tocitem" href="../../esn_tutorials/deep_esn/">Deep Echo State Networks</a></li><li><a class="tocitem" href="../../esn_tutorials/hybrid/">Hybrid Echo State Networks</a></li></ul></li><li><a class="tocitem" href="../../reca_tutorials/reca/">Reservoir Computing with Cellular Automata</a></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="../training/">Training Algorithms</a></li><li class="is-active"><a class="tocitem" href>States Modifications</a><ul class="internal"><li><a class="tocitem" href="#Padding-and-Estension"><span>Padding and Estension</span></a></li><li><a class="tocitem" href="#Non-Linear-Transformations"><span>Non Linear Transformations</span></a></li><li><a class="tocitem" href="#Internals"><span>Internals</span></a></li></ul></li><li><a class="tocitem" href="../predict/">Prediction Types</a></li><li><a class="tocitem" href="../esn/">Echo State Networks</a></li><li><a class="tocitem" href="../inits/">ESN Initializers</a></li><li><a class="tocitem" href="../esn_drivers/">ESN Drivers</a></li><li><a class="tocitem" href="../esn_variations/">ESN Variations</a></li><li><a class="tocitem" href="../reca/">ReCA</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API Documentation</a></li><li class="is-active"><a href>States Modifications</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>States Modifications</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/api/states.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="States-Modifications"><a class="docs-heading-anchor" href="#States-Modifications">States Modifications</a><a id="States-Modifications-1"></a><a class="docs-heading-anchor-permalink" href="#States-Modifications" title="Permalink"></a></h1><h2 id="Padding-and-Estension"><a class="docs-heading-anchor" href="#Padding-and-Estension">Padding and Estension</a><a id="Padding-and-Estension-1"></a><a class="docs-heading-anchor-permalink" href="#Padding-and-Estension" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.StandardStates" href="#ReservoirComputing.StandardStates"><code>ReservoirComputing.StandardStates</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">StandardStates()</code></pre><p>When this struct is employed, the states of the reservoir are not modified.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; states = StandardStates()
+StandardStates()
+
+julia&gt; test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia&gt; new_vec = states(test_vec)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia&gt; test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia&gt; new_mat = states(test_mat)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L16-L59">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.ExtendedStates" href="#ReservoirComputing.ExtendedStates"><code>ReservoirComputing.ExtendedStates</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">ExtendedStates()</code></pre><p>The <code>ExtendedStates</code> struct is used to extend the reservoir states by vertically concatenating the input data (during training) and the prediction data (during the prediction phase).</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; states = ExtendedStates()
+ExtendedStates()
+
+julia&gt; test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia&gt; new_vec = states(test_vec, fill(3.0f0, 3))
+8-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 3.0
+ 3.0
+ 3.0
+
+julia&gt; test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia&gt; new_mat = states(test_mat, fill(3.0f0, 3))
+8×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L68-L119">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.PaddedStates" href="#ReservoirComputing.PaddedStates"><code>ReservoirComputing.PaddedStates</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">PaddedStates(padding)
+PaddedStates(;padding=1.0)</code></pre><p>Creates an instance of the <code>PaddedStates</code> struct with specified padding value (default 1.0). The states of the reservoir are padded by vertically concatenating the padding value.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; states = PaddedStates(1.0)
+PaddedStates{Float64}(1.0)
+
+julia&gt; test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia&gt; new_vec = states(test_vec)
+6-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 1.0
+
+julia&gt; test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia&gt; new_mat = states(test_mat)
+6×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  1.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L144-L192">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.PaddedExtendedStates" href="#ReservoirComputing.PaddedExtendedStates"><code>ReservoirComputing.PaddedExtendedStates</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">PaddedExtendedStates(padding)
+PaddedExtendedStates(;padding=1.0)</code></pre><p>Constructs a <code>PaddedExtendedStates</code> struct, which first extends the reservoir states with training or prediction data,then pads them with a specified value (defaulting to 1.0).</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; states = PaddedExtendedStates(1.0)
+PaddedExtendedStates{Float64}(1.0)
+
+julia&gt; test_vec = zeros(Float32, 5)
+5-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+
+julia&gt; new_vec = states(test_vec, fill(3.0f0, 3))
+9-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 1.0
+ 3.0
+ 3.0
+ 3.0
+
+julia&gt; test_mat = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia&gt; new_mat = states(test_mat, fill(3.0f0, 3))
+9×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  1.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L216-L270">source</a></section></article><h2 id="Non-Linear-Transformations"><a class="docs-heading-anchor" href="#Non-Linear-Transformations">Non Linear Transformations</a><a id="Non-Linear-Transformations-1"></a><a class="docs-heading-anchor-permalink" href="#Non-Linear-Transformations" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.NLADefault" href="#ReservoirComputing.NLADefault"><code>ReservoirComputing.NLADefault</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">NLADefault()</code></pre><p><code>NLADefault</code> represents the default non-linear algorithm option. When used, it leaves the input array unchanged.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; nlat = NLADefault()
+NLADefault()
+
+julia&gt; x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; n_new = nlat(x_old)
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; mat_old = [1 2 3;
+                  4 5 6;
+                  7 8 9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia&gt; mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L301-L365">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.NLAT1" href="#ReservoirComputing.NLAT1"><code>ReservoirComputing.NLAT1</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">NLAT1()</code></pre><p><code>NLAT1</code> implements the T₁ transformation algorithm introduced in <sup class="footnote-reference"><a id="citeref-Chattopadhyay" href="#footnote-Chattopadhyay">[Chattopadhyay]</a></sup> and <sup class="footnote-reference"><a id="citeref-Pathak" href="#footnote-Pathak">[Pathak]</a></sup>. The T₁ algorithm squares elements of the input array, targeting every second row.</p><p class="math-container">\[\tilde{r}_{i,j} =
+\begin{cases}
+    r_{i,j} \times r_{i,j}, &amp; \text{if } j \text{ is odd}; \\
+    r_{i,j}, &amp; \text{if } j \text{ is even}.
+\end{cases}\]</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; nlat = NLAT1()
+NLAT1()
+
+julia&gt; x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  4
+  3
+ 16
+  5
+ 36
+  7
+ 64
+  9
+
+julia&gt; mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia&gt; mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+   1    4    9
+   4    5    6
+  49   64   81
+  10   11   12
+ 169  196  225
+  16   17   18
+ 361  400  441
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L371-L455">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.NLAT2" href="#ReservoirComputing.NLAT2"><code>ReservoirComputing.NLAT2</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">NLAT2()</code></pre><p><code>NLAT2</code> implements the T₂ transformation algorithm as defined in <sup class="footnote-reference"><a id="citeref-Chattopadhyay" href="#footnote-Chattopadhyay">[Chattopadhyay]</a></sup>. This transformation algorithm modifies the reservoir states by multiplying each odd-indexed row (starting from the second row) with the product of its two preceding rows.</p><p class="math-container">\[\tilde{r}_{i,j} =
+\begin{cases}
+    r_{i,j-1} \times r_{i,j-2}, &amp; \text{if } j &gt; 1 \text{ is odd}; \\
+    r_{i,j}, &amp; \text{if } j \text{ is 1 or even}.
+\end{cases}\]</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; nlat = NLAT2()
+NLAT2()
+
+julia&gt; x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  0
+  3
+  6
+  5
+ 20
+  7
+ 42
+  9
+
+julia&gt; mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia&gt; mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+  1   2    3
+  4   5    6
+  4  10   18
+ 10  11   12
+ 70  88  108
+ 16  17   18
+ 19  20   21
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L470-L549">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.NLAT3" href="#ReservoirComputing.NLAT3"><code>ReservoirComputing.NLAT3</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">NLAT3()</code></pre><p>Implements the T₃ transformation algorithm as detailed in <sup class="footnote-reference"><a id="citeref-Chattopadhyay" href="#footnote-Chattopadhyay">[Chattopadhyay]</a></sup>. This algorithm modifies the reservoir&#39;s states by multiplying each odd-indexed row (beginning from the second row) with the product of the immediately preceding and the immediately following rows.</p><p class="math-container">\[\tilde{r}_{i,j} =
+\begin{cases}
+r_{i,j-1} \times r_{i,j+1}, &amp; \text{if } j &gt; 1 \text{ is odd}; \\
+r_{i,j}, &amp; \text{if } j = 1 \text{ or even.}
+\end{cases}\]</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; nlat = NLAT3()
+NLAT3()
+
+julia&gt; x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; n_new = nlat(x_old)
+10-element Vector{Int64}:
+  0
+  1
+  3
+  3
+ 15
+  5
+ 35
+  7
+ 63
+  9
+
+julia&gt; mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+julia&gt; mat_new = nlat(mat_old)
+7×3 Matrix{Int64}:
+   1    2    3
+   4    5    6
+  40   55   72
+  10   11   12
+ 160  187  216
+  16   17   18
+  19   20   21
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L564-L643">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.PartialSquare" href="#ReservoirComputing.PartialSquare"><code>ReservoirComputing.PartialSquare</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">PartialSquare(eta)</code></pre><p>Implement a partial squaring of the states as described in <sup class="footnote-reference"><a id="citeref-barbosa2021" href="#footnote-barbosa2021">[barbosa2021]</a></sup>.</p><p><strong>Equations</strong></p><p class="math-container">\[    \begin{equation}
+    g(r_i) =
+    \begin{cases} 
+        r_i^2, &amp; \text{if } i \leq \eta_r N, \\
+        r_i, &amp; \text{if } i &gt; \eta_r N.
+    \end{cases}
+    \end{equation}\]</p><p><strong>Examples</strong></p><p>```jldoctest julia&gt; ps = PartialSquare(0.6) PartialSquare(0.6)</p><p>julia&gt; x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] 10-element Vector{Int64}:  0  1  2  3  4  5  6  7  8  9</p><p>julia&gt; x<em>new = ps(x</em>old) 10-element Vector{Int64}:   0   1   4   9  16  25   6   7   8   9</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L658-L712">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.ExtendedSquare" href="#ReservoirComputing.ExtendedSquare"><code>ReservoirComputing.ExtendedSquare</code></a> — <span class="docstring-category">Type</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">ExtendedSquare()</code></pre><p>Extension of the Lu initialization proposed in <sup class="footnote-reference"><a id="citeref-herteux2020" href="#footnote-herteux2020">[herteux2020]</a></sup>. The state vector is extended with the squared elements of the initial state</p><p><strong>Equations</strong></p><p class="math-container">\[\begin{equation}
+    \vec{x} = \{x_1, x_2, \dots, x_N, x_1^2, x_2^2, \dots, x_N^2\}
+\end{equation}\]</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; x_old = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+9-element Vector{Int64}:
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia&gt; es = ExtendedSquare()
+ExtendedSquare()
+
+julia&gt; x_new = es(x_old)
+18-element Vector{Int64}:
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+  1
+  4
+  9
+ 16
+ 25
+ 36
+ 49
+ 64
+ 81
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/states.jl#L730-L790">source</a></section></article><h2 id="Internals"><a class="docs-heading-anchor" href="#Internals">Internals</a><a id="Internals-1"></a><a class="docs-heading-anchor-permalink" href="#Internals" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="ReservoirComputing.create_states" href="#ReservoirComputing.create_states"><code>ReservoirComputing.create_states</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">create_states(reservoir_driver::AbstractReservoirDriver, train_data, washout,
+    reservoir_matrix, input_matrix, bias_vector)</code></pre><p>Create and return the trained Echo State Network (ESN) states according to the specified reservoir driver.</p><p><strong>Arguments</strong></p><ul><li><code>reservoir_driver</code>: The reservoir driver that determines how the ESN states evolve over time.</li><li><code>train_data</code>: The training data used to train the ESN.</li><li><code>washout</code>: The number of initial time steps to discard during training to allow the reservoir dynamics to wash out the initial conditions.</li><li><code>reservoir_matrix</code>: The reservoir matrix representing the dynamic, recurrent part of the ESN.</li><li><code>input_matrix</code>: The input matrix that defines the connections between input features and reservoir nodes.</li><li><code>bias_vector</code>: The bias vector to be added at each time step during the reservoir update.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/2b55a6ee295c3c7eb5f6f0682a89feea16dae187/src/esn/esn_reservoir_drivers.jl#L3-L23">source</a></section></article><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-Chattopadhyay"><a class="tag is-link" href="#citeref-Chattopadhyay">Chattopadhyay</a>Chattopadhyay, Ashesh, et al. &quot;Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM.&quot; (2019).</li><li class="footnote" id="footnote-Pathak"><a class="tag is-link" href="#citeref-Pathak">Pathak</a>Pathak, Jaideep, et al. &quot;Model-free prediction of large spatiotemporally chaotic systems from data: A reservoir computing approach.&quot; Physical review letters 120.2 (2018): 024102.</li><li class="footnote" id="footnote-Chattopadhyay"><a class="tag is-link" href="#citeref-Chattopadhyay">Chattopadhyay</a>Chattopadhyay, Ashesh, et al. &quot;Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM.&quot; (2019).</li><li class="footnote" id="footnote-Chattopadhyay"><a class="tag is-link" href="#citeref-Chattopadhyay">Chattopadhyay</a>Chattopadhyay, Ashesh, et al. &quot;Data-driven predictions of a multiscale Lorenz 96 chaotic system using machine-learning methods: reservoir computing, artificial neural network, and long short-term memory network.&quot; (2019).</li><li class="footnote" id="footnote-barbosa2021"><a class="tag is-link" href="#citeref-barbosa2021">barbosa2021</a>Barbosa, Wendson AS, et al. &quot;Symmetry-aware reservoir computing.&quot; Physical Review E 104.4 (2021): 045307.</li><li class="footnote" id="footnote-herteux2020"><a class="tag is-link" href="#citeref-herteux2020">herteux2020</a>Herteux, Joschka, and Christoph Räth. &quot;Breaking symmetries of the reservoir equations in echo state networks.&quot; Chaos: An Interdisciplinary Journal of Nonlinear Science 30.12 (2020).</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../training/">« Training Algorithms</a><a class="docs-footer-nextpage" href="../predict/">Prediction Types »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.9.0 on <span class="colophon-date" title="Sunday 30 March 2025 10:21">Sunday 30 March 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
