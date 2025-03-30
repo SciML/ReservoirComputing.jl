@@ -5,25 +5,25 @@
 ```@docs
     scaled_rand
     weighted_init
-    weighted_minimal
-    informed_init
     minimal_init
+    weighted_minimal
     chebyshev_mapping
     logistic_mapping
     modified_lm
+    informed_init
 ```
 
 ## Reservoirs
 
 ```@docs
     rand_sparse
-    delay_line
-    delay_line_backward
-    cycle_jumps
-    simple_cycle
     pseudo_svd
     chaotic_init
     low_connectivity
+    delay_line
+    delay_line_backward
+    simple_cycle
+    cycle_jumps
     double_cycle
     selfloop_cycle
     selfloop_feedback_cycle
