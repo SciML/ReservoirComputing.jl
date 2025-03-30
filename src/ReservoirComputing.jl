@@ -43,8 +43,8 @@ export rand_sparse, delay_line, delay_line_backward, cycle_jumps,
        simple_cycle, pseudo_svd, chaotic_init, low_connectivity, double_cycle,
        selfloop_cycle, selfloop_feedback_cycle, selfloop_delayline_backward,
        selfloop_forward_connection, forward_connection
-export scale_radius!, delay_line!, backward_connection!, simple_cycle!, add_jumps!,
-       self_loop!
+export scale_radius!, delay_line!, backward_connection!, simple_cycle!, reverse_simple_cycle!,
+       add_jumps!, self_loop!
 export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN

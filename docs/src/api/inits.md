@@ -39,6 +39,7 @@
     delay_line!
     backward_connection!
     simple_cycle!
+    reverse_simple_cycle!
     self_loop!
     add_jumps!
 ```
