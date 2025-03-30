@@ -32,7 +32,8 @@ reservoir_inits = [
     selfloop_feedback_cycle,
     selfloop_delayline_backward,
     selfloop_forward_connection,
-    forward_connection
+    forward_connection,
+    true_double_cycle
 ]
 input_inits = [
     scaled_rand,

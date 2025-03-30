@@ -25,6 +25,7 @@
     simple_cycle
     cycle_jumps
     double_cycle
+    true_double_cycle
     selfloop_cycle
     selfloop_feedback_cycle
     selfloop_delayline_backward
