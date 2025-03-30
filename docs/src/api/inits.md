@@ -25,6 +25,7 @@
     simple_cycle
     cycle_jumps
     double_cycle
+    true_double_cycle
     selfloop_cycle
     selfloop_feedback_cycle
     selfloop_delayline_backward
@@ -39,6 +40,7 @@
     delay_line!
     backward_connection!
     simple_cycle!
+    reverse_simple_cycle!
     self_loop!
     add_jumps!
 ```

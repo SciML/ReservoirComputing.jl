@@ -127,13 +127,17 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
-    set to `:bernoulli_sample!`. Default is 0.5
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -203,13 +207,17 @@ Adds a backward connection in the `reservoir_matrix`, with given `shift` and
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive with `sampling_type`
-    set to `:bernoulli_sample!`. Default is 0.5
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -279,13 +287,17 @@ Adds a simple cycle in the `reservoir_matrix`, with given
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -326,6 +338,78 @@ function simple_cycle!(
 end
 
 """
+    reverse_simple_cycle!([rng], reservoir_matrix, weight;
+        sampling_type=:no_sample, irrational=pi, start=1,
+        p=0.5)
+
+Adds a reverse simple cycle in the `reservoir_matrix`, with given
+`weight`. The `weight` can be a single number or an array.
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`
+    from WeightInitializers.
+  - `reservoir_matrix`: matrix to be changed.
+  - `weight`: weight to add as a simple cycle. Can be either a single number
+    or an array.
+
+# Keyword arguments
+
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
+
+# Examples
+
+```jldoctest
+julia> matrix = zeros(Float32, 5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> reverse_simple_cycle!(matrix, 1.0; sampling_type=:regular_sample!)
+5×5 Matrix{Float32}:
+ 0.0  -1.0  0.0   0.0  0.0
+ 0.0   0.0  1.0   0.0  0.0
+ 0.0   0.0  0.0  -1.0  0.0
+ 0.0   0.0  0.0   0.0  1.0
+ 1.0   0.0  0.0   0.0  0.0
+```
+"""
+function reverse_simple_cycle!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number; kwargs...)
+    weights = fill(weight, size(reservoir_matrix, 1))
+    return reverse_simple_cycle!(rng, reservoir_matrix, weights; kwargs...)
+end
+
+function reverse_simple_cycle!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
+        sampling_type=:no_sample, kwargs...)
+    f_sample = getfield(@__MODULE__, sampling_type)
+    f_sample(rng, weight; kwargs...)
+    for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
+        reservoir_matrix[idx - 1, idx] = weight[idx]
+    end
+    reservoir_matrix[end, 1] = weight[end]
+    return reservoir_matrix
+end
+
+"""
     add_jumps!([rng], reservoir_matrix, weight, jump_size;
         sampling_type=:no_sample, irrational=pi, start=1,
         positive_prob=0.5)
@@ -348,13 +432,17 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -423,13 +511,17 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `weight` can be positive with a probability set by `positive_prob`. If set to
     `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. Default is `:no_sample`.
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
   - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5
+    set to `:bernoulli_sample!`. Default is 0.5.
   - `irrational`: Irrational number whose decimals decide the sign of `weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
 
 # Examples
 
@@ -468,7 +560,7 @@ function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
 end
 
 for init_component in (:delay_line!, :add_jumps!, :backward_connection!,
-    :simple_cycle!, :self_loop!)
+    :simple_cycle!, :reverse_simple_cycle!, :self_loop!)
     @eval begin
         function ($init_component)(args...; kwargs...)
             return $init_component(Utils.default_rng(), args...; kwargs...)
