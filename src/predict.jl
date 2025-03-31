@@ -68,7 +68,7 @@ end
 
 function obtain_prediction(rc::AbstractReservoirComputer, prediction::Generative,
         x, output_layer::AbstractOutputLayer, args...;
-        initial_conditions=output_layer.last_value)
+        initial_conditions = output_layer.last_value)
     #x = last_state
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method

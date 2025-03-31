@@ -36,7 +36,7 @@ julia> res_input = scaled_rand(8, 3)
 ```
 """
 function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Number=T(0.1)) where {T <: Number}
+        scaling::Number = T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = (DeviceAgnostic.rand(rng, T, res_size, in_size) .- T(0.5)) .*
                    (T(2) * T(scaling))
@@ -85,7 +85,7 @@ julia> res_input = weighted_init(8, 3)
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Number=T(0.1), return_sparse::Bool=false) where {T <: Number}
+        scaling::Number = T(0.1), return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -164,7 +164,7 @@ julia> res_input = weighted_minimal(8, 3)
  0.0  0.0  0.1
  0.0  0.0  0.1
 
-julia> res_input = weighted_minimal(9, 3; weight=0.99)
+julia> res_input = weighted_minimal(9, 3; weight = 0.99)
 9×3 Matrix{Float32}:
  0.99  0.0   0.0
  0.99  0.0   0.0
@@ -176,7 +176,7 @@ julia> res_input = weighted_minimal(9, 3; weight=0.99)
  0.0   0.0   0.99
  0.0   0.0   0.99
 
-julia> res_input = weighted_minimal(9, 3; sampling_type=:bernoulli_sample!)
+julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
 9×3 Matrix{Float32}:
   0.1  -0.0  -0.0
  -0.1  -0.0  -0.0
@@ -195,8 +195,8 @@ julia> res_input = weighted_minimal(9, 3; sampling_type=:bernoulli_sample!)
     Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number=T(0.1), return_sparse::Bool=false,
-        sampling_type=:no_sample, kwargs...) where {T <: Number}
+        weight::Number = T(0.1), return_sparse::Bool = false,
+        sampling_type = :no_sample, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -240,8 +240,8 @@ Create an input layer for informed echo state networks [^pathak2018].
     Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Number=T(0.1), model_in_size::Integer,
-        gamma::Number=T(0.5)) where {T <: Number}
+        scaling::Number = T(0.1), model_in_size::Integer,
+        gamma::Number = T(0.5)) where {T <: Number}
     res_size, in_size = dims
     state_size = in_size - model_in_size
 
@@ -258,7 +258,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(1, state_size; step=1)[DeviceAgnostic.rand(rng, T, 1:end)]
+        random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * T(scaling))
     end
@@ -267,7 +267,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(state_size + 1, in_size; step=1)[DeviceAgnostic.rand(
+        random_clm_idx = range(state_size + 1, in_size; step = 1)[DeviceAgnostic.rand(
             rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * T(scaling))
@@ -325,7 +325,7 @@ julia> res_input = minimal_init(8, 3)
  -0.1  -0.1   0.1
   0.1  -0.1   0.1
 
-julia> res_input = minimal_init(8, 3; sampling_type=:irrational)
+julia> res_input = minimal_init(8, 3; sampling_type = :irrational)
 8×3 Matrix{Float32}:
  -0.1   0.1  -0.1
   0.1  -0.1  -0.1
@@ -336,7 +336,7 @@ julia> res_input = minimal_init(8, 3; sampling_type=:irrational)
   0.1   0.1  -0.1
  -0.1   0.1  -0.1
 
-julia> res_input = minimal_init(8, 3; p=0.1) # lower p -> more negative signs
+julia> res_input = minimal_init(8, 3; p = 0.1) # lower p -> more negative signs
 8×3 Matrix{Float32}:
  -0.1  -0.1  -0.1
  -0.1  -0.1  -0.1
@@ -347,7 +347,7 @@ julia> res_input = minimal_init(8, 3; p=0.1) # lower p -> more negative signs
  -0.1  -0.1  -0.1
  -0.1  -0.1  -0.1
 
-julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
+julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
 8×3 Matrix{Float32}:
   0.1   0.1  0.1
  -0.1   0.1  0.1
@@ -364,7 +364,7 @@ julia> res_input = minimal_init(8, 3; p=0.8)# higher p -> more positive signs
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number=T(0.1), sampling_type::Symbol=:bernoulli_sample!,
+        weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
         kwargs...) where {T <: Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
@@ -438,9 +438,9 @@ julia> input_matrix = chebyshev_mapping(10, 3)
     Neural Processing Letters 56.1 (2024): 30.
 """
 function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat=one(T), sine_divisor::AbstractFloat=one(T),
-        chebyshev_parameter::AbstractFloat=one(T),
-        return_sparse::Bool=false) where {T <: Number}
+        amplitude::AbstractFloat = one(T), sine_divisor::AbstractFloat = one(T),
+        chebyshev_parameter::AbstractFloat = one(T),
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     n_rows, n_cols = dims[1], dims[2]
@@ -518,9 +518,9 @@ julia> logistic_mapping(8, 3)
     Neurocomputing 489 (2022): 196-210.
 """
 function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat=0.3, sine_divisor::AbstractFloat=5.9,
-        logistic_parameter::AbstractFloat=3.7,
-        return_sparse::Bool=false) where {T <: Number}
+        amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
+        logistic_parameter::AbstractFloat = 3.7,
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     num_rows, num_columns = dims[1], dims[2]
@@ -620,9 +620,9 @@ julia> modified_lm(12, 4; factor=3)
     arXiv preprint arXiv:2501.15615 (2025).
 """
 function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        factor::Integer, amplitude::AbstractFloat=0.3,
-        sine_divisor::AbstractFloat=5.9, logistic_parameter::AbstractFloat=2.35,
-        return_sparse::Bool=false) where {T <: Number}
+        factor::Integer, amplitude::AbstractFloat = 0.3,
+        sine_divisor::AbstractFloat = 5.9, logistic_parameter::AbstractFloat = 2.35,
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     num_columns = dims[2]
     expected_num_rows = factor * num_columns
@@ -678,7 +678,7 @@ and scaled spectral radius according to `radius`.
 # Examples
 
 ```jldoctest
-julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
+julia> res_matrix = rand_sparse(5, 5; sparsity = 0.5)
 5×5 Matrix{Float32}:
  0.0        0.0        0.0        0.0      0.0
  0.0        0.794565   0.0        0.26164  0.0
@@ -688,12 +688,12 @@ julia> res_matrix = rand_sparse(5, 5; sparsity=0.5)
 ```
 """
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        radius::Number=T(1.0), sparsity::Number=T(0.1), std::Number=T(1.0),
-        return_sparse::Bool=false) where {T <: Number}
+        radius::Number = T(1.0), sparsity::Number = T(0.1), std::Number = T(1.0),
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
-    reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
+    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -747,15 +747,15 @@ julia> res_matrix = pseudo_svd(5, 5)
     Neurocomputing 290 (2018): 148-160.
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        max_value::Number=T(1.0), sparsity::Number=0.1, sorted::Bool=true,
-        reverse_sort::Bool=false, return_sparse::Bool=false,
-        return_diag::Bool=false) where {T <: Number}
+        max_value::Number = T(1.0), sparsity::Number = 0.1, sorted::Bool = true,
+        reverse_sort::Bool = false, return_sparse::Bool = false,
+        return_diag::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = create_diag(rng, T, dims[1],
         T(max_value);
-        sorted=sorted,
-        reverse_sort=reverse_sort)
+        sorted = sorted,
+        reverse_sort = reverse_sort)
     tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
 
     while tmp_sparsity <= sparsity
@@ -779,12 +779,12 @@ function rand_range(rng, T, n::Int)
 end
 
 function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number;
-        sorted::Bool=true, reverse_sort::Bool=false) where {T <: Number}
+        sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
     diagonal_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
     if sorted == true
         if reverse_sort == true
             diagonal_values = sort(
-                DeviceAgnostic.rand(rng, T, dim) .* max_value; rev=true)
+                DeviceAgnostic.rand(rng, T, dim) .* max_value; rev = true)
             diagonal_values[1] = max_value
         else
             diagonal_values = sort(DeviceAgnostic.rand(rng, T, dim) .* max_value)
@@ -873,8 +873,8 @@ julia> res_matrix = chaotic_init(8, 8)
     Neural Processing Letters 56.1 (2024): 30.
 """
 function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        extra_edge_probability::AbstractFloat=T(0.1), spectral_radius::AbstractFloat=one(T),
-        return_sparse::Bool=false) where {T <: Number}
+        extra_edge_probability::AbstractFloat = T(0.1), spectral_radius::AbstractFloat = one(T),
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     requested_order = first(dims)
@@ -902,7 +902,7 @@ function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     random_weight_matrix = T(2) * rand(rng, T, actual_matrix_order, actual_matrix_order) .-
                            T(1)
     adjacency_matrix = digital_chaotic_adjacency(
-        rng, chosen_bit_precision; extra_edge_probability=extra_edge_probability)
+        rng, chosen_bit_precision; extra_edge_probability = extra_edge_probability)
     reservoir_matrix = random_weight_matrix .* adjacency_matrix
     current_spectral_radius = maximum(abs, eigvals(reservoir_matrix))
     if current_spectral_radius != 0
@@ -913,7 +913,7 @@ function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function digital_chaotic_adjacency(rng::AbstractRNG, bit_precision::Integer;
-        extra_edge_probability::AbstractFloat=0.1)
+        extra_edge_probability::AbstractFloat = 0.1)
     matrix_order = 2^(2 * bit_precision)
     adjacency_matrix = DeviceAgnostic.zeros(rng, Int, matrix_order, matrix_order)
     for row_index in 1:(matrix_order - 1)
@@ -967,8 +967,8 @@ otherwise, it generates a random connectivity pattern.
     Chaos: An Interdisciplinary Journal of Nonlinear Science 29.12 (2019).
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        return_sparse::Bool=false, connected::Bool=false,
-        in_degree::Integer=1, kwargs...) where {T <: Number}
+        return_sparse::Bool = false, connected::Bool = false,
+        in_degree::Integer = 1, kwargs...) where {T <: Number}
     check_res_size(dims...)
     res_size = dims[1]
     if in_degree > res_size
@@ -978,17 +978,17 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
     if in_degree == 1
         reservoir_matrix = build_cycle(
-            Val(connected), rng, T, res_size; in_degree=in_degree, kwargs...)
+            Val(connected), rng, T, res_size; in_degree = in_degree, kwargs...)
     else
         reservoir_matrix = build_cycle(
-            Val(false), rng, T, res_size; in_degree=in_degree, kwargs...)
+            Val(false), rng, T, res_size; in_degree = in_degree, kwargs...)
     end
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <:
-                                                                                   Number}
+        in_degree::Integer = 1, radius::Number = T(1.0), cut_cycle::Bool = false) where {T <:
+                                                                                         Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -1001,8 +1001,8 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
 end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer=1, radius::Number=T(1.0), cut_cycle::Bool=false) where {T <:
-                                                                                   Number}
+        in_degree::Integer = 1, radius::Number = T(1.0), cut_cycle::Bool = false) where {T <:
+                                                                                         Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for idx in 1:(res_size - 1)
@@ -1081,7 +1081,7 @@ julia> res_matrix = delay_line(5, 5)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
 
-julia> res_matrix = delay_line(5, 5; weight=1)
+julia> res_matrix = delay_line(5, 5; weight = 1)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
  1.0  0.0  0.0  0.0  0.0
@@ -1095,8 +1095,8 @@ julia> res_matrix = delay_line(5, 5; weight=1)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1), shift::Integer=1,
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
+        weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
+        return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1183,11 +1183,11 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1),
-        fb_weight::Union{Number, AbstractVector}=T(0.2), shift::Integer=1,
-        fb_shift::Integer=1, return_sparse::Bool=false,
-        delay_kwargs::NamedTuple=NamedTuple(),
-        fb_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+        weight::Union{Number, AbstractVector} = T(0.1),
+        fb_weight::Union{Number, AbstractVector} = T(0.2), shift::Integer = 1,
+        fb_shift::Integer = 1, return_sparse::Bool = false,
+        delay_kwargs::NamedTuple = NamedTuple(),
+        fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1258,7 +1258,7 @@ julia> res_matrix = cycle_jumps(5, 5)
  0.1  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
 
-julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
+julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
 5×5 Matrix{Float32}:
  0.0  0.0  0.1  0.0  0.1
  0.1  0.0  0.0  0.0  0.0
@@ -1272,11 +1272,11 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size=2)
     Neural computation 24.7 (2012): 1822-1852.
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        jump_weight::Union{Number, AbstractVector}=T(0.1),
-        jump_size::Integer=3, return_sparse::Bool=false,
-        cycle_kwargs::NamedTuple=NamedTuple(),
-        jump_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+        cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        jump_weight::Union{Number, AbstractVector} = T(0.1),
+        jump_size::Integer = 3, return_sparse::Bool = false,
+        cycle_kwargs::NamedTuple = NamedTuple(),
+        jump_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     res_size = first(dims)
@@ -1336,7 +1336,7 @@ julia> res_matrix = simple_cycle(5, 5)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
 
-julia> res_matrix = simple_cycle(5, 5; weight=11)
+julia> res_matrix = simple_cycle(5, 5; weight = 11)
 5×5 Matrix{Float32}:
   0.0   0.0   0.0   0.0  11.0
  11.0   0.0   0.0   0.0   0.0
@@ -1350,8 +1350,8 @@ julia> res_matrix = simple_cycle(5, 5; weight=11)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1),
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
+        weight::Union{Number, AbstractVector} = T(0.1),
+        return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1385,7 +1385,7 @@ Creates a double cycle reservoir [^fu2023].
 # Examples
 
 ```jldoctest
-julia> reservoir_matrix = double_cycle(5, 5; cycle_weight=0.1, second_cycle_weight=0.3)
+julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.3
  0.1  0.0  0.3  0.0  0.0
@@ -1399,9 +1399,9 @@ julia> reservoir_matrix = double_cycle(5, 5; cycle_weight=0.1, second_cycle_weig
     Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
 """
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        second_cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        return_sparse::Bool=false) where {T <: Number}
+        cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        second_cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1464,7 +1464,7 @@ with cycles built on the definition by [^rodan2010].
 # Examples
 
 ```jldoctest
-julia> true_double_cycle(5, 5; cycle_weight=0.1, second_cycle_weight=0.3)
+julia> true_double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.1
  0.1  0.0  0.3  0.0  0.0
@@ -1481,10 +1481,10 @@ julia> true_double_cycle(5, 5; cycle_weight=0.1, second_cycle_weight=0.3)
     IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function true_double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        second_cycle_weight::Union{Number, AbstractVector}=T(0.1),
-        return_sparse::Bool=false, cycle_kwargs::NamedTuple=NamedTuple(),
-        second_cycle_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+        cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        second_cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        return_sparse::Bool = false, cycle_kwargs::NamedTuple = NamedTuple(),
+        second_cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1577,13 +1577,13 @@ julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1f0),
-        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
-        return_sparse::Bool=false, kwargs...) where {T <: Number}
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
+        return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=T.(cycle_weight), return_sparse=false)
+        weight = T.(cycle_weight), return_sparse = false)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -1655,13 +1655,13 @@ julia> reservoir_matrix = selfloop_feedback_cycle(5, 5; self_loop_weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector}=T(0.1f0),
-        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
-        return_sparse::Bool=false) where {T <: Number}
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
+        return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = simple_cycle(rng, T, dims...;
-        weight=T.(cycle_weight), return_sparse=false)
+        weight = T.(cycle_weight), return_sparse = false)
     for idx in axes(reservoir_matrix, 1)
         if isodd(idx)
             reservoir_matrix[idx, idx] = T.(selfloop_weight)
@@ -1769,13 +1769,13 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        shift::Integer=1, fb_shift::Integer=2,
-        weight::Union{Number, AbstractVector}=T(0.1f0),
-        fb_weight::Union{Number, AbstractVector}=weight,
-        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
-        return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
-        fb_kwargs::NamedTuple=NamedTuple(),
-        selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+        shift::Integer = 1, fb_shift::Integer = 2,
+        weight::Union{Number, AbstractVector} = T(0.1f0),
+        fb_weight::Union{Number, AbstractVector} = weight,
+        selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
+        return_sparse::Bool = false, delay_kwargs::NamedTuple = NamedTuple(),
+        fb_kwargs::NamedTuple = NamedTuple(),
+        selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1871,10 +1871,10 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1f0),
-        selfloop_weight::Union{Number, AbstractVector}=T(0.1f0), shift::Integer=2,
-        return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
-        selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
+        weight::Union{Number, AbstractVector} = T(0.1f0),
+        selfloop_weight::Union{Number, AbstractVector} = T(0.1f0), shift::Integer = 2,
+        return_sparse::Bool = false, delay_kwargs::NamedTuple = NamedTuple(),
+        selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
@@ -1959,7 +1959,7 @@ julia> reservoir_matrix = forward_connection(5, 5; weight=0.5)
     International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector}=T(0.1f0), return_sparse::Bool=false,
+        weight::Union{Number, AbstractVector} = T(0.1f0), return_sparse::Bool = false,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)

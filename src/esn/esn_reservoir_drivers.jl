@@ -100,7 +100,7 @@ echo state networks (`ESN`).
   - `leaky_coefficient`: The leaky coefficient used in the RNN.
     Defaults to 1.0.
 """
-function RNN(; activation_function=fast_act(tanh), leaky_coefficient=1.0)
+function RNN(; activation_function = fast_act(tanh), leaky_coefficient = 1.0)
     return RNN(activation_function, leaky_coefficient)
 end
 
@@ -178,9 +178,9 @@ in the ESN.
     "_A novel model of leaky integrator echo state network for
     time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
-function MRNN(; activation_function=[tanh, sigmoid],
-        leaky_coefficient=1.0,
-        scaling_factor=fill(leaky_coefficient, length(activation_function)))
+function MRNN(; activation_function = [tanh, sigmoid],
+        leaky_coefficient = 1.0,
+        scaling_factor = fill(leaky_coefficient, length(activation_function)))
     @assert length(activation_function) == length(scaling_factor)
     return MRNN(activation_function, leaky_coefficient, scaling_factor)
 end
@@ -272,11 +272,11 @@ This driver is based on the GRU architecture [^Cho2014].
     "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
     arXiv preprint arXiv:1406.1078 (2014).
 """
-function GRU(; activation_function=[sigmoid, sigmoid, tanh],
-        inner_layer=fill(scaled_rand, 2),
-        reservoir=fill(rand_sparse, 2),
-        bias=fill(scaled_rand, 2),
-        variant=FullyGated())
+function GRU(; activation_function = [sigmoid, sigmoid, tanh],
+        inner_layer = fill(scaled_rand, 2),
+        reservoir = fill(rand_sparse, 2),
+        bias = fill(scaled_rand, 2),
+        variant = FullyGated())
     return GRU(activation_function, inner_layer, reservoir, bias, variant)
 end
 

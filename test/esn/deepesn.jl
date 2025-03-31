@@ -15,9 +15,9 @@ zeros_types = [zeros64, zeros32, zeros16]
 
 for (tidx, t) in enumerate(test_types)
     Random.seed!(77)
-    res = rand_sparse(; radius=1.2, sparsity=0.1)
+    res = rand_sparse(; radius = 1.2, sparsity = 0.1)
     esn = DeepESN(t.(input_data), 1, res_size;
-        bias=fill(zeros_types[tidx], 2))
+        bias = fill(zeros_types[tidx], 2))
 
     output_layer = train(esn, t.(target_data))
     output = esn(Generative(length(test_data)), output_layer)

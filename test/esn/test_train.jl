@@ -12,15 +12,15 @@ const reg = 10e-6
 #test_types = [Float64, Float32, Float16]
 
 Random.seed!(77)
-res = rand_sparse(; radius=1.2, sparsity=0.1)
+res = rand_sparse(; radius = 1.2, sparsity = 0.1)
 esn = ESN(input_data, 1, res_size;
-    reservoir=res)
+    reservoir = res)
 # different models that implement a train dispatch
 # TODO add classification
-linear_training = [StandardRidge(0.0), LinearRegression(; fit_intercept=false),
-    RidgeRegression(; fit_intercept=false), LassoRegression(; fit_intercept=false),
-    ElasticNetRegression(; fit_intercept=false), HuberRegression(; fit_intercept=false),
-    QuantileRegression(; fit_intercept=false), LADRegression(; fit_intercept=false)]
+linear_training = [StandardRidge(0.0), LinearRegression(; fit_intercept = false),
+    RidgeRegression(; fit_intercept = false), LassoRegression(; fit_intercept = false),
+    ElasticNetRegression(; fit_intercept = false), HuberRegression(; fit_intercept = false),
+    QuantileRegression(; fit_intercept = false), LADRegression(; fit_intercept = false)]
 svm_training = [EpsilonSVR(), NuSVR()]
 
 # TODO check types

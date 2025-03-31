@@ -19,11 +19,11 @@ The detail of this implementation can be found in [1].
 [1] Nichele, Stefano, and Andreas Molund. “Deep reservoir computing using cellular
 automata.” arXiv preprint arXiv:1703.02806 (2017).
 """
-function RandomMapping(; permutations=8, expansion_size=40)
+function RandomMapping(; permutations = 8, expansion_size = 40)
     RandomMapping(permutations, expansion_size)
 end
 
-function RandomMapping(permutations; expansion_size=40)
+function RandomMapping(permutations; expansion_size = 40)
     RandomMapping(permutations, expansion_size)
 end
 

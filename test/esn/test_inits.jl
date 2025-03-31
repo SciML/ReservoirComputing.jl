@@ -8,13 +8,13 @@ const weight = 0.2
 const jump_size = 3
 const rng = Random.default_rng()
 
-function check_radius(matrix, target_radius; tolerance=1e-5)
+function check_radius(matrix, target_radius; tolerance = 1e-5)
     if matrix isa SparseArrays.SparseMatrixCSC
         matrix = Matrix(matrix)
     end
     eigenvalues = eigvals(matrix)
     spectral_radius = maximum(abs.(eigenvalues))
-    return isapprox(spectral_radius, target_radius; atol=tolerance)
+    return isapprox(spectral_radius, target_radius; atol = tolerance)
 end
 
 ft = [Float16, Float32, Float64]
@@ -40,10 +40,10 @@ input_inits = [
     weighted_init,
     weighted_minimal,
     minimal_init,
-    minimal_init(; sampling_type=:irrational_sample!),
+    minimal_init(; sampling_type = :irrational_sample!),
     chebyshev_mapping,
     logistic_mapping,
-    modified_lm(; factor=4)
+    modified_lm(; factor = 4)
 ]
 
 @testset "Reservoir Initializers" begin
@@ -95,7 +95,7 @@ end
 
     @testset "Minimum complexity: $init" for init in [
         minimal_init,
-        minimal_init(; sampling_type=:irrational_sample!)
+        minimal_init(; sampling_type = :irrational_sample!)
     ]
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
