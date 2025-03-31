@@ -15,6 +15,26 @@ function throw_sparse_error(return_sparse::Bool)
     end
 end
 
+function check_modified_ressize(res_size::Integer, approx_res_size::Integer)
+    if res_size != approx_res_size
+        @warn """Reservoir size has changed!\n
+            Computed reservoir size ($res_size) does not equal the \
+            provided reservoir size ($approx_res_size). \n 
+            Using computed value ($res_size). Make sure to modify the \
+            reservoir initializer accordingly. \n
+        """
+    end
+end
+
+function check_res_size(dims::Integer...)
+    if length(dims) != 2 || dims[1] != dims[2]
+        error("""\n
+            Internal reservoir matrix must be square (e.g., (100, 100)).
+            Got dims = $(dims)\n
+        """)
+    end
+end
+
 ## scale spectral radius
 """
     scale_radius!(matrix, radius)
