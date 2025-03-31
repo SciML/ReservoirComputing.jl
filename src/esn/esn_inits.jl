@@ -89,14 +89,7 @@ function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
-    if res_size != approx_res_size
-        @warn """Reservoir size has changed!\n
-            Computed reservoir size ($res_size) does not equal the \
-            provided reservoir size ($approx_res_size). \n 
-            Using computed value ($res_size). Make sure to modify the \
-            reservoir initializer accordingly. \n
-        """
-    end
+    check_modified_ressize(res_size, approx_res_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     q = floor(Int, res_size / in_size)
 
@@ -207,14 +200,7 @@ function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
-    if res_size != approx_res_size
-        @warn """Reservoir size has changed!\n
-            Computed reservoir size ($res_size) does not equal the \
-            provided reservoir size ($approx_res_size). \n 
-            Using computed value ($res_size). Make sure to modify the \
-            reservoir initializer accordingly. \n
-        """
-    end
+    check_modified_ressize(res_size, approx_res_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     q = floor(Int, res_size / in_size)
 
@@ -705,6 +691,7 @@ function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius::Number=T(1.0), sparsity::Number=T(0.1), std::Number=T(1.0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity=lcl_sparsity, std=std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
@@ -764,6 +751,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         reverse_sort::Bool=false, return_sparse::Bool=false,
         return_diag::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = create_diag(rng, T, dims[1],
         T(max_value);
         sorted=sorted,
@@ -888,6 +876,7 @@ function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         extra_edge_probability::AbstractFloat=T(0.1), spectral_radius::AbstractFloat=one(T),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     requested_order = first(dims)
     if length(dims) > 1 && dims[2] != requested_order
         @warn """\n
@@ -980,12 +969,8 @@ otherwise, it generates a random connectivity pattern.
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool=false, connected::Bool=false,
         in_degree::Integer=1, kwargs...) where {T <: Number}
+    check_res_size(dims...)
     res_size = dims[1]
-    if length(dims) != 2 || dims[1] != dims[2]
-        error("""
-            Internal reservoir matrix must be square. Got dims = $(dims)
-        """)
-    end
     if in_degree > res_size
         error("""
             In-degree k (got k=$(in_degree)) cannot exceed number of nodes N=$(res_size)
@@ -1113,10 +1098,7 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector}=T(0.1), shift::Integer=1,
         return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
-    @assert length(dims) == 2&&dims[1] == dims[2] """\n
-        The dimensions must define a square matrix
-        (e.g., (100, 100))
-    """
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(weight), shift; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -1207,6 +1189,7 @@ function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_kwargs::NamedTuple=NamedTuple(),
         fb_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
     backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
@@ -1295,6 +1278,7 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_kwargs::NamedTuple=NamedTuple(),
         jump_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     res_size = first(dims)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
@@ -1369,6 +1353,7 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector}=T(0.1),
         return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(rng, reservoir_matrix, T.(weight); kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -1418,6 +1403,7 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         second_cycle_weight::Union{Number, AbstractVector}=T(0.1),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
 
     for uidx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
@@ -1500,6 +1486,7 @@ function true_double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool=false, cycle_kwargs::NamedTuple=NamedTuple(),
         second_cycle_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(rng, reservoir_matrix, cycle_weight; cycle_kwargs...)
     reverse_simple_cycle!(
@@ -1594,6 +1581,7 @@ function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
         return_sparse::Bool=false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = simple_cycle(rng, T, dims...;
         weight=T.(cycle_weight), return_sparse=false)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); kwargs...)
@@ -1671,6 +1659,7 @@ function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         selfloop_weight::Union{Number, AbstractVector}=T(0.1f0),
         return_sparse::Bool=false) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = simple_cycle(rng, T, dims...;
         weight=T.(cycle_weight), return_sparse=false)
     for idx in axes(reservoir_matrix, 1)
@@ -1788,6 +1777,7 @@ function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer.
         fb_kwargs::NamedTuple=NamedTuple(),
         selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
     delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
@@ -1886,6 +1876,7 @@ function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer.
         return_sparse::Bool=false, delay_kwargs::NamedTuple=NamedTuple(),
         selfloop_kwargs::NamedTuple=NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
     delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
@@ -1971,6 +1962,7 @@ function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector}=T(0.1f0), return_sparse::Bool=false,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(weight), 2; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
