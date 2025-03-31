@@ -194,7 +194,7 @@ struct PaddedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-function PaddedStates(; padding=1.0)
+function PaddedStates(; padding = 1.0)
     return PaddedStates(padding)
 end
 
@@ -272,7 +272,7 @@ struct PaddedExtendedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-function PaddedExtendedStates(; padding=1.0)
+function PaddedExtendedStates(; padding = 1.0)
     return PaddedExtendedStates(padding)
 end
 

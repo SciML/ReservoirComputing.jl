@@ -50,17 +50,17 @@ julia> train_data = rand(Float32, 10, 100)  # 10 features, 100 time steps
  0.4463     0.334423  0.444679  0.311695      0.0494497   0.27171     0.214925
  0.987182   0.898593  0.295241  0.233098      0.789699    0.453692    0.759205
 
-julia> esn = ESN(train_data, 10, 300; washout=10)
+julia> esn = ESN(train_data, 10, 300; washout = 10)
 ESN(10 => 300)
 ```
 """
 function ESN(train_data::AbstractArray, in_size::Int, res_size::Int;
-        input_layer=scaled_rand, reservoir=rand_sparse, bias=zeros32,
-        reservoir_driver::AbstractDriver=RNN(),
-        nla_type::NonLinearAlgorithm=NLADefault(),
-        states_type::AbstractStates=StandardStates(),
-        washout::Int=0, rng::AbstractRNG=Utils.default_rng(),
-        matrix_type=typeof(train_data))
+        input_layer = scaled_rand, reservoir = rand_sparse, bias = zeros32,
+        reservoir_driver::AbstractDriver = RNN(),
+        nla_type::NonLinearAlgorithm = NLADefault(),
+        states_type::AbstractStates = StandardStates(),
+        washout::Int = 0, rng::AbstractRNG = Utils.default_rng(),
+        matrix_type = typeof(train_data))
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
         train_data = vcat(adapt(matrix_type, ones(1, size(train_data, 2))),
@@ -82,7 +82,7 @@ function ESN(train_data::AbstractArray, in_size::Int, res_size::Int;
 end
 
 function (esn::AbstractEchoStateNetwork)(prediction::AbstractPrediction,
-        output_layer::AbstractOutputLayer; last_state=esn.states[:, [end]],
+        output_layer::AbstractOutputLayer; last_state = esn.states[:, [end]],
         kwargs...)
     return obtain_esn_prediction(esn, prediction, last_state, output_layer;
         kwargs...)
@@ -120,7 +120,7 @@ julia> train_data = rand(Float32, 10, 100)  # 10 features, 100 time steps
  0.133498  0.451058  0.0761995  0.90421      0.994212   0.332164  0.545112
  0.214467  0.791524  0.124105   0.951805     0.947166   0.954244  0.889733
 
-julia> esn = ESN(train_data, 10, 300; washout=10)
+julia> esn = ESN(train_data, 10, 300; washout = 10)
 ESN(10 => 300)
 
 julia> output_layer = train(esn, rand(Float32, 3, 90))
@@ -128,7 +128,7 @@ OutputLayer successfully trained with output size: 3
 ```
 """
 function train(esn::AbstractEchoStateNetwork, target_data::AbstractArray,
-        training_method=StandardRidge(); kwargs...)
+        training_method = StandardRidge(); kwargs...)
     states_new = esn.states_type(esn.nla_type, esn.states, esn.train_data[:, 1:end])
     return train(training_method, states_new, target_data; kwargs...)
 end

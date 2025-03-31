@@ -13,9 +13,9 @@ nlas = [(NLADefault(), test_array),
     (ExtendedSquare(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 4, 9, 16, 25, 36, 49, 64, 81])]
 
 pes = [(StandardStates(), test_array),
-    (PaddedStates(; padding=padding),
+    (PaddedStates(; padding = padding),
         vcat(test_array, padding)),
-    (PaddedExtendedStates(; padding=padding),
+    (PaddedExtendedStates(; padding = padding),
         vcat(test_array, padding, extension)),
     (ExtendedStates(), vcat(test_array, extension))]
 

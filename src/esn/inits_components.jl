@@ -64,7 +64,7 @@ function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
 end
 
 function regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
-        strides::Union{Integer, AbstractVector{<:Integer}}=2)
+        strides::Union{Integer, AbstractVector{<:Integer}} = 2)
     return _regular_sample!(rng, vecormat, strides)
 end
 
@@ -91,7 +91,7 @@ function _regular_sample!(
 end
 
 function bernoulli_sample!(
-        rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number=0.5)
+        rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number = 0.5)
     for idx in eachindex(vecormat)
         if rand(rng) > positive_prob
             vecormat[idx] = -vecormat[idx]
@@ -101,7 +101,7 @@ end
 
 #TODO: @MartinuzziFrancesco maybe change name here #wait, for sure change name here
 function irrational_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
-        irrational::Irrational=pi, start::Int=1)
+        irrational::Irrational = pi, start::Int = 1)
     total_elements = length(vecormat)
     setprecision(BigFloat, Int(ceil(log2(10) * (total_elements + start + 1))))
     ir_string = collect(string(BigFloat(irrational)))
@@ -195,7 +195,7 @@ end
 
 function delay_line!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type=:no_sample, kwargs...)
+        shift::Integer; sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -258,7 +258,7 @@ julia> backward_connection!(matrix, 3.0, 1)
  0.0  0.0  0.0  0.0  3.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> backward_connection!(matrix, 3.0, 1; sampling_type=:bernoulli_sample!)
+julia> backward_connection!(matrix, 3.0, 1; sampling_type = :bernoulli_sample!)
 5×5 Matrix{Float32}:
  0.0  3.0   0.0  0.0   0.0
  0.0  0.0  -3.0  0.0   0.0
@@ -276,7 +276,7 @@ end
 
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type=:no_sample, kwargs...)
+        shift::Integer; sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -330,7 +330,7 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> simple_cycle!(matrix, 1.0; sampling_type=:irrational_sample!)
+julia> simple_cycle!(matrix, 1.0; sampling_type = :irrational_sample!)
 5×5 Matrix{Float32}:
   0.0  0.0   0.0   0.0  -1.0
  -1.0  0.0   0.0   0.0   0.0
@@ -347,7 +347,7 @@ end
 
 function simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type=:no_sample, kwargs...)
+        sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
@@ -402,7 +402,7 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> reverse_simple_cycle!(matrix, 1.0; sampling_type=:regular_sample!)
+julia> reverse_simple_cycle!(matrix, 1.0; sampling_type = :regular_sample!)
 5×5 Matrix{Float32}:
  0.0  -1.0  0.0   0.0  0.0
  0.0   0.0  1.0   0.0  0.0
@@ -419,7 +419,7 @@ end
 
 function reverse_simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type=:no_sample, kwargs...)
+        sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
@@ -493,7 +493,7 @@ end
 
 function add_jumps!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
         weight::AbstractVector, jump_size::Integer;
-        sampling_type=:no_sample, kwargs...)
+        sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     w_idx = 1
@@ -570,7 +570,7 @@ function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
 end
 
 function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::AbstractVector; sampling_type=:no_sample, kwargs...)
+        weight::AbstractVector; sampling_type = :no_sample, kwargs...)
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in axes(reservoir_matrix, 1)
