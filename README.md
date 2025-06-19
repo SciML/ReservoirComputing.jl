@@ -27,6 +27,38 @@ Use the
 [in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/)
 to take a look at not yet released features.
 
+## Citing
+
+If you use this library in your work, please cite:
+
+```bibtex
+@article{martinuzzi2022reservoircomputing,
+  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  journal = {Journal of Machine Learning Research},
+  year    = {2022},
+  volume  = {23},
+  number  = {288},
+  pages   = {1--8},
+  url     = {http://jmlr.org/papers/v23/22-0611.html}
+}
+```
+
+## Installation
+
+ReservoirComputing.jl can be installed using either of
+
+```julia_repl
+julia> ] #actually press the closing square brackets
+pkg> add ReservoirComputing
+```
+or
+
+```julia
+using Pkg
+Pkg.add("ReservoirComputing")
+```
+
 ## Quick Example
 
 To illustrate the workflow of this library we will showcase
@@ -36,7 +68,9 @@ For the `Generative` prediction we need the target data
 to be one step ahead of the training data:
 
 ```julia
-using ReservoirComputing, OrdinaryDiffEq
+using ReservoirComputing, OrdinaryDiffEq, Random
+Random.seed!(42)
+rng = MersenneTwister(17)
 
 #lorenz system parameters
 u0 = [1.0, 0.0, 0.0]
@@ -74,7 +108,8 @@ res_size = 300
 esn = ESN(input_data, input_size, res_size;
     reservoir=rand_sparse(; radius=1.2, sparsity=6 / res_size),
     input_layer=weighted_init,
-    nla_type=NLAT2())
+    nla_type=NLAT2(),
+    rng=rng)
 ```
 
 The echo state network can now be trained and tested.
@@ -109,23 +144,6 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3]; label
 ```
 
 ![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)
-
-## Citing
-
-If you use this library in your work, please cite:
-
-```bibtex
-@article{JMLR:v23:22-0611,
-  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
-  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
-  journal = {Journal of Machine Learning Research},
-  year    = {2022},
-  volume  = {23},
-  number  = {288},
-  pages   = {1--8},
-  url     = {http://jmlr.org/papers/v23/22-0611.html}
-}
-```
 
 ## Acknowledgements
 

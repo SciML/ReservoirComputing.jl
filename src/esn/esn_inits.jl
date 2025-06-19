@@ -49,7 +49,8 @@ end
 
 Create and return a matrix representing a weighted input layer.
 This initializer generates a weighted input matrix with random non-zero
-elements distributed uniformly within the range [-`scaling`, `scaling`] [^lu2017].
+elements distributed uniformly within the range
+[-`scaling`, `scaling`] [Lu2017](@cite).
 
 # Arguments
 
@@ -78,11 +79,6 @@ julia> res_input = weighted_init(8, 3)
   0.0         0.0          0.0577838
   0.0         0.0         -0.0562827
 ```
-
-[^lu2017]: Lu, Zhixin, et al.
-    "Reservoir observers: Model-free inference of unmeasured variables in
-    chaotic systems."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Number = T(0.1), return_sparse::Bool = false) where {T <: Number}
@@ -109,7 +105,7 @@ end
 Create and return a minimal weighted input layer matrix.
 This initializer generates a weighted input matrix with equal, deterministic
 elements in the same construction as [`weighted_minimal]`(@ref),
-inspired by [^lu2017].
+inspired by [Lu2017](@cite).
 
 Please note that this initializer computes its own reservoir size! If
 the computed reservoir size is different than the provided one it will raise a
@@ -188,11 +184,6 @@ julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
  -0.0  -0.0   0.1
   0.0  -0.0   0.1
 ```
-
-[^lu2017]: Lu, Zhixin, et al.
-    "Reservoir observers: Model-free inference of unmeasured variables in
-    chaotic systems."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), return_sparse::Bool = false,
@@ -216,7 +207,8 @@ end
     informed_init([rng], [T], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
-Create an input layer for informed echo state networks [^pathak2018].
+Create an input layer for informed echo state
+networks [Pathak2018](@cite).
 
 # Arguments
 
@@ -234,10 +226,6 @@ Create an input layer for informed echo state networks [^pathak2018].
   - `gamma`: The gamma value. Default is 0.5.
 
 # Examples
-
-[^pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
-    Using machine learning in conjunction with a knowledge-based model."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Number = T(0.1), model_in_size::Integer,
@@ -281,8 +269,9 @@ end
         sampling_type=:bernoulli_sample!, weight=0.1, irrational=pi,
         start=1, p=0.5)
 
-Create a layer matrix with uniform weights determined by `weight` [^rodan2010].
-The sign difference is randomly determined by the `sampling` chosen.
+Create a layer matrix with uniform weights determined by
+`weight` [Rodan2011](@cite). The sign difference is randomly
+determined by the `sampling` chosen.
 
 # Arguments
 
@@ -358,10 +347,6 @@ julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
  -0.1   0.1  0.1
   0.1   0.1  0.1
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
@@ -1034,7 +1019,7 @@ end
         weight=0.1, return_sparse=false,
         kwargs...)
 
-Create and return a delay line reservoir matrix [^rodan2010].
+Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
 # Arguments
 
@@ -1089,10 +1074,6 @@ julia> res_matrix = delay_line(5, 5; weight = 1)
  0.0  0.0  1.0  0.0  0.0
  0.0  0.0  0.0  1.0  0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
@@ -1106,11 +1087,11 @@ end
 
 """
     delay_line_backward([rng], [T], dims...;
-        weight=0.1, fb_weight=0.2, return_sparse=false,
+        weight=0.1, fb_weight=0.1, return_sparse=false,
         delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
-Creates a matrix with backward connections as described in [^rodan2010].
+Creates a matrix with backward connections as described in [Rodan2011](@cite).
 
 # Arguments
 
@@ -1134,7 +1115,7 @@ Creates a matrix with backward connections as described in [^rodan2010].
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the lenght of the array matches the lenght of the sub-diagonal
     you want to populate.
-    Default is 0.2.
+    Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
     Default is 2.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1163,24 +1144,20 @@ Creates a matrix with backward connections as described in [^rodan2010].
 ```jldoctest
 julia> res_matrix = delay_line_backward(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
 
 julia> res_matrix = delay_line_backward(Float16, 5, 5)
 5×5 Matrix{Float16}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
@@ -1201,7 +1178,7 @@ end
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
         cycle_kwargs=(), jump_kwargs=())
 
-Create a cycle jumps reservoir [^Rodan2012].
+Create a cycle jumps reservoir [Rodan2011](@cite).
 
 # Arguments
 
@@ -1266,10 +1243,6 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
 ```
-
-[^rodan2012]: Rodan, Ali, and Peter Tiňo.
-    "Simple deterministically constructed cycle reservoirs with regular jumps."
-    Neural computation 24.7 (2012): 1822-1852.
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
@@ -1291,7 +1264,7 @@ end
         weight=0.1, return_sparse=false,
         kwargs...)
 
-Create a simple cycle reservoir [^rodan2010].
+Create a simple cycle reservoir [Rodan2011](@cite).
 
 # Arguments
 
@@ -1344,10 +1317,6 @@ julia> res_matrix = simple_cycle(5, 5; weight = 11)
   0.0   0.0  11.0   0.0   0.0
   0.0   0.0   0.0  11.0   0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
@@ -1424,7 +1393,7 @@ end
         return_sparse=false)
 
 Creates a true double cycle reservoir, ispired by [^fu2023],
-with cycles built on the definition by [^rodan2010].
+with cycles built on the definition by [Rodan2011](@cite).
 
 # Arguments
 
@@ -1476,9 +1445,6 @@ julia> true_double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 [^fu2023]: Fu, Jun, et al.
     "A double-cycle echo state network topology for time series prediction."
     Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function true_double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
