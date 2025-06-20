@@ -9,13 +9,14 @@ include("pages.jl")
 mathengine = Documenter.MathJax()
 
 bib = CitationBibliography(
-    joinpath(@__DIR__, "refs.bib");
+    joinpath(@__DIR__, "src", "refs.bib");
     style = :authoryear
 )
 
 makedocs(; modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
     clean = true, doctest = false, linkcheck = true,
+    plugins = [bib],
     format = Documenter.HTML(;
         mathengine,
         assets = ["assets/favicon.ico"],

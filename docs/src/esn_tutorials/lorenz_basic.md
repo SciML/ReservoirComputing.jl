@@ -40,7 +40,7 @@ It is *important* to notice that the data needs to be formatted in a matrix with
 
 ## Building the Echo State Network
 
-Once the data is ready, it is possible to define the parameters for the ESN and the `ESN` struct itself. In this example, the values from [^1] are loosely followed as general guidelines.
+Once the data is ready, it is possible to define the parameters for the ESN and the `ESN` struct itself. In this example, the values from [Pathak2017](@cite) are loosely followed as general guidelines.
 
 ```@example lorenz
 using ReservoirComputing
@@ -63,9 +63,9 @@ esn = ESN(input_data, in_size, res_size;
 
 Most of the parameters chosen here mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening, starting from `res_size`: this value determines the dimensions of the reservoir matrix. In this case, a size of 300 has been chosen, so the reservoir matrix will be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case, everything is taken care of internally.
 
-The `res_radius` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the `rand_sparse` method is 1.0 in accordance with the most commonly followed guidelines found in the literature (see [^2] and references therein). The `sparsity` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course, it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values.
+The `res_radius` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the `rand_sparse` method is 1.0 in accordance with the most commonly followed guidelines found in the literature (see [Lukoeviius2012](@cite) and references therein). The `sparsity` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course, it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values.
 
-The value of `input_scaling` determines the upper and lower bounds of the uniform distribution of the weights in the `weighted_init`. The value of 0.1 represents the default. The default input layer is the `scaled_rand`, a dense matrix. The details of the weighted version can be found in [^3], for this example, this version returns the best results.
+The value of `input_scaling` determines the upper and lower bounds of the uniform distribution of the weights in the `weighted_init`. The value of 0.1 represents the default. The default input layer is the `scaled_rand`, a dense matrix. The details of the weighted version can be found in [Lu2017](@cite), for this example, this version returns the best results.
 
 The reservoir driver represents the dynamics of the reservoir. In the standard ESN definition, these dynamics are obtained through a Recurrent Neural Network (RNN), and this is reflected by calling the `RNN` driver for the `ESN` struct. This option is set as the default, and unless there is the need to change parameters, it is not needed. The full equation is the following:
 
@@ -126,8 +126,9 @@ plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
     legendfontsize=12, titlefontsize=20)
 ```
 
-## Bibliography
+## References
 
-[^1]: Pathak, Jaideep, et al. "_Using machine learning to replicate chaotic attractors and calculate Lyapunov exponents from data._" Chaos: An Interdisciplinary Journal of Nonlinear Science 27.12 (2017): 121102.
-[^2]: Lukoševičius, Mantas. "_A practical guide to applying echo state networks._" Neural networks: Tricks of the trade. Springer, Berlin, Heidelberg, 2012. 659-686.
-[^3]: Lu, Zhixin, et al. "_Reservoir observers: Model-free inference of unmeasured variables in chaotic systems._" Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
+```@bibliography
+Pages = ["lorenz_basic.md"]
+Canonical = false
+```

@@ -1,8 +1,8 @@
 # Reservoir Computing using Cellular Automata
 
-Reservoir Computing based on Elementary Cellular Automata (ECA) has been recently introduced. Dubbed as ReCA [^1][^2] it proposed the advantage of storing the reservoir states as binary data. Less parameter tuning represents another advantage of this model. The architecture implemented in ReservoirComputing.jl follows [^3] which builds on top of the original implementation, improving the results. It is strongly suggested to go through the paper to get a solid understanding of the model before delving into experimentation with the code.
+Reservoir Computing based on Elementary Cellular Automata (ECA) has been recently introduced. Dubbed as ReCA [Yilmaz2014](@cite) [Margem2017](@cite) it proposed the advantage of storing the reservoir states as binary data. Less parameter tuning represents another advantage of this model. The architecture implemented in ReservoirComputing.jl follows [Nichele2017](@cite) which builds on top of the original implementation, improving the results. It is strongly suggested to go through the paper to get a solid understanding of the model before delving into experimentation with the code.
 
-To showcase how to use these models, this page illustrates the performance of ReCA in the 5 bit memory task [^4]. The script for the example and companion data can be found [here](https://github.com/MartinuzziFrancesco/reservoir-computing-examples/tree/main/reca).
+To showcase how to use these models, this page illustrates the performance of ReCA in the 5 bit memory task.
 
 ## 5 bit memory task
 
@@ -46,7 +46,3 @@ final_pred = convert(AbstractArray{Float32}, prediction .> 0.5)
 final_pred == output
 ```
 
-[^1]: Yilmaz, Ozgur. "Reservoir computing using cellular automata." arXiv preprint arXiv:1410.0162 (2014).
-[^2]: Margem, Mrwan, and Ozgür Yilmaz. "An experimental study on cellular automata reservoir in pathological sequence learning tasks." (2017).
-[^3]: Nichele, Stefano, and Andreas Molund. "Deep reservoir computing using cellular automata." arXiv preprint arXiv:1703.02806 (2017).
-[^4]: Hochreiter, Sepp, and Jürgen Schmidhuber. "Long short-term memory." Neural computation 9.8 (1997): 1735-1780.

@@ -20,5 +20,6 @@ pages = [
         "ESN Initializers" => "api/inits.md",
         "ESN Drivers" => "api/esn_drivers.md",
         "ESN Variations" => "api/esn_variations.md",
-        "ReCA" => "api/reca.md"]
+        "ReCA" => "api/reca.md"],
+    #"References" => "references.md"
 ]

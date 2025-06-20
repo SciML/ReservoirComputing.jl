@@ -25,3 +25,10 @@
 ```@docs
     ReservoirComputing.create_states
 ```
+
+## References
+
+```@bibliography
+Pages = ["states.md"]
+Canonical = false
+```
