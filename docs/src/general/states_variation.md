@@ -18,7 +18,7 @@ You can choose not to apply any of these changes to the states by calling `Stand
 
 ## Non-Linear Algorithms
 
-First introduced in [^1] and expanded in [^2], non-linear algorithms are nonlinear combinations of the columns of the matrix states. There are three such algorithms implemented in ReservoirComputing.jl, and you can choose which one to use with the `nla_type` keyword argument. The default value is set to `NLADefault()`, which means no non-linear algorithm is applied.
+First introduced in [Pathak2017](@cite) and expanded in [Chattopadhyay2020](@cite), non-linear algorithms are nonlinear combinations of the columns of the matrix states. There are three such algorithms implemented in ReservoirComputing.jl, and you can choose which one to use with the `nla_type` keyword argument. The default value is set to `NLADefault()`, which means no non-linear algorithm is applied.
 
 The available non-linear algorithms are:
 
@@ -31,23 +31,27 @@ These algorithms perform specific operations on the reservoir states. To provide
 **NLAT1**
 
 ```math
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j} \times \textbf{x}_{i,j} \ \ \text{if \textit{j} is odd} \\
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if \textit{j} is even}
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j} \times \textbf{x}_{i,j} \ \ \text{if j is odd} \\
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if j is even}
 ```
 
 **NLAT2**
 
 ```math
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j-1} \times \textbf{x}_{i,j-2} \ \ \text{if \textit{j} > 1 is odd} \\
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if \textit{j} is 1 or even}
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j-1} \times \textbf{x}_{i,j-2} \ \ \text{if j > 1 is odd} \\
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if j is 1 or even}
 ```
 
 **NLAT3**
 
 ```math
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j-1} \times \textbf{x}_{i,j+1} \ \ \text{if \textit{j} > 1 is odd} \\
-\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if \textit{j} is 1 or even}
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j-1} \times \textbf{x}_{i,j+1} \ \ \text{if j > 1 is odd} \\
+\tilde{\textbf{x}}_{i,j} = \textbf{x}_{i,j}  \ \ \text{if j is 1 or even}
 ```
 
-[^1]: Pathak, Jaideep, et al. "_Using machine learning to replicate chaotic attractors and calculate Lyapunov exponents from data._" Chaos: An Interdisciplinary Journal of Nonlinear Science 27.12 (2017): 121102.
-[^2]: Chattopadhyay, Ashesh, Pedram Hassanzadeh, and Devika Subramanian. "_Data-driven predictions of a multiscale Lorenz 96 chaotic system using machine-learning methods: reservoir computing, artificial neural network, and long short-term memory network._" Nonlinear Processes in Geophysics 27.3 (2020): 373-389.
+## References
+
+```@bibliography
+Pages = ["states_variation.md"]
+Canonical = false
+```

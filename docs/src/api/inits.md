@@ -44,3 +44,10 @@
     self_loop!
     add_jumps!
 ```
+
+## References
+
+```@bibliography
+Pages = ["inits.md"]
+Canonical = false
+```

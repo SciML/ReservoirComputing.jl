@@ -150,7 +150,7 @@ end
         scaling_factor=fill(leaky_coefficient, length(activation_function)))
 
 Returns a Multiple RNN (MRNN) initializer for the Echo State Network (ESN),
-introduced in [^Lun2015].
+introduced in [Lun2015](@cite).
 
 # Arguments
 
@@ -173,10 +173,6 @@ introduced in [^Lun2015].
 This function creates an MRNN object with the specified activation functions,
 leaky coefficient, and scaling factors, which can be used as a reservoir driver
 in the ESN.
-
-[^Lun2015]: Lun, Shu-Xian, et al.
-    "_A novel model of leaky integrator echo state network for
-    time-series prediction._" Neurocomputing 159 (2015): 58-66.
 """
 function MRNN(; activation_function = [tanh, sigmoid],
         leaky_coefficient = 1.0,
@@ -222,24 +218,15 @@ end
 Returns a Fully Gated Recurrent Unit (FullyGated) initializer
 for the Echo State Network (ESN).
 
-Returns the standard gated recurrent unit [^Cho2014] as a driver for the
+Returns the standard gated recurrent unit [Cho2014](@cite) as a driver for the
 echo state network (`ESN`).
-
-[^Cho2014]: Cho, Kyunghyun, et al.
-    "_Learning phrase representations using RNN encoder-decoder
-    for statistical machine translation._"
-    arXiv preprint arXiv:1406.1078 (2014).
 """
 struct FullyGated <: AbstractGRUVariant end
 
 """
     Minimal()
 
-Returns a minimal GRU ESN initializer as described in [^Zhou2016].
-
-[^Zhou2016]: Zhou, Guo-Bing, et al. "_Minimal gated unit for recurrent
-    neural networks._"
-    International Journal of Automation and Computing 13.3 (2016): 226-234.
+Returns a minimal GRU ESN initializer.
 """
 struct Minimal <: AbstractGRUVariant end
 
@@ -252,7 +239,7 @@ struct Minimal <: AbstractGRUVariant end
         variant = FullyGated())
 
 Returns a Gated Recurrent Unit (GRU) reservoir driver for Echo State Network (`ESN`).
-This driver is based on the GRU architecture [^Cho2014].
+This driver is based on the GRU architecture [Cho2014](@cite).
 
 # Arguments
 
@@ -267,10 +254,6 @@ This driver is based on the GRU architecture [^Cho2014].
     By default, it uses two dense layers.
   - `variant`: The GRU variant to use.
     By default, it uses the "FullyGated" variant.
-
-[^Cho2014]: Cho, Kyunghyun, et al.
-    "_Learning phrase representations using RNN encoder-decoder for statistical machine translation._"
-    arXiv preprint arXiv:1406.1078 (2014).
 """
 function GRU(; activation_function = [sigmoid, sigmoid, tanh],
         inner_layer = fill(scaled_rand, 2),

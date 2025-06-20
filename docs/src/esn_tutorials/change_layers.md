@@ -26,7 +26,7 @@ Custom layers only need to follow these APIs to be compatible with ReservoirComp
 
 ## Example of minimally complex ESN
 
-Using [^rodan2012] and [^rodan2010] as references this section will provide an
+Using [Rodan2012](@cite) and [Rodan2011](@cite) as references this section will provide an
 example on how to change both the input layer and the reservoir for ESNs.
 
 The task for this example will be the one step ahead prediction of the Henon map.
@@ -77,11 +77,9 @@ end
 As it is possible to see, changing layers in ESN models is straightforward.
 Be sure to check the API documentation for a full list of reservoir and layers.
 
-## Bibliography
+## References
 
-[^rodan2012]: Rodan, Ali, and Peter Tiňo.
-    “Simple deterministically constructed cycle reservoirs with regular jumps.”
-    Neural computation 24.7 (2012): 1822-1852.
-[^rodan2010]: Rodan, Ali, and Peter Tiňo.
-    “Minimum complexity echo state network.”
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
+```@bibliography
+Pages = ["change_layers.md"]
+Canonical = false
+```

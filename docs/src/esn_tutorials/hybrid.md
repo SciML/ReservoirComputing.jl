@@ -1,6 +1,6 @@
 # Hybrid Echo State Networks
 
-Following the idea of giving physical information to machine learning models, the hybrid echo state networks [^1] try to achieve this results by feeding model data into the ESN. In this example, it is explained how to create and leverage such models in ReservoirComputing.jl.
+Following the idea of giving physical information to machine learning models, the hybrid echo state networks [Pathak2018](@cite) try to achieve this results by feeding model data into the ESN. In this example, it is explained how to create and leverage such models in ReservoirComputing.jl.
 
 ## Generating the data
 
@@ -94,6 +94,9 @@ plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
     legendfontsize=12, titlefontsize=20)
 ```
 
-## Bibliography
+## References
 
-[^1]: Pathak, Jaideep, et al. "_Hybrid forecasting of chaotic processes: Using machine learning in conjunction with a knowledge-based model._" Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018): 041101.
+```@bibliography
+Pages = ["hybrid.md"]
+Canonical = false
+```

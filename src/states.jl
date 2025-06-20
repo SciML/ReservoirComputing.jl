@@ -372,7 +372,7 @@ struct NLADefault <: NonLinearAlgorithm end
     NLAT1()
 
 `NLAT1` implements the T₁ transformation algorithm introduced
-in [^Chattopadhyay] and [^Pathak]. The T₁ algorithm squares
+in [Chattopadhyay2020](@cite) and [Pathak2017](@cite). The T₁ algorithm squares
 elements of the input array, targeting every second row.
 
 
@@ -442,16 +442,6 @@ julia> mat_new = nlat(mat_old)
  361  400  441
 
 ```
-
-[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
-    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
-    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM."
-    (2019).
-
-[^Pathak]: Pathak, Jaideep, et al.
-    "Model-free prediction of large spatiotemporally chaotic systems
-    from data: A reservoir computing approach."
-    Physical review letters 120.2 (2018): 024102.
 """
 struct NLAT1 <: NonLinearAlgorithm end
 
@@ -471,7 +461,7 @@ end
     NLAT2()
 
 `NLAT2` implements the T₂ transformation algorithm as defined
-in [^Chattopadhyay]. This transformation algorithm modifies the
+in [Chattopadhyay2020](@cite). This transformation algorithm modifies the
 reservoir states by multiplying each odd-indexed row
 (starting from the second row) with the product of its two preceding rows.
 
@@ -541,11 +531,6 @@ julia> mat_new = nlat(mat_old)
  19  20   21
 
 ```
-
-[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
-    "Data-driven prediction of a multi-scale Lorenz 96 chaotic system using a
-    hierarchy of deep learning methods: Reservoir computing, ANN, and RNN-LSTM."
-    (2019).
 """
 struct NLAT2 <: NonLinearAlgorithm end
 
@@ -565,7 +550,7 @@ end
     NLAT3()
 
 Implements the T₃ transformation algorithm as detailed
-in [^Chattopadhyay]. This algorithm modifies the reservoir's states by
+in [Chattopadhyay2020](@cite). This algorithm modifies the reservoir's states by
 multiplying each odd-indexed row (beginning from the second row) with the
 product of the immediately preceding and the immediately following rows.
 
@@ -635,11 +620,6 @@ julia> mat_new = nlat(mat_old)
   19   20   21
 
 ```
-
-[^Chattopadhyay]: Chattopadhyay, Ashesh, et al.
-    "Data-driven predictions of a multiscale Lorenz 96 chaotic system using
-    machine-learning methods: reservoir computing, artificial neural network,
-    and long short-term memory network." (2019).
 """
 struct NLAT3 <: NonLinearAlgorithm end
 
@@ -658,7 +638,7 @@ end
 @doc raw"""
     PartialSquare(eta)
 
-Implement a partial squaring of the states as described in [^barbosa2021].
+Implement a partial squaring of the states as described in [Barbosa2021](@cite).
 
 # Equations
 
@@ -704,11 +684,7 @@ julia> x_new = ps(x_old)
   7
   8
   9
-
-
-[^barbosa2021]: Barbosa, Wendson AS, et al.
-    "Symmetry-aware reservoir computing."
-    Physical Review E 104.4 (2021): 045307.
+```
 """
 struct PartialSquare <: NonLinearAlgorithm
     eta::Number
@@ -731,7 +707,7 @@ end
 
     ExtendedSquare()
 
-Extension of the Lu initialization proposed in [^herteux2020].
+Extension of the Lu initialization proposed in [Herteux2020](@cite).
 The state vector is extended with the squared elements of the initial
 state
 
@@ -783,10 +759,6 @@ julia> x_new = es(x_old)
  81
 
 ```
-
-[^herteux2020]: Herteux, Joschka, and Christoph Räth.
-    "Breaking symmetries of the reservoir equations in echo state networks."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 30.12 (2020).
 """
 struct ExtendedSquare <: NonLinearAlgorithm end
 

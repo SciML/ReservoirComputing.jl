@@ -2,7 +2,7 @@
 
 Deep Echo State Network architectures started to gain some traction recently. In this guide, we illustrate how it is possible to use ReservoirComputing.jl to build a deep ESN.
 
-The network implemented in this library is taken from [^1]. It works by stacking reservoirs on top of each other, feeding the output from one into the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in-depth explanation, refer to the paper linked above.
+The network implemented in this library is taken from [Gallicchio2017](@cite). It works by stacking reservoirs on top of each other, feeding the output from one into the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in-depth explanation, refer to the paper linked above.
 
 ## Lorenz Example
 
@@ -88,6 +88,9 @@ plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
     legendfontsize=12, titlefontsize=20)
 ```
 
-## Documentation
+## References
 
-[^1]: Gallicchio, Claudio, and Alessio Micheli. "_Deep echo state network (deepesn): A brief survey._" arXiv preprint arXiv:1712.04323 (2017).
+```@bibliography
+Pages = ["deep_esn.md"]
+Canonical = false
+```

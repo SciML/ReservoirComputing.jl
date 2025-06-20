@@ -49,7 +49,8 @@ end
 
 Create and return a matrix representing a weighted input layer.
 This initializer generates a weighted input matrix with random non-zero
-elements distributed uniformly within the range [-`scaling`, `scaling`] [^lu2017].
+elements distributed uniformly within the range
+[-`scaling`, `scaling`] [Lu2017](@cite).
 
 # Arguments
 
@@ -78,11 +79,6 @@ julia> res_input = weighted_init(8, 3)
   0.0         0.0          0.0577838
   0.0         0.0         -0.0562827
 ```
-
-[^lu2017]: Lu, Zhixin, et al.
-    "Reservoir observers: Model-free inference of unmeasured variables in
-    chaotic systems."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Number = T(0.1), return_sparse::Bool = false) where {T <: Number}
@@ -109,7 +105,7 @@ end
 Create and return a minimal weighted input layer matrix.
 This initializer generates a weighted input matrix with equal, deterministic
 elements in the same construction as [`weighted_minimal]`(@ref),
-inspired by [^lu2017].
+inspired by [Lu2017](@cite).
 
 Please note that this initializer computes its own reservoir size! If
 the computed reservoir size is different than the provided one it will raise a
@@ -188,11 +184,6 @@ julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
  -0.0  -0.0   0.1
   0.0  -0.0   0.1
 ```
-
-[^lu2017]: Lu, Zhixin, et al.
-    "Reservoir observers: Model-free inference of unmeasured variables in
-    chaotic systems."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 27.4 (2017): 041102.
 """
 function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), return_sparse::Bool = false,
@@ -216,7 +207,8 @@ end
     informed_init([rng], [T], dims...;
         scaling=0.1, model_in_size, gamma=0.5)
 
-Create an input layer for informed echo state networks [^pathak2018].
+Create an input layer for informed echo state
+networks [Pathak2018](@cite).
 
 # Arguments
 
@@ -234,10 +226,6 @@ Create an input layer for informed echo state networks [^pathak2018].
   - `gamma`: The gamma value. Default is 0.5.
 
 # Examples
-
-[^pathak2018]: Pathak, Jaideep, et al. "Hybrid forecasting of chaotic processes:
-    Using machine learning in conjunction with a knowledge-based model."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 28.4 (2018).
 """
 function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Number = T(0.1), model_in_size::Integer,
@@ -281,8 +269,9 @@ end
         sampling_type=:bernoulli_sample!, weight=0.1, irrational=pi,
         start=1, p=0.5)
 
-Create a layer matrix with uniform weights determined by `weight` [^rodan2010].
-The sign difference is randomly determined by the `sampling` chosen.
+Create a layer matrix with uniform weights determined by
+`weight` [Rodan2011](@cite). The sign difference is randomly
+determined by the `sampling` chosen.
 
 # Arguments
 
@@ -358,10 +347,6 @@ julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
  -0.1   0.1  0.1
   0.1   0.1  0.1
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
@@ -379,7 +364,8 @@ end
         amplitude=one(T), sine_divisor=one(T),
         chebyshev_parameter=one(T), return_sparse=false)
 
-Generate a Chebyshev-mapped matrix [^xie2024]. The first row is initialized
+Generate a Chebyshev-mapped matrix [Xie2024](@cite).
+The first row is initialized
 using a sine function and subsequent rows are iteratively generated
 via the Chebyshev mapping. The first row is defined as:
 
@@ -431,11 +417,6 @@ julia> input_matrix = chebyshev_mapping(10, 3)
  0.866025  0.866025  -4.37114f-8
  0.866025  0.866025  -4.37114f-8
 ```
-
-[^xie2024]: Xie, Minzhi, Qianxue Wang, and Simin Yu.
-    "Time Series Prediction of ESN Based on Chebyshev Mapping and Strongly
-    Connected Topology."
-    Neural Processing Letters 56.1 (2024): 30.
 """
 function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat = one(T), sine_divisor::AbstractFloat = one(T),
@@ -463,8 +444,8 @@ end
         amplitude=0.3, sine_divisor=5.9, logistic_parameter=3.7,
         return_sparse=false)
 
-Generate an input weight matrix using a logistic mapping [^wang2022].The first
-row is initialized using a sine function:
+Generate an input weight matrix using a logistic mapping [Wang2022](@cite)
+The first row is initialized using a sine function:
 
 ```math
     W[1, j] = \text{amplitude} \cdot \sin(j \cdot \pi / 
@@ -511,11 +492,6 @@ julia> logistic_mapping(8, 3)
  0.841322   0.767132  0.791346
 
 ```
-
-
-[^wang2022]: Wang, Heshan, et al. "Echo state network with logistic
-    mapping and bias dropout for time series prediction."
-    Neurocomputing 489 (2022): 196-210.
 """
 function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
@@ -544,8 +520,8 @@ end
         factor, amplitude=0.3, sine_divisor=5.9, logistic_parameter=2.35,
         return_sparse=false)
 
-Generate a input weight matrix based on the logistic mapping [^viehweg2025]. The
-matrix is built so that each input is transformed into a high-dimensional feature
+Generate a input weight matrix based on the logistic mapping [Viehweg2025](@cite).
+Thematrix is built so that each input is transformed into a high-dimensional feature
 space via a recursive logistic map. For each input, a chain of weights is generated
 as follows:
 - The first element of the chain is initialized using a sine function:
@@ -614,10 +590,6 @@ julia> modified_lm(12, 4; factor=3)
   ⋅    ⋅          ⋅         0.192168
 
 ```
-
-[^viehweg2025]: Viehweg, Johannes, Constanze Poll, and Patrick Mäder.
-    "Deterministic Reservoir Computing for Chaotic Time Series Prediction."
-    arXiv preprint arXiv:2501.15615 (2025).
 """
 function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         factor::Integer, amplitude::AbstractFloat = 0.3,
@@ -704,7 +676,7 @@ end
         return_sparse=false)
 
 Returns an initializer to build a sparse reservoir matrix with the given
-`sparsity` by using a pseudo-SVD approach as described in [^yang2018].
+`sparsity` by using a pseudo-SVD approach as described in [Yang2018](@cite).
 
 # Arguments
 
@@ -741,10 +713,6 @@ julia> res_matrix = pseudo_svd(5, 5)
  0.0       0.0       0.0       0.726199  0.0
  0.0       0.0       0.0       0.0       1.0
 ```
-
-[^yang2018]: Yang, Cuili, et al.
-    "_Design of polynomial echo state networks for time series prediction._"
-    Neurocomputing 290 (2018): 148-160.
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number = T(1.0), sparsity::Number = 0.1, sorted::Bool = true,
@@ -825,7 +793,7 @@ end
         extra_edge_probability=T(0.1), spectral_radius=one(T),
         return_sparse=false)
 
-Construct a chaotic reservoir matrix using a digital chaotic system [^xie2024].
+Construct a chaotic reservoir matrix using a digital chaotic system [Xie2024](@cite).
 
 The matrix topology is derived from a strongly connected adjacency
 matrix based on a digital chaotic system operating at finite precision.
@@ -866,11 +834,6 @@ julia> res_matrix = chaotic_init(8, 8)
    ⋅        -2.60383    ⋅        -2.90391
  -0.578156    ⋅         ⋅          ⋅
 ```
-
-[^xie2024]: Xie, Minzhi, Qianxue Wang, and Simin Yu.
-    "Time Series Prediction of ESN Based on Chebyshev Mapping and Strongly
-    Connected Topology."
-    Neural Processing Letters 56.1 (2024): 30.
 """
 function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         extra_edge_probability::AbstractFloat = T(0.1), spectral_radius::AbstractFloat = one(T),
@@ -937,7 +900,7 @@ end
 Construct an internal reservoir connectivity matrix with low connectivity.
 
 This function creates a square reservoir matrix with the specified in-degree
-for each node [^griffith2019]. When `in_degree` is 1, the function can enforce
+for each node [Griffith2019](@cite). When `in_degree` is 1, the function can enforce
 a fully connected cycle if `connected` is `true`;
 otherwise, it generates a random connectivity pattern.
 
@@ -961,10 +924,6 @@ otherwise, it generates a random connectivity pattern.
     Defaults to 1.0.
   - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
     Default is `false`.
-
-[^griffith2019]: Griffith, Aaron, Andrew Pomerance, and Daniel J. Gauthier.
-    "Forecasting chaotic systems with very low connectivity reservoir computers."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 29.12 (2019).
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool = false, connected::Bool = false,
@@ -1034,7 +993,7 @@ end
         weight=0.1, return_sparse=false,
         kwargs...)
 
-Create and return a delay line reservoir matrix [^rodan2010].
+Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
 # Arguments
 
@@ -1089,10 +1048,6 @@ julia> res_matrix = delay_line(5, 5; weight = 1)
  0.0  0.0  1.0  0.0  0.0
  0.0  0.0  0.0  1.0  0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
@@ -1106,11 +1061,11 @@ end
 
 """
     delay_line_backward([rng], [T], dims...;
-        weight=0.1, fb_weight=0.2, return_sparse=false,
+        weight=0.1, fb_weight=0.1, return_sparse=false,
         delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
-Creates a matrix with backward connections as described in [^rodan2010].
+Creates a matrix with backward connections as described in [Rodan2011](@cite).
 
 # Arguments
 
@@ -1134,7 +1089,7 @@ Creates a matrix with backward connections as described in [^rodan2010].
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the lenght of the array matches the lenght of the sub-diagonal
     you want to populate.
-    Default is 0.2.
+    Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
     Default is 2.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1163,24 +1118,20 @@ Creates a matrix with backward connections as described in [^rodan2010].
 ```jldoctest
 julia> res_matrix = delay_line_backward(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
 
 julia> res_matrix = delay_line_backward(Float16, 5, 5)
 5×5 Matrix{Float16}:
- 0.0  0.2  0.0  0.0  0.0
- 0.1  0.0  0.2  0.0  0.0
- 0.0  0.1  0.0  0.2  0.0
- 0.0  0.0  0.1  0.0  0.2
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
@@ -1201,7 +1152,7 @@ end
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
         cycle_kwargs=(), jump_kwargs=())
 
-Create a cycle jumps reservoir [^Rodan2012].
+Create a cycle jumps reservoir [Rodan2012](@cite).
 
 # Arguments
 
@@ -1266,10 +1217,6 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
 ```
-
-[^rodan2012]: Rodan, Ali, and Peter Tiňo.
-    "Simple deterministically constructed cycle reservoirs with regular jumps."
-    Neural computation 24.7 (2012): 1822-1852.
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
@@ -1291,7 +1238,7 @@ end
         weight=0.1, return_sparse=false,
         kwargs...)
 
-Create a simple cycle reservoir [^rodan2010].
+Create a simple cycle reservoir [Rodan2011](@cite).
 
 # Arguments
 
@@ -1344,10 +1291,6 @@ julia> res_matrix = simple_cycle(5, 5; weight = 11)
   0.0   0.0  11.0   0.0   0.0
   0.0   0.0   0.0  11.0   0.0
 ```
-
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
@@ -1364,7 +1307,7 @@ end
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
 
-Creates a double cycle reservoir [^fu2023].
+Creates a double cycle reservoir [Fu2023](@cite).
 
 # Arguments
 
@@ -1393,10 +1336,6 @@ julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_we
  0.0  0.0  0.1  0.0  0.3
  0.1  0.0  0.0  0.1  0.0
 ```
-
-[^fu2023]: Fu, Jun, et al.
-    "A double-cycle echo state network topology for time series prediction."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
 """
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
@@ -1423,8 +1362,8 @@ end
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
 
-Creates a true double cycle reservoir, ispired by [^fu2023],
-with cycles built on the definition by [^rodan2010].
+Creates a true double cycle reservoir, ispired by [Fu2023](@cite),
+with cycles built on the definition by [Rodan2011](@cite).
 
 # Arguments
 
@@ -1472,13 +1411,6 @@ julia> true_double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
  0.0  0.0  0.1  0.0  0.3
  0.3  0.0  0.0  0.1  0.0
 ```
-
-[^fu2023]: Fu, Jun, et al.
-    "A double-cycle echo state network topology for time series prediction."
-    Chaos: An Interdisciplinary Journal of Nonlinear Science 33.9 (2023).
-[^rodan2010]: Rodan, Ali, and Peter Tino.
-    "Minimum complexity echo state network."
-    IEEE transactions on neural networks 22.1 (2010): 131-144.
 """
 function true_double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
@@ -1499,7 +1431,8 @@ end
         cycle_weight=0.1, selfloop_weight=0.1,
         return_sparse=false, kwargs...)
 
-Creates a simple cycle reservoir with the addition of self loops [^elsarraj2019].
+Creates a simple cycle reservoir with the
+addition of self loops [Elsarraj2019](@cite).
 
 This architecture is referred to as TP1 in the original paper.
 
@@ -1571,10 +1504,6 @@ julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
  0.0  0.0  0.2  0.5  0.0
  0.0  0.0  0.0  0.2  0.5
 ```
-
-[^elsarraj2019]: Elsarraj, Duaa, et al.
-    "Demystifying echo state network with deterministic simple topologies."
-    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
@@ -1594,7 +1523,7 @@ end
         return_sparse=false)
 
 Creates a cycle reservoir with feedback connections on even neurons and
-self loops on odd neurons [^elsarraj2019].
+self loops on odd neurons [Elsarraj2019](@cite).
 
 This architecture is referred to as TP2 in the original paper.
 
@@ -1649,10 +1578,6 @@ julia> reservoir_matrix = selfloop_feedback_cycle(5, 5; self_loop_weight=0.5)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.5
 ```
-
-[^elsarraj2019]: Elsarraj, Duaa, et al.
-    "Demystifying echo state network with deterministic simple topologies."
-    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_feedback_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
@@ -1682,7 +1607,7 @@ end
         selfloop_kwargs=(), delay_kwargs=())
 
 Creates a reservoir based on a delay line with the addition of self loops and
-backward connections shifted by one [^elsarraj2019].
+backward connections shifted by one [Elsarraj2019](@cite).
 
 This architecture is referred to as TP3 in the original paper.
 
@@ -1763,10 +1688,6 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
  0.0  0.0  0.3  0.1  0.0
  0.0  0.0  0.0  0.3  0.1
 ```
-
-[^elsarraj2019]: Elsarraj, Duaa, et al.
-    "Demystifying echo state network with deterministic simple topologies."
-    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         shift::Integer = 1, fb_shift::Integer = 2,
@@ -1792,7 +1713,7 @@ end
         delay_kwargs=())
 
 Creates a reservoir based on a forward connection of weights between even nodes
-with the addition of self loops [^elsarraj2019].
+with the addition of self loops [Elsarraj2019](@cite).
 
 This architecture is referred to as TP4 in the original paper.
 
@@ -1865,10 +1786,6 @@ julia> reservoir_matrix = selfloop_forward_connection(5, 5; weight=0.5)
  0.0  0.5  0.0  0.1  0.0
  0.0  0.0  0.5  0.0  0.1
 ```
-
-[^elsarraj2019]: Elsarraj, Duaa, et al.
-    "Demystifying echo state network with deterministic simple topologies."
-    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function selfloop_forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1f0),
@@ -1888,7 +1805,7 @@ end
         weight=0.1, selfloop_weight=0.1,
         return_sparse=false)
 
-Creates a reservoir based on a forward connection of weights [^elsarraj2019].
+Creates a reservoir based on a forward connection of weights [Elsarraj2019](@cite).
 
 This architecture is referred to as TP5 in the original paper.
 
@@ -1953,10 +1870,6 @@ julia> reservoir_matrix = forward_connection(5, 5; weight=0.5)
  0.0  0.5  0.0  0.0  0.0
  0.0  0.0  0.5  0.0  0.0
 ```
-
-[^elsarraj2019]: Elsarraj, Duaa, et al.
-    "Demystifying echo state network with deterministic simple topologies."
-    International Journal of Computational Science and Engineering 19.3 (2019): 407-417.
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1f0), return_sparse::Bool = false,
