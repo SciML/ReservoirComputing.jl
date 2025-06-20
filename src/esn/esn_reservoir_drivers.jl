@@ -227,7 +227,6 @@ struct FullyGated <: AbstractGRUVariant end
     Minimal()
 
 Returns a minimal GRU ESN initializer.
-
 """
 struct Minimal <: AbstractGRUVariant end
 
