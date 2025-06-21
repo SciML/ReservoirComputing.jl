@@ -1881,6 +1881,98 @@ function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+@doc raw"""
+    block_diagonal([rng], [T], dims...;
+        weight=1, block_size=1,
+        return_sparse=false)
+
+Creates a block‐diagonal matrix consisting of square blocks of size
+`block_size` along the main diagonal [Ma2023](@cite).  
+Each block may be filled with  
+  - a single scalar
+  - a vector of per‐block weights (length = number of blocks)
+
+# Equations
+
+```math
+W_{i,j} =
+\begin{cases}
+    w_b, & \text{if }\left\lfloor\frac{i-1}{s}\right\rfloor = \left\lfloor\frac{j-1}{s}\right\rfloor = b,\; 
+           s = \text{block\_size},\; b=0,\dots,nb-1, \\
+    0,   & \text{otherwise,}
+\end{cases}
+```
+
+# Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`.  
+  - `T`: Element type of the matrix. Default is `Float32`.  
+  - `dims`: Dimensions of the output matrix (must be two-dimensional).
+
+# Keyword arguments
+
+  - `weight`:  
+    - scalar: every block is filled with that value
+    - vector: length = number of blocks, one constant per block
+    Default is `1.0`.
+  - `block_size`: Size\(s\) of each square block on the diagonal. Default is `1.0`.
+  - `return_sparse`: If `true`, returns the matrix as sparse.
+    SparseArrays.jl must be lodead.
+    Default is `false`.
+
+# Examples
+
+```jldoctest
+# 4×4 with two 2×2 blocks of 1.0
+julia> W1 = block_diagonal(4, 4; block_size=2)
+4×4 Matrix{Float32}:
+ 1.0  1.0  0.0  0.0
+ 1.0  1.0  0.0  0.0
+ 0.0  0.0  1.0  1.0
+ 0.0  0.0  1.0  1.0
+
+# per-block weights [0.5, 2.0]
+julia> W2 = block_diagonal(4, 4; block_size=2, weight=[0.5, 2.0])
+4×4 Matrix{Float32}:
+ 0.5  0.5  0.0  0.0
+ 0.5  0.5  0.0  0.0
+ 0.0  0.0  2.0  2.0
+ 0.0  0.0  2.0  2.0
+```
+"""
+function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight::Union{Number, AbstractVector} = T(1),
+        block_size::Integer = 1,
+        return_sparse::Bool = false) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    n_rows, n_cols = dims
+    total = min(n_rows, n_cols)
+    num_blocks = fld(total, block_size)
+    remainder = total - num_blocks * block_size
+    if remainder != 0
+        @warn "\n
+        With block_size=$block_size on a $n_rows×$n_cols matrix,
+        only $num_blocks block(s) of size $block_size fit,
+        leaving $remainder row(s)/column(s) unused.
+        \n"
+    end
+    weights = isa(weight, AbstractVector) ? T.(weight) : fill(T(weight), num_blocks)
+    @assert length(weights)==num_blocks "
+      weight vector must have length = number of blocks
+  "
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, n_rows, n_cols)
+    for block in 1:num_blocks
+        row_start = (block - 1) * block_size + 1
+        row_end = row_start + block_size - 1
+        col_start = (block - 1) * block_size + 1
+        col_end = col_start + block_size - 1
+        @inbounds reservoir_matrix[row_start:row_end, col_start:col_end] .= weights[block]
+    end
+
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jumps,
@@ -1888,7 +1980,7 @@ for initializer in (:rand_sparse, :delay_line, :delay_line_backward, :cycle_jump
     :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
     :selfloop_feedback_cycle, :selfloop_delayline_backward, :selfloop_forward_connection,
-    :forward_connection, :true_double_cycle)
+    :forward_connection, :true_double_cycle, :block_diagonal)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
