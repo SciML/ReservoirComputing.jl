@@ -19,31 +19,32 @@ end
 
 ft = [Float16, Float32, Float64]
 reservoir_inits = [
-    rand_sparse,
+    block_diagonal,
+    chaotic_init,
+    cycle_jumps,
     delay_line,
     delay_line_backward,
-    cycle_jumps,
-    simple_cycle,
-    pseudo_svd,
-    chaotic_init,
-    low_connectivity,
     double_cycle,
-    selfloop_cycle,
-    selfloop_feedback_cycle,
-    selfloop_delayline_backward,
-    selfloop_forward_connection,
     forward_connection,
+    low_connectivity,
+    pseudo_svd,
+    rand_sparse,
+    selfloop_cycle,
+    selfloop_delayline_backward,
+    selfloop_feedback_cycle,
+    selfloop_forward_connection,
+    simple_cycle,
     true_double_cycle
 ]
 input_inits = [
-    scaled_rand,
-    weighted_init,
-    weighted_minimal,
-    minimal_init,
-    minimal_init(; sampling_type = :irrational_sample!),
     chebyshev_mapping,
     logistic_mapping,
-    modified_lm(; factor = 4)
+    minimal_init,
+    minimal_init(; sampling_type = :irrational_sample!),
+    modified_lm(; factor = 4),
+    scaled_rand,
+    weighted_init,
+    weighted_minimal
 ]
 
 @testset "Reservoir Initializers" begin

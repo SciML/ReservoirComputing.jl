@@ -3,46 +3,47 @@
 ## Input layers
 
 ```@docs
+    chebyshev_mapping
+    informed_init
+    logistic_mapping
+    minimal_init
+    modified_lm
     scaled_rand
     weighted_init
-    minimal_init
     weighted_minimal
-    chebyshev_mapping
-    logistic_mapping
-    modified_lm
-    informed_init
 ```
 
 ## Reservoirs
 
 ```@docs
-    rand_sparse
-    pseudo_svd
+    block_diagonal
     chaotic_init
-    low_connectivity
+    cycle_jumps
     delay_line
     delay_line_backward
-    simple_cycle
-    cycle_jumps
     double_cycle
-    true_double_cycle
-    selfloop_cycle
-    selfloop_feedback_cycle
-    selfloop_delayline_backward
-    selfloop_forward_connection
     forward_connection
+    low_connectivity
+    pseudo_svd
+    rand_sparse
+    selfloop_cycle
+    selfloop_delayline_backward
+    selfloop_feedback_cycle
+    selfloop_forward_connection
+    simple_cycle
+    true_double_cycle
 ```
 
 ## Building functions
 
 ```@docs
-    scale_radius!
-    delay_line!
-    backward_connection!
-    simple_cycle!
-    reverse_simple_cycle!
-    self_loop!
     add_jumps!
+    backward_connection!
+    delay_line!
+    reverse_simple_cycle!
+    scale_radius!
+    self_loop!
+    simple_cycle!
 ```
 
 ## References
