@@ -2,53 +2,40 @@
 
 ## Input layers
 
-```@docs
-    chebyshev_mapping
-    informed_init
-    logistic_mapping
-    minimal_init
-    modified_lm
-    scaled_rand
-    weighted_init
-    weighted_minimal
-```
+  - [chebyshev_mapping](inits/chebyshev_mapping.md)
+  - [informed_init](inits/informed_init.md)
+  - [logistic_mapping](inits/logistic_mapping.md)
+  - [minimal_init](inits/minimal_init.md)
+  - [modified_lm](inits/modified_lm.md)
+  - [scaled_rand](inits/scaled_rand.md)
+  - [weighted_init](inits/weighted_init.md)
+  - [weighted_minimal](inits/weighted_minimal.md)
 
 ## Reservoirs
 
-```@docs
-    block_diagonal
-    chaotic_init
-    cycle_jumps
-    delay_line
-    delay_line_backward
-    double_cycle
-    forward_connection
-    low_connectivity
-    pseudo_svd
-    rand_sparse
-    selfloop_cycle
-    selfloop_delayline_backward
-    selfloop_feedback_cycle
-    selfloop_forward_connection
-    simple_cycle
-    true_double_cycle
-```
+  - [block_diagonal](inits/block_diagonal.md)
+  - [chaotic_init](inits/chaotic_init.md)
+  - [cycle_jumps](inits/cycle_jumps.md)
+  - [delay_line](inits/delay_line.md)
+  - [delay_line_backward](inits/delay_line_backward.md)
+  - [double_cycle](inits/double_cycle.md)
+  - [forward_connection](inits/forward_connection.md)
+  - [low_connectivity](inits/low_connectivity.md)
+  - [pseudo_svd](inits/pseudo_svd.md)
+  - [rand_sparse](inits/rand_sparse.md)
+  - [selfloop_cycle](inits/selfloop_cycle.md)
+  - [selfloop_delayline_backward](inits/selfloop_delayline_backward.md)
+  - [selfloop_feedback_cycle](inits/selfloop_feedback_cycle.md)
+  - [selfloop_forward_connection](inits/selfloop_forward_connection.md)
+  - [simple_cycle](inits/simple_cycle.md)
+  - [true_double_cycle](inits/true_double_cycle.md)
 
 ## Building functions
 
-```@docs
-    add_jumps!
-    backward_connection!
-    delay_line!
-    reverse_simple_cycle!
-    scale_radius!
-    self_loop!
-    simple_cycle!
-```
-
-## References
-
-```@bibliography
-Pages = ["inits.md"]
-Canonical = false
-```
+  - [add_jumps!](inits/add_jumps!.md)
+  - [backward_connection!](inits/backward_connection!.md)
+  - [delay_line!](inits/delay_line!.md)
+  - [reverse_simple_cycle!](inits/reverse_simple_cycle!.md)
+  - [scale_radius!](inits/scale_radius!.md)
+  - [self_loop!](inits/self_loop!.md)
+  - [simple_cycle!](inits/simple_cycle!.md)
