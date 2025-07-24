@@ -17,8 +17,15 @@ a range defined by `scaling`.
 # Keyword arguments
 
   - `scaling`: A scaling factor to define the range of the uniform distribution.
-    The matrix elements will be randomly chosen from the
-    range `[-scaling, scaling]`. Defaults to `0.1`.
+    The factor can be passed in three different ways:
+
+      + A single number. In this case, the matrix elements will be randomly
+        chosen from the range `[-scaling, scaling]`. Default option, with
+        a the scaling value set to `0.1`.
+      + A tuple `(lower, upper)`. The values define the range of the distribution.
+      + A vector. In this case, the columns will be scaled individually by the
+        entries of the vector. The entries can be numbers or tuples, which will mirror
+        the behavior described above.
 
 # Examples
 
@@ -33,10 +40,38 @@ julia> res_input = scaled_rand(8, 3)
   0.0944272   0.0679244   0.0148647
  -0.0799005  -0.0891089  -0.0444782
  -0.0970182   0.0934286   0.03553
+
+julia> tt = scaled_rand(5, 3, scaling = (0.1, 0.15))
+5×3 Matrix{Float32}:
+  0.13631   0.110929  0.116177
+  0.116299  0.136038  0.119713
+  0.11535   0.144712  0.110029
+  0.127453  0.12657   0.147656
+  0.139446  0.117656  0.104712
+```
+
+Example with vector:
+
+```jldoctest
+julia> tt = scaled_rand(5, 3, scaling = [0.1, 0.2, 0.3])
+5×3 Matrix{Float32}:
+  0.0452399   -0.112565   -0.105874
+ -0.0348047    0.0883044  -0.0634468
+ -0.0386004    0.157698   -0.179648
+  0.00981022   0.012559    0.271875
+  0.0577838   -0.0587553  -0.243451
+
+julia> tt = scaled_rand(5, 3, scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
+5×3 Matrix{Float32}:
+  0.17262   -0.178141  0.364709
+  0.132598  -0.127924  0.378851
+  0.1307    -0.110575  0.340117
+  0.154905  -0.14686   0.490625
+  0.178892  -0.164689  0.31885
 ```
 """
 function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Union{Number, Tuple} = T(0.1)) where {T <: Number}
+        scaling::Union{Number, Tuple, Vector} = T(0.1)) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = DeviceAgnostic.rand(rng, T, res_size, in_size)
     apply_scale!(layer_matrix, scaling, T)
@@ -54,6 +89,16 @@ function apply_scale!(input_matrix,
     @assert lower<upper "lower < upper required"
     scale = upper - lower
     @. input_matrix = input_matrix * scale + lower
+    return input_matrix
+end
+
+function apply_scale!(input_matrix,
+        scaling::AbstractVector, ::Type{T}) where {T <: Number}
+    ncols = size(input_matrix, 2)
+    @assert length(scaling)==ncols "need one scaling per column"
+    for (idx, col) in enumerate(eachcol(input_matrix))
+        apply_scale!(col, scaling[idx], T)
+    end
     return input_matrix
 end
 
