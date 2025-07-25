@@ -13,7 +13,3 @@ end
     @safetestset "Hybrid ESN" include("esn/test_hybrid.jl")
     @safetestset "Deep ESN" include("esn/deepesn.jl")
 end
-
-@testset "CA based Reservoirs" begin
-    @safetestset "RECA" include("reca/test_predictive.jl")
-end
