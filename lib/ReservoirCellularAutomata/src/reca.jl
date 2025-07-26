@@ -18,11 +18,8 @@ end
         nla_type = NLADefault(),
         states_type = StandardStates())
 
-[1] Yilmaz, Ozgur. “_Reservoir computing using cellular automata._”
-arXiv preprint arXiv:1410.0162 (2014).
-
-[2] Nichele, Stefano, and Andreas Molund. “_Deep reservoir computing using cellular
-automata._” arXiv preprint arXiv:1703.02806 (2017).
+Builds a Resercoir Computing model with cellular automata [Yilmaz2014](@cite)
+[Nichele2017](@cite).
 """
 function RECA(train_data,
         automata;

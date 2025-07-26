@@ -1,4 +1,4 @@
-using Documenter, DocumenterCitations, ReservoirComputing
+using Documenter, DocumenterCitations, ReservoirCellularAutomata
 
 cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force = true)
 cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force = true)
@@ -13,8 +13,8 @@ bib = CitationBibliography(
     style = :authoryear
 )
 
-makedocs(; modules = [ReservoirComputing],
-    sitename = "ReservoirComputing.jl",
+makedocs(; modules = [ReservoirCellularAutomata],
+    sitename = "ReservoirCellularAutomata.jl",
     authors = "Francesco Martinuzzi",
     clean = true, doctest = false, linkcheck = true,
     plugins = [bib],
