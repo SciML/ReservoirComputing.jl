@@ -1,9 +1,12 @@
-name: "Tests"
+name: "Tests - ReservoirCellularAutomata"
 
 on:
   pull_request:
     branches:
       - master
+    paths:
+      - "lib/ReservoirCellularAutomata/**"
+      - ".github/workflows/TestsReservoirCellularAutomata.yml"
     paths-ignore:
       - 'docs/**'
   push:

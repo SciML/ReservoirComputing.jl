@@ -1,3 +1,5 @@
+# Inspiration from https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/blob/master/.github/workflows/TagBot.yml
+# and https://github.com/LuxDL/Lux.jl/blob/main/.github/workflows/TagBot.yml
 name: TagBot
 on:
   issue_comment:
@@ -21,13 +23,22 @@ permissions:
   security-events: read
   statuses: read
 jobs:
-  TagBot:
+  TagBot-ReservoirComputing:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
     runs-on: ubuntu-latest
     steps:
-      - uses: JuliaRegistries/TagBot@62dd7cd21dcde087eca10e70c3fc3f8cefbe44a2
+      - name: Tag ReservoirComputing
+        uses: JuliaRegistries/TagBot@62dd7cd21dcde087eca10e70c3fc3f8cefbe44a2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Edit the following line to reflect the actual name of the GitHub Secret containing your private key
           ssh: ${{ secrets.DOCUMENTER_KEY }}
-          # ssh: ${{ secrets.NAME_OF_MY_SSH_PRIVATE_KEY_SECRET }}
+  TagBot-ReservoirCellularAutomata:
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tag ReservoirCellularAutomata
+        uses: JuliaRegistries/TagBot@62dd7cd21dcde087eca10e70c3fc3f8cefbe44a2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}
+          subdir: "lib/ReservoirCellularAutomata"
