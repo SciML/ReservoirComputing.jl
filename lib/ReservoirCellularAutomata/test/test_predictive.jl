@@ -1,4 +1,4 @@
-using ReservoirCellularAutomata, CellularAutomata
+using ReservoirCellularAutomata
 
 const input = ones(2, 10)
 const output = zeros(2, 10)

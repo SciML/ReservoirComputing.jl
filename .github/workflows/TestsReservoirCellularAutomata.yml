@@ -21,7 +21,6 @@ concurrency:
 
 jobs:
   tests:
-    name: "Tests"
     strategy:
       fail-fast: false
       matrix:
@@ -37,4 +36,5 @@ jobs:
     with:
       julia-version: "${{ matrix.version }}"
       os: "${{ matrix.os }}"
+      project: "lib/ReservoirCellularAutomata"
     secrets: "inherit"
