@@ -15,6 +15,7 @@ bib = CitationBibliography(
 
 makedocs(; modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
+    authors = "Francesco Martinuzzi",
     clean = true, doctest = false, linkcheck = true,
     plugins = [bib],
     format = Documenter.HTML(;

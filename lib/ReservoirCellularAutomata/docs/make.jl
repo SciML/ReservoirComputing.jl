@@ -1,24 +1,29 @@
-using ReservoirCellularAutomata
-using Documenter
+using Documenter, DocumenterCitations, ReservoirCellularAutomata
 
-DocMeta.setdocmeta!(ReservoirCellularAutomata, :DocTestSetup,
-    :(using ReservoirCellularAutomata); recursive = true)
+cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force = true)
+cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force = true)
 
-makedocs(;
-    modules = [ReservoirCellularAutomata],
-    authors = "Francesco Martinuzzi",
+ENV["PLOTS_TEST"] = "true"
+ENV["GKSwstype"] = "100"
+include("pages.jl")
+mathengine = Documenter.MathJax()
+
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "refs.bib");
+    style = :authoryear
+)
+
+makedocs(; modules = [ReservoirCellularAutomata],
     sitename = "ReservoirCellularAutomata.jl",
+    authors = "Francesco Martinuzzi",
+    clean = true, doctest = false, linkcheck = true,
+    plugins = [bib],
     format = Documenter.HTML(;
-        canonical = "https://MartinuzziFrancesco.github.io/ReservoirCellularAutomata.jl",
-        edit_link = "main",
-        assets = String[]
-    ),
-    pages = [
-        "Home" => "index.md"
-    ]
+        mathengine,
+        assets = ["assets/favicon.ico"],
+        canonical = "https://docs.sciml.ai/ReservoirComputing/stable/"),
+    pages = pages
 )
 
-deploydocs(;
-    repo = "github.com/MartinuzziFrancesco/ReservoirCellularAutomata.jl",
-    devbranch = "main"
-)
+deploydocs(; repo = "github.com/SciML/ReservoirComputing.jl.git",
+    push_preview = true)
