@@ -16,8 +16,8 @@ on:
 jobs:
   downgrade:
     strategy:
-      fail-fast: false
       matrix:
+
         project:
           - name: ReservoirComputing
             path: .
@@ -35,10 +35,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
-      - uses: julia-actions/julia-downgrade-compat@v1
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/julia-downgrade-compat@v2
+#        if: ${{ matrix.version == '1.6' }}
         with:
-          skip: Pkg, TOML, Test, Random, LinearAlgebra, Statistics, SparseArrays
+
+          skip: Pkg, TOML
           project: ${{ matrix.project.path }}
       - uses: julia-actions/cache@v2
         with:
