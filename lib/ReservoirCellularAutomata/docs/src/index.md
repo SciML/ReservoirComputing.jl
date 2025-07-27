@@ -4,7 +4,7 @@ CurrentModule = ReservoirCellularAutomata
 
 # ReservoirCellularAutomata
 
-Documentation for [ReservoirCellularAutomata](https://github.com/MartinuzziFrancesco/ReservoirCellularAutomata.jl).
+Documentation for ReservoirCellularAutomata.
 
 ```@index
 ```
