@@ -11,7 +11,7 @@ ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 
 [compat]
 Aqua = "0.8"
-CellularAutomata = "0.0.6"
+CellularAutomata = "0.0.2"
 Random = "1.10"
 Reexport = "1.2.2"
 ReservoirComputing = "0.11.3"

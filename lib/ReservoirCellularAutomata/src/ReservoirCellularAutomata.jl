@@ -1,10 +1,9 @@
 module ReservoirCellularAutomata
 
-using CellularAutomata: CellularAutomaton
 using Random: randperm
 using Reexport: @reexport
 using ReservoirComputing
-@reexport using CellularAutomata
+@reexport import CellularAutomata: CellularAutomaton, DCA, CCA, TCA, Life
 @reexport import ReservoirComputing: NLADefault, NLAT1, NLAT2, NLAT3, PartialSquare,
                                      ExtendedSquare,
                                      StandardStates, ExtendedStates, PaddedStates,
