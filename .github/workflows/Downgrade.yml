@@ -3,52 +3,49 @@ name: Downgrade
 on:
   pull_request:
     branches: [ master ]
-    paths:
-      - 'lib/ReservoirCellularAutomata/**'
-      - '.github/workflows/**'
+    paths-ignore: [ 'docs/**' ]
   push:
     branches: [ master ]
     paths-ignore: [ 'docs/**' ]
-  schedule:
-    - cron: '33 1 * * 4'
 
 jobs:
-  downgrade:
-    strategy:
-      matrix:
+  test:
+    runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
         project:
           - name: ReservoirComputing
             path: .
           - name: ReservoirCellularAutomata
             path: lib/ReservoirCellularAutomata
-        version: ['1']
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+        group:      ['Core']
+        downgrade_mode: ['alldeps']
+        julia-version: ['1.10']
 
-    runs-on: ${{ matrix.os }}
-    name: Downgrade – ${{ matrix.project.name }} · Julia ${{ matrix.version }} · ${{ matrix.os }}
+    name: Downgrade – ${{ matrix.project.name }} · Julia ${{ matrix.julia-version }}
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.julia-version }}
-      - uses: julia-actions/julia-downgrade-compat@v2
-#        if: ${{ matrix.version == '1.6' }}
-        with:
+          julia-version: ${{ matrix.julia-version }}
 
-          skip: Pkg, TOML
-          project: ${{ matrix.project.path }}
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-downgrade-compat@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          skip:  Pkg,TOML
+          mode:  ${{ matrix.downgrade_mode }}
           project: ${{ matrix.project.path }}
+
       - uses: julia-actions/julia-buildpkg@v1
         with:
           project: ${{ matrix.project.path }}
+
       - uses: julia-actions/julia-runtest@v1
         with:
-          project: ${{ matrix.project.path }}
-
+          project:        ${{ matrix.project.path }}
+          allow-reresolve: false
+        env:
+          GROUP: ${{ matrix.group }}
