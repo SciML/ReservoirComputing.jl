@@ -1,0 +1,40 @@
+name: "Tests - ReservoirCellularAutomata"
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "lib/ReservoirCellularAutomata/**"
+      - ".github/workflows/TestsReservoirCellularAutomata.yml"
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+  schedule:
+    - cron: '33 1 * * 4'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch || github.ref != 'refs/tags/v*' }}
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - "1"
+          - "lts"
+          - "pre"
+        os:
+          - "ubuntu-latest"
+          - "macos-latest"
+          - "windows-latest"
+    uses: "SciML/.github/.github/workflows/tests.yml@v1"
+    with:
+      julia-version: "${{ matrix.version }}"
+      os: "${{ matrix.os }}"
+      project: "lib/ReservoirCellularAutomata"
+    secrets: "inherit"

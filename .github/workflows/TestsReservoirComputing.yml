@@ -1,4 +1,4 @@
-name: "Tests"
+name: "Tests - ReservoirComputing"
 
 on:
   pull_request:

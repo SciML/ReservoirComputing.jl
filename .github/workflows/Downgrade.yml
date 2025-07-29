@@ -1,36 +1,51 @@
 name: Downgrade
+
 on:
   pull_request:
-    branches:
-      - master
-    paths-ignore:
-      - 'docs/**'
+    branches: [ master ]
+    paths-ignore: [ 'docs/**' ]
   push:
-    branches:
-      - master
-    paths-ignore:
-      - 'docs/**'
+    branches: [ master ]
+    paths-ignore: [ 'docs/**' ]
+
 jobs:
   test:
     runs-on: ubuntu-latest
+
     strategy:
+      fail-fast: false
       matrix:
-        group:
-          - Core
+        project:
+          - name: ReservoirComputing
+            path: .
+          - name: ReservoirCellularAutomata
+            path: lib/ReservoirCellularAutomata
+        group:      ['Core']
         downgrade_mode: ['alldeps']
         julia-version: ['1.10']
+
+    name: Downgrade – ${{ matrix.project.name }} · Julia ${{ matrix.julia-version }}
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.julia-version }}
+          julia-version: ${{ matrix.julia-version }}
+
       - uses: julia-actions/julia-downgrade-compat@v2
-#        if: ${{ matrix.version == '1.6' }}
         with:
-          skip: Pkg,TOML
+          skip:  Pkg,TOML
+          mode:  ${{ matrix.downgrade_mode }}
+          project: ${{ matrix.project.path }}
+
       - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: ${{ matrix.project.path }}
+
       - uses: julia-actions/julia-runtest@v1
         with:
-          ALLOW_RERESOLVE: false
+          project:        ${{ matrix.project.path }}
+          allow-reresolve: false
         env:
           GROUP: ${{ matrix.group }}

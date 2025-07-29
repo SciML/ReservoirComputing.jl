@@ -1,5 +1,5 @@
 steps:
-  - label: ":page_facing_up: Build and Deploy Documentation"
+  - label: ":page_facing_up: Build and Deploy ReservoirComputing Documentation"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
@@ -17,6 +17,21 @@ steps:
       cuda: "*"
     env:
       DATADEPS_ALWAYS_ACCEPT: true
+    if: build.message !~ /\[skip docs\]/ && !build.pull_request.draft
+    timeout_in_minutes: 1000
+
+  - label: ":page_facing_up: Build & Deploy ReservoirCellularAutomata Documentation"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+    command: |
+      julia --project=lib/ReservoirCellularAutomata/docs -e '
+        using Pkg; Pkg.instantiate()
+        include("make.jl")
+      '
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
     if: build.message !~ /\[skip docs\]/ && !build.pull_request.draft
     timeout_in_minutes: 1000
 
