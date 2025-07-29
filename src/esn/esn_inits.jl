@@ -1066,7 +1066,7 @@ Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
   - `weight`: Determines the value of all connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
   - `shift`: delay line shift. Default is 1.
@@ -1139,14 +1139,14 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
   - `weight`: The weight determines the absolute value of
     forward connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1
 
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
@@ -1225,13 +1225,13 @@ Create a cycle jumps reservoir [Rodan2012](@cite).
 
   - `cycle_weight`:  The weight of cycle connections.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
 
   - `jump_weight`: The weight of jump connections.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the jumps
+    array please make sure that the length of the array matches the length of the jumps
     you want to populate.
     Default is 0.1.
   - `jump_size`:  The number of steps between jump connections.
@@ -1310,7 +1310,7 @@ Create a simple cycle reservoir [Rodan2011](@cite).
 
   - `weight`: Weight of the connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1518,12 +1518,12 @@ W_{i,j} =
 
   - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the diagonal
+    array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1610,7 +1610,7 @@ W_{i,j} =
 
   - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
@@ -1693,17 +1693,17 @@ W_{i,j} =
 
   - `weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the diagonal
+    array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
   - `fb_weight`: Weight of the feedback in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the diagonal
+    array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
@@ -1798,12 +1798,12 @@ W_{i,j} =
 
   - `weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the cycle
+    array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the diagonal
+    array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1889,7 +1889,7 @@ W_{i,j} =
 
   - `weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
-    array please make sure that the lenght of the array matches the lenght of the sub-diagonal
+    array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
