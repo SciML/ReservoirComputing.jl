@@ -18,7 +18,8 @@ function obtain_esn_prediction(esn,
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
     for i in 1:prediction_len
-        x, x_new = next_state_prediction!(esn, x, x_new, out, out_pad, i, tmp_array,
+        x,
+        x_new = next_state_prediction!(esn, x, x_new, out, out_pad, i, tmp_array,
             args...)
         out_tmp = get_prediction(output_layer.training_method, output_layer, x_new)
         out = store_results!(output_layer.training_method, out_tmp, output, i)
@@ -48,7 +49,8 @@ function obtain_esn_prediction(esn,
     x_new = esn.states_type(esn.nla_type, x, out_pad)
 
     for i in 1:prediction_len
-        x, x_new = next_state_prediction!(esn, x, x_new, prediction.prediction_data[:, i],
+        x,
+        x_new = next_state_prediction!(esn, x, x_new, prediction.prediction_data[:, i],
             out_pad, i, tmp_array, args...)
         out_tmp = get_prediction(training_method, output_layer, x_new)
         out = store_results!(training_method, out_tmp, output, i)

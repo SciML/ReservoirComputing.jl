@@ -70,7 +70,7 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
             input_vector,
             new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
             rm.maps[i,
-                :])
+            :])
     end
 
     return new_tot_enc_vec
