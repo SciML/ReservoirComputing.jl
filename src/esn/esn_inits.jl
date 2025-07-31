@@ -305,7 +305,8 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
         random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(rng, T, 1:end)]
+        random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(
+            rng, T, 1:end)]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * T(scaling))
     end
@@ -943,6 +944,7 @@ function digital_chaotic_adjacency(rng::AbstractRNG, bit_precision::Integer;
     end
     adjacency_matrix[matrix_order, 1] = 1
     for row_index in 1:matrix_order, column_index in 1:matrix_order
+
         if row_index != column_index && rand(rng) < extra_edge_probability
             adjacency_matrix[row_index, column_index] = 1
         end
