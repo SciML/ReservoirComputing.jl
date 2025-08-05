@@ -13,11 +13,13 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 WeightInitializers = "d49dbf32-c5c2-4618-8acc-27bb2598ef2d"
 
 [weakdeps]
+CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [extensions]
+RCCellularAutomataExt = "CellularAutomata"
 RCLIBSVMExt = "LIBSVM"
 RCMLJLinearModelsExt = "MLJLinearModels"
 RCSparseArraysExt = "SparseArrays"
@@ -25,6 +27,7 @@ RCSparseArraysExt = "SparseArrays"
 [compat]
 Adapt = "4.1.1"
 Aqua = "0.8"
+CellularAutomata = "0.0.6"
 Compat = "4.16.0"
 DifferentialEquations = "7.16.1"
 LIBSVM = "0.8"
