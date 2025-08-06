@@ -944,6 +944,7 @@ function digital_chaotic_adjacency(rng::AbstractRNG, bit_precision::Integer;
     end
     adjacency_matrix[matrix_order, 1] = 1
     for row_index in 1:matrix_order, column_index in 1:matrix_order
+
         if row_index != column_index && rand(rng) < extra_edge_probability
             adjacency_matrix[row_index, column_index] = 1
         end
