@@ -1,39 +1,55 @@
-abstract type AbstractInputEncoding end
-abstract type AbstractEncodingData end
+module RCCellularAutomataExt
+using ReservoirComputing: RECA, RandomMapping, RandomMaps
+import ReservoirComputing: train, next_state_prediction!, AbstractOutputLayer, NLADefault,
+                           StandardStates, obtain_prediction
+using CellularAutomata
+using Random: randperm
 
-struct RandomMapping{I, T} <: AbstractInputEncoding
-    permutations::I
-    expansion_size::T
+function RECA(train_data,
+        automata;
+        generations = 8,
+        input_encoding = RandomMapping(),
+        nla_type = NLADefault(),
+        states_type = StandardStates())
+    in_size = size(train_data, 1)
+    #res_size = obtain_res_size(input_encoding, generations)
+    state_encoding = create_encoding(input_encoding, train_data, generations)
+    states = reca_create_states(state_encoding, automata, train_data)
+
+    return RECA(train_data, automata, state_encoding, nla_type, states, states_type)
 end
 
-"""
-    RandomMapping(permutations, expansion_size)
-    RandomMapping(permutations; expansion_size=40)
-    RandomMapping(;permutations=8, expansion_size=40)
+#training dispatch
+function train(reca::RECA, target_data, training_method = StandardRidge; kwargs...)
+    states_new = reca.states_type(reca.nla_type, reca.states, reca.train_data)
+    return train(training_method, Float32.(states_new), Float32.(target_data); kwargs...)
+end
 
-Random mapping of the input data directly in the reservoir. The `expansion_size`
-determines the dimension of the single reservoir, and `permutations` determines the
-number of total reservoirs that will be connected, each with a different mapping.
-The detail of this implementation can be found in [1].
+#predict dispatch
+function (reca::RECA)(prediction,
+        output_layer::AbstractOutputLayer,
+        initial_conditions = output_layer.last_value,
+        last_state = zeros(reca.input_encoding.ca_size))
+    return obtain_prediction(reca, prediction, last_state, output_layer;
+        initial_conditions = initial_conditions)
+end
 
-[1] Nichele, Stefano, and Andreas Molund. “Deep reservoir computing using cellular
-automata.” arXiv preprint arXiv:1703.02806 (2017).
-"""
+function next_state_prediction!(reca::RECA, x, out, i, args...)
+    rm = reca.input_encoding
+    x = encoding(rm, out, x)
+    ca = CellularAutomaton(reca.automata, x, rm.generations + 1)
+    ca_states = ca.evolution[2:end, :]
+    x_new = reshape(transpose(ca_states), rm.states_size)
+    x = ca.evolution[end, :]
+    return x, x_new
+end
+
 function RandomMapping(; permutations = 8, expansion_size = 40)
     RandomMapping(permutations, expansion_size)
 end
 
 function RandomMapping(permutations; expansion_size = 40)
     RandomMapping(permutations, expansion_size)
-end
-
-struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
-    permutations::T
-    expansion_size::E
-    generations::G
-    maps::M
-    states_size::S
-    ca_size::S
 end
 
 function create_encoding(rm::RandomMapping, input_data, generations)
@@ -105,3 +121,5 @@ function mapping(input_size, mapped_vector_size)
     #sample(1:mapped_vector_size, input_size; replace=false)
     return randperm(mapped_vector_size)[1:input_size]
 end
+
+end #module

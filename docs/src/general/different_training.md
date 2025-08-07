@@ -29,4 +29,4 @@ To change the regularization coefficient in the ridge example, using for example
 
 ## Support Vector Regression
 
-Contrary to the `LinearModel`s, no wrappers are needed for support vector regression. By using [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl), LIBSVM wrappers in Julia, it is possible to call both `epsilonSVR()` or `nuSVR()` directly in `train()`. For the full range of kernels provided and the parameters to call, we refer the user to the official [documentation](https://www.csie.ntu.edu.tw/%7Ecjlin/libsvm/). Like before, if one intends to use LIBSVM regressors, it is necessary to specify `using LIBSVM`.
+Contrary to the `LinearModel`s, no wrappers are needed for support vector regression. By using [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl), LIBSVM wrappers in Julia, it is possible to call both `epsilonSVR()` or `nuSVR()` directly in `train()`. For the full range of kernels provided and the parameters to call, we refer the user to the official documentation. Like before, if one intends to use LIBSVM regressors, it is necessary to specify `using LIBSVM`.
