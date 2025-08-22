@@ -2,7 +2,7 @@ abstract type AbstractOutputLayer end
 abstract type AbstractPrediction end
 
 #general output layer struct
-struct OutputLayer{T, I, S, L} <: AbstractOutputLayer
+struct OutputLayer{T,I,S,L} <: AbstractOutputLayer
     training_method::T
     output_matrix::I
     out_size::S
@@ -39,7 +39,7 @@ struct Generative{T} <: AbstractPrediction
     prediction_len::T
 end
 
-struct Predictive{I, T} <: AbstractPrediction
+struct Predictive{I,T} <: AbstractPrediction
     prediction_data::I
     prediction_len::T
 end
@@ -67,8 +67,8 @@ function Predictive(prediction_data::AbstractArray)
 end
 
 function obtain_prediction(rc::AbstractReservoirComputer, prediction::Generative,
-        x, output_layer::AbstractOutputLayer, args...;
-        initial_conditions = output_layer.last_value)
+    x, output_layer::AbstractOutputLayer, args...;
+    initial_conditions=output_layer.last_value)
     #x = last_state
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method
@@ -86,7 +86,7 @@ function obtain_prediction(rc::AbstractReservoirComputer, prediction::Generative
 end
 
 function obtain_prediction(rc::AbstractReservoirComputer, prediction::Predictive,
-        x, output_layer::AbstractOutputLayer, args...; kwargs...)
+    x, output_layer::AbstractOutputLayer, args...; kwargs...)
     prediction_len = prediction.prediction_len
     train_method = output_layer.training_method
     out_size = output_layer.out_size
@@ -116,4 +116,16 @@ end
 function store_results!(training_method, out, output, i)
     output[:, i] = out
     return out
+end
+
+function predict(rc, steps::Int, ps, st; initialdata=nothing)
+    if initialdata == nothing
+        initialdata = rand(Float32, 3)
+    end
+    output = zeros(size(initialdata, 1), steps)
+    for step in 1:steps
+        initialdata, st = apply(rc, initialdata, ps, st)
+        output[:, step] = initialdata
+    end
+    return output, st
 end

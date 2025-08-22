@@ -1,6 +1,6 @@
-abstract type AbstractStates end
+abstract type AbstractStates <: Function end
 abstract type AbstractPaddedStates <: AbstractStates end
-abstract type NonLinearAlgorithm end
+abstract type NonLinearAlgorithm <: Function end
 
 function pad_state!(states_type::AbstractPaddedStates, x_pad, x)
     x_pad[1, :] .= states_type.padding
@@ -60,7 +60,7 @@ julia> new_mat = states(test_mat)
 struct StandardStates <: AbstractStates end
 
 function (::StandardStates)(nla_type::NonLinearAlgorithm,
-        state, inp)
+    state, inp)
     return nla(nla_type, state)
 end
 
@@ -137,7 +137,7 @@ function (::ExtendedStates)(vect::AbstractVector, inp::AbstractVector)
 end
 
 function (states_type::ExtendedStates)(nla_type::NonLinearAlgorithm,
-        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    state::AbstractVecOrMat, inp::AbstractVecOrMat)
     return nla(nla_type, states_type(state, inp))
 end
 
@@ -194,7 +194,7 @@ struct PaddedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-function PaddedStates(; padding = 1.0)
+function PaddedStates(; padding=1.0)
     return PaddedStates(padding)
 end
 
@@ -209,7 +209,7 @@ function (states_type::PaddedStates)(vect::AbstractVector)
 end
 
 function (states_type::PaddedStates)(nla_type::NonLinearAlgorithm,
-        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    state::AbstractVecOrMat, inp::AbstractVecOrMat)
     return nla(nla_type, states_type(state))
 end
 
@@ -272,17 +272,17 @@ struct PaddedExtendedStates{T} <: AbstractPaddedStates
     padding::T
 end
 
-function PaddedExtendedStates(; padding = 1.0)
+function PaddedExtendedStates(; padding=1.0)
     return PaddedExtendedStates(padding)
 end
 
 function (states_type::PaddedExtendedStates)(nla_type::NonLinearAlgorithm,
-        state::AbstractVecOrMat, inp::AbstractVecOrMat)
+    state::AbstractVecOrMat, inp::AbstractVecOrMat)
     return nla(nla_type, states_type(state, inp))
 end
 
 function (states_type::PaddedExtendedStates)(state::AbstractVecOrMat,
-        inp::AbstractVecOrMat)
+    inp::AbstractVecOrMat)
     x_pad = PaddedStates(states_type.padding)(state)
     x_ext = ExtendedStates()(x_pad, inp)
     return x_ext
@@ -539,7 +539,7 @@ function (::NLAT2)(x_old::AbstractVector)
 
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
-            x_new[idx, :] .= x_old[idx - 1, :] .* x_old[idx - 2, :]
+            x_new[idx, :] .= x_old[idx-1, :] .* x_old[idx-2, :]
         end
     end
 
@@ -628,7 +628,7 @@ function (::NLAT3)(x_old::AbstractVector)
 
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
-            x_new[idx] = x_old[idx - 1] * x_old[idx + 1]
+            x_new[idx] = x_old[idx-1] * x_old[idx+1]
         end
     end
 
@@ -645,7 +645,7 @@ Implement a partial squaring of the states as described in [Barbosa2021](@cite).
 ```math
     \begin{equation}
     g(r_i) =
-    \begin{cases} 
+    \begin{cases}
         r_i^2, & \text{if } i \leq \eta_r N, \\
         r_i, & \text{if } i > \eta_r N.
     \end{cases}
