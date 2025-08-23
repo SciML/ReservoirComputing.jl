@@ -41,12 +41,15 @@ end
     in_dims <: IntegerType
     out_dims <: IntegerType
     use_bias <: StaticBool
+    include_collect <: StaticBool
 end
 
 function Base.show(io::IO, d::Readout)
     print(io, "Readout($(d.in_dims) => $(d.out_dims)")
     (d.activation == identity) || print(io, ", $(d.activation)")
     has_bias(d) || print(io, ", use_bias=false")
+    ic = known(getproperty(d, Val(:include_collect)))
+    ic === true && print(io, ", include_collect=true")
     return print(io, ")")
 end
 
@@ -55,8 +58,8 @@ function Readout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity
 end
 
 function Readout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
-    use_bias::BoolType=False())
-    return Readout(activation, in_dims, out_dims, static(use_bias))
+    include_collect::BoolType=True(), use_bias::BoolType=False())
+    return Readout(activation, in_dims, out_dims, static(use_bias), static(include_collect))
 end
 
 function initialparameters(rng::AbstractRNG, ro::Readout)
@@ -123,6 +126,15 @@ function wrap_functions_in_chain_call(layers::Union{AbstractVector,Tuple})
 end
 
 wrap_functions_in_chain_call(x) = x
+
+_readout_include_collect(ro::Readout) = begin
+    res = known(getproperty(ro, Val(:include_collect)))
+    res === nothing ? false : res
+end
+
+function wrap_functions_in_chain_call(ro::Readout)
+    return _readout_include_collect(ro) ? (Collect(), ro) : ro
+end
 
 (c::ReservoirChain)(x, ps, st::NamedTuple) = applychain(c.layers, x, ps, st)
 
@@ -192,24 +204,24 @@ function collectstates(rc::ReservoirChain, data::AbstractArray, ps, st::NamedTup
     return eltype(data).(reduce(hcat, collected))
 end
 =#
+
 function collectstates(rc::ReservoirChain, data::AbstractArray, ps, st::NamedTuple)
-    # Start from the incoming state and *carry it forward over time*
     newst = st
     collected = Any[]
-    for inp_t in eachcol(data)
-        x = inp_t
+    for inp in eachcol(data)
+        inp_tmp = inp
         state_vec = nothing
-
         for (name, layer) in pairs(rc.layers)
-            x, st_i = layer(x, ps[name], newst[name])
+            inp_tmp, st_i = layer(inp_tmp, ps[name], newst[name])
             newst = merge(newst, (; name => st_i))
             if layer isa AbstractReservoirCollectionLayer
-                state_vec = state_vec === nothing ? copy(x) : vcat(state_vec, x)
+                state_vec = state_vec === nothing ? copy(inp_tmp) : vcat(state_vec, inp_tmp)
             end
         end
-        push!(collected, state_vec === nothing ? copy(x) : state_vec)
+        push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
     end
-    return eltype(data).(reduce(hcat, collected))
+    states = eltype(data).(reduce(hcat, collected))
+    return states, newst
 end
 
 ### from Lux.Utils

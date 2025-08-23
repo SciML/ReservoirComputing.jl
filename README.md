@@ -105,19 +105,20 @@ possible parameters:
 ```julia
 input_size = 3
 res_size = 300
-esn = ESN(input_data, input_size, res_size;
-    reservoir=rand_sparse(; radius=1.2, sparsity=6 / res_size),
-    input_layer=weighted_init,
-    nla_type=NLAT2(),
-    rng=rng)
+esn = ReservoirChain(
+    StatefulLayer(ESNCell(input_size => res_size; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300))),
+    NLAT2(),
+    Readout(res_size => input_size)
+)
 ```
 
 The echo state network can now be trained and tested.
 If not specified, the training will always be ordinary least squares regression:
 
 ```julia
-output_layer = train(esn, target_data)
-output = esn(Generative(predict_len), output_layer)
+ps, st = setup(rng, esn)
+ps, st = train!(esn, input_data, target_data, ps, st)
+output, _ = predict(esn, 1250, ps, st; initialdata=test[:, 1])
 ```
 
 The data is returned as a matrix, `output` in the code above,
@@ -126,7 +127,7 @@ The results can now be easily plotted:
 
 ```julia
 using Plots
-plot(transpose(output); layout=(3, 1), label="predicted")
+plot(transpose(output); layout=(3, 1), label="predicted");
 plot!(transpose(test); layout=(3, 1), label="actual")
 ```
 

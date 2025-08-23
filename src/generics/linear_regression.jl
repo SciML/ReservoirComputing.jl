@@ -29,18 +29,12 @@ function StandardRidge()
     return StandardRidge(0.0)
 end
 
-function train!(rc::ReservoirChain, train_data::AbstractArray,
-    target_data::AbstractArray, ps, st::NamedTuple, sr::StandardRidge=StandardRidge(0.0);
+function train!(rc::ReservoirChain, train_data, target_data, ps, st, sr=StandardRidge(0.0);
     return_states::Bool=false)
-    states = collectstates(rc, train_data, ps, st)
-    readout = train(sr, states, target_data)
-    ps, st = addreadout!(rc, readout, ps, st)
-
-    if return_states
-        return (ps, st), states
-    else
-        return ps, st
-    end
+    states, new_st = collectstates(rc, train_data, ps, st)
+    W = train(sr, states, target_data)
+    ps2, _ = addreadout!(rc, W, ps, new_st)
+    return return_states ? ((ps2, new_st), states) : (ps2, new_st)
 end
 
 function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractArray)
@@ -53,16 +47,50 @@ function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractAr
     return output_layer
 end
 
-function addreadout!(rc::ReservoirChain, readout_matrix::AbstractArray, ps, st::NamedTuple) #make sure the compile infers
-    ro_param = (; weight=readout_matrix)
-    new_ps = (;)
-    for ((name, layer), param) in zip(pairs(rc.layers), ps)
-        if layer isa Readout
-            param = merge(param, ro_param)
-        end
-        new_ps = merge(new_ps, (; name => param))
+_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+
+@generated function _setweight_rt(p::NamedTuple{K}, W) where {K}
+    keys = K
+    Kq = _quote_keys(keys)
+    idx = findfirst(==(Symbol(:weight)), keys)
+
+    terms = Any[]
+    for i in 1:length(keys)
+        push!(terms, (idx === i) ? :(W) : :(getfield(p, $i)))
     end
-    return new_ps, st
+
+    if idx === nothing
+        newK = _quote_keys((keys..., :weight))
+        return :(NamedTuple{$newK}(($(terms...), W)))
+    else
+        return :(NamedTuple{$Kq}(($(terms...),)))
+    end
 end
 
-#use a recursion to make it more compiler safe
+@generated function _addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
+    if length(K) == 0
+        return :(NamedTuple())
+    end
+    tailK = Base.tail(K)
+    Kq = _quote_keys(K)
+    tailKq = _quote_keys(tailK)
+
+    head_val = :((getfield(layers, 1) isa Readout)
+                 ? _setweight_rt(getfield(ps, 1), W)
+                 : getfield(ps, 1))
+
+    tail_call = :(_addreadout(NamedTuple{$tailKq}(Base.tail(layers)),
+        NamedTuple{$tailKq}(Base.tail(ps)),
+        W))
+
+    return :(NamedTuple{$Kq}(($head_val, Base.values($tail_call)...)))
+end
+
+function addreadout!(rc::ReservoirChain,
+    W::AbstractMatrix,
+    ps::NamedTuple,
+    st::NamedTuple)
+    @assert propertynames(rc.layers) == propertynames(ps)
+    new_ps = _addreadout(rc.layers, ps, W)
+    return new_ps, st
+end

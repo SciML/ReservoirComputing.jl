@@ -32,16 +32,15 @@ include("layers/esn_cell.jl")
 include("generics/states.jl")
 include("generics/predict.jl")
 include("generics/linear_regression.jl")
-#extensions
-include("extensions/reca.jl")
 #esn
 include("inits/inits_components.jl")
 include("inits/esn_inits.jl")
-include("layers/esn_reservoir_drivers.jl")
 include("models/esn.jl")
 include("models/deepesn.jl")
 include("models/hybridesn.jl")
-include("models/esn_predict.jl")
+#extensions
+include("extensions/reca.jl")
+
 
 
 
@@ -58,10 +57,8 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delay_line_backwar
     selfloop_forward_connection, simple_cycle, true_double_cycle
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
-export RNN, MRNN, GRU, GRUParams, FullyGated, Minimal
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
-export Generative, Predictive, OutputLayer
 #reca
 export RECA
 export RandomMapping, RandomMaps
