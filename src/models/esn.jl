@@ -23,7 +23,6 @@ function Base.show(io::IO, ::MIME"text/plain", rc::ReservoirChain)
         ro = L[end][2]
         if sl.cell isa ESNCell
             esn = sl.cell
-            # modifiers are anything between first and last
             mods = (length(L) > 2) ? map(x -> _basefuncstr(x[2]), L[2:end-1]) : String[]
             print(io, "ESN($(esn.in_dims) => $(esn.out_dims); ",
                 "activation=", esn.activation,

@@ -1,4 +1,4 @@
-struct HybridESN{I, S, V, N, T, O, M, B, ST, W, IS} <: AbstractEchoStateNetwork
+struct HybridESN{I,S,V,N,T,O,M,B,ST,W,IS}
     res_size::I
     train_data::S
     model::V
@@ -12,9 +12,7 @@ struct HybridESN{I, S, V, N, T, O, M, B, ST, W, IS} <: AbstractEchoStateNetwork
     states::IS
 end
 
-const AbstractDriver = Union{AbstractReservoirDriver, GRU}
-
-struct KnowledgeModel{T, K, O, I, S, D}
+struct KnowledgeModel{T,K,O,I,S,D}
     prior_model::T
     u0::K
     tspan::O
@@ -41,7 +39,7 @@ integrating a knowledge-based model (`prior_model`) with ESNs.
     Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function KnowledgeModel(prior_model, u0, tspan, datasize)
-    trange = collect(range(tspan[1], tspan[2]; length = datasize))
+    trange = collect(range(tspan[1], tspan[2]; length=datasize))
     dt = trange[2] - trange[1]
     tsteps = push!(trange, dt + trange[end])
     tspan_new = (tspan[1], dt + tspan[2])
@@ -94,13 +92,13 @@ traditional Echo State Networks with a predefined knowledge model [^Pathak2018].
     Using Machine Learning in Conjunction with a Knowledge-Based Model" (2018).
 """
 function HybridESN(model::KnowledgeModel, train_data::AbstractArray,
-        in_size::Int, res_size::Int; input_layer = scaled_rand, reservoir = rand_sparse,
-        bias = zeros32, reservoir_driver::AbstractDriver = RNN(),
-        nla_type::NonLinearAlgorithm = NLADefault(),
-        states_type::AbstractStates = StandardStates(), washout::Int = 0,
-        rng::AbstractRNG = Utils.default_rng(), T = Float32,
-        matrix_type = typeof(train_data))
-    train_data = vcat(train_data, model.model_data[:, 1:(end - 1)])
+    in_size::Int, res_size::Int; input_layer=scaled_rand, reservoir=rand_sparse,
+    bias=zeros32, reservoir_driver=RNN(),
+    nla_type::NonLinearAlgorithm=NLADefault(),
+    states_type::AbstractStates=StandardStates(), washout::Int=0,
+    rng::AbstractRNG=Utils.default_rng(), T=Float32,
+    matrix_type=typeof(train_data))
+    train_data = vcat(train_data, model.model_data[:, 1:(end-1)])
 
     if states_type isa AbstractPaddedStates
         in_size = size(train_data, 1) + 1
@@ -117,17 +115,17 @@ function HybridESN(model::KnowledgeModel, train_data::AbstractArray,
     inner_res_driver = reservoir_driver_params(reservoir_driver, res_size, in_size)
     states = create_states(inner_res_driver, train_data, washout, reservoir_matrix,
         input_matrix, bias_vector)
-    train_data = train_data[:, (washout + 1):end]
+    train_data = train_data[:, (washout+1):end]
 
     return HybridESN(res_size, train_data, model, nla_type, input_matrix,
         inner_res_driver, reservoir_matrix, bias_vector, states_type, washout,
         states)
 end
 
-function (hesn::HybridESN)(prediction::AbstractPrediction,
-        output_layer::AbstractOutputLayer; last_state::AbstractArray = hesn.states[
-            :, [end]],
-        kwargs...)
+function (hesn::HybridESN)(prediction,
+    output_layer, last_state::AbstractArray=hesn.states[
+        :, [end]],
+    kwargs...)
     km = hesn.model
     pred_len = prediction.prediction_len
 
@@ -144,7 +142,7 @@ function (hesn::HybridESN)(prediction::AbstractPrediction,
 end
 
 function train(hesn::HybridESN, target_data::AbstractArray,
-        training_method = StandardRidge(); kwargs...)
+    training_method=StandardRidge(); kwargs...)
     states = vcat(hesn.states, hesn.model.model_data[:, 2:end])
     states_new = hesn.states_type(hesn.nla_type, states, hesn.train_data[:, 1:end])
 

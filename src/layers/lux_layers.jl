@@ -1,8 +1,3 @@
-abstract type AbstractReservoirCollectionLayer <: AbstractLuxLayer end
-abstract type AbstractReservoirRecurrentCell <: AbstractLuxLayer end
-abstract type AbstractReservoirTrainableLayer <: AbstractLuxLayer end
-
-
 # from lux layers/basic
 @concrete struct WrappedFunction <: AbstractLuxLayer
     func <: Function
@@ -32,58 +27,6 @@ end
 
 function applyrecurrentcell(sl::AbstractReservoirRecurrentCell, inp, ps, st, ::Nothing)
     return apply(sl, inp, ps, st)
-end
-
-### Readout
-# adapted from lux layers/basic Dense
-@concrete struct Readout <: AbstractReservoirTrainableLayer
-    activation
-    in_dims <: IntegerType
-    out_dims <: IntegerType
-    use_bias <: StaticBool
-    include_collect <: StaticBool
-end
-
-function Base.show(io::IO, d::Readout)
-    print(io, "Readout($(d.in_dims) => $(d.out_dims)")
-    (d.activation == identity) || print(io, ", $(d.activation)")
-    has_bias(d) || print(io, ", use_bias=false")
-    ic = known(getproperty(d, Val(:include_collect)))
-    ic === true && print(io, ", include_collect=true")
-    return print(io, ")")
-end
-
-function Readout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity; kwargs...)
-    return Readout(first(mapping), last(mapping), activation; kwargs...)
-end
-
-function Readout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
-    include_collect::BoolType=True(), use_bias::BoolType=False())
-    return Readout(activation, in_dims, out_dims, static(use_bias), static(include_collect))
-end
-
-function initialparameters(rng::AbstractRNG, ro::Readout)
-    weight = rand(rng, Float32, ro.out_dims, ro.in_dims)
-
-    if has_bias(ro)
-        return (; weight, bias=rand(rng, Float32, ro.out_dims))
-    else
-        return (; weight)
-    end
-end
-
-parameterlength(ro::Readout) = ro.out_dims * ro.in_dims + has_bias(ro) * ro.out_dims
-statelength(ro::Readout) = 0
-
-outputsize(ro::Readout, _, ::AbstractRNG) = (ro.out_dims,)
-
-function (ro::Readout)(inp::AbstractArray, ps, st::NamedTuple)
-    out_tmp = ps.weight * inp
-    if has_bias(ro)
-        out_tmp += ps.bias
-    end
-    output = ro.activation.(out_tmp)
-    return output, st
 end
 
 ###build the ReservoirChain
@@ -164,65 +107,6 @@ end
 Base.length(c::ReservoirChain) = length(c.layers)
 Base.lastindex(c::ReservoirChain) = lastindex(c.layers)
 Base.firstindex(c::ReservoirChain) = firstindex(c.layers)
-
-"""
-    Collect()
-
-A simple marker layer that passes data forward unchanged, but signals we want
-to collect the passing states at this point.
-"""
-struct Collect <: AbstractReservoirCollectionLayer end
-
-function (cl::Collect)(inp::AbstractArray, ps, st::NamedTuple)
-    return inp, st
-end
-
-Base.show(io::IO, cl::Collect) = print(io, "Collection point of states")
-
-"""
-    collectstates(rc, data, ps, st)
-
-Run `data` through the reservoir chain `rc` once and gather all states at every
-`Collect()`. If more than one `Collect()` is present, the resulting vectors are
-stacked with `vcat`.
-"""
-#=
-function collectstates(rc::ReservoirChain, data::AbstractArray, ps, st::NamedTuple)
-    collected = Any[]
-    newst = (;)
-    for inp in eachcol(data)
-        state_tmp = Vector[]
-        for (name, layer) in pairs(rc.layers)
-            inp, st_tmp = layer(inp, ps[name], st[name])
-            newst = merge(newst, (; name => st_tmp))
-            if layer isa AbstractReservoirCollectionLayer
-                state_tmp = vcat(state_tmp, inp)
-            end
-        end
-        push!(collected, state_tmp)
-    end
-    return eltype(data).(reduce(hcat, collected))
-end
-=#
-
-function collectstates(rc::ReservoirChain, data::AbstractArray, ps, st::NamedTuple)
-    newst = st
-    collected = Any[]
-    for inp in eachcol(data)
-        inp_tmp = inp
-        state_vec = nothing
-        for (name, layer) in pairs(rc.layers)
-            inp_tmp, st_i = layer(inp_tmp, ps[name], newst[name])
-            newst = merge(newst, (; name => st_i))
-            if layer isa AbstractReservoirCollectionLayer
-                state_vec = state_vec === nothing ? copy(inp_tmp) : vcat(state_vec, inp_tmp)
-            end
-        end
-        push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
-    end
-    states = eltype(data).(reduce(hcat, collected))
-    return states, newst
-end
 
 ### from Lux.Utils
 function sample_replicate(rng::AbstractRNG)

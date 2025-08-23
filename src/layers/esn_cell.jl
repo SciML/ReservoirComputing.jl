@@ -25,12 +25,12 @@ Echo State Network (ESN) recurrent cell with optional leaky integration.
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
+      Default is [`rand32`](@extref).
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix `W_in`.
   - `init_state`: Initializer for the hidden state when an external
-    state is not provided. Default is `randn32`.
+    state is not provided. Default is [`randn32`](@extref).
   - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
 
 ## Inputs

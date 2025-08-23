@@ -1,0 +1,6 @@
+# Train
+
+```@docs
+    train!
+    StandardRidge
+```

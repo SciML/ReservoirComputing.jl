@@ -109,7 +109,7 @@ esn = ReservoirChain(
     StatefulLayer(ESNCell(input_size => res_size; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300))),
     NLAT2(),
     Readout(res_size => input_size)
-)
+) #or ESN(input_size, res_size, input_size; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300))
 ```
 
 The echo state network can now be trained and tested.

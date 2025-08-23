@@ -28,7 +28,7 @@ struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     ca_size::S
 end
 
-abstract type AbstractReca <: AbstractReservoirComputer end
+abstract type AbstractReca end
 
 """
     RECA(train_data,

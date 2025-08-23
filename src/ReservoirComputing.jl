@@ -17,7 +17,6 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 @reexport using LuxCore: setup, apply
 
-abstract type AbstractReservoirComputer end
 
 const BoolType = Union{StaticBool,Bool,Val{true},Val{false}}
 const InputType = Tuple{<:AbstractArray,Tuple{<:AbstractArray}}
@@ -26,12 +25,13 @@ const IntegerType = Union{Integer,StaticInteger}
 @compat(public, (create_states))
 
 #layers
+include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
 #general
-include("generics/states.jl")
-include("generics/predict.jl")
-include("generics/linear_regression.jl")
+include("states.jl")
+include("predict.jl")
+include("train.jl")
 #esn
 include("inits/inits_components.jl")
 include("inits/esn_inits.jl")
