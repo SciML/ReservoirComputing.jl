@@ -17,7 +17,7 @@ pages = [
         "Layers"=>"api/layers.md",
         "Models"=>"api/models.md",
         "States"=>"api/states.md",
-        "Train"=>"api/training.md",
+        "Train"=>"api/train.md",
         "Predict"=>"api/predict.md",
         "Initializers"=>"api/inits.md",
         "ReCA"=>"api/reca.md"]    #"References" => "references.md"

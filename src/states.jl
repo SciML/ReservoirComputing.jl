@@ -1,375 +1,83 @@
-abstract type AbstractStates <: Function end
-abstract type AbstractPaddedStates <: AbstractStates end
-abstract type NonLinearAlgorithm <: Function end
 
-function pad_state!(states_type::AbstractPaddedStates, x_pad, x)
-    x_pad[1, :] .= states_type.padding
-    x_pad[2:end, :] .= x
-    return x_pad
-end
-
-function pad_state!(states_type, x_pad, x)
-    return x
-end
-
-#states types
-"""
-    StandardStates()
-
-When this struct is employed, the states of the reservoir are not modified.
-
-# Example
-
-```jldoctest
-julia> states = StandardStates()
-StandardStates()
-
-julia> test_vec = zeros(Float32, 5)
-5-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-
-julia> new_vec = states(test_vec)
-5-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-
-julia> test_mat = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
-
-julia> new_mat = states(test_mat)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
-```
-"""
-struct StandardStates <: AbstractStates end
-
-function (::StandardStates)(nla_type::NonLinearAlgorithm,
-    state, inp)
-    return nla(nla_type, state)
-end
-
-(::StandardStates)(state) = state
-"""
-    ExtendedStates()
-
-The `ExtendedStates` struct is used to extend the reservoir
-states by vertically concatenating the input data (during training)
-and the prediction data (during the prediction phase).
-
-# Example
-
-```jldoctest
-julia> states = ExtendedStates()
-ExtendedStates()
-
-julia> test_vec = zeros(Float32, 5)
-5-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-
-julia> new_vec = states(test_vec, fill(3.0f0, 3))
-8-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- 3.0
- 3.0
- 3.0
-
-julia> test_mat = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
-
-julia> new_mat = states(test_mat, fill(3.0f0, 3))
-8×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
-```
-"""
-struct ExtendedStates <: AbstractStates end
-
-function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractMatrix)
-    results = states_type.(eachcol(mat), eachcol(inp))
+function _apply_tomatrix(res_states, x_old::AbstractMatrix)
+    results = res_states.(eachcol(x_old))
     return hcat(results...)
 end
 
-function (states_type::ExtendedStates)(mat::AbstractMatrix, inp::AbstractVector)
-    results = Vector{Vector{eltype(mat)}}(undef, size(mat, 2))
-    for (idx, col) in enumerate(eachcol(mat))
-        results[idx] = states_type(col, inp)
-    end
-    return hcat(results...)
+
+"""
+  Pad(padding)
+
+Padding layer that adds `padding` (either a number or an array) at the
+end of a state.
+
+## Arguments
+ - `padding`: value to append. Default is 1.0.
+"""
+struct Pad{P} <: Function
+    padding::P
 end
 
-function (::ExtendedStates)(vect::AbstractVector, inp::AbstractVector)
-    return x_tmp = vcat(vect, inp)
+Pad() = Pad(1.0)
+
+function (pad::Pad)(x_old::AbstractVector)
+    T = eltype(x_old)
+    return vcat(x_old, T(pad.padding))
 end
 
-function (states_type::ExtendedStates)(nla_type::NonLinearAlgorithm,
-    state::AbstractVecOrMat, inp::AbstractVecOrMat)
-    return nla(nla_type, states_type(state, inp))
+function (pad::Pad)(x_old::AbstractMatrix)
+    T = eltype(x_old)
+    row = fill(T(pad.padding), 1, size(x_old, 2))
+    return vcat(x_old, row)
 end
 
 """
-    PaddedStates(padding)
-    PaddedStates(;padding=1.0)
+  Pad(padding)
 
-Creates an instance of the `PaddedStates` struct with specified
-padding value (default 1.0). The states of the reservoir are padded
-by vertically concatenating the padding value.
+Wrapper layer that concatenates the reservoir state at that
+point with the input that it receives.
+## Arguments
+ - `op`: wrapped layer
 
-# Example
+ ## Examples
+ ```julia
+ esn = ReservoirChain(
+    Extend(
+        StatefulLayer(
+            ESNCell(3 => 300; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300))
+        )
+    ),
+    NLAT2(),
+    Readout(300+3 => 3)
+)
+ ```
 
-```jldoctest
-julia> states = PaddedStates(1.0)
-PaddedStates{Float64}(1.0)
-
-julia> test_vec = zeros(Float32, 5)
-5-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-
-julia> new_vec = states(test_vec)
-6-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- 1.0
-
-julia> test_mat = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
-
-julia> new_mat = states(test_mat)
-6×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  1.0
-```
+ In this esample the input to `Extend` is the initial value fed to
+ [`ReservoirChain`](@ref). After `Extend`, the value in the chain will
+ be the state returned by the [`StatefulLayer`](@ref), `vcat`ed with
+ the input.
 """
-struct PaddedStates{T} <: AbstractPaddedStates
-    padding::T
+@concrete struct Extend <: AbstractLuxWrapperLayer{:op}
+    op <: AbstractLuxLayer
 end
 
-function PaddedStates(; padding=1.0)
-    return PaddedStates(padding)
+function initialparameters(rng::AbstractRNG, ex::Extend)
+    return (op=initialparameters(rng, ex.op),)
+end
+function initialstates(rng::AbstractRNG, ex::Extend)
+    return (op=initialstates(rng, ex.op),)
 end
 
-function (states_type::PaddedStates)(mat::AbstractMatrix)
-    results = states_type.(eachcol(mat))
-    return hcat(results...)
+function (ex::Extend)(inp, ps, st::NamedTuple)
+    state, st_op = apply(ex.op, inp, ps.op, st.op)
+    return vcat(inp, state), (; op=st_op)
 end
 
-function (states_type::PaddedStates)(vect::AbstractVector)
-    tt = eltype(vect)
-    return vcat(vect, tt(states_type.padding))
-end
+Base.show(io::IO, ex::Extend) = print(io, "Extend(", ex.op, ")")
 
-function (states_type::PaddedStates)(nla_type::NonLinearAlgorithm,
-    state::AbstractVecOrMat, inp::AbstractVecOrMat)
-    return nla(nla_type, states_type(state))
-end
-
-"""
-    PaddedExtendedStates(padding)
-    PaddedExtendedStates(;padding=1.0)
-
-Constructs a `PaddedExtendedStates` struct, which first extends
-the reservoir states with training or prediction data,then pads them
-with a specified value (defaulting to 1.0).
-
-# Example
-
-```jldoctest
-julia> states = PaddedExtendedStates(1.0)
-PaddedExtendedStates{Float64}(1.0)
-
-julia> test_vec = zeros(Float32, 5)
-5-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-
-julia> new_vec = states(test_vec, fill(3.0f0, 3))
-9-element Vector{Float32}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- 1.0
- 3.0
- 3.0
- 3.0
-
-julia> test_mat = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
-
-julia> new_mat = states(test_mat, fill(3.0f0, 3))
-9×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  1.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
-```
-"""
-struct PaddedExtendedStates{T} <: AbstractPaddedStates
-    padding::T
-end
-
-function PaddedExtendedStates(; padding=1.0)
-    return PaddedExtendedStates(padding)
-end
-
-function (states_type::PaddedExtendedStates)(nla_type::NonLinearAlgorithm,
-    state::AbstractVecOrMat, inp::AbstractVecOrMat)
-    return nla(nla_type, states_type(state, inp))
-end
-
-function (states_type::PaddedExtendedStates)(state::AbstractVecOrMat,
-    inp::AbstractVecOrMat)
-    x_pad = PaddedStates(states_type.padding)(state)
-    x_ext = ExtendedStates()(x_pad, inp)
-    return x_ext
-end
-
-#### non linear algorithms ###
-## to conform to current (0.10.5) approach
-nla(nlat::NonLinearAlgorithm, x_old::AbstractVecOrMat) = nlat(x_old)
-
-# dispatch over matrices for all nonlin algorithms
-function (nlat::NonLinearAlgorithm)(x_old::AbstractMatrix)
-    results = nlat.(eachcol(x_old))
-    return hcat(results...)
-end
-
-"""
-    NLADefault()
-
-`NLADefault` represents the default non-linear algorithm option.
-When used, it leaves the input array unchanged.
-
-# Example
-
-```jldoctest
-julia> nlat = NLADefault()
-NLADefault()
-
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> n_new = nlat(x_old)
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> mat_old = [1 2 3;
-                  4 5 6;
-                  7 8 9;
-                  10 11 12;
-                  13 14 15;
-                  16 17 18;
-                  19 20 21]
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
-
-julia> mat_new = nlat(mat_old)
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
-```
-"""
-struct NLADefault <: NonLinearAlgorithm end
-
-(::NLADefault)(x::AbstractVector) = x
-(::NLADefault)(x::AbstractMatrix) = x
 
 @doc raw"""
-    NLAT1()
+    NLAT1(x)
 
 `NLAT1` implements the T₁ transformation algorithm introduced
 in [Chattopadhyay2020](@cite) and [Pathak2017](@cite). The T₁ algorithm squares
@@ -386,9 +94,6 @@ elements of the input array, targeting every second row.
 # Example
 
 ```jldoctest
-julia> nlat = NLAT1()
-NLAT1()
-
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -402,7 +107,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = nlat(x_old)
+julia> n_new = NLAT1(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -431,7 +136,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = nlat(mat_old)
+julia> mat_new = NLAT1(mat_old)
 7×3 Matrix{Int64}:
    1    4    9
    4    5    6
@@ -443,19 +148,19 @@ julia> mat_new = nlat(mat_old)
 
 ```
 """
-struct NLAT1 <: NonLinearAlgorithm end
-
-function (::NLAT1)(x_old::AbstractVector)
+function NLAT1(x_old::AbstractVector)
     x_new = copy(x_old)
-
-    for idx in eachindex(x_old)
+    for idx in axes(x_old, 1)
         if isodd(idx)
             x_new[idx] = x_old[idx] * x_old[idx]
         end
     end
-
     return x_new
 end
+
+NLAT1(x_old::AbstractMatrix) = _apply_tomatrix(NLAT1, x_old)
+
+NLAT1() = NLAT1
 
 @doc raw"""
     NLAT2()
@@ -475,9 +180,6 @@ reservoir states by multiplying each odd-indexed row
 # Example
 
 ```jldoctest
-julia> nlat = NLAT2()
-NLAT2()
-
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -491,7 +193,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = nlat(x_old)
+julia> n_new = NLAT2(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -520,7 +222,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = nlat(mat_old)
+julia> mat_new = NLAT2(mat_old)
 7×3 Matrix{Int64}:
   1   2    3
   4   5    6
@@ -532,19 +234,19 @@ julia> mat_new = nlat(mat_old)
 
 ```
 """
-struct NLAT2 <: NonLinearAlgorithm end
-
-function (::NLAT2)(x_old::AbstractVector)
+function NLAT2(x_old::AbstractVector)
     x_new = copy(x_old)
-
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
             x_new[idx, :] .= x_old[idx-1, :] .* x_old[idx-2, :]
         end
     end
-
     return x_new
 end
+
+NLAT2(x_old::AbstractMatrix) = _apply_tomatrix(NLAT2, x_old)
+
+NLAT2() = NLAT2
 
 @doc raw"""
     NLAT3()
@@ -564,9 +266,6 @@ r_{i,j}, & \text{if } j = 1 \text{ or even.}
 # Example
 
 ```jldoctest
-julia> nlat = NLAT3()
-NLAT3()
-
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -580,7 +279,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = nlat(x_old)
+julia> n_new = NLAT3(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -609,7 +308,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = nlat(mat_old)
+julia> mat_new = NLAT3(mat_old)
 7×3 Matrix{Int64}:
    1    2    3
    4    5    6
@@ -621,19 +320,19 @@ julia> mat_new = nlat(mat_old)
 
 ```
 """
-struct NLAT3 <: NonLinearAlgorithm end
-
-function (::NLAT3)(x_old::AbstractVector)
+function NLAT3(x_old::AbstractVector)
     x_new = copy(x_old)
-
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
             x_new[idx] = x_old[idx-1] * x_old[idx+1]
         end
     end
-
     return x_new
 end
+
+NLAT3(x_old::AbstractMatrix) = _apply_tomatrix(NLAT3, x_old)
+
+NLAT3() = NLAT3
 
 @doc raw"""
     PartialSquare(eta)
@@ -686,7 +385,7 @@ julia> x_new = ps(x_old)
   9
 ```
 """
-struct PartialSquare <: NonLinearAlgorithm
+struct PartialSquare <: Function
     eta::Number
 end
 
@@ -702,6 +401,8 @@ function (ps::PartialSquare)(x_old::AbstractVector)
 
     return x_new
 end
+
+(ps::PartialSquare)(x_old::AbstractMatrix) = _apply_tomatrix(ps, x_old)
 
 @doc raw"""
 
@@ -760,9 +461,11 @@ julia> x_new = es(x_old)
 
 ```
 """
-struct ExtendedSquare <: NonLinearAlgorithm end
-
-function (::ExtendedSquare)(x_old::AbstractVector)
+function ExtendedSquare(x_old::AbstractVector)
     x_new = copy(x_old)
     return vcat(x_new, x_new .^ 2)
 end
+
+ExtendedSquare(x_old::AbstractMatrix) = _apply_tomatrix(ExtendedSquare, x_old)
+
+ExtendedSquare() = ExtendedSquare

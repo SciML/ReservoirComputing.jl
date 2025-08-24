@@ -46,8 +46,7 @@ include("extensions/reca.jl")
 
 export ESNCell, StatefulLayer, Readout, ReservoirChain, Collect, collectstates, train!, predict
 
-export NLADefault, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
-export StandardStates, ExtendedStates, PaddedStates, PaddedExtendedStates
+export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
     modified_lm, scaled_rand, weighted_init, weighted_minimal

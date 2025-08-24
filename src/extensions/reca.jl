@@ -14,12 +14,12 @@ The detail of this implementation can be found in [1].
 [1] Nichele, Stefano, and Andreas Molund. “Deep reservoir computing using cellular
 automata.” arXiv preprint arXiv:1703.02806 (2017).
 """
-struct RandomMapping{I, T} <: AbstractInputEncoding
+struct RandomMapping{I,T} <: AbstractInputEncoding
     permutations::I
     expansion_size::T
 end
 
-struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
+struct RandomMaps{T,E,G,M,S} <: AbstractEncodingData
     permutations::T
     expansion_size::E
     generations::G
@@ -44,12 +44,12 @@ arXiv preprint arXiv:1410.0162 (2014).
 [2] Nichele, Stefano, and Andreas Molund. “_Deep reservoir computing using cellular
 automata._” arXiv preprint arXiv:1703.02806 (2017).
 """
-struct RECA{S, R, E, T, Q} <: AbstractReca
+struct RECA{S,R,E,N,T,Q} <: AbstractReca
     #res_size::I
     train_data::S
     automata::R
     input_encoding::E
-    nla_type::ReservoirComputing.NonLinearAlgorithm
+    nla_type::N
     states::T
     states_type::Q
 end

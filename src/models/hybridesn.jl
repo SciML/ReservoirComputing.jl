@@ -94,19 +94,14 @@ traditional Echo State Networks with a predefined knowledge model [^Pathak2018].
 function HybridESN(model::KnowledgeModel, train_data::AbstractArray,
     in_size::Int, res_size::Int; input_layer=scaled_rand, reservoir=rand_sparse,
     bias=zeros32, reservoir_driver=RNN(),
-    nla_type::NonLinearAlgorithm=NLADefault(),
-    states_type::AbstractStates=StandardStates(), washout::Int=0,
+    nla_type=NLADefault(),
+    states_type=StandardStates(), washout::Int=0,
     rng::AbstractRNG=Utils.default_rng(), T=Float32,
     matrix_type=typeof(train_data))
     train_data = vcat(train_data, model.model_data[:, 1:(end-1)])
 
-    if states_type isa AbstractPaddedStates
-        in_size = size(train_data, 1) + 1
-        train_data = vcat(adapt(matrix_type, ones(1, size(train_data, 2))),
-            train_data)
-    else
-        in_size = size(train_data, 1)
-    end
+    in_size = size(train_data, 1)
+
 
     reservoir_matrix = reservoir(rng, T, res_size, res_size)
     #different from ESN, why?

@@ -75,11 +75,11 @@ The returned state is the final state after running through the full sequence.
   `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the chain.
 """
 function train!(rc::ReservoirChain, train_data, target_data, ps, st,
-    sr::StandardRidge=StandardRidge(0.0);
+    train_method=StandardRidge(0.0);
     washout::Int=0, return_states::Bool=false)
     states, st_after = collectstates(rc, train_data, ps, st)
     states_wo, traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) : (states, target_data)
-    output_matrix = train(sr, states_wo, traindata_wo)
+    output_matrix = train(train_method, states_wo, traindata_wo)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
