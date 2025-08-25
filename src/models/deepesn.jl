@@ -39,7 +39,7 @@ function DeepESN(in_dims::Int,
 
     layers = Any[]
     prev = in_dims
-    @inbounds for res in 1:num_reservoirs
+    for res in 1:num_reservoirs
         cell = ESNCell(prev => res_dims[res], acts[res];
             use_bias=static(ubias[res]),
             init_bias=inbias[res],
@@ -58,6 +58,6 @@ function DeepESN(in_dims::Int,
     return ReservoirChain((layers..., ro)...)
 end
 
-function DeepESN(in_size::Int, res_size::Int; depth::Int=2, kwargs...)
-    return DeepESN(in_size, fill(res_size, depth); kwargs...)
+function DeepESN(in_dims::Int, res_dims::Int, out_dims::Int; depth::Int=2, kwargs...)
+    return DeepESN(in_dims, fill(res_dims, depth), out_dims; kwargs...)
 end
