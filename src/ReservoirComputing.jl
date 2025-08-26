@@ -59,7 +59,7 @@ export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
 export train
 export ESN, HybridESN, KnowledgeModel, DeepESN
 #reca
-export RECA
+export RECACell, RECA
 export RandomMapping, RandomMaps
 
 end #module

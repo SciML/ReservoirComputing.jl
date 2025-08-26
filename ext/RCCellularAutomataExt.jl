@@ -1,64 +1,61 @@
 module RCCellularAutomataExt
-using ReservoirComputing: RECA, RandomMapping, RandomMaps
-import ReservoirComputing: train, next_state_prediction!, AbstractOutputLayer, NLADefault,
-                           StandardStates, obtain_prediction
+using ReservoirComputing: RECA, RandomMapping, RandomMaps, AbstractInputEncoding,
+    IntegerType, Readout, ReservoirChain, StatefulLayer
+import ReservoirComputing: RECACell, RECA
 using CellularAutomata
 using Random: randperm
 
-function RECA(train_data,
-        automata;
-        generations = 8,
-        input_encoding = RandomMapping(),
-        nla_type = NLADefault(),
-        states_type = StandardStates())
-    in_size = size(train_data, 1)
-    #res_size = obtain_res_size(input_encoding, generations)
-    state_encoding = create_encoding(input_encoding, train_data, generations)
-    states = reca_create_states(state_encoding, automata, train_data)
-
-    return RECA(train_data, automata, state_encoding, nla_type, states, states_type)
+function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
+    rm = reca.enc
+    T = eltype(inp)
+    ca0 = T.(encoding(rm, inp, T.(ca_prev)))
+    ca = CellularAutomaton(reca.automaton, ca0, rm.generations + 1)
+    evo = ca.evolution
+    feat2T = evo[2:end, :]
+    feats = reshape(permutedims(feat2T), rm.states_size)
+    ca_last = evo[end, :]
+    return (T.(feats), (T.(ca_last),)), st
 end
 
-#training dispatch
-function train(reca::RECA, target_data, training_method = StandardRidge; kwargs...)
-    states_new = reca.states_type(reca.nla_type, reca.states, reca.train_data)
-    return train(training_method, Float32.(states_new), Float32.(target_data); kwargs...)
+function (reca::RECACell)(inp::AbstractVector, ps, st::NamedTuple)
+    ca = st.ca
+    return reca((inp, (ca,)), ps, st)
 end
 
-#predict dispatch
-function (reca::RECA)(prediction,
-        output_layer::AbstractOutputLayer,
-        initial_conditions = output_layer.last_value,
-        last_state = zeros(reca.input_encoding.ca_size))
-    return obtain_prediction(reca, prediction, last_state, output_layer;
-        initial_conditions = initial_conditions)
+function RECA(in_dims::IntegerType,
+    out_dims::IntegerType,
+    automaton;
+    input_encoding::AbstractInputEncoding=RandomMapping(),
+    generations::Integer=8,
+    state_modifiers=(),
+    readout_activation=identity)
+
+    rm = create_encoding(input_encoding, in_dims, generations)
+    cell = RECACell(automaton, rm)
+
+    mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+           Tuple(state_modifiers) : (state_modifiers,)
+
+    ro = Readout(rm.states_size => out_dims, readout_activation)
+
+    return ReservoirChain((StatefulLayer(cell), mods..., ro)...)
 end
 
-function next_state_prediction!(reca::RECA, x, out, i, args...)
-    rm = reca.input_encoding
-    x = encoding(rm, out, x)
-    ca = CellularAutomaton(reca.automata, x, rm.generations + 1)
-    ca_states = ca.evolution[2:end, :]
-    x_new = reshape(transpose(ca_states), rm.states_size)
-    x = ca.evolution[end, :]
-    return x, x_new
-end
-
-function RandomMapping(; permutations = 8, expansion_size = 40)
+function RandomMapping(; permutations=8, expansion_size=40)
     RandomMapping(permutations, expansion_size)
 end
 
-function RandomMapping(permutations; expansion_size = 40)
+function RandomMapping(permutations; expansion_size=40)
     RandomMapping(permutations, expansion_size)
 end
 
-function create_encoding(rm::RandomMapping, input_data, generations)
-    maps = init_maps(size(input_data, 1), rm.permutations, rm.expansion_size)
+function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::IntegerType)
+    maps = init_maps(in_dims, rm.permutations, rm.expansion_size)
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations
-    return RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size,
-        ca_size)
+    return RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size, ca_size)
 end
+
 
 function reca_create_states(rm::RandomMaps, automata, input_data)
     train_time = size(input_data, 2)
@@ -82,21 +79,21 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
-        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(
+        new_tot_enc_vec[((i-1)*rm.expansion_size+1):(i*rm.expansion_size)] = single_encoding(
             input_vector,
-            new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
+            new_tot_enc_vec[((i-1)*rm.expansion_size+1):(i*rm.expansion_size)],
             rm.maps[i,
-            :])
+                :])
     end
 
     return new_tot_enc_vec
 end
 
-#function obtain_res_size(rm::RandomMapping, generations)
-#    generations*rm.expansion_size*rm.permutations
-#end
-
 function single_encoding(input_vector, encoded_vector, map)
+    @assert length(map) == length(input_vector) """
+        RandomMaps mismatch: map length = $(length(map)) but input length = $(length(input_vector)).
+        (Build RandomMaps with in_dims = size(input, 1) used at training time.)
+        """
     new_enc_vec = copy(encoded_vector)
 
     for i in 1:size(input_vector, 1)

@@ -18,7 +18,9 @@ output = readdlm("./5bitoutput.txt", ',', Float64)
 To use a ReCA model, it is necessary to define the rule one intends to use. To do so, ReservoirComputing.jl leverages [CellularAutomata.jl](https://github.com/MartinuzziFrancesco/CellularAutomata.jl) that needs to be called as well to define the `RECA` struct:
 
 ```@example reca
-using ReservoirComputing, CellularAutomata
+using ReservoirComputing, CellularAutomata, Random
+Random.seed!(42)
+rng = MersenneTwister(17)
 
 ca = DCA(90)
 ```
@@ -26,23 +28,27 @@ ca = DCA(90)
 To define the ReCA model, it suffices to call:
 
 ```@example reca
-reca = RECA(input, ca;
-    generations=16,
-    input_encoding=RandomMapping(16, 40))
+reca = RECA(4, 4, DCA(90);
+           generations=16,
+           input_encoding=RandomMapping(16, 40))
+ps, st = setup(rng, reca)
 ```
-
 After this, the training can be performed with the chosen method.
 
 ```@example reca
-output_layer = train(reca, output, StandardRidge(0.00001))
+ps, st = train!(reca, input, output, ps, st, StandardRidge(0.00001))
 ```
 
-The prediction in this case will be a `Predictive()` with the input data equal to the training data. In addition, to test the 5 bit memory task, a conversion from Float to Bool is necessary (at the moment, we are aware of a bug that doesn't allow boolean input data to the RECA models):
+We are going to test the recall ability of the model, feeding the input data
+and investigating wether the predicted output equals the output data.
+In addition, to test the 5 bit memory task, a conversion from Float to Bool
+is necessary (at the moment, we are aware of a bug that doesn't allow boolean
+input data to the RECA models):
 
 ```@example reca
-prediction = reca(Predictive(input), output_layer)
+_, st0 = setup(rng, reca) #reset the first ca state
+pred_out, st = predict(reca, input, ps, st0)
 final_pred = convert(AbstractArray{Float32}, prediction .> 0.5)
 
 final_pred == output
 ```
-
