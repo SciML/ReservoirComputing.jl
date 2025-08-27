@@ -1,3 +1,49 @@
+@doc raw"""
+    predict(rc, steps::Integer, ps, st; initialdata=nothing)
+    predict(rc, data::AbstractMatrix, ps, st)
+
+Run the model either in (1) closed-loop (auto-regressive) mode for a fixed number
+of steps, or in (2) teacher-forced (point-by-point) mode over a given input
+sequence.
+
+## 1) Auto-regressive rollout
+
+**Behavior**
+- Rolls the model forward for `steps` time steps.
+- At each step, the model’s output becomes the next input.
+
+### Arguments
+- `rc`: The reservoir chain / model.
+- `steps::Integer`: Number of time steps to generate.
+- `ps`: Model parameters (from `setup` or after `train!`).
+- `st`: Model state (carry, RNG replicas, etc.), threaded across time.
+
+### Keyword Arguments
+- `initialdata=nothing`: Column vector used as the first input.
+
+### Returns
+
+- `Y`: Generated outputs of shape `(out_dims, steps)`.
+- `st_out`: Final model state after `steps` steps.
+
+
+## 2) Teacher-forced / point-by-point
+
+- Feeds each column of `data` as input; the model state is threaded across time,
+  and an output is produced for each input column.
+
+### Arguments
+
+- `rc`: The reservoir chain / model.
+- `data`: Input sequence of shape `(in_dims, T)` (columns are time).
+- `ps`: Model parameters.
+- `st`: Initial model state before processing `data`.
+
+### Returns
+
+- `Y::AbstractMatrix`: Outputs for each input column, shape `(out_dims, T)`.
+- `st_out`: Final model state after consuming all `T` columns.
+"""
 function predict(rc::AbstractLuxLayer, steps::Int, ps, st; initialdata=nothing)
     if initialdata == nothing
         initialdata = rand(Float32, 3)
