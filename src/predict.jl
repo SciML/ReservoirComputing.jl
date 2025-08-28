@@ -44,11 +44,9 @@ sequence.
 - `Y::AbstractMatrix`: Outputs for each input column, shape `(out_dims, T)`.
 - `st_out`: Final model state after consuming all `T` columns.
 """
-function predict(rc::AbstractLuxLayer, steps::Int, ps, st; initialdata=nothing)
-    if initialdata == nothing
-        initialdata = rand(Float32, 3)
-    end
-    output = zeros(size(initialdata, 1), steps)
+function predict(rc::AbstractLuxLayer,
+    steps::Integer, ps, st; initialdata::AbstractVector)
+    output = zeros(eltype(initialdata), length(initialdata), steps)
     for step in 1:steps
         initialdata, st = apply(rc, initialdata, ps, st)
         output[:, step] = initialdata
