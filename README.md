@@ -123,7 +123,7 @@ esn = ReservoirChain(
 
 ### 3. Train the Echo State Network
 
-ReservoirCOmputing.jl builds on Lux(Core), so in order to train the model
+ReservoirComputing.jl builds on Lux(Core), so in order to train the model
 we first need to instantiate the parameters and the states:
 
 ```julia

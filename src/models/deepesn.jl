@@ -16,8 +16,7 @@ function DeepESN(in_dims::Int,
     res_dims::AbstractVector{<:Int},
     out_dims,
     activation=tanh;
-    activations=nothing,
-    leaks=1.0,
+    leak_coefficient=1.0,
     init_reservoir=rand_sparse,
     init_input=weighted_init,
     init_bias=zeros32,
@@ -28,8 +27,8 @@ function DeepESN(in_dims::Int,
 
     num_reservoirs = length(res_dims)
 
-    acts = activations === nothing ? _asvec(activation, num_reservoirs) : _asvec(activations, num_reservoirs)
-    leaksv = _asvec(leaks, num_reservoirs)
+    acts = _asvec(activation, num_reservoirs)
+    leaksv = _asvec(leak_coefficient, num_reservoirs)
     inres = _asvec(init_reservoir, num_reservoirs)
     ininp = _asvec(init_input, num_reservoirs)
     inbias = _asvec(init_bias, num_reservoirs)
