@@ -195,6 +195,9 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractArray, ps, st::NamedT
         inp_tmp = inp
         state_vec = nothing
         for (name, layer) in pairs(rc.layers)
+            if layer isa AbstractReservoirTrainableLayer
+                break
+            end
             inp_tmp, st_i = layer(inp_tmp, ps[name], newst[name])
             newst = merge(newst, (; name => st_i))
             if layer isa AbstractReservoirCollectionLayer

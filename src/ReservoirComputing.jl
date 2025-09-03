@@ -17,35 +17,33 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 @reexport using LuxCore: setup, apply
 
-
 const BoolType = Union{StaticBool,Bool,Val{true},Val{false}}
 const InputType = Tuple{<:AbstractArray,Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer,StaticInteger}
 
-@compat(public, (create_states))
+#@compat(public, (create_states)) #do I need to add intialstates/parameters in compat?
 
 #layers
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
+include("layers/svmreadout.jl")
 #general
 include("states.jl")
 include("predict.jl")
 include("train.jl")
-#esn
+#initializers
 include("inits/inits_components.jl")
 include("inits/esn_inits.jl")
+#full models
 include("models/esn.jl")
 include("models/deepesn.jl")
 include("models/hybridesn.jl")
 #extensions
 include("extensions/reca.jl")
 
-
-
-
 export ESNCell, StatefulLayer, Readout, ReservoirChain, Collect, collectstates, train!, predict
-
+export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,

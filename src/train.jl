@@ -94,7 +94,7 @@ function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractAr
     return output_layer
 end
 
-_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+#_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 
 @generated function _setweight_rt(p::NamedTuple{K}, W) where {K}
     keys = K

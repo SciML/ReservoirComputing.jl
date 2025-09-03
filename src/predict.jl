@@ -62,7 +62,7 @@ function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
     Y = similar(y1, size(y1, 1), T)
     Y[:, 1] .= y1
 
-    @inbounds @views for t in 2:T
+    for t in 2:T
         yt, st = apply(rc, data[:, t], ps, st)
         Y[:, t] .= yt
     end
