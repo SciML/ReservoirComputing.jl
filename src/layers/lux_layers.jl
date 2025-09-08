@@ -124,6 +124,10 @@ function named_tuple_layers(layers::Vararg{AbstractLuxLayer,N}) where {N}
     return NamedTuple{ntuple(i -> Symbol(:layer_, i), N)}(layers)
 end
 
+function index_namedtuple(nt::NamedTuple{fields}, idxs::AbstractArray) where {fields}
+    return NamedTuple{fields[idxs]}(values(nt)[idxs])
+end
+
 # from Lux extended_ops
 const KnownSymbolType{v} = Union{Val{v},StaticSymbol{v}}
 
@@ -132,6 +136,10 @@ function has_bias(l::AbstractLuxLayer)
     return ifelse(res === nothing, false, res)
 end
 
-function getproperty(x, ::KnownSymbolType{v}) where {v}
-    return v ∈ Base.propertynames(x) ? Base.getproperty(x, v) : nothing
+@generated function getproperty(x::X, ::KnownSymbolType{v}) where {X,v}
+    if hasfield(X, v)
+        return :(getfield(x, v))
+    else
+        return :(nothing)
+    end
 end

@@ -1,7 +1,13 @@
 
-function _apply_tomatrix(res_states, x_old::AbstractMatrix)
-    results = res_states.(eachcol(x_old))
-    return hcat(results...)
+@inline function _apply_tomatrix(states_mod::F, states::AbstractMatrix) where {F<:Function}
+    cols = axes(states, 2)
+    states_1 = states_mod(states[:, first(cols)])
+    new_states = similar(states_1, length(states_1), length(cols))
+    new_states[:, 1] .= states_1
+    for (k, j) in enumerate(cols)
+        new_states[:, k] .= states_mod(@view states[:, j])
+    end
+    return new_states
 end
 
 

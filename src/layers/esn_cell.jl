@@ -75,7 +75,7 @@ Created by `initialstates(rng, esn)`:
     use_bias <: StaticBool
 end
 
-function ESNCell((in_dims, out_dims)::Pair{<:Int,<:Int}, activation=tanh;
+function ESNCell((in_dims, out_dims)::Pair{<:IntegerType,<:IntegerType}, activation=tanh;
     use_bias::BoolType=False(), init_bias=zeros32, init_reservoir=rand_sparse,
     init_input=weighted_init, init_state=randn32, leak_coefficient=1.0)
     return ESNCell(activation, in_dims, out_dims, init_bias, init_reservoir,

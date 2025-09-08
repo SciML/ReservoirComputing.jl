@@ -4,7 +4,7 @@ using Adapt: adapt
 using ArrayInterface: ArrayInterface
 using Compat: @compat
 using ConcreteStructs: @concrete
-using LinearAlgebra: eigvals, mul!, I, qr, Diagonal
+using LinearAlgebra: eigvals, mul!, I, qr, Diagonal, diag
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize

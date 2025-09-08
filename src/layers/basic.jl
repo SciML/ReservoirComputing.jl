@@ -52,17 +52,10 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
+    init_weight
+    init_bias
     use_bias <: StaticBool
     include_collect <: StaticBool
-end
-
-function Base.show(io::IO, ro::Readout)
-    print(io, "Readout($(ro.in_dims) => $(ro.out_dims)")
-    (ro.activation == identity) || print(io, ", $(ro.activation)")
-    has_bias(ro) || print(io, ", use_bias=false")
-    ic = known(getproperty(ro, Val(:include_collect)))
-    ic === true && print(io, ", include_collect=true")
-    return print(io, ")")
 end
 
 function Readout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity; kwargs...)
@@ -70,15 +63,16 @@ function Readout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity
 end
 
 function Readout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
-    include_collect::BoolType=True(), use_bias::BoolType=False())
-    return Readout(activation, in_dims, out_dims, static(use_bias), static(include_collect))
+    init_weight=rand32, init_bias=rand32, include_collect::BoolType=True(),
+    use_bias::BoolType=False())
+    return Readout(activation, in_dims, out_dims, init_weight, init_bias, static(use_bias), static(include_collect))
 end
 
 function initialparameters(rng::AbstractRNG, ro::Readout)
-    weight = rand(rng, Float32, ro.out_dims, ro.in_dims)
+    weight = ro.init_weight(rng, ro.out_dims, ro.in_dims)
 
     if has_bias(ro)
-        return (; weight, bias=rand(rng, Float32, ro.out_dims))
+        return (; weight, bias=ro.init_bias(rng, Float32, ro.out_dims))
     else
         return (; weight)
     end
@@ -96,6 +90,15 @@ function (ro::Readout)(inp::AbstractArray, ps, st::NamedTuple)
     end
     output = ro.activation.(out_tmp)
     return output, st
+end
+
+function Base.show(io::IO, ro::Readout)
+    print(io, "Readout($(ro.in_dims) => $(ro.out_dims)")
+    (ro.activation == identity) || print(io, ", $(ro.activation)")
+    has_bias(ro) || print(io, ", use_bias=false")
+    ic = known(getproperty(ro, Val(:include_collect)))
+    ic === true && print(io, ", include_collect=true")
+    return print(io, ")")
 end
 
 @doc raw"""
@@ -188,7 +191,7 @@ that time step.
 - `st`: Updated model states.
 
 """
-function collectstates(rc::AbstractLuxLayer, data::AbstractArray, ps, st::NamedTuple)
+function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
     collected = Any[]
     for inp in eachcol(data)
@@ -208,4 +211,8 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractArray, ps, st::NamedT
     end
     states = eltype(data).(reduce(hcat, collected))
     return states, newst
+end
+
+function collectstates(rc::AbstractLuxLayer, data::AbstractVector, ps, st::NamedTuple)
+    return collectstates(rc, reshape(data, :, 1), ps, st)
 end
