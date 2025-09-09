@@ -53,7 +53,7 @@ function DeepESN(in_dims::Int,
         end
         prev = res_dims[res]
     end
-    ro = Readout(prev => out_dims, readout_activation)
+    ro = LinearReadout(prev => out_dims, readout_activation)
     return ReservoirChain((layers..., ro)...)
 end
 

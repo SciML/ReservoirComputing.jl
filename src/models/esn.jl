@@ -5,7 +5,7 @@ function ESN(in_dims::IntegerType, res_dims::IntegerType, out_dims::IntegerType,
     cell = ESNCell(in_dims => res_dims, activation; kwargs...)
     mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
            Tuple(state_modifiers) : (state_modifiers,)
-    ro = Readout(res_dims => out_dims, readout_activation)
+    ro = LinearReadout(res_dims => out_dims, readout_activation)
     return ReservoirChain((StatefulLayer(cell), mods..., ro)...)
 end
 
@@ -18,7 +18,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", rc::ReservoirChain)
     L = collect(pairs(rc.layers))
-    if !isempty(L) && (L[1][2] isa StatefulLayer) && (L[end][2] isa Readout)
+    if !isempty(L) && (L[1][2] isa StatefulLayer) && (L[end][2] isa LinearReadout)
         sl = L[1][2]
         ro = L[end][2]
         if sl.cell isa ESNCell

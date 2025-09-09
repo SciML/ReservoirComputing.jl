@@ -3,4 +3,5 @@
 ```@docs
     ESN
     DeepESN
+    HybridESN
 ```

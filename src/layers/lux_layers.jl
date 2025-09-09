@@ -70,12 +70,12 @@ end
 
 wrap_functions_in_chain_call(x) = x
 
-_readout_include_collect(ro::Readout) = begin
+_readout_include_collect(ro::LinearReadout) = begin
     res = known(getproperty(ro, Val(:include_collect)))
     res === nothing ? false : res
 end
 
-function wrap_functions_in_chain_call(ro::Readout)
+function wrap_functions_in_chain_call(ro::LinearReadout)
     return _readout_include_collect(ro) ? (Collect(), ro) : ro
 end
 

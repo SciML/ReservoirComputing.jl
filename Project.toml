@@ -4,7 +4,6 @@ authors = ["Francesco Martinuzzi"]
 version = "0.11.4"
 
 [deps]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
@@ -29,7 +28,6 @@ RCMLJLinearModelsExt = "MLJLinearModels"
 RCSparseArraysExt = "SparseArrays"
 
 [compat]
-Adapt = "4.1.1"
 Aqua = "0.8"
 ArrayInterface = "7.19.0"
 CellularAutomata = "0.0.6"
@@ -64,4 +62,4 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test", "SafeTestsets", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "Statistics", "SparseArrays", "CellularAutomata", "JET"]
+test = ["Aqua", "Test", "SafeTestsets", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "Statistics", "SparseArrays", "JET"]

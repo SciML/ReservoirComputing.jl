@@ -787,7 +787,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = create_diag(rng, T, res_dim, T(max_value);
         sorted=sorted, reverse_sort=reverse_sort)
 
-    tmp = get_sparsity(R, res_dim)
+    tmp = get_sparsity(reservoir_matrix, res_dim)
     while tmp <= sparsity
         i = rand_range(rng, res_dim)
         j = rand_range(rng, res_dim)
@@ -813,7 +813,7 @@ end
 
 function create_diag(rng::AbstractRNG, ::Type{T}, res_dim::Integer, max_value::Number;
     sorted::Bool=true, reverse_sort::Bool=false) where {T<:Number}
-    diag_matrix = DeviceAgnostic.rand(rng, T, Int(n)) .* T(max_value)
+    diag_matrix = DeviceAgnostic.rand(rng, T, Int(res_dim)) .* T(max_value)
 
     if sorted
         sort!(diag_matrix)

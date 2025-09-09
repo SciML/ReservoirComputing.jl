@@ -2,10 +2,10 @@ abstract type AbstractReservoirCollectionLayer <: AbstractLuxLayer end
 abstract type AbstractReservoirRecurrentCell <: AbstractLuxLayer end
 abstract type AbstractReservoirTrainableLayer <: AbstractLuxLayer end
 
-### Readout
+### LinearReadout
 # adapted from lux layers/basic Dense
 @doc raw"""
-    Readout(in_dims => out_dims, [activation];
+    LinearReadout(in_dims => out_dims, [activation];
             use_bias=false, include_collect=true)
 
 Linear readout layer with optional bias and elementwise activation. Intended as
@@ -48,7 +48,7 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
   Otherwise training may operate on the post-readout signal,
   which is usually unintended.
 """
-@concrete struct Readout <: AbstractReservoirTrainableLayer
+@concrete struct LinearReadout <: AbstractReservoirTrainableLayer
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
@@ -58,32 +58,32 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
     include_collect <: StaticBool
 end
 
-function Readout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity; kwargs...)
-    return Readout(first(mapping), last(mapping), activation; kwargs...)
+function LinearReadout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity; kwargs...)
+    return LinearReadout(first(mapping), last(mapping), activation; kwargs...)
 end
 
-function Readout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
+function LinearReadout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
     init_weight=rand32, init_bias=rand32, include_collect::BoolType=True(),
     use_bias::BoolType=False())
-    return Readout(activation, in_dims, out_dims, init_weight, init_bias, static(use_bias), static(include_collect))
+    return LinearReadout(activation, in_dims, out_dims, init_weight, init_bias, static(use_bias), static(include_collect))
 end
 
-function initialparameters(rng::AbstractRNG, ro::Readout)
+function initialparameters(rng::AbstractRNG, ro::LinearReadout)
     weight = ro.init_weight(rng, ro.out_dims, ro.in_dims)
 
     if has_bias(ro)
-        return (; weight, bias=ro.init_bias(rng, Float32, ro.out_dims))
+        return (; weight, bias=ro.init_bias(rng, ro.out_dims))
     else
         return (; weight)
     end
 end
 
-parameterlength(ro::Readout) = ro.out_dims * ro.in_dims + has_bias(ro) * ro.out_dims
-statelength(ro::Readout) = 0
+parameterlength(ro::LinearReadout) = ro.out_dims * ro.in_dims + has_bias(ro) * ro.out_dims
+statelength(ro::LinearReadout) = 0
 
-outputsize(ro::Readout, _, ::AbstractRNG) = (ro.out_dims,)
+outputsize(ro::LinearReadout, _, ::AbstractRNG) = (ro.out_dims,)
 
-function (ro::Readout)(inp::AbstractArray, ps, st::NamedTuple)
+function (ro::LinearReadout)(inp::AbstractArray, ps, st::NamedTuple)
     out_tmp = ps.weight * inp
     if has_bias(ro)
         out_tmp += ps.bias
@@ -92,8 +92,8 @@ function (ro::Readout)(inp::AbstractArray, ps, st::NamedTuple)
     return output, st
 end
 
-function Base.show(io::IO, ro::Readout)
-    print(io, "Readout($(ro.in_dims) => $(ro.out_dims)")
+function Base.show(io::IO, ro::LinearReadout)
+    print(io, "LinearReadout($(ro.in_dims) => $(ro.out_dims)")
     (ro.activation == identity) || print(io, ", $(ro.activation)")
     has_bias(ro) || print(io, ", use_bias=false")
     ic = known(getproperty(ro, Val(:include_collect)))
@@ -136,7 +136,7 @@ vectors are concatenated with `vcat` in order of appearance.
 
 ## Notes
 
-- When used with a single `Collect()` before a [`Readout`](@ref), training uses exactly
+- When used with a single `Collect()` before a [`LinearReadout`](@ref), training uses exactly
   the tensor right before the readout (e.g., the reservoir state).
 - With **multiple** `Collect()` layers (e.g., after different submodules), the
   per-step features are `vcat`-ed in chain order to form one feature vector.
@@ -150,7 +150,7 @@ vectors are concatenated with `vcat` in order of appearance.
           StatefulLayer(ESNCell(3 => 300)),
           NLAT2(),
           Collect(), # <-- collect the 300-dim reservoir after NLAT2
-          Readout(300 => 3; include_collect=false) # <-- toggle off the default Collect()
+          LinearReadout(300 => 3; include_collect=false) # <-- toggle off the default Collect()
       )
 ```
 """
@@ -173,7 +173,7 @@ in a step, the feature defaults to the final vector exiting the chain for
 that time step.
 
 !!! note
-    If your [`Readout`](@ref) layer was created with `include_collect=true`
+    If your [`LinearReadout`](@ref) layer was created with `include_collect=true`
     (default behaviour), a collection point is placed immediately before the readout,
     so the collected features are the inputs to the readout.
 
@@ -209,7 +209,12 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
         end
         push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
     end
-    states = eltype(data).(reduce(hcat, collected))
+    @assert !isempty(collected)
+    firstcol = collected[1]
+    Tcol = eltype(firstcol)
+    empty_mat = zeros(Tcol, length(firstcol), 0)
+    states_raw = reduce(hcat, collected; init=empty_mat)
+    states = eltype(data).(states_raw)
     return states, newst
 end
 

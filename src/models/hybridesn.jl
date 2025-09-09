@@ -66,7 +66,7 @@ end
               kwargs...)
 
 Build a hybrid ESN as a `ReservoirChain`:
-`StatefulLayer(ESNCell) → modifiers → AttachStream(train KB) → Readout`.
+`StatefulLayer(ESNCell) → modifiers → AttachStream(train KB) → LinearReadout`.
 """
 function HybridESN(km::KnowledgeModel,
     in_dims::Integer, res_dims::Integer, out_dims::Integer,
@@ -82,7 +82,7 @@ function HybridESN(km::KnowledgeModel,
     stream_train = kb_stream_train(km, km.datasize)
     d_kb = size(stream_train, 1)
 
-    ro = Readout((res_dims + d_kb) => out_dims, readout_activation;
+    ro = LinearReadout((res_dims + d_kb) => out_dims, readout_activation;
         include_collect=static(include_collect))
 
     return ReservoirChain((StatefulLayer(cell), mods..., AttachStream(stream_train), ro)...)

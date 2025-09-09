@@ -3,9 +3,10 @@
 ## Base Layers
 ```@doc
     ReservoirChain
-    Readout
     Collect
     StatefulLayer
+    LinearReadout
+    SVMReadout
 ```
 
 ## Echo State Networks

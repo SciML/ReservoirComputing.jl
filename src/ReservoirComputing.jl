@@ -1,6 +1,5 @@
 module ReservoirComputing
 
-using Adapt: adapt
 using ArrayInterface: ArrayInterface
 using Compat: @compat
 using ConcreteStructs: @concrete
@@ -15,13 +14,13 @@ using Static: StaticBool, StaticInt, StaticSymbol,
 using Reexport: Reexport, @reexport
 using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
-@reexport using LuxCore: setup, apply
+@reexport using LuxCore: setup, apply, initialparameters, initialstates
 
 const BoolType = Union{StaticBool,Bool,Val{true},Val{false}}
 const InputType = Tuple{<:AbstractArray,Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer,StaticInteger}
 
-#@compat(public, (create_states)) #do I need to add intialstates/parameters in compat?
+#@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
 
 #layers
 include("layers/basic.jl")
@@ -42,7 +41,7 @@ include("models/hybridesn.jl")
 #extensions
 include("extensions/reca.jl")
 
-export ESNCell, StatefulLayer, Readout, ReservoirChain, Collect, collectstates, train!, predict
+export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates, train!, predict
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
