@@ -3,6 +3,7 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using Compat: @compat
 using ConcreteStructs: @concrete
+#using Functors
 using LinearAlgebra: eigvals, mul!, I, qr, Diagonal, diag
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate

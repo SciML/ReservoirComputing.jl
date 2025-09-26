@@ -103,6 +103,7 @@ We can either use the provided `ESN` or build one from scratch.
 We showcase the second option:
 
 ```julia
+using ReservoirComputing
 input_size = 3
 res_size = 300
 esn = ReservoirChain(

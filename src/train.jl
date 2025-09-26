@@ -44,13 +44,13 @@ end
            washout::Int=0, return_states::Bool=false)
 
 Trains the Reservoir Computer by creating the reservoir states from `train_data`,
-and then fiting the last [`Readout`](@ref) layer by (ridge)
+and then fiting the last [`LinearReadout`](@ref) layer by (ridge)
 linear regression onto `target_data`. The learned weights are written into `ps`, and.
 The returned state is the final state after running through the full sequence.
 
 ## Arguments
 
-- `rc`: A [`ReservoirChain`](@ref) whose last trainable layer is a `Readout`.
+- `rc`: A [`ReservoirChain`](@ref) whose last trainable layer is a `LinearReadout`.
 - `train_data`: input sequence (columns are time steps).
 - `target_data`: targets aligned with `train_data`.
 - `ps, st`: current parameters and state.
@@ -71,7 +71,7 @@ The returned state is the final state after running through the full sequence.
 ## Notes
 
 - Features are produced by `collectstates(rc, train_data, ps, st)`. If you rely on
-  the implicit collection of a [`Readout`](@ref), make sure that readout was created with
+  the implicit collection of a [`LinearReadout`](@ref), make sure that readout was created with
   `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the chain.
 """
 function train!(rc::ReservoirChain, train_data, target_data, ps, st,
@@ -122,7 +122,7 @@ end
     Kq = _quote_keys(K)
     tailKq = _quote_keys(tailK)
 
-    head_val = :((getfield(layers, 1) isa Readout)
+    head_val = :((getfield(layers, 1) isa LinearReadout)
                  ? _setweight_rt(getfield(ps, 1), W)
                  : getfield(ps, 1))
 

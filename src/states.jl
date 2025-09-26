@@ -54,7 +54,7 @@ point with the input that it receives.
         )
     ),
     NLAT2(),
-    Readout(300+3 => 3)
+    LinearReadout(300+3 => 3)
 )
  ```
 
