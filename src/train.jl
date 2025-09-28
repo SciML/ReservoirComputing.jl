@@ -19,7 +19,7 @@ struct StandardRidge
     reg::Number
 end
 
-function StandardRidge(::Type{T}, reg) where {T<:Number}
+function StandardRidge(::Type{T}, reg) where {T <: Number}
     return StandardRidge(T.(reg))
 end
 
@@ -27,14 +27,13 @@ function StandardRidge()
     return StandardRidge(0.0)
 end
 
-
 function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
-    @assert washout ≥ 0 "washout must be ≥ 0"
+    @assert washout≥0 "washout must be ≥ 0"
     len_states = size(states, 2)
-    @assert washout < len_states "washout=$washout is ≥ number of time steps=$len_states"
+    @assert washout<len_states "washout=$washout is ≥ number of time steps=$len_states"
     first_idx = washout + 1
-    states_wo = states[:, washout+1:end]
-    targets_wo = targets[:, washout+1:end]
+    states_wo = states[:, (washout + 1):end]
+    targets_wo = targets[:, (washout + 1):end]
     return states_wo, targets_wo
 end
 
@@ -75,10 +74,11 @@ The returned state is the final state after running through the full sequence.
   `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the chain.
 """
 function train!(rc::ReservoirChain, train_data, target_data, ps, st,
-    train_method=StandardRidge(0.0);
-    washout::Int=0, return_states::Bool=false)
+        train_method = StandardRidge(0.0);
+        washout::Int = 0, return_states::Bool = false)
     states, st_after = collectstates(rc, train_data, ps, st)
-    states_wo, traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) : (states, target_data)
+    states_wo, traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
+                              (states, target_data)
     output_matrix = train(train_method, states_wo, traindata_wo)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
@@ -134,9 +134,9 @@ end
 end
 
 function addreadout!(rc::ReservoirChain,
-    W::AbstractMatrix,
-    ps::NamedTuple,
-    st::NamedTuple)
+        W::AbstractMatrix,
+        ps::NamedTuple,
+        st::NamedTuple)
     @assert propertynames(rc.layers) == propertynames(ps)
     new_ps = _addreadout(rc.layers, ps, W)
     return new_ps, st
