@@ -3,7 +3,6 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using Compat: @compat
 using ConcreteStructs: @concrete
-#using Functors
 using LinearAlgebra: eigvals, mul!, I, qr, Diagonal, diag
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
@@ -20,6 +19,7 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 const BoolType = Union{StaticBool,Bool,Val{true},Val{false}}
 const InputType = Tuple{<:AbstractArray,Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer,StaticInteger}
+const RCFields = (:cells, :states_modifiers, :readout)
 
 abstract type AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fields} end
 
@@ -38,10 +38,10 @@ include("train.jl")
 include("inits/inits_components.jl")
 include("inits/esn_inits.jl")
 #full models
-include("models/esn_utils.jl")
+include("models/esn_generics.jl")
 include("models/esn.jl")
-include("models/deepesn.jl")
-include("models/hybridesn.jl")
+include("models/esn_deep.jl")
+include("models/esn_hybrid.jl")
 #extensions
 include("extensions/reca.jl")
 
@@ -60,7 +60,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delay_line_backwar
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export train
-export ESN, HybridESN, KnowledgeModel, DeepESN
+export ESN, HybridESN, DeepESN
 #reca
 export RECACell, RECA
 export RandomMapping, RandomMaps

@@ -106,20 +106,10 @@ We showcase the second option:
 using ReservoirComputing
 input_size = 3
 res_size = 300
-esn = ReservoirChain(
-    StatefulLayer(
-        ESNCell(
-            input_size => res_size;
-            init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300)
-        )
-    ),
-    NLAT2(),
-    Readout(res_size => input_size) # autoregressive so out_dims == in_dims
+esn = ESN(input_size, res_size, input_size;
+    init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
+    state_modifiers=NLAT2
 )
-# alternative:
-# esn = ESN(input_size, res_size, input_size;
-#     init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300)
-# )
 ```
 
 ### 3. Train the Echo State Network

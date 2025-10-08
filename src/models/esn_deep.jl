@@ -5,7 +5,7 @@
             activation=tanh;
             leak_coefficient=1.0,
             init_reservoir=rand_sparse,
-            init_input=weighted_init,
+            init_input=scaled_rand,
             init_bias=zeros32,
             init_state=randn32,
             use_bias=false,
@@ -96,7 +96,7 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
     return (cells=st_cells, states_modifiers=st_mods, readout=st_ro)
 end
 
-function (desn::DeepESN)(inp, ps, st)
+function _partial_apply(desn::DeepESN, inp, ps, st)
     inp_t = inp
     n_layers = length(desn.cells)
     new_cell_st = Vector{Any}(undef, n_layers)
@@ -108,13 +108,17 @@ function (desn::DeepESN)(inp, ps, st)
             ps.states_modifiers[idx], st.states_modifiers[idx])
         new_mods_st[idx] = st_mods_i
     end
-    inp_t, st_ro = apply(desn.readout, inp_t, ps.readout, st.readout)
 
     return inp_t, (;
         cells=tuple(new_cell_st...),
         states_modifiers=tuple(new_mods_st...),
-        readout=st_ro,
     )
+end
+
+function (desn::DeepESN)(inp, ps, st)
+    out, new_st = _partial_apply(desn, inp, ps, st)
+    inp_t, st_ro = apply(desn.readout, out, ps.readout, st.readout)
+    return inp_t, merge(new_st, (readout=st_ro,))
 end
 
 function resetcarry(rng::AbstractRNG, desn::DeepESN, st; init_carry=nothing)
@@ -189,12 +193,3 @@ end
 
 collectstates(m::DeepESN, data::AbstractVector, ps, st::NamedTuple) =
     collectstates(m, reshape(data, :, 1), ps, st)
-
-function addreadout!(::DeepESN, output_matrix::AbstractMatrix,
-    ps::NamedTuple, st::NamedTuple)
-    @assert hasproperty(ps, :readout)
-    new_readout = _set_readout_weight(ps.readout, output_matrix)
-    return (cells=ps.cells,
-        states_modifiers=ps.states_modifiers,
-        readout=new_readout), st
-end

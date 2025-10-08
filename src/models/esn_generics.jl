@@ -43,3 +43,25 @@ _set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight=w
 function resetcarry(rng::AbstractRNG, esn, ps, st; init_carry=nothing)
     return ps, resetcarry(rng, esn, st; init_carry=init_carry)
 end
+
+function collectstates(esn::AbstractEchoStateNetwork, data::AbstractMatrix, ps, st::NamedTuple)
+    newst = st
+    collected = Any[]
+    for inp in eachcol(data)
+        state_t, partial_st = _partial_apply(esn, inp, ps, newst)
+        push!(collected, copy(state_t))
+        newst = merge(partial_st, (readout=newst.readout,))
+    end
+    states = eltype(data).(reduce(hcat, collected))
+    @assert !isempty(collected)
+    states_raw = reduce(hcat, collected)
+    states = eltype(data).(states_raw)
+    return states, newst
+end
+
+function addreadout!(::AbstractEchoStateNetwork, output_matrix::AbstractMatrix,
+    ps::NamedTuple, st::NamedTuple)
+    @assert hasproperty(ps, :readout)
+    new_readout = _set_readout_weight(ps.readout, output_matrix)
+    return merge(ps, (readout=new_readout,)), st
+end

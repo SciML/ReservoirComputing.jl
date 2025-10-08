@@ -5,42 +5,6 @@ import ReservoirComputing: RECACell, RECA
 using CellularAutomata
 using Random: randperm
 
-function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
-    rm = reca.enc
-    T = eltype(inp)
-    ca0 = T.(encoding(rm, inp, T.(ca_prev)))
-    ca = CellularAutomaton(reca.automaton, ca0, rm.generations + 1)
-    evo = ca.evolution
-    feat2T = evo[2:end, :]
-    feats = reshape(permutedims(feat2T), rm.states_size)
-    ca_last = evo[end, :]
-    return (T.(feats), (T.(ca_last),)), st
-end
-
-function (reca::RECACell)(inp::AbstractVector, ps, st::NamedTuple)
-    ca = st.ca
-    return reca((inp, (ca,)), ps, st)
-end
-
-function RECA(in_dims::IntegerType,
-    out_dims::IntegerType,
-    automaton;
-    input_encoding::AbstractInputEncoding=RandomMapping(),
-    generations::Integer=8,
-    state_modifiers=(),
-    readout_activation=identity)
-
-    rm = create_encoding(input_encoding, in_dims, generations)
-    cell = RECACell(automaton, rm)
-
-    mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-           Tuple(state_modifiers) : (state_modifiers,)
-
-    ro = Readout(rm.states_size => out_dims, readout_activation)
-
-    return ReservoirChain((StatefulLayer(cell), mods..., ro)...)
-end
-
 function RandomMapping(; permutations=8, expansion_size=40)
     RandomMapping(permutations, expansion_size)
 end
@@ -54,23 +18,6 @@ function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::I
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations
     return RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size, ca_size)
-end
-
-
-function reca_create_states(rm::RandomMaps, automata, input_data)
-    train_time = size(input_data, 2)
-    states = zeros(rm.states_size, train_time)
-    init_ca = zeros(rm.expansion_size * rm.permutations)
-
-    for i in 1:train_time
-        init_ca = encoding(rm, input_data[:, i], init_ca)
-        ca = CellularAutomaton(automata, init_ca, rm.generations + 1)
-        ca_states = ca.evolution[2:end, :]
-        states[:, i] = reshape(transpose(ca_states), rm.states_size)
-        init_ca = ca.evolution[end, :]
-    end
-
-    return states
 end
 
 function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
@@ -117,6 +64,42 @@ end
 function mapping(input_size, mapped_vector_size)
     #sample(1:mapped_vector_size, input_size; replace=false)
     return randperm(mapped_vector_size)[1:input_size]
+end
+
+function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
+    rm = reca.enc
+    T = eltype(inp)
+    ca0 = T.(encoding(rm, inp, T.(ca_prev)))
+    ca = CellularAutomaton(reca.automaton, ca0, rm.generations + 1)
+    evo = ca.evolution
+    feat2T = evo[2:end, :]
+    feats = reshape(permutedims(feat2T), rm.states_size)
+    ca_last = evo[end, :]
+    return (T.(feats), (T.(ca_last),)), st
+end
+
+function (reca::RECACell)(inp::AbstractVector, ps, st::NamedTuple)
+    ca = st.ca
+    return reca((inp, (ca,)), ps, st)
+end
+
+function RECA(in_dims::IntegerType,
+    out_dims::IntegerType,
+    automaton;
+    input_encoding::AbstractInputEncoding=RandomMapping(),
+    generations::Integer=8,
+    state_modifiers=(),
+    readout_activation=identity)
+
+    rm = create_encoding(input_encoding, in_dims, generations)
+    cell = RECACell(automaton, rm)
+
+    mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+           Tuple(state_modifiers) : (state_modifiers,)
+
+    ro = Readout(rm.states_size => out_dims, readout_activation)
+
+    return ReservoirChain((StatefulLayer(cell), mods..., ro)...)
 end
 
 end #module

@@ -1,3 +1,11 @@
+"""
+    ESN(in_dims, res_dims, out_dims, activation=tanh;
+        leak_coefficient=1.0, init_reservoir=rand_sparse, init_input=scaled_rand,
+        init_bias=zeros32, init_state=randn32, use_bias=false,
+        state_modifiers=(), readout_activation=identity)
+
+Build a ESN.
+"""
 @concrete struct ESN <: AbstractEchoStateNetwork{(:cell, :states_modifiers, :readout)}
     cell
     states_modifiers
@@ -31,12 +39,17 @@ function initialstates(rng::AbstractRNG, esn::ESN)
     return (cell=st_cell, states_modifiers=st_mods, readout=st_ro)
 end
 
-function (esn::ESN)(inp, ps, st)
+function _partial_apply(esn::ESN, inp, ps, st)
     out, st_cell = apply(esn.cell, inp, ps.cell, st.cell)
     out, st_mods = _apply_seq(
         esn.states_modifiers, out, ps.states_modifiers, st.states_modifiers)
+    return out, (cell=st_cell, states_modifiers=st_mods)
+end
+
+function (esn::ESN)(inp, ps, st)
+    out, new_st = _partial_apply(esn, inp, ps, st)
     out, st_ro = apply(esn.readout, out, ps.readout, st.readout)
-    return out, (cell=st_cell, states_modifiers=st_mods, readout=st_ro)
+    return out, merge(new_st, (readout=st_ro,))
 end
 
 function resetcarry(rng::AbstractRNG, esn::ESN, st; init_carry=nothing)
@@ -58,30 +71,4 @@ function resetcarry(rng::AbstractRNG, esn::ESN, st; init_carry=nothing)
 
     new_cell = merge(st.cell, (; carry=new_state))
     return (cell=new_cell, states_modifiers=st.states_modifiers, readout=st.readout)
-end
-
-function collectstates(esn::ESN, data::AbstractMatrix, ps, st::NamedTuple)
-    newst = st
-    collected = Any[]
-    for inp in eachcol(data)
-        cell_y, st_cell = apply(esn.cell, inp, ps.cell, newst.cell)
-        state_t, st_mods = _apply_seq(
-            esn.states_modifiers, cell_y, ps.states_modifiers, newst.states_modifiers)
-        push!(collected, copy(state_t))
-        newst = (cell=st_cell, states_modifiers=st_mods, readout=newst.readout)
-    end
-    states = eltype(data).(reduce(hcat, collected))
-    @assert !isempty(collected)
-    states_raw = reduce(hcat, collected)
-    states = eltype(data).(states_raw)
-    return states, newst
-end
-
-function addreadout!(::ESN, output_matrix::AbstractMatrix,
-    ps::NamedTuple, st::NamedTuple)
-    @assert hasproperty(ps, :readout)
-    new_readout = _set_readout_weight(ps.readout, output_matrix)
-    return (cell=ps.cell,
-        states_modifiers=ps.states_modifiers,
-        readout=new_readout), st
 end
