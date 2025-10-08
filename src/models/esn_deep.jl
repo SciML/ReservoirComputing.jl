@@ -121,7 +121,7 @@ function (desn::DeepESN)(inp, ps, st)
     return inp_t, merge(new_st, (readout=st_ro,))
 end
 
-function resetcarry(rng::AbstractRNG, desn::DeepESN, st; init_carry=nothing)
+function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry=nothing)
     n_layers = length(desn.cells)
 
     @inline function _layer_outdim(idx)

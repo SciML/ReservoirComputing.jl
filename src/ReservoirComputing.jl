@@ -47,7 +47,7 @@ include("extensions/reca.jl")
 
 export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     train!,
-    predict, resetcarry
+    predict, resetcarry!
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge

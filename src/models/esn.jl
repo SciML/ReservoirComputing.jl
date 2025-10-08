@@ -51,24 +51,3 @@ function (esn::ESN)(inp, ps, st)
     out, st_ro = apply(esn.readout, out, ps.readout, st.readout)
     return out, merge(new_st, (readout=st_ro,))
 end
-
-function resetcarry(rng::AbstractRNG, esn::ESN, st; init_carry=nothing)
-    carry = get(st.cell, :carry, nothing)
-    if carry === nothing
-        outd = esn.cell.cell.out_dims
-        sz = outd
-    else
-        state = first(carry)
-        sz = size(state, 1)
-    end
-
-    if init_carry === nothing
-        new_state = nothing
-    else
-        new_state = init_carry(rng, sz, 1)
-        new_state = (new_state,)
-    end
-
-    new_cell = merge(st.cell, (; carry=new_state))
-    return (cell=new_cell, states_modifiers=st.states_modifiers, readout=st.readout)
-end

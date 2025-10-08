@@ -40,10 +40,6 @@ _coerce_layer_mods(x) =
 _set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight=wro))
 
 
-function resetcarry(rng::AbstractRNG, esn, ps, st; init_carry=nothing)
-    return ps, resetcarry(rng, esn, st; init_carry=init_carry)
-end
-
 function collectstates(esn::AbstractEchoStateNetwork, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
     collected = Any[]
@@ -64,4 +60,29 @@ function addreadout!(::AbstractEchoStateNetwork, output_matrix::AbstractMatrix,
     @assert hasproperty(ps, :readout)
     new_readout = _set_readout_weight(ps.readout, output_matrix)
     return merge(ps, (readout=new_readout,)), st
+end
+
+function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork, st; init_carry=nothing)
+    carry = get(st.cell, :carry, nothing)
+    if carry === nothing
+        outd = esn.cell.cell.out_dims
+        sz = outd
+    else
+        state = first(carry)
+        sz = size(state, 1)
+    end
+
+    if init_carry === nothing
+        new_state = nothing
+    else
+        new_state = init_carry(rng, sz, 1)
+        new_state = (new_state,)
+    end
+    new_cell = merge(st.cell, (; carry=new_state))
+    return merge(st, (cell=new_cell,))
+end
+
+function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork,
+    ps, st; init_carry=nothing)
+    return ps, resetcarry!(rng, esn, st; init_carry=init_carry)
 end
