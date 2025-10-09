@@ -19,6 +19,5 @@ pages = [
         "States"=>"api/states.md",
         "Train"=>"api/train.md",
         "Predict"=>"api/predict.md",
-        "Initializers"=>"api/inits.md",
-        "ReCA"=>"api/reca.md"]    #"References" => "references.md"
+        "Initializers"=>"api/inits.md"]    #"References" => "references.md"
 ]

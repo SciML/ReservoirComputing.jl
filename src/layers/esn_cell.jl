@@ -1,7 +1,7 @@
 @doc raw"""
     ESNCell(in_dims => out_dims, [activation];
         use_bias=false, init_bias=rand32,
-        init_reservoir=rand_sparse, init_input=weighted_init,
+        init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=randn32, leak_coefficient=1.0)
 
 Echo State Network (ESN) recurrent cell with optional leaky integration.
@@ -29,6 +29,7 @@ Echo State Network (ESN) recurrent cell with optional leaky integration.
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix `W_in`.
+    Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
     state is not provided. Default is [`randn32`](@extref).
   - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.

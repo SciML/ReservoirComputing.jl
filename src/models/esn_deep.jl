@@ -1,4 +1,4 @@
-"""
+@doc raw"""
     DeepESN(in_dims::Int,
             res_dims::AbstractVector{<:Int},
             out_dims,
@@ -12,8 +12,113 @@
             state_modifiers=(),
             readout_activation=identity)
 
-Build a deep ESN: a stack of `StatefulLayer(ESNCell)` with optional per-layer
-state modifiers, followed by a final linear readout.
+Deep Echo State Network (DeepESN): a stack of stateful [`ESNCell`](@ref) layers
+(optionally with per-layer state modifiers) followed by a linear readout.
+
+`DeepESN` composes, for `L = length(res_dims)` layers:
+  1) a sequence of stateful [`ESNCell`](@ref) with widths `res_dims[ℓ]`,
+  2) zero or more per-layer `state_modifiers[ℓ]` applied to the layer's state, and
+  3) a final [`LinearReadout`](@ref) from the last layer's features to the output.
+
+## Equations
+
+For input `\mathbf{x}(t) ∈ \mathbb{R}^{in\_dims}`, per-layer reservoir states
+`\mathbf{h}^{(\ell)}(t) ∈ \mathbb{R}^{res\_dims[\ell]}` (`\ell = 1..L`), and output
+`\mathbf{y}(t) ∈ \mathbb{R}^{out\_dims}`:
+
+```math
+\begin{aligned}
+    \tilde{\mathbf{h}}^{(1)}(t) &= \phi_1\!\left(
+        \mathbf{W}^{(1)}_{in}\,\mathbf{x}(t) + \mathbf{W}^{(1)}_{res}\,\mathbf{h}^{(1)}(t-1)
+        + \mathbf{b}^{(1)}\right) \\
+    \mathbf{h}^{(1)}(t) &= (1-\alpha_1)\,\mathbf{h}^{(1)}(t-1) + \alpha_1\,\tilde{\mathbf{h}}^{(1)}(t) \\
+    \mathbf{u}^{(1)}(t) &= \mathrm{Mods}_1\!\big(\mathbf{h}^{(1)}(t)\big) \\
+    \tilde{\mathbf{h}}^{(\ell)}(t) &= \phi_\ell\!\left(
+        \mathbf{W}^{(\ell)}_{in}\,\mathbf{u}^{(\ell-1)}(t) +
+        \mathbf{W}^{(\ell)}_{res}\,\mathbf{h}^{(\ell)}(t-1) + \mathbf{b}^{(\ell)}\right),
+        \quad \ell=2..L \\
+    \mathbf{h}^{(\ell)}(t) &= (1-\alpha_\ell)\,\mathbf{h}^{(\ell)}(t-1) + \alpha_\ell\,\tilde{\mathbf{h}}^{(\ell)}(t),
+        \quad \ell=2..L \\
+    \mathbf{u}^{(\ell)}(t) &= \mathrm{Mods}_\ell\!\big(\mathbf{h}^{(\ell)}(t)\big), \quad \ell=2..L \\
+    \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{out}\,\mathbf{u}^{(L)}(t) + \mathbf{b}_{out}\right)
+\end{aligned}
+
+## Where
+
+- `\mathbf{x}(t) ∈ ℝ^{in_dims × batch}` — input at time `t`.
+- `\mathbf{h}^{(\ell)}(t) ∈ ℝ^{res_dims[ℓ] × batch}` — hidden state of layer `ℓ`.
+- `\tilde{\mathbf{h}}^{(\ell)}(t)` — candidate state before leaky mixing.
+- `\mathbf{u}^{(\ell)}(t)` — features after applying the `ℓ`-th `state_modifiers` (identity if none).
+- `\mathbf{y}(t) ∈ ℝ^{out_dims × batch}` — network output.
+
+- `\mathbf{W}^{(\ell)}_{in} ∈ ℝ^{res_dims[ℓ] × in\_size[ℓ]}` — input matrix at layer `ℓ`
+  (`in_size[1]=in_dims`, `in_size[ℓ]=res_dims[ℓ-1]` for `ℓ>1`).
+- `\mathbf{W}^{(\ell)}_{res} ∈ ℝ^{res_dims[ℓ] × res_dims[ℓ]}` — reservoir matrix at layer `ℓ`.
+- `\mathbf{b}^{(\ell)} ∈ ℝ^{res_dims[ℓ] × 1}` — reservoir bias (broadcast over batch), present iff `use_bias[ℓ]=true`.
+- `\mathbf{W}_{out} ∈ ℝ^{out_dims × res_dims[L]}` — readout matrix.
+- `\mathbf{b}_{out} ∈ ℝ^{out_dims × 1}` — readout bias (if used by the readout).
+
+- `\phi_\ell` — activation of layer `ℓ` (`activation[ℓ]`, default `tanh`).
+- `\alpha_\ell ∈ (0,1]` — leak coefficient of layer `ℓ` (`leak_coefficient[ℓ]`).
+- `\mathrm{Mods}_\ell(·)` — composition of modifiers for layer `ℓ` (may be empty).
+- `\rho` — readout activation (`readout_activation`, default `identity`).
+
+## Arguments
+
+  - `in_dims`: Input dimension.
+  - `res_dims`: Vector of reservoir (hidden) dimensions per layer; its length sets the depth `L`.
+  - `out_dims`: Output dimension.
+  - `activation`: Reservoir activation(s). Either a single function (broadcast to all layers)
+    or a vector/tuple of length `L`. Default: `tanh`.
+
+## Keyword arguments
+
+Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
+
+  - `leak_coefficient`: Leak rate(s) `α_ℓ ∈ (0,1]`. Scalar or length-`L` collection. Default: `1.0`.
+  - `init_reservoir`: Initializer(s) for `W_res^{(ℓ)}`. Scalar or length-`L`. Default: [`rand_sparse`](@ref).
+  - `init_input`: Initializer(s) for `W_in^{(ℓ)}`. Scalar or length-`L`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: Initializer(s) for reservoir bias (used iff `use_bias[ℓ]=true`).
+    Scalar or length-`L`. Default: [`zeros32`](@extref).
+  - `init_state`: Initializer(s) used when an external state is not provided.
+    Scalar or length-`L`. Default: [`randn32`](@extref).
+  - `use_bias`: Whether each reservoir uses a bias term. Boolean scalar or length-`L`. Default: `false`.
+
+Composition:
+
+  - `state_modifiers`: Per-layer modifier(s) applied to each layer’s state before it
+    feeds into the next layer (and the readout for the last layer). Accepts `nothing`,
+    a single layer, a vector/tuple of length `L`, or per-layer collections. Defaults to no modifiers.
+  - `readout_activation`: Activation for the final linear readout. Default: `identity`.
+
+## Inputs
+
+  - `x :: AbstractArray (in_dims, batch)`
+
+## Returns
+
+  - Output `y :: (out_dims, batch)`.
+  - Updated layer state (NamedTuple) containing states for all cells, modifiers, and readout.
+
+## Parameters
+
+  - `cells :: NTuple{L,NamedTuple}` — parameters for each [`ESNCell`](@ref), including:
+      - `input_matrix :: (res_dims[ℓ] × in_size[ℓ])` — `W_in^{(ℓ)}`
+      - `reservoir_matrix :: (res_dims[ℓ] × res_dims[ℓ])` — `W_res^{(ℓ)}`
+      - `bias :: (res_dims[ℓ],)` — present only if `use_bias[ℓ]=true`
+  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
+  - `readout` — parameters of [`LinearReadout`](@ref), typically:
+      - `weight :: (out_dims × res_dims[L])` — `W_out`
+      - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
+
+> Exact field names for modifiers/readout follow their respective layer definitions.
+
+## States
+
+  - `cells :: NTuple{L,NamedTuple}` — states for each [`ESNCell`](@ref).
+  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
+  - `readout` — states for [`LinearReadout`](@ref).
+
 """
 @concrete struct DeepESN <: AbstractEchoStateNetwork{(:cells, :states_modifiers, :readout)}
     cells

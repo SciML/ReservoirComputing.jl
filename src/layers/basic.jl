@@ -128,11 +128,11 @@ vectors are concatenated with `vcat` in order of appearance.
 
 ## Parameters
 
-- None (`Collect` has no trainable parameters).
+- None.
 
 ## States
 
-- None (state is passed through unchanged).
+- None.
 
 ## Notes
 
