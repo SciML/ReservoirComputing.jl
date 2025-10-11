@@ -9,22 +9,26 @@ sequence.
 ## 1) Auto-regressive rollout
 
 **Behavior**
+
 - Rolls the model forward for `steps` time steps.
 - At each step, the model’s output becomes the next input.
 
 ### Arguments
+
 - `rc`: The reservoir chain / model.
-- `steps::Integer`: Number of time steps to generate.
-- `ps`: Model parameters (from `setup` or after `train!`).
-- `st`: Model state (carry, RNG replicas, etc.), threaded across time.
+- `steps`: Number of time steps to generate.
+- `ps`: Model parameters.
+- `st`: Model states.
 
 ### Keyword Arguments
+
 - `initialdata=nothing`: Column vector used as the first input.
+  Has to be provided.
 
 ### Returns
 
-- `Y`: Generated outputs of shape `(out_dims, steps)`.
-- `st_out`: Final model state after `steps` steps.
+- `output`: Generated outputs of shape `(out_dims, steps)`.
+- `st`: Final model state after `steps` steps.
 
 
 ## 2) Teacher-forced / point-by-point
@@ -37,12 +41,12 @@ sequence.
 - `rc`: The reservoir chain / model.
 - `data`: Input sequence of shape `(in_dims, T)` (columns are time).
 - `ps`: Model parameters.
-- `st`: Initial model state before processing `data`.
+- `st`: Model states.
 
 ### Returns
 
-- `Y::AbstractMatrix`: Outputs for each input column, shape `(out_dims, T)`.
-- `st_out`: Final model state after consuming all `T` columns.
+- `output`: Outputs for each input column, shape `(out_dims, T)`.
+- `st`: Updated minal model states.
 """
 function predict(rc::AbstractLuxLayer,
     steps::Integer, ps, st; initialdata::AbstractVector)

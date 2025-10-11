@@ -62,6 +62,41 @@ function addreadout!(::AbstractEchoStateNetwork, output_matrix::AbstractMatrix,
     return merge(ps, (readout=new_readout,)), st
 end
 
+@doc raw"""
+    resetcarry!(rng, esn::AbstractEchoStateNetwork, st; init_carry=nothing)
+    resetcarry!(rng, esn::AbstractEchoStateNetwork, ps, st; init_carry=nothing)
+
+Reset (or set) the hidden-state carry of a model in the echo state network family.
+
+If an existing carry is present in `st.cell.carry`, its leading dimension is used to
+infer the state size. Otherwise the reservoir output size is taken from
+`esn.cell.cell.out_dims`. When `init_carry=nothing`, the carry is cleared; the initialzer
+from the struct construction will then be used. When a
+function is provided, it is called to create a new initial hidden state.
+
+## Arguments
+
+- `rng`: Random number generator (used if a new carry is sampled/created).
+- `esn`: An echo state network model.
+- `st`: Current model states.
+- `ps`: Optional model parameters. Returned unchanged.
+
+## Keyword arguments
+
+- `init_carry`: Controls the initialization of the new carry.
+  - `nothing` (default): remove/clear the carry (forces the cell to reinitialize
+    from its own `init_state` on next use).
+  - `f`: a function called as `f(rng, sz, batch)`, following standard from
+    [WeightInitializers.jl](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+
+## Returns
+
+- `resetcarry!(rng, esn, st; ...) -> st′`:
+  Updated states with `st′.cell.carry` set to `nothing` or `(h0,)`.
+- `resetcarry!(rng, esn, ps, st; ...) -> (ps, st′)`:
+  Same as above, but also returns the unchanged `ps` for convenience.
+
+"""
 function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork, st; init_carry=nothing)
     carry = get(st.cell, :carry, nothing)
     if carry === nothing

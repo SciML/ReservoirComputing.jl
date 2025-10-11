@@ -2,15 +2,17 @@
 
     StandardRidge([Type], [reg])
 
-Returns a training method for `train` based on ridge regression.
-The equations for ridge regression are as follows:
+Ridge regression method.
+
+## Equations
 
 ```math
 \mathbf{w} = (\mathbf{X}^\top \mathbf{X} +
 \lambda \mathbf{I})^{-1} \mathbf{X}^\top \mathbf{y}
 ```
 
-# Arguments
+## Arguments
+
  - `Type`: type of the regularization argument. Default is inferred internally,
    there's usually no need to tweak this
  - `reg`: regularization coefficient. Default is set to 0.0 (linear regression).
@@ -40,52 +42,90 @@ end
 _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
 @doc raw"""
-    train!(rc::ReservoirChain, train_data, target_data, ps, st,
-           sr::StandardRidge=StandardRidge(0.0);
-           washout::Int=0, return_states::Bool=false)
+    train!(rc, train_data, target_data, ps, st,
+           train_method=StandardRidge(0.0);
+           washout=0, return_states=false)
 
-Trains the Reservoir Computer by creating the reservoir states from `train_data`,
-and then fiting the last [`LinearReadout`](@ref) layer by (ridge)
-linear regression onto `target_data`. The learned weights are written into `ps`, and.
-The returned state is the final state after running through the full sequence.
+Trains a given reservoir computing by creating the reservoir states from `train_data`,
+and then fiting the readout layer using `target_data` as target.
+The learned weights/layer are written into `ps`.
 
 ## Arguments
 
-- `rc`: A [`ReservoirChain`](@ref) whose last trainable layer is a `LinearReadout`.
-- `train_data`: input sequence (columns are time steps).
+- `rc`: A reservoir computing model, either provided by ReservoirComputing.jl
+  or built with [`ReservoirChain`](@ref). Must contain a trainable layer
+  (for example [`LinearReadout`](@ref)), and a collection point [`Collect`](@ref).
+- `train_data`: input sequence where columns are time steps.
 - `target_data`: targets aligned with `train_data`.
-- `ps, st`: current parameters and state.
-- `sr`: ridge spec, e.g. `StandardRidge(1e-4)`; `0.0` gives ordinary least squares.
+- `ps`: model parameters.
+- `st`: model states.
+- `train_method`: training algorithm. Default is [`StandardRidge`](@ref).
 
 ## Keyword arguments
 
 - `washout`: number of initial time steps to discard (applied equally to features
-  and targets). Must satisfy `0 ≤ washout < T`. Default `0`.
+  and targets). Default `0`.
 - `return_states`: if `true`, also returns the feature matrix used
   for the fit.
+- `kwargs...`: additional keyword arguments for the training algorithm, if needed.
+  Defaults vary according to the different training method.
 
 ## Returns
 
-- `(ps2, st_after)` — updated parameters and the final model state.
-- If `return_states=true`, also returns `states_used`.
+- `(ps, st)`: updated model parameters and states.
+- `(ps, st), states`: If `return_states=true`.
 
 ## Notes
 
 - Features are produced by `collectstates(rc, train_data, ps, st)`. If you rely on
   the implicit collection of a [`LinearReadout`](@ref), make sure that readout was created with
-  `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the chain.
+  `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the
+  [`ReservoirChain`](@ref).
 """
 function train!(rc, train_data, target_data, ps, st,
     train_method=StandardRidge(0.0);
-    washout::Int=0, return_states::Bool=false)
+    washout::Int=0, return_states::Bool=false, kwargs...)
     states, st_after = collectstates(rc, train_data, ps, st)
     states_wo, traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
                               (states, target_data)
-    output_matrix = train(train_method, states_wo, traindata_wo)
+    output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
+@doc raw"""
+    train(train_method, states, target_data; kwargs...)
+
+Lower level training hook to fit a readout from precomputed
+reservoir features and given targets.
+
+Dispatching on this method with different training methods
+allows one to hook directly into [`train!`](@ref) without
+additional changes.
+
+## Arguments
+
+- `train_method`: An object describing the training algorithm and its hyperparameters
+  (e.g. regularization strength, solver choice, constraints).
+- `states`: Feature matrix with reservoir states (ie. obtained with [`collectstates`](@ref)).
+  Shape `(n_features, T)`, where `T` is the number of samples (e.g. time steps).
+- `target_data`: Target matrix aligned with `states`. Shape `(n_outputs, T)`.
+
+## Returns
+
+- `output_weights`: Trained readout. Should be a forward method to be hooked into a
+  layer. For instance, in case of linear regression `output_weights` is a mtrix
+  consumable by [`LinearReadout`](@ref).
+
+## Notes
+
+- Any sequence pre-processing (e.g. washout) should be handled by the caller before
+  invoking `train`. See [`train!`](@ref) for an end-to-end workflow.
+- For very long `T`, consider chunked or iterative solvers to reduce memory usage.
+- If your approach returns additional artifacts (e.g. diagnostics), prefer storing
+  them inside `train_method` or exposing a separate API; keep `train`’s return
+  value as the forward method only.
+"""
 function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractArray)
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
