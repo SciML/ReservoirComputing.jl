@@ -1,10 +1,14 @@
 # Lorenz System Forecasting
 
-This example expands on the readme Lorenz system forecasting to better showcase how to use methods and functions provided in the library for Echo State Networks. Here the prediction method used is `Generative`, for a more detailed explanation of the differences between `Generative` and `Predictive` please refer to the other examples given in the documentation.
+This example expands on the readme Lorenz system forecasting to showcase
+how to use models and methods provided in the library for Echo State Networks.
 
 ## Generating the data
 
-Starting off the workflow, the first step is to obtain the data. Leveraging `OrdinaryDiffEq` it is possible to derive the Lorenz system data in the following way:
+Starting off the workflow, the first step is to obtain the data.
+We use `OrdinaryDiffEq` to derive the Lorenz system data.
+The data is passed to the model as a matrix, where the columns
+represent the time steps.
 
 ```@example lorenz
 using OrdinaryDiffEq
@@ -22,7 +26,10 @@ data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
 ```
 
-After obtaining the data, it is necessary to determine the kind of prediction for the model. Since this example will use the `Generative` prediction type, this means that the target data will be the next step of the input data. In addition, it is important to notice that the Lorenz system just obtained presents a transient period that is not representative of the general behavior of the system. This can easily be discarded by setting a `shift` parameter.
+Now we split the data in training and testing. To do an autoregressive
+forecast we want the model to be trained on the next step, so we are
+going to shift the target data by one. Additionally, we discard the
+transient period.
 
 ```@example lorenz
 #determine shift length, training length and prediction length
@@ -36,11 +43,15 @@ target_data = data[:, (shift + 1):(shift + train_len)]
 test_data = data[:, (shift + train_len + 1):(shift + train_len + predict_len)]
 ```
 
-It is *important* to notice that the data needs to be formatted in a matrix with the features as rows and time steps as columns as in this example. This is needed even if the time series consists of single values.
+It is *important* to notice that the data needs to be formatted in a
+matrix with the features as rows and time steps as columns as in this example
+This is needed even if the time series consists of single values.
 
 ## Building the Echo State Network
 
-Once the data is ready, it is possible to define the parameters for the ESN and the `ESN` struct itself. In this example, the values from [Pathak2017](@cite) are loosely followed as general guidelines.
+Once the data is ready, it is possible to define the parameters for
+the ESN and the `ESN` struct itself. In this example, the values
+from [Pathak2017](@cite) are loosely followed as general guidelines.
 
 ```@example lorenz
 using ReservoirComputing
@@ -53,57 +64,81 @@ res_sparsity = 6 / 300
 input_scaling = 0.1
 
 #build ESN struct
-esn = ESN(input_data, in_size, res_size;
-    reservoir=rand_sparse(; radius=res_radius, sparsity=res_sparsity),
-    input_layer=weighted_init(; scaling=input_scaling),
-    reservoir_driver=RNN(),
-    nla_type=NLADefault(),
-    states_type=StandardStates())
+esn = ESN(in_size, res_size, in_size; #autoregressive so in_size = out_size
+    init_reservoir = rand_sparse(; radius = res_radius, sparsity = res_sparsity),
+    init_input = weighted_init(; scaling = input_scaling)
+    state_modifiers = NLAT2
+)
 ```
 
-Most of the parameters chosen here mirror the default ones, so a direct call is not necessary. The readme example is identical to this one, except for the explicit call. Going line by line to see what is happening, starting from `res_size`: this value determines the dimensions of the reservoir matrix. In this case, a size of 300 has been chosen, so the reservoir matrix will be 300 x 300. This is not always the case, since some input layer constructions can modify the dimensions of the reservoir, but in that case, everything is taken care of internally.
+In this case, a size of 300 has been chosen, so the reservoir matrix will be 300 x 300.
+However, this is not always the case, since some input layer
+constructions can modify the dimensions of the reservoir. Please make sure to read the
+API documentation of the initializer you intend to use if you think that
+is cause of errors.
 
-The `res_radius` determines the scaling of the spectral radius of the reservoir matrix; a proper scaling is necessary to assure the Echo State Property. The default value in the `rand_sparse` method is 1.0 in accordance with the most commonly followed guidelines found in the literature (see [Lukoeviius2012](@cite) and references therein). The `sparsity` of the reservoir matrix in this case is obtained by choosing a degree of connections and dividing that by the reservoir size. Of course, it is also possible to simply choose any value between 0.0 and 1.0 to test behaviors for different sparsity values.
+The `res_radius` determines the scaling of the spectral radius of the reservoir matrix;
+a proper scaling is necessary to assure the Echo State Property.
+The default value in the [`rand_sparse`](@ref) method is 1.0 in accordance with the most
+commonly followed guidelines found in the literature (see [Lukoeviius2012](@cite)
+and references therein).
 
-The value of `input_scaling` determines the upper and lower bounds of the uniform distribution of the weights in the `weighted_init`. The value of 0.1 represents the default. The default input layer is the `scaled_rand`, a dense matrix. The details of the weighted version can be found in [Lu2017](@cite), for this example, this version returns the best results.
-
-The reservoir driver represents the dynamics of the reservoir. In the standard ESN definition, these dynamics are obtained through a Recurrent Neural Network (RNN), and this is reflected by calling the `RNN` driver for the `ESN` struct. This option is set as the default, and unless there is the need to change parameters, it is not needed. The full equation is the following:
-
-```math
-\textbf{x}(t+1) = (1-\alpha)\textbf{x}(t) + \alpha \cdot \text{tanh}(\textbf{W}\textbf{x}(t)+\textbf{W}_{\text{in}}\textbf{u}(t))
-```
-
-where ``α`` represents the leaky coefficient, and tanh can be any activation function. Also, ``\textbf{x}`` represents the state vector, ``\textbf{u}`` the input data, and ``\textbf{W}, \textbf{W}_{\text{in}}`` are the reservoir matrix and input matrix, respectively. The default call to the RNN in the library is the following `RNN(;activation_function=tanh, leaky_coefficient=1.0)`, where the meaning of the parameters is clear from the equation above. Instead of the hyperbolic tangent, any activation function can be used, either leveraging external libraries such as `NNlib` or creating a custom one.
-
-The final calls are modifications to the states in training or prediction. The default calls, depicted in the example, do not make any modifications to the states. This is the safest bet if one is not sure how these work. The `nla_type` applies a non-linear algorithm to the states, while the `states_type` can expand them by concatenating them with the input data, or padding them by concatenating a constant value to all the states. More in depth descriptions of these parameters are given in other examples in the documentation.
+The value of `input_scaling` determines the upper and lower bounds of the
+uniform distribution of the weights in the [`weighted_init`](@ref).
+The value of 0.1 represents the default. The default input layer is
+the [`scaled_rand`](@ref), a dense matrix. The details of the weighted version
+can be found in [Lu2017](@cite), for this example, this version returns
+the best results.
 
 ## Training and Prediction
 
-Now that the ESN has been created and all the parameters have been explained, it is time to proceed with the training. The full call of the readme example follows this general idea:
+Training for ESNs usually means solving a linear regression. The libbrary supports
+solvers from ['MLILinearModels.jl'](https://github.com/JuliaAI/MLJLinearModels.jl),
+in addition to a custom implementation of ridge regression. In this example we will
+use the latter.
+
+Since `ReservoirComputing.jl` builds on
+[`LuxCore.jl`](https://lux.csail.mit.edu/stable/api/Building_Blocks/LuxCore)
+we first need to setup the state and the parameters
+
+```@example lorenz
+using Random
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+ps, st = setup(rng, esn)
+```
+
+Now we can proceed with training the ESN model. Usually an initial transient
+is discarded, to account for the dynamics of the ESN to settle. This can
+be done by passing the `washout` keyword argument to `train`.
 
 ```@example lorenz
 #define training method
 training_method = StandardRidge(0.0)
 
-#obtain output layer
-output_layer = train(esn, target_data, training_method)
+ps, st = train!(esn, input_data, target_data, ps, st, training_method)
 ```
 
-The training returns an `OutputLayer` struct containing the trained output matrix and other  needed for the prediction. The necessary elements in the `train()` call are the `ESN` struct created in the previous step and the `target_data`, which in this case is the one step ahead evolution of the Lorenz system. The training method chosen in this example is the standard one, so an equivalent way of calling the `train` function here is `output_layer = train(esn, target_data)` like the readme basic version. Likewise, the default value for the ridge regression parameter is set to zero, so the actual default training is Ordinary Least Squares regression. Other training methods are available and will be explained in the following examples.
+`ps` now contains the trained parameters for the ESN.
 
-Once the `OutputLayer` has been obtained, the prediction can be done following this procedure:
+!!! info "Returning training states"
+
+    The ESN states are internally used the training, however they are not returned by
+    default. To inspect the states, it is necessary to set the boolean keyword
+    argument `return_states` as `true` in the [`train!`](@ref) call.
+
+
+ReservoirComputing.jl provides
+additional utilities functions for autoregressive forecasting:
 
 ```@example lorenz
-output = esn(Generative(predict_len), output_layer)
+pred_length
+output, st = predict(esn, pred_length, ps, st; initialdata=test[:, 1])
 ```
 
-both the training method and the output layer are needed in this call. The number of steps for the prediction must be specified in the `Generative` method. The output results are given in a matrix.
-
-!!! info "Saving the states during prediction"
-    
-    While the states are saved in the `ESN` struct for the training, for the prediction they are not saved by default. To inspect the states, it is necessary to pass the boolean keyword argument `save_states` to the prediction call, in this example using `esn(... ; save_states=true)`. This returns a tuple `(output, states)` where `size(states) = res_size, prediction_len`
-
-To inspect the results, they can easily be plotted using an external library. In this case, `Plots` is adopted:
+To inspect the results, they can easily be plotted using an external library.
+In this case, we will use `Plots.jl`:
 
 ```@example lorenz
 using Plots, Plots.PlotMeasures

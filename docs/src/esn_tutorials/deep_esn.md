@@ -1,12 +1,15 @@
 # Deep Echo State Networks
 
-Deep Echo State Network architectures started to gain some traction recently. In this guide, we illustrate how it is possible to use ReservoirComputing.jl to build a deep ESN.
-
-The network implemented in this library is taken from [Gallicchio2017](@cite). It works by stacking reservoirs on top of each other, feeding the output from one into the next. The states are obtained by merging all the inner states of the stacked reservoirs. For a more in-depth explanation, refer to the paper linked above.
+In this example we showcase how to build a deep echo state network (DeepESN)
+following the work of [Gallicchio2017](@cite). The DeepESN stacks reservoirs
+on top of each other, feeding the output from one into the next.
+In the version implemented in ReservoirComputing.jl the final state is the state
+used for training.
 
 ## Lorenz Example
 
-For this example, we are going to reuse the Lorenz data used in the [Lorenz System Forecasting](@ref) example.
+We are going to reuse the Lorenz data used in the
+[Lorenz System Forecasting](@ref) example.
 
 ```@example deep_lorenz
 using OrdinaryDiffEq
@@ -34,35 +37,30 @@ target_data = data[:, (shift + 1):(shift + train_len)]
 test_data = data[:, (shift + train_len + 1):(shift + train_len + predict_len)]
 ```
 
-Again, it is *important* to notice that the data needs to be formatted in a matrix, with the features as rows and time steps as columns, as in this example. This is needed even if the time series consists of single values.
-
-The construction of the ESN is also really similar. The only difference is that the reservoir can be fed as an array of reservoirs.
+The call for the DeepESN works similarly to the ESN.
+The only difference is that the reservoir (and corresponding kwargs)
+can be fed as an array.
 
 ```@example deep_lorenz
 using ReservoirComputing
+desn = DeepESN(input_size, [res_size, res_size], input_size;
+    init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
+    state_modifiers=ExtendedSquare
+)
 
-reservoirs = [rand_sparse(; radius=1.1, sparsity=0.1),
-    rand_sparse(; radius=1.2, sparsity=0.1),
-    rand_sparse(; radius=1.4, sparsity=0.1)]
-
-esn = DeepESN(input_data, 3, 200;
-    reservoir=reservoirs,
-    reservoir_driver=RNN(),
-    nla_type=NLADefault(),
-    states_type=StandardStates())
 ```
-
-The input layer and bias can also be given as vectors, but of course, they have to be of the same size of the reservoirs vector. If they are not passed as a vector, the value passed will be used for all the layers in the deep ESN.
-
-In addition to using the provided functions for the construction of the layers, the user can also choose to build their own matrix, or array of matrices, and feed that into the `ESN` in the same way.
 
 The training and prediction follow the usual framework:
 
 ```@example deep_lorenz
-training_method = StandardRidge(0.0)
-output_layer = train(esn, target_data, training_method)
+using Random
+Random.seed!(42)
+rng = MersenneTwister(17)
 
-output = esn(Generative(predict_len), output_layer)
+ps, st = setup(rng, esn)
+ps, st = train!(esn, input_data, target_data, ps, st)
+
+output, st = predict(esn, 1250, ps, st; initialdata=test[:, 1])
 ```
 
 Plotting the results:
