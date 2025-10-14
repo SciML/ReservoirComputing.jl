@@ -8,6 +8,12 @@
     HybridESN
 ```
 
+### Utilities
+
+```@docs
+    resetcarry!
+```
+
 ## Reservoir Computing with Cellular Automata
 
 ```@docs

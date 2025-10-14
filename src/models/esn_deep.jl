@@ -1,16 +1,8 @@
 @doc raw"""
-    DeepESN(in_dims::Int,
-            res_dims::AbstractVector{<:Int},
-            out_dims,
-            activation=tanh;
-            leak_coefficient=1.0,
-            init_reservoir=rand_sparse,
-            init_input=scaled_rand,
-            init_bias=zeros32,
-            init_state=randn32,
-            use_bias=false,
-            state_modifiers=(),
-            readout_activation=identity)
+    DeepESN(in_dims, res_dims, out_dims,
+            activation=tanh; depth=2, leak_coefficient=1.0, init_reservoir=rand_sparse,
+            init_input=scaled_rand, init_bias=zeros32, init_state=randn32,
+            use_bias=false, state_modifiers=(), readout_activation=identity)
 
 Deep Echo State Network (DeepESN): a stack of stateful [`ESNCell`](@ref) layers
 (optionally with per-layer state modifiers) followed by a linear readout.
@@ -83,6 +75,8 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `init_state`: Initializer(s) used when an external state is not provided.
     Scalar or length-`L`. Default: [`randn32`](@extref).
   - `use_bias`: Whether each reservoir uses a bias term. Boolean scalar or length-`L`. Default: `false`.
+  - `depth`: Depth of the DeepESN. If the reservoir size is given as a number instead of a vector, this
+    parameter controls the depth of the model. Default is 2.
 
 Composition:
 
@@ -170,8 +164,8 @@ function DeepESN(in_dims::IntegerType,
     return DeepESN(Tuple(cells), mods_per_layer, ro)
 end
 
-DeepESN(in_dims::Int, res_dim::Int, out_dims::Int; depth::Int=2, kwargs...) =
-    DeepESN(in_dims, fill(res_dim, depth), out_dims; kwargs...)
+DeepESN(in_dims::Int, res_dim::Int, out_dims::Int, activation=tanh; depth::Int=2, kwargs...) =
+    DeepESN(in_dims, fill(res_dim, depth), out_dims, activation; kwargs...)
 
 function initialparameters(rng::AbstractRNG, desn::DeepESN)
     ps_cells = map(l -> initialparameters(rng, l), desn.cells) |> Tuple

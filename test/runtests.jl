@@ -11,6 +11,8 @@ end
     @safetestset "ESN Cell" include("layers/test_esncell.jl")
 end
 
-#@testset "Echo State Networks" begin
+@testset "Echo State Networks" begin
 #    @safetestset "ESN Initializers" include("esn/test_inits.jl")
-#end
+    @safetestset "ESN model" include("esn/test_esn.jl")
+    @safetestset "DeepESN model" include("esn/test_esn_deep.jl")
+end

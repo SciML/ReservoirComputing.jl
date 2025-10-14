@@ -1,11 +1,17 @@
 # Layers
 
 ## Base Layers
+
 ```@doc
     ReservoirChain
     Collect
     StatefulLayer
     LinearReadout
+```
+
+## External Layers
+
+```@docs
     SVMReadout
 ```
 

@@ -16,15 +16,9 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 @reexport using WeightInitializers
 @reexport using LuxCore: setup, apply, initialparameters, initialstates
 
-const BoolType = Union{StaticBool,Bool,Val{true},Val{false}}
-const InputType = Tuple{<:AbstractArray,Tuple{<:AbstractArray}}
-const IntegerType = Union{Integer,StaticInteger}
-const RCFields = (:cells, :states_modifiers, :readout)
-
-abstract type AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fields} end
-
 #@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
 
+include("generics.jl")
 #layers
 include("layers/basic.jl")
 include("layers/lux_layers.jl")

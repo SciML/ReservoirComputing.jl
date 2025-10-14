@@ -128,10 +128,7 @@ function _partial_apply(esn::ESN, inp, ps, st)
 end
 
 function (esn::ESN)(inp, ps, st)
-    @show size(inp)
     out, new_st = _partial_apply(esn, inp, ps, st)
-        @show size(out)
     out, st_ro = apply(esn.readout, out, ps.readout, st.readout)
-        @show size(out)
     return out, merge(new_st, (readout=st_ro,))
 end
