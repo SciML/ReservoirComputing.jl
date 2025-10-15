@@ -9,11 +9,12 @@ const _Z32 = m -> zeros(Float32, m)
 const _O32 = (rng, m) -> zeros(Float32, m)
 const _W_I = (rng, m, n) -> _I32(m, n)
 const _W_ZZ = (rng, m, n) -> zeros(Float32, m, n)
-init_state3(rng::AbstractRNG, m::Integer, B::Integer) =
+function init_state3(rng::AbstractRNG, m::Integer, B::Integer)
     B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
+end
 
 @testset "ESNCell: constructor & show" begin
-    esn = ESNCell(3 => 5; leak_coefficient=0.3, use_bias=False())
+    esn = ESNCell(3 => 5; leak_coefficient = 0.3, use_bias = False())
     io = IOBuffer()
     show(io, esn)
     shown = String(take!(io))
@@ -25,8 +26,8 @@ end
 @testset "ESNCell: initialparameters shapes & bias flag" begin
     rng = MersenneTwister(1)
 
-    esn_nobias = ESNCell(3 => 4; use_bias=False(),
-        init_input=_W_I, init_reservoir=_W_I, init_bias=_O32)
+    esn_nobias = ESNCell(3 => 4; use_bias = False(),
+        init_input = _W_I, init_reservoir = _W_I, init_bias = _O32)
 
     ps_nb = initialparameters(rng, esn_nobias)
     @test haskey(ps_nb, :input_matrix)
@@ -35,8 +36,8 @@ end
     @test size(ps_nb.input_matrix) == (4, 3)
     @test size(ps_nb.reservoir_matrix) == (4, 4)
 
-    esn_bias = ESNCell(3 => 4; use_bias=True(),
-        init_input=_W_I, init_reservoir=_W_I, init_bias=_O32)
+    esn_bias = ESNCell(3 => 4; use_bias = True(),
+        init_input = _W_I, init_reservoir = _W_I, init_bias = _O32)
 
     ps_b = initialparameters(rng, esn_bias)
     @test haskey(ps_b, :bias)
@@ -51,9 +52,9 @@ end
 end
 
 @testset "ESNCell: forward (vector) — identity + leak=1 gives linear map" begin
-    esn = ESNCell(3 => 3, identity; use_bias=False(),
-        init_input=_W_I, init_reservoir=_W_I, init_bias=_O32,
-        init_state=_Z32, leak_coefficient=1.0)
+    esn = ESNCell(3 => 3, identity; use_bias = False(),
+        init_input = _W_I, init_reservoir = _W_I, init_bias = _O32,
+        init_state = _Z32, leak_coefficient = 1.0)
 
     ps = initialparameters(MersenneTwister(0), esn)
     st = NamedTuple()
@@ -68,9 +69,9 @@ end
 end
 
 @testset "ESNCell: forward (vector) — leak extremes" begin
-    esn0 = ESNCell(3 => 3, identity; use_bias=False(),
-        init_input=_W_I, init_reservoir=_W_I, init_bias=_O32,
-        init_state=_Z32, leak_coefficient=0.0)
+    esn0 = ESNCell(3 => 3, identity; use_bias = False(),
+        init_input = _W_I, init_reservoir = _W_I, init_bias = _O32,
+        init_state = _Z32, leak_coefficient = 0.0)
 
     ps0 = initialparameters(MersenneTwister(0), esn0)
     x = Float32[10, 20, 30]
@@ -79,9 +80,9 @@ end
     y0, _ = y0_tuple
     @test y0 ≈ h0
 
-    esn1 = ESNCell(3 => 3, identity; use_bias=True(),
-        init_input=_W_I, init_reservoir=_W_ZZ, init_bias=(rng, m) -> ones(Float32, m),
-        init_state=_Z32, leak_coefficient=1.0)
+    esn1 = ESNCell(3 => 3, identity; use_bias = True(),
+        init_input = _W_I, init_reservoir = _W_ZZ, init_bias = (rng, m) -> ones(Float32, m),
+        init_state = _Z32, leak_coefficient = 1.0)
 
     ps1 = initialparameters(MersenneTwister(0), esn1)
     (y1_tuple, _) = esn1((x, (zeros(Float32, 3),)), ps1, NamedTuple())
@@ -90,9 +91,9 @@ end
 end
 
 @testset "ESNCell: forward (matrix batch)" begin
-    esn = ESNCell(3 => 3, identity; use_bias=False(),
-        init_input=_W_I, init_reservoir=_W_I, init_bias=_O32,
-        init_state=_Z32, leak_coefficient=1.0)
+    esn = ESNCell(3 => 3, identity; use_bias = False(),
+        init_input = _W_I, init_reservoir = _W_I, init_bias = _O32,
+        init_state = _Z32, leak_coefficient = 1.0)
 
     ps = initialparameters(MersenneTwister(0), esn)
     X = Float32[1 2; 3 4; 5 6]  # (3, 2)
@@ -106,9 +107,9 @@ end
 
 @testset "ESNCell: outer call computes its own initial hidden state" begin
     rng = MersenneTwister(123)
-    esn = ESNCell(2 => 2, identity; use_bias=False(),
-        init_input=_W_I, init_reservoir=_W_ZZ,
-        init_state=init_state3, leak_coefficient=1.0)
+    esn = ESNCell(2 => 2, identity; use_bias = False(),
+        init_input = _W_I, init_reservoir = _W_ZZ,
+        init_state = init_state3, leak_coefficient = 1.0)
 
     ps = initialparameters(rng, esn)
     st = initialstates(rng, esn)

@@ -49,30 +49,31 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
   which is usually unintended.
 """
 @concrete struct LinearReadout <: AbstractReservoirTrainableLayer
-    activation
+    activation::Any
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_weight
-    init_bias
+    init_weight::Any
+    init_bias::Any
     use_bias <: StaticBool
     include_collect <: StaticBool
 end
 
-function LinearReadout(mapping::Pair{<:IntegerType,<:IntegerType}, activation=identity; kwargs...)
+function LinearReadout(mapping::Pair{<:IntegerType, <:IntegerType}, activation = identity; kwargs...)
     return LinearReadout(first(mapping), last(mapping), activation; kwargs...)
 end
 
-function LinearReadout(in_dims::IntegerType, out_dims::IntegerType, activation=identity;
-    init_weight=rand32, init_bias=rand32, include_collect::BoolType=True(),
-    use_bias::BoolType=False())
-    return LinearReadout(activation, in_dims, out_dims, init_weight, init_bias, static(use_bias), static(include_collect))
+function LinearReadout(in_dims::IntegerType, out_dims::IntegerType, activation = identity;
+        init_weight = rand32, init_bias = rand32, include_collect::BoolType = True(),
+        use_bias::BoolType = False())
+    return LinearReadout(activation, in_dims, out_dims, init_weight,
+        init_bias, static(use_bias), static(include_collect))
 end
 
 function initialparameters(rng::AbstractRNG, ro::LinearReadout)
     weight = ro.init_weight(rng, ro.out_dims, ro.in_dims)
 
     if has_bias(ro)
-        return (; weight, bias=ro.init_bias(rng, ro.out_dims))
+        return (; weight, bias = ro.init_bias(rng, ro.out_dims))
     else
         return (; weight)
     end
@@ -213,7 +214,7 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
     firstcol = collected[1]
     Tcol = eltype(firstcol)
     empty_mat = zeros(Tcol, length(firstcol), 0)
-    states_raw = reduce(hcat, collected; init=empty_mat)
+    states_raw = reduce(hcat, collected; init = empty_mat)
     states = eltype(data).(states_raw)
     return states, newst
 end

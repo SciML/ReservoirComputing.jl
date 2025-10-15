@@ -11,12 +11,14 @@ function Base.show(io::IO, ro::SVMReadout)
     return print(io, ")")
 end
 
-SVMReadout(mapping::Pair{<:IntegerType,<:IntegerType}; kwargs...) =
+function SVMReadout(mapping::Pair{<:IntegerType, <:IntegerType}; kwargs...)
     SVMReadout(first(mapping), last(mapping); kwargs...)
+end
 
-SVMReadout(in_dims::IntegerType, out_dims::IntegerType;
-    include_collect::BoolType=True()) =
+function SVMReadout(in_dims::IntegerType, out_dims::IntegerType;
+        include_collect::BoolType = True())
     SVMReadout(in_dims, out_dims, static(include_collect))
+end
 
 initialparameters(::AbstractRNG, ::SVMReadout) = NamedTuple()
 parameterlength(::SVMReadout) = 0
@@ -26,7 +28,7 @@ outputsize(ro::SVMReadout, _, ::AbstractRNG) = (ro.out_dims,)
 # NOTE: forward for SVMReadout will be defined in the LIBSVM extension,
 # because it calls LIBSVM.predict.
 
-_svmreadout_include_collect(ro::SVMReadout) = begin
+function _svmreadout_include_collect(ro::SVMReadout)
     ic = known(getproperty(ro, Val(:include_collect)))
     ic === nothing ? false : ic
 end
@@ -34,7 +36,6 @@ end
 function wrap_functions_in_chain_call(ro::SVMReadout)
     return _svmreadout_include_collect(ro) ? (Collect(), ro) : ro
 end
-
 
 _quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 

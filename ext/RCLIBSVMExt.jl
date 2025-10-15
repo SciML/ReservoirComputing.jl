@@ -2,11 +2,11 @@ module RCLIBSVMExt
 
 using LIBSVM
 using ReservoirComputing:
-    SVMReadout, addreadout!, ReservoirChain
+                          SVMReadout, addreadout!, ReservoirChain
 import ReservoirComputing: train
 
 function train(svr::LIBSVM.AbstractSVR,
-    states::AbstractArray, target::AbstractArray)
+        states::AbstractArray, target::AbstractArray)
     @assert size(states, 2) == size(target, 2) "states and target must share columns."
     perm_states = permutedims(states)
     size_target = size(target, 1)

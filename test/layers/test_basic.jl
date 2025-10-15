@@ -15,14 +15,14 @@ using LinearAlgebra
         @test ro.activation === identity
         @test ReservoirComputing.has_bias(ro) == false
 
-        ro_b = LinearReadout(5, 3; use_bias=True(), include_collect=False())
+        ro_b = LinearReadout(5, 3; use_bias = True(), include_collect = False())
         @test ReservoirComputing.has_bias(ro_b) == true
         ic = ReservoirComputing.getproperty(ro_b, Val(:include_collect))
         @test ic === false || ic === False()
     end
 
     @testset "initialparameters shapes & determinism" begin
-        ro_nb = LinearReadout(4 => 2; use_bias=False())
+        ro_nb = LinearReadout(4 => 2; use_bias = False())
         ps1 = initialparameters(rng, ro_nb)
         @test keys(ps1) == (:weight,)
         @test size(ps1.weight) == (2, 4)
@@ -31,7 +31,7 @@ using LinearAlgebra
         ps2 = initialparameters(rng2, ro_nb)
         @test ps1.weight == ps2.weight
 
-        ro_b = LinearReadout(4 => 2; use_bias=True())
+        ro_b = LinearReadout(4 => 2; use_bias = True())
         psb = initialparameters(rng, ro_b)
         @test keys(psb) == (:weight, :bias)
         @test size(psb.weight) == (2, 4)
@@ -39,18 +39,18 @@ using LinearAlgebra
     end
 
     @testset "parameterlength/statelength/outputsize" begin
-        ro_nb = LinearReadout(7 => 5; use_bias=False())
+        ro_nb = LinearReadout(7 => 5; use_bias = False())
         @test LuxCore.parameterlength(ro_nb) == 5 * 7
         @test LuxCore.statelength(ro_nb) == 0
         @test LuxCore.outputsize(ro_nb, nothing, rng) == (5,)
 
-        ro_b = LinearReadout(7 => 5; use_bias=True())
+        ro_b = LinearReadout(7 => 5; use_bias = True())
         @test LuxCore.parameterlength(ro_b) == 5 * 7 + 5
     end
 
     @testset "forward pass: vector, no-bias, identity" begin
-        ro = LinearReadout(3 => 3; use_bias=False())
-        ps = (weight=Matrix{Float32}(I, 3, 3),)
+        ro = LinearReadout(3 => 3; use_bias = False())
+        ps = (weight = Matrix{Float32}(I, 3, 3),)
         x = Float32[0.2, -0.5, 1.0]
         y, st = ro(x, ps, NamedTuple())
         @test y == x
@@ -58,18 +58,18 @@ using LinearAlgebra
     end
 
     @testset "forward pass: vector with bias" begin
-        ro = LinearReadout(3 => 2; use_bias=True())
-        ps = (weight=Float32[1 0 0; 0 1 0], bias=Float32[0.5, -1.0])
+        ro = LinearReadout(3 => 2; use_bias = True())
+        ps = (weight = Float32[1 0 0; 0 1 0], bias = Float32[0.5, -1.0])
         x = Float32[2, 3, 4]
         y, _ = ro(x, ps, NamedTuple())
         @test y ≈ Float32[2.5, 2.0]
     end
 
     @testset "forward pass: matrix (batch), activation" begin
-        ro = LinearReadout(2 => 2, tanh; use_bias=False())
-        ps = (weight=Float32[1 0; 0 2],)
+        ro = LinearReadout(2 => 2, tanh; use_bias = False())
+        ps = (weight = Float32[1 0; 0 2],)
         X = Float32[0.0 1.0 -1.0;
-            0.5 0.5 0.5]
+                    0.5 0.5 0.5]
         Y, _ = ro(X, ps, NamedTuple())
         @test size(Y) == (2, 3)
         @test Y[:, 1] ≈ tanh.(ps.weight * X[:, 1])
@@ -78,13 +78,13 @@ using LinearAlgebra
 
     @testset "dimension mismatch error" begin
         ro = LinearReadout(4 => 2)
-        ps = (weight=rand(Float32, 2, 4),)
+        ps = (weight = rand(Float32, 2, 4),)
         badx = rand(Float32, 3)
         @test_throws DimensionMismatch ro(badx, ps, NamedTuple())
     end
 
     @testset "show" begin
-        ro = LinearReadout(5 => 3; use_bias=False(), include_collect=True())
+        ro = LinearReadout(5 => 3; use_bias = False(), include_collect = True())
         s = sprint(show, ro)
         @test occursin("LinearReadout(5 => 3", s)
         @test occursin("use_bias=false", s)
@@ -93,12 +93,13 @@ using LinearAlgebra
 
     @testset "include_collect causes Collect() insertion" begin
         try
-            rc = ReservoirChain(LinearReadout(4 => 2; include_collect=True()))
+            rc = ReservoirChain(LinearReadout(4 => 2; include_collect = True()))
             L = rc.layers
             first_layer = getfield(L, 1)
             @test first_layer isa Collect
         catch e
-            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception = (e, catch_backtrace())
+            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception = (
+                e, catch_backtrace())
         end
     end
 end
@@ -108,7 +109,7 @@ end
 
     F_id = ReservoirComputing.WrappedFunction(x -> x)
     F_2x = ReservoirComputing.WrappedFunction(x -> 2 .* x)
-    ro = LinearReadout(3 => 1; include_collect=false)
+    ro = LinearReadout(3 => 1; include_collect = false)
 
     @testset "single Collect == features at collect point" begin
         rc = ReservoirChain(F_id, Collect(), ro)

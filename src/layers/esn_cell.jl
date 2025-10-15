@@ -64,36 +64,37 @@ Created by `initialstates(rng, esn)`:
   - `rng`: a replicated RNG used to sample initial hidden states when needed.
 """
 @concrete struct ESNCell <: AbstractReservoirRecurrentCell
-    activation
+    activation::Any
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_bias
-    init_reservoir
-    init_input
+    init_bias::Any
+    init_reservoir::Any
+    init_input::Any
     #init_feedback::F
-    init_state
-    leak_coefficient
+    init_state::Any
+    leak_coefficient::Any
     use_bias <: StaticBool
 end
 
-function ESNCell((in_dims, out_dims)::Pair{<:IntegerType,<:IntegerType}, activation=tanh;
-    use_bias::BoolType=False(), init_bias=zeros32, init_reservoir=rand_sparse,
-    init_input=scaled_rand, init_state=randn32, leak_coefficient=1.0)
+function ESNCell(
+        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType}, activation = tanh;
+        use_bias::BoolType = False(), init_bias = zeros32, init_reservoir = rand_sparse,
+        init_input = scaled_rand, init_state = randn32, leak_coefficient = 1.0)
     return ESNCell(activation, in_dims, out_dims, init_bias, init_reservoir,
         init_input, init_state, leak_coefficient, use_bias)
 end
 
 function initialparameters(rng::AbstractRNG, esn::ESNCell)
-    ps = (input_matrix=esn.init_input(rng, esn.out_dims, esn.in_dims),
-        reservoir_matrix=esn.init_reservoir(rng, esn.out_dims, esn.out_dims))
+    ps = (input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
+        reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims))
     if has_bias(esn)
-        ps = merge(ps, (bias=esn.init_bias(rng, esn.out_dims),))
+        ps = merge(ps, (bias = esn.init_bias(rng, esn.out_dims),))
     end
     return ps
 end
 
 function initialstates(rng::AbstractRNG, esn::ESNCell)
-    return (rng=sample_replicate(rng),)
+    return (rng = sample_replicate(rng),)
 end
 
 function (esn::ESNCell)(inp::AbstractArray, ps, st::NamedTuple)

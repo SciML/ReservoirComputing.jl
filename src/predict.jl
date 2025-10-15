@@ -49,7 +49,7 @@ sequence.
 - `st`: Updated minal model states.
 """
 function predict(rc::AbstractLuxLayer,
-    steps::Integer, ps, st; initialdata::AbstractVector)
+        steps::Integer, ps, st; initialdata::AbstractVector)
     output = zeros(eltype(initialdata), length(initialdata), steps)
     for step in 1:steps
         initialdata, st = apply(rc, initialdata, ps, st)

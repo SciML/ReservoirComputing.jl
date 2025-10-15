@@ -1,15 +1,15 @@
 module RCCellularAutomataExt
 using ReservoirComputing: RECA, RandomMapping, RandomMaps, AbstractInputEncoding,
-    IntegerType, LinearReadout, ReservoirChain, StatefulLayer
+                          IntegerType, LinearReadout, ReservoirChain, StatefulLayer
 import ReservoirComputing: RECACell, RECA
 using CellularAutomata
 using Random: randperm
 
-function RandomMapping(; permutations=8, expansion_size=40)
+function RandomMapping(; permutations = 8, expansion_size = 40)
     RandomMapping(permutations, expansion_size)
 end
 
-function RandomMapping(permutations; expansion_size=40)
+function RandomMapping(permutations; expansion_size = 40)
     RandomMapping(permutations, expansion_size)
 end
 
@@ -17,7 +17,8 @@ function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::I
     maps = init_maps(in_dims, rm.permutations, rm.expansion_size)
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations
-    return RandomMaps(rm.permutations, rm.expansion_size, generations, maps, states_size, ca_size)
+    return RandomMaps(
+        rm.permutations, rm.expansion_size, generations, maps, states_size, ca_size)
 end
 
 function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
@@ -26,11 +27,11 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
-        new_tot_enc_vec[((i-1)*rm.expansion_size+1):(i*rm.expansion_size)] = single_encoding(
+        new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)] = single_encoding(
             input_vector,
-            new_tot_enc_vec[((i-1)*rm.expansion_size+1):(i*rm.expansion_size)],
+            new_tot_enc_vec[((i - 1) * rm.expansion_size + 1):(i * rm.expansion_size)],
             rm.maps[i,
-                :])
+            :])
     end
 
     return new_tot_enc_vec
@@ -84,13 +85,12 @@ function (reca::RECACell)(inp::AbstractVector, ps, st::NamedTuple)
 end
 
 function RECA(in_dims::IntegerType,
-    out_dims::IntegerType,
-    automaton;
-    input_encoding::AbstractInputEncoding=RandomMapping(),
-    generations::Integer=8,
-    state_modifiers=(),
-    readout_activation=identity)
-
+        out_dims::IntegerType,
+        automaton;
+        input_encoding::AbstractInputEncoding = RandomMapping(),
+        generations::Integer = 8,
+        state_modifiers = (),
+        readout_activation = identity)
     rm = create_encoding(input_encoding, in_dims, generations)
     cell = RECACell(automaton, rm)
 

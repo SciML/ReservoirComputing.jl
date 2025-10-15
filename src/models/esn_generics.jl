@@ -31,14 +31,14 @@ end
 
 @inline _asvec(x) = (ndims(x) == 2 ? vec(x) : x)
 
-_coerce_layer_mods(x) =
+function _coerce_layer_mods(x)
     x === nothing ? () :
     x isa Tuple ? x :
     x isa AbstractVector ? Tuple(x) :
     (x,)
+end
 
-_set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight=wro))
-
+_set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
 
 function collectstates(esn::AbstractEchoStateNetwork, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
@@ -46,7 +46,7 @@ function collectstates(esn::AbstractEchoStateNetwork, data::AbstractMatrix, ps, 
     for inp in eachcol(data)
         state_t, partial_st = _partial_apply(esn, inp, ps, newst)
         push!(collected, copy(state_t))
-        newst = merge(partial_st, (readout=newst.readout,))
+        newst = merge(partial_st, (readout = newst.readout,))
     end
     states = eltype(data).(reduce(hcat, collected))
     @assert !isempty(collected)
@@ -56,10 +56,10 @@ function collectstates(esn::AbstractEchoStateNetwork, data::AbstractMatrix, ps, 
 end
 
 function addreadout!(::AbstractEchoStateNetwork, output_matrix::AbstractMatrix,
-    ps::NamedTuple, st::NamedTuple)
+        ps::NamedTuple, st::NamedTuple)
     @assert hasproperty(ps, :readout)
     new_readout = _set_readout_weight(ps.readout, output_matrix)
-    return merge(ps, (readout=new_readout,)), st
+    return merge(ps, (readout = new_readout,)), st
 end
 
 @doc raw"""
@@ -97,7 +97,7 @@ function is provided, it is called to create a new initial hidden state.
   Same as above, but also returns the unchanged `ps` for convenience.
 
 """
-function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork, st; init_carry=nothing)
+function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork, st; init_carry = nothing)
     carry = get(st.cell, :carry, nothing)
     if carry === nothing
         outd = esn.cell.cell.out_dims
@@ -113,11 +113,11 @@ function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork, st; init_c
         new_state = init_carry(rng, sz, 1)
         new_state = (new_state,)
     end
-    new_cell = merge(st.cell, (; carry=new_state))
-    return merge(st, (cell=new_cell,))
+    new_cell = merge(st.cell, (; carry = new_state))
+    return merge(st, (cell = new_cell,))
 end
 
 function resetcarry!(rng::AbstractRNG, esn::AbstractEchoStateNetwork,
-    ps, st; init_carry=nothing)
-    return ps, resetcarry!(rng, esn, st; init_carry=init_carry)
+        ps, st; init_carry = nothing)
+    return ps, resetcarry!(rng, esn, st; init_carry = init_carry)
 end

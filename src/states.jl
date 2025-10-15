@@ -1,5 +1,6 @@
 
-@inline function _apply_tomatrix(states_mod::F, states::AbstractMatrix) where {F<:Function}
+@inline function _apply_tomatrix(states_mod::F, states::AbstractMatrix) where {F <:
+                                                                               Function}
     cols = axes(states, 2)
     states_1 = states_mod(states[:, first(cols)])
     new_states = similar(states_1, length(states_1), length(cols))
@@ -10,15 +11,15 @@
     return new_states
 end
 
-
 """
-  Pad(padding)
+Pad(padding)
 
 Padding layer that adds `padding` (either a number or an array) at the
 end of a state.
 
 ## Arguments
- - `padding`: value to append. Default is 1.0.
+
+  - `padding`: value to append. Default is 1.0.
 """
 struct Pad{P} <: Function
     padding::P
@@ -38,49 +39,51 @@ function (pad::Pad)(x_old::AbstractMatrix)
 end
 
 """
-  Pad(padding)
+Pad(padding)
 
 Wrapper layer that concatenates the reservoir state at that
 point with the input that it receives.
-## Arguments
- - `op`: wrapped layer
 
- ## Examples
- ```julia
- esn = ReservoirChain(
+## Arguments
+
+  - `op`: wrapped layer
+
+## Examples
+
+```julia
+esn = ReservoirChain(
     Extend(
         StatefulLayer(
-            ESNCell(3 => 300; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300))
-        )
+        ESNCell(3 => 300; init_reservoir = rand_sparse(; radius = 1.2, sparsity = 6/300))
+    )
     ),
     NLAT2(),
     LinearReadout(300+3 => 3)
 )
- ```
+```
 
- In this esample the input to `Extend` is the initial value fed to
- [`ReservoirChain`](@ref). After `Extend`, the value in the chain will
- be the state returned by the [`StatefulLayer`](@ref), `vcat`ed with
- the input.
+In this esample the input to `Extend` is the initial value fed to
+[`ReservoirChain`](@ref). After `Extend`, the value in the chain will
+be the state returned by the [`StatefulLayer`](@ref), `vcat`ed with
+the input.
 """
 @concrete struct Extend <: AbstractLuxWrapperLayer{:op}
     op <: AbstractLuxLayer
 end
 
 function initialparameters(rng::AbstractRNG, ex::Extend)
-    return (op=initialparameters(rng, ex.op),)
+    return (op = initialparameters(rng, ex.op),)
 end
 function initialstates(rng::AbstractRNG, ex::Extend)
-    return (op=initialstates(rng, ex.op),)
+    return (op = initialstates(rng, ex.op),)
 end
 
 function (ex::Extend)(inp, ps, st::NamedTuple)
     state, st_op = apply(ex.op, inp, ps.op, st.op)
-    return vcat(inp, state), (; op=st_op)
+    return vcat(inp, state), (; op = st_op)
 end
 
 Base.show(io::IO, ex::Extend) = print(io, "Extend(", ex.op, ")")
-
 
 @doc raw"""
     NLAT1(x)
@@ -244,7 +247,7 @@ function NLAT2(x_old::AbstractVector)
     x_new = copy(x_old)
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
-            x_new[idx, :] .= x_old[idx-1, :] .* x_old[idx-2, :]
+            x_new[idx, :] .= x_old[idx - 1, :] .* x_old[idx - 2, :]
         end
     end
     return x_new
@@ -330,7 +333,7 @@ function NLAT3(x_old::AbstractVector)
     x_new = copy(x_old)
     for idx in eachindex(x_old)
         if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
-            x_new[idx] = x_old[idx-1] * x_old[idx+1]
+            x_new[idx] = x_old[idx - 1] * x_old[idx + 1]
         end
     end
     return x_new

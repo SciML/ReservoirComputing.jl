@@ -15,11 +15,11 @@ The detail of this implementation can be found in [Nichele2017](@cite).
 
 ## Arguments
 
-- `permutations`: number of independent random maps (blocks). Larger
-  values increase feature diversity and `ca_size` proportionally.
-- `expansion_size`: width of each block (the size of a single CA
-  lattice). Larger values increase the spatial resolution and both `ca_size`
-  and `states_size`.
+  - `permutations`: number of independent random maps (blocks). Larger
+    values increase feature diversity and `ca_size` proportionally.
+  - `expansion_size`: width of each block (the size of a single CA
+    lattice). Larger values increase the spatial resolution and both `ca_size`
+    and `states_size`.
 
 ## Usage
 
@@ -32,31 +32,31 @@ using ReservoirComputing, CellularAutomata, Random
 
 in_dims = 4
 generations = 8
-mapping = RandomMapping(permutations=8, expansion_size=40)
+mapping = RandomMapping(permutations = 8, expansion_size = 40)
 
 enc = ReservoirComputing.create_encoding(mapping, in_dims, generations)  # → RandomMaps
 cell = RECACell(DCA(90), enc)
 
 rc = ReservoirChain(
     StatefulLayer(cell),
-    Readout(enc.states_size => in_dims; include_collect=true)
+    Readout(enc.states_size => in_dims; include_collect = true)
 )
 ```
 
 Or let [`RECA`](@ref) do this for you:
 
 ```julia
-rc = RECA(in_dims=4, out_dims=4, DCA(90);
-          input_encoding = RandomMapping(permutations=8, expansion_size=40),
-          generations = 8)
+rc = RECA(in_dims = 4, out_dims = 4, DCA(90);
+    input_encoding = RandomMapping(permutations = 8, expansion_size = 40),
+    generations = 8)
 ```
 """
-struct RandomMapping{I,T} <: AbstractInputEncoding
+struct RandomMapping{I, T} <: AbstractInputEncoding
     permutations::I
     expansion_size::T
 end
 
-struct RandomMaps{T,E,G,M,S} <: AbstractEncodingData
+struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     permutations::T
     expansion_size::E
     generations::G
@@ -120,19 +120,21 @@ and [Yilmaz2014](@cite).
 
 """
 @concrete struct RECACell <: AbstractReservoirRecurrentCell
-    automaton
+    automaton::Any
     enc <: RandomMaps
 end
 
-Base.show(io::IO, reca::RECACell) = print(io,
-    "RECACell(in ⇒ ", reca.enc.ca_size, ", out=", reca.enc.states_size,
-    ", gens=", reca.enc.generations, ", perms=", reca.enc.permutations,
-    ", exp=", reca.enc.expansion_size, ")")
+function Base.show(io::IO, reca::RECACell)
+    print(io,
+        "RECACell(in ⇒ ", reca.enc.ca_size, ", out=", reca.enc.states_size,
+        ", gens=", reca.enc.generations, ", perms=", reca.enc.permutations,
+        ", exp=", reca.enc.expansion_size, ")")
+end
 
 initialparameters(::AbstractRNG, ::RECACell) = NamedTuple()
 
 function initialstates(::AbstractRNG, reca::RECACell)
-    return (ca=zeros(Float32, reca.enc.ca_size),)
+    return (ca = zeros(Float32, reca.enc.ca_size),)
 end
 
 @doc raw"""
