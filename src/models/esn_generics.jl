@@ -12,22 +12,41 @@ _wrap_layers(xs::Tuple) = map(_wrap_layer, xs)
     return inp, tuple(new_st_parts...)
 end
 
-function _asvec(comp, n_layers::Integer)
-    if comp === ()
-        return ntuple(_ -> nothing, n_layers)
-    elseif comp isa Tuple || comp isa AbstractVector
-        len = length(comp)
-        if len == n_layers
-            return Tuple(comp)
-        elseif len == 1
-            return ntuple(_ -> comp[1], n_layers)
-        else
-            error("Expected length $n_layers or 1, got $len")
-        end
+@inline function _fillvec(x, n::Integer)
+    v = Vector{typeof(x)}(undef, n)
+    @inbounds @simd for i in 1:n
+        v[i] = x
+    end
+    return v
+end
+
+@inline _asvec(::Tuple{}, n::Integer) = _fillvec(nothing, n)
+
+@inline function _asvec(comp::Tuple, n::Integer)
+    len = length(comp)
+    if len == n
+        return collect(comp)
+    elseif len == 1
+        return _fillvec(comp[1], n)
     else
-        return ntuple(_ -> comp, n_layers)
+        error("Expected length $n or 1, got $len")
     end
 end
+
+@inline function _asvec(comp::AbstractVector, n::Integer)
+    len = length(comp)
+    if len == n
+        return collect(comp)
+    elseif len == 1
+        return _fillvec(comp[1], n)
+    else
+        error("Expected length $n or 1, got $len")
+    end
+end
+
+@inline _asvec(::Nothing, n::Integer) = _fillvec(nothing, n)
+
+@inline _asvec(comp, n::Integer) = _fillvec(comp, n)
 
 @inline _asvec(x) = (ndims(x) == 2 ? vec(x) : x)
 

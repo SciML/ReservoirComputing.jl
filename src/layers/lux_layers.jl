@@ -82,7 +82,9 @@ end
 (c::ReservoirChain)(x, ps, st::NamedTuple) = applychain(c.layers, x, ps, st)
 
 @generated function applychain(
-        layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}) where {fields}
+    layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}
+) where {fields}
+    @assert isa(fields, NTuple{<:Any, Symbol})
     N = length(fields)
     x_symbols = vcat([:x], [gensym() for _ in 1:N])
     st_symbols = [gensym() for _ in 1:N]
