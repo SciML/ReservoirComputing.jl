@@ -9,7 +9,7 @@ utilities)
 ## Using provided layers: ReservoirChain, ESNCell, and LinearReadout
 
 The library provides a [`ReservoirChain`](@ref), which is virtually
-equivivalent to Lux's [`Chain`](@extref). Passing layers, or functions,
+equivalent to Lux's [`Chain`](@extref). Passing layers, or functions,
 to the chain will concatenate them, and will allow the flow of the input
 data through the model.
 
@@ -36,7 +36,7 @@ esn_scratch = ReservoirChain(
 )
 ```
 
-Now, this implementation, elements naming aside, is completley equivalent to
+Now, this implementation, elements naming aside, is completely equivalent to
 the following
 
 ```@example scratch

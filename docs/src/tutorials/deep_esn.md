@@ -43,9 +43,11 @@ can be fed as an array.
 
 ```@example deep_lorenz
 using ReservoirComputing
+input_size = 3
+res_size = 300
 desn = DeepESN(input_size, [res_size, res_size], input_size;
     init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
-    state_modifiers=ExtendedSquare
+    state_modifiers=[NLAT2, ExtendedSquare]
 )
 
 ```
@@ -57,10 +59,10 @@ using Random
 Random.seed!(42)
 rng = MersenneTwister(17)
 
-ps, st = setup(rng, esn)
-ps, st = train!(esn, input_data, target_data, ps, st)
+ps, st = setup(rng, desn)
+ps, st = train!(desn, input_data, target_data, ps, st)
 
-output, st = predict(esn, 1250, ps, st; initialdata=test[:, 1])
+output, st = predict(desn, 1250, ps, st; initialdata=test_data[:, 1])
 ```
 
 Plotting the results:

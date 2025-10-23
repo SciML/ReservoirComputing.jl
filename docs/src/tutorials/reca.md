@@ -44,7 +44,7 @@ ps, st = train!(reca, input, output, ps, st, StandardRidge(0.00001))
 ```
 
 We are going to test the recall ability of the model, feeding the input data
-and investigating wether the predicted output equals the output data.
+and investigating whether the predicted output equals the output data.
 
 ```@example reca
 _, st0 = setup(rng, reca) #reset the first ca state

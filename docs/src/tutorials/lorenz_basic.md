@@ -66,7 +66,7 @@ input_scaling = 0.1
 #build ESN struct
 esn = ESN(in_size, res_size, in_size; #autoregressive so in_size = out_size
     init_reservoir = rand_sparse(; radius = res_radius, sparsity = res_sparsity),
-    init_input = weighted_init(; scaling = input_scaling)
+    init_input = weighted_init(; scaling = input_scaling),
     state_modifiers = NLAT2
 )
 ```
@@ -134,7 +134,7 @@ additional utilities functions for autoregressive forecasting:
 
 ```@example lorenz
 pred_length
-output, st = predict(esn, pred_length, ps, st; initialdata=test[:, 1])
+output, st = predict(esn, predict_len, ps, st; initialdata=test[:, 1])
 ```
 
 To inspect the results, they can easily be plotted using an external library.
