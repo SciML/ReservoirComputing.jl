@@ -133,8 +133,7 @@ ReservoirComputing.jl provides
 additional utilities functions for autoregressive forecasting:
 
 ```@example lorenz
-pred_length
-output, st = predict(esn, predict_len, ps, st; initialdata=test[:, 1])
+output, st = predict(esn, predict_len, ps, st; initialdata=test_data[:, 1])
 ```
 
 To inspect the results, they can easily be plotted using an external library.

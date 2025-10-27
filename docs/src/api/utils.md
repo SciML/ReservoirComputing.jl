@@ -1,0 +1,5 @@
+# Utilities
+
+```@docs
+    collectstates
+```

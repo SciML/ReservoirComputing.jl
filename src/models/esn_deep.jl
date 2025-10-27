@@ -71,9 +71,9 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `init_reservoir`: Initializer(s) for `W_res^{(ℓ)}`. Scalar or length-`L`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer(s) for `W_in^{(ℓ)}`. Scalar or length-`L`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initializer(s) for reservoir bias (used iff `use_bias[ℓ]=true`).
-    Scalar or length-`L`. Default: [`zeros32`](@extref).
+    Scalar or length-`L`. Default: `zeros32`.
   - `init_state`: Initializer(s) used when an external state is not provided.
-    Scalar or length-`L`. Default: [`randn32`](@extref).
+    Scalar or length-`L`. Default: `randn32`.
   - `use_bias`: Whether each reservoir uses a bias term. Boolean scalar or length-`L`. Default: `false`.
   - `depth`: Depth of the DeepESN. If the reservoir size is given as a number instead of a vector, this
     parameter controls the depth of the model. Default is 2.
@@ -138,7 +138,7 @@ function DeepESN(in_dims::IntegerType,
     ires = _asvec(init_reservoir, n_layers)
     iinp = _asvec(init_input, n_layers)
     ibias = _asvec(init_bias, n_layers)
-    ist = _asvec(init_state, n_layers)
+    istate = _asvec(init_state, n_layers)
     ub = _asvec(use_bias, n_layers)
     mods0 = _asvec(state_modifiers, n_layers)
 
@@ -152,7 +152,7 @@ function DeepESN(in_dims::IntegerType,
             init_bias = ibias[idx],
             init_reservoir = ires[idx],
             init_input = iinp[idx],
-            init_state = ist[idx],
+            init_state = istate[idx],
             leak_coefficient = leaks[idx])
         cells[idx] = StatefulLayer(cell)
         states_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])

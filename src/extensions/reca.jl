@@ -39,7 +39,7 @@ cell = RECACell(DCA(90), enc)
 
 rc = ReservoirChain(
     StatefulLayer(cell),
-    Readout(enc.states_size => in_dims; include_collect = true)
+    LinearReadout(enc.states_size => in_dims; include_collect = true)
 )
 ```
 
@@ -148,7 +148,7 @@ Construct a cellular–automata reservoir model.
 At each time step the input vector is randomly embedded into a Cellular
 Automaton (CA) lattice, the CA is evolved for `generations` steps, and the
 flattened evolution (excluding the initial row) is used as the reservoir state.
-A linear [`Readout`](@ref) maps these features to `out_dims`.
+A linear [`LinearReadout`](@ref) maps these features to `out_dims`.
 
 !!! note
     This constructor is only available when the `CellularAutomata.jl` package is

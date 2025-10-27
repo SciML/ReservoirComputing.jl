@@ -89,7 +89,7 @@ Reset (or set) the hidden-state carry of a model in the echo state network famil
 
 If an existing carry is present in `st.cell.carry`, its leading dimension is used to
 infer the state size. Otherwise the reservoir output size is taken from
-`esn.cell.cell.out_dims`. When `init_carry=nothing`, the carry is cleared; the initialzer
+`esn.cell.cell.out_dims`. When `init_carry=nothing`, the carry is cleared; the initializer
 from the struct construction will then be used. When a
 function is provided, it is called to create a new initial hidden state.
 

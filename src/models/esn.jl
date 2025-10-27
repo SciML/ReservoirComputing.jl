@@ -43,9 +43,9 @@ Reservoir (passed to [`ESNCell`](@ref)):
   - `init_reservoir`: Initializer for `W_res`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initializer for reservoir bias (used iff `use_bias=true`).
-    Default: [`zeros32`](@extref).
+    Default: `zeros32`.
   - `init_state`: Initializer used when an external state is not provided.
-    Default: [`randn32`](@extref).
+    Default: `randn32`.
   - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
 
 Composition:

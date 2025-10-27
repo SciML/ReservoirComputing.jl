@@ -2,21 +2,27 @@
 
 ## Base Layers
 
-```@doc
+```@docs
     ReservoirChain
     Collect
     StatefulLayer
-    LinearReadout
 ```
 
-## External Layers
+## Readout Layers
 
 ```@docs
+    LinearReadout
     SVMReadout
 ```
 
 ## Echo State Networks
 
-```@doc
+```@docs
     ESNCell
+```
+
+## REservoir computing with cellualr automata
+
+```@docs
+    RECACell
 ```

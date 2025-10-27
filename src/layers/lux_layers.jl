@@ -8,6 +8,22 @@ end
 Base.show(io::IO, wf::WrappedFunction) = print(io, "WrappedFunction(", wf.func, ")")
 
 # adapted from lux layers/recurrent StatefulRecurrentCell
+@doc raw"""
+    StatefulLayer(cell::AbstractReservoirRecurrentCell)
+
+A lightweight wrapper that makes a recurrent cell carry its imput state to the
+next step.
+
+## Arguments
+
+- `cell`: Any `AbstractReservoirRecurrentCell` (e.g. [`ESNCell`](@ref)).
+
+## States
+
+- `cell`: internal states for the wrapped `cell` (e.g., RNG replicas, etc.).
+- `carry`: the per-sequence hidden state; initialized to `nothing`.
+
+"""
 @concrete struct StatefulLayer <: AbstractLuxWrapperLayer{:cell}
     cell <: AbstractReservoirRecurrentCell
 end
@@ -29,15 +45,76 @@ function applyrecurrentcell(sl::AbstractReservoirRecurrentCell, inp, ps, st, ::N
     return apply(sl, inp, ps, st)
 end
 
-###build the ReservoirChain
+@doc raw"""
+    ReservoirChain(layers...; name=nothing)
+    ReservoirChain(xs::AbstractVector; name=nothing)
+    ReservoirChain(nt::NamedTuple; name=nothing)
+    ReservoirChain(; name=nothing, kwargs...)
 
-#abstract type RCLayer <: AbstractLuxLayer end
-#abstract type RCContainerLayer <: AbstractLuxContainerLayer end
+A lightweight, Lux-compatible container that composes a sequence of layers
+and executes them in order. The implementation of `ReservoirChain` is
+equivalent to Lux's own `Chain`.
 
-"""
-    ReservoirChain(layers...)
+## Construction
 
-A simple container that holds a sequence of layers
+You can build a chain from:
+
+  - **Positional layers:** `ReservoirChain(l1, l2, ...)`
+  - **A vector of layers:** `ReservoirChain([l1, l2, ...])`
+  - **A named tuple of layers:** `ReservoirChain((; layer_a=l1, layer_b=l2))`
+  - **Keywords (sugar for a named tuple):** `ReservoirChain(; layer_a=l1, layer_b=l2)`
+
+In all cases, function objects are automatically wrapped via `WrappedFunction`
+so they can participate like regular layers. If a [`LinearReadout`](@ref) with
+`include_collect=true` is present, the chain automatically inserts a [`Collect`](@ref)
+layer immediately before that readout.
+
+Use `name` to optionally tag the chain instance.
+
+## Inputs
+
+`(x, ps, st)` where:
+
+  - `x`: input to the first layer.
+  - `ps`: parameters as a named tuple with the same fields and order as the chain's layers.
+  - `st`: states as a named tuple with the same fields and order as the chain's layers.
+
+The call `(c::ReservoirChain)(x, ps, st)` forwards `x` through each layer:
+`(x, ps_i, st_i) -> (x_next, st_i′)` and returns the final output and the
+updated states for every layer.
+
+## Returns
+
+  - `(y, st′)` where `y` is the output of the last layer and `st′` is a named
+    tuple collecting the updated states for each layer.
+
+## Parameters
+
+  - A `NamedTuple` whose fields correspond 1:1 with the layers. Each field
+    holds the parameters for that layer.
+  - Field names are generated as `:layer_1, :layer_2, ...` when constructed
+    positionally, or preserved when you pass a `NamedTuple`/keyword constructor.
+
+## States
+
+  - A `NamedTuple` whose fields correspond 1:1 with the layers. Each field
+    holds the state for that layer.
+
+## Layer access & indexing
+
+  - `c[i]`: get the *i*-th layer (1-based).
+  - `c[indices]`: return a new `ReservoirChain` formed by selecting a subset of layers.
+  - `getproperty(c, :layer_k)`: access layer `k` by its generated/explicit name.
+  - `length(c)`, `firstindex(c)`, `lastindex(c)`: standard collection interfaces.
+
+## Notes
+
+  - **Function wrapping:** Any plain `Function` in the constructor is wrapped as
+    `WrappedFunction(f)`. Non-layer, non-function objects will error.
+  - **Auto-collect for readouts:** When a [`LinearReadout`](@ref) has
+    `include_collect=true`, the constructor expands it to `(Collect(), readout)`
+    so that downstream tooling can capture features consistently.
+
 """
 @concrete struct ReservoirChain <: AbstractLuxWrapperLayer{:layers}
     layers <: NamedTuple
@@ -82,7 +159,7 @@ end
 (c::ReservoirChain)(x, ps, st::NamedTuple) = applychain(c.layers, x, ps, st)
 
 @generated function applychain(
-    layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}
+        layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}
 ) where {fields}
     @assert isa(fields, NTuple{<:Any, Symbol})
     N = length(fields)

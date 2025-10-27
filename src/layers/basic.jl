@@ -11,7 +11,7 @@ abstract type AbstractReservoirTrainableLayer <: AbstractLuxLayer end
 Linear readout layer with optional bias and elementwise activation. Intended as
 the final, trainable mapping from collected features (e.g., reservoir state) to
 outputs. When `include_collect=true`, training will collect features immediately
-before this layer (logically inserting a [`Collect()`](@ref) right before it).
+before this layer (logically inserting a [`Collect`](@ref) right before it).
 
 ## Equation
 
@@ -29,7 +29,7 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
 
 - `use_bias`: Include an additive bias vector `b`. Default: `false`.
 - `include_collect`: If `true` (default), training collects features immediately
-  before this layer (as if a [`Collect()`](@ref) were inserted right before it).
+  before this layer (as if a [`Collect`](@ref) were inserted right before it).
 
 ## Parameters
 
@@ -42,9 +42,11 @@ before this layer (logically inserting a [`Collect()`](@ref) right before it).
 
 ## Notes
 
-- In ESN workflows, readout weights are typically set via ridge regression in
-  `train!(...)`. Therefore, how `Readout` gets initialized is of no consequence.
-- If you set `include_collect=false`, make sure a [`Collect()`](@ref) appears earlier in the chain.
+- In ESN workflows, readout weights are typically replaced via ridge regression in
+  [`train!`](@ref). Therefore, how `LinearReadout` gets initialized is of no consequence.
+  Additionally, the dimesions will also not be taken into account, as [`train!`](@ref)
+  will replace the weights.
+- If you set `include_collect=false`, make sure a [`Collect`](@ref) appears earlier in the chain.
   Otherwise training may operate on the post-readout signal,
   which is usually unintended.
 """
@@ -106,9 +108,9 @@ end
     Collect()
 
 Marker layer that passes data through unchanged but marks a feature
-checkpoint for [`collectstates`](@ref). At each time step, whenever a `Collect()` is
+checkpoint for [`collectstates`](@ref). At each time step, whenever a `Collect` is
 encountered in the chain, the current vector is recorded as part of the feature
-vector used to train the readout. If multiple `Collect()` layers exist, their
+vector used to train the readout. If multiple `Collect` layers exist, their
 vectors are concatenated with `vcat` in order of appearance.
 
 ## Arguments
@@ -137,13 +139,13 @@ vectors are concatenated with `vcat` in order of appearance.
 
 ## Notes
 
-- When used with a single `Collect()` before a [`LinearReadout`](@ref), training uses exactly
+- When used with a single `Collect` before a [`LinearReadout`](@ref), training uses exactly
   the tensor right before the readout (e.g., the reservoir state).
-- With **multiple** `Collect()` layers (e.g., after different submodules), the
+- With **multiple** `Collect` layers (e.g., after different submodules), the
   per-step features are `vcat`-ed in chain order to form one feature vector.
 - If the readout is constructed with `include_collect=true`, an *implicit*
   collection point is assumed immediately before the readout. Use an explicit
-  `Collect()` only when you want to control where/what is collected (or to stack
+  `Collect` only when you want to control where/what is collected (or to stack
   multiple features).
 
   ```julia
@@ -167,9 +169,9 @@ Base.show(io::IO, cl::Collect) = print(io, "Collection point of states")
     collectstates(rc, data, ps, st)
 
 Run the sequence `data` once through the reservoir chain `rc`, advancing the
-model state over time, and collect feature vectors at every [`Collect()`](@ref) layer.
-If more than one [`Collect()`](ref) is encountered in a step, their vectors are
-concatenated with `vcat` in order of appearance. If no [`Collect()`](@ref) is seen
+model state over time, and collect feature vectors at every [`Collect`](@ref) layer.
+If more than one [`Collect`](@ref) is encountered in a step, their vectors are
+concatenated with `vcat` in order of appearance. If no [`Collect`](@ref) is seen
 in a step, the feature defaults to the final vector exiting the chain for
 that time step.
 
@@ -180,7 +182,7 @@ that time step.
 
 ## Arguments
 
-- `rc`: A [`ReservoirChain`](@ref) (or compatible [`AbstractLuxLayer`](@extref) with `.layers`).
+- `rc`: A [`ReservoirChain`](@ref) (or compatible `AbstractLuxLayer` with `.layers`).
 - `data`: Input sequence of shape `(in_dims, T)`, where columns are time steps.
 - `ps`, `st`: Current parameters and state for `rc`.
 
@@ -188,7 +190,7 @@ that time step.
 
 - `states`: Reservoir states, i.e. a feature matrix with one column per
   time step. The feature dimension `n_features` equals the vertical concatenation
-  of all vectors captured at [`Collect()`](@ref) layers in that step.
+  of all vectors captured at [`Collect`](@ref) layers in that step.
 - `st`: Updated model states.
 
 """

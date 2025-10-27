@@ -9,7 +9,7 @@ utilities)
 ## Using provided layers: ReservoirChain, ESNCell, and LinearReadout
 
 The library provides a [`ReservoirChain`](@ref), which is virtually
-equivalent to Lux's [`Chain`](@extref). Passing layers, or functions,
+equivalent to Lux's `Chain`. Passing layers, or functions,
 to the chain will concatenate them, and will allow the flow of the input
 data through the model.
 
@@ -48,7 +48,7 @@ the weights of the input layer:
 
 ```@example scratch
 using Random
-Random.seed(43)
+Random.seed!(43)
 
 rng = MersenneTwister(17)
 ps_s, st_s = setup(rng, esn_scratch)
