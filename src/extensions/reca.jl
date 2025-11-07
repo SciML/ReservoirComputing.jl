@@ -56,6 +56,14 @@ struct RandomMapping{I, T} <: AbstractInputEncoding
     expansion_size::T
 end
 
+function RandomMapping(; permutations = 8, expansion_size = 40)
+    RandomMapping(permutations, expansion_size)
+end
+
+function RandomMapping(permutations; expansion_size = 40)
+    RandomMapping(permutations, expansion_size)
+end
+
 struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     permutations::T
     expansion_size::E

@@ -1,17 +1,9 @@
 module RCCellularAutomataExt
-using ReservoirComputing: RECA, RandomMapping, RandomMaps, AbstractInputEncoding,
-                          IntegerType, LinearReadout, ReservoirChain, StatefulLayer
-import ReservoirComputing: RECACell, RECA
+using ReservoirComputing: RECA, AbstractInputEncoding, ReservoirComputer,
+                          IntegerType, LinearReadout, StatefulLayer
+import ReservoirComputing: RECACell, RECA, RandomMapping, RandomMaps
 using CellularAutomata
 using Random: randperm
-
-function RandomMapping(; permutations = 8, expansion_size = 40)
-    RandomMapping(permutations, expansion_size)
-end
-
-function RandomMapping(permutations; expansion_size = 40)
-    RandomMapping(permutations, expansion_size)
-end
 
 function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::IntegerType)
     maps = init_maps(in_dims, rm.permutations, rm.expansion_size)
@@ -99,7 +91,7 @@ function RECA(in_dims::IntegerType,
 
     ro = LinearReadout(rm.states_size => out_dims, readout_activation)
 
-    return ReservoirChain((StatefulLayer(cell), mods..., ro)...)
+    return ReservoirComputer(StatefulLayer(cell), mods, ro)
 end
 
 end #module

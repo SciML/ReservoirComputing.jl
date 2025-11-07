@@ -47,9 +47,8 @@ We are going to test the recall ability of the model, feeding the input data
 and investigating whether the predicted output equals the output data.
 
 ```@example reca
-_, st0 = setup(rng, reca) #reset the first ca state
+st0 = resetcarry!(rng, reca, st) #reset the first ca state
 pred_out, st = predict(reca, input, ps, st0)
 final_pred = convert(AbstractArray{Float32}, pred_out .> 0.5)
-
 final_pred == output
 ```

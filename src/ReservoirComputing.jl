@@ -18,7 +18,9 @@ using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
 
 #@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
 
+#reservoir computers
 include("generics.jl")
+include("reservoircomputer.jl")
 #layers
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
@@ -39,6 +41,7 @@ include("models/esn_hybrid.jl")
 #extensions
 include("extensions/reca.jl")
 
+export ReservoirComputer
 export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
        train!,
        predict, resetcarry!

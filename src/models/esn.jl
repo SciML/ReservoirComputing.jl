@@ -66,7 +66,7 @@ Composition:
 
 ## Parameters
 
-  - `cell` — parameters of the internal [`ESNCell`](@ref), including:
+  - `reservoir` — parameters of the internal [`ESNCell`](@ref), including:
       - `input_matrix :: (res_dims × in_dims)` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
@@ -80,19 +80,11 @@ Composition:
 
 ## States
 
-Created by `initialstates(rng, esn)`:
-
-  - `cell` — states for the internal [`ESNCell`](@ref) (e.g. `rng` used to sample initial hidden states).
+  - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng` used to sample initial hidden states).
   - `states_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
-@concrete struct ESN <: AbstractEchoStateNetwork{(:cell, :states_modifiers, :readout)}
-    cell::Any
-    states_modifiers::Any
-    readout::Any
-end
-
 function ESN(in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh;
         readout_activation = identity,
@@ -103,33 +95,5 @@ function ESN(in_dims::IntegerType, res_dims::IntegerType,
                  Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-    return ESN(cell, mods, ro)
-end
-
-function initialparameters(rng::AbstractRNG, esn::ESN)
-    ps_cell = initialparameters(rng, esn.cell)
-    ps_mods = map(l -> initialparameters(rng, l), esn.states_modifiers) |> Tuple
-    ps_ro = initialparameters(rng, esn.readout)
-    return (cell = ps_cell, states_modifiers = ps_mods, readout = ps_ro)
-end
-
-function initialstates(rng::AbstractRNG, esn::ESN)
-    st_cell = initialstates(rng, esn.cell)
-    st_mods = map(l -> initialstates(rng, l), esn.states_modifiers) |> Tuple
-    st_ro = initialstates(rng, esn.readout)
-    return (cell = st_cell, states_modifiers = st_mods, readout = st_ro)
-end
-
-function _partial_apply(esn::ESN, inp, ps, st)
-    out, st_cell = apply(esn.cell, inp, ps.cell, st.cell)
-    out,
-    st_mods = _apply_seq(
-        esn.states_modifiers, out, ps.states_modifiers, st.states_modifiers)
-    return out, (cell = st_cell, states_modifiers = st_mods)
-end
-
-function (esn::ESN)(inp, ps, st)
-    out, new_st = _partial_apply(esn, inp, ps, st)
-    out, st_ro = apply(esn.readout, out, ps.readout, st.readout)
-    return out, merge(new_st, (readout = st_ro,))
+    return ReservoirComputer(cell, mods, ro)
 end
