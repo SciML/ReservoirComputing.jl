@@ -34,18 +34,18 @@ end
 
     ps, st = setup(rng, esn)
 
-    @test haskey(ps, :cell)
-    @test haskey(ps.cell, :input_matrix)
-    @test haskey(ps.cell, :reservoir_matrix)
-    @test !haskey(ps.cell, :bias)
-    @test size(ps.cell.input_matrix) == (res_dims, in_dims)
-    @test size(ps.cell.reservoir_matrix) == (res_dims, res_dims)
+    @test haskey(ps, :reservoir)
+    @test haskey(ps.reservoir, :input_matrix)
+    @test haskey(ps.reservoir, :reservoir_matrix)
+    @test !haskey(ps.reservoir, :bias)
+    @test size(ps.reservoir.input_matrix) == (res_dims, in_dims)
+    @test size(ps.reservoir.reservoir_matrix) == (res_dims, res_dims)
 
     @test haskey(ps, :readout)
     @test haskey(ps.readout, :weight)
     @test size(ps.readout.weight) == (out_dims, res_dims)
 
-    @test haskey(st, :cell)
+    @test haskey(st, :reservoir)
     @test haskey(st, :states_modifiers)
     @test haskey(st, :readout)
     @test st.states_modifiers isa Tuple
@@ -72,7 +72,7 @@ end
 
     @test size(Y) == (D, 1)
     @test vec(Y) ≈ x
-    @test haskey(st2, :cell) && haskey(st2, :states_modifiers) && haskey(st2, :readout)
+    @test haskey(st2, :reservoir) && haskey(st2, :states_modifiers) && haskey(st2, :readout)
 end
 
 @testset "ESN: forward (batch matrix) with identity pipeline -> Y == X" begin
@@ -155,7 +155,7 @@ end
     y, st2 = esn(x, ps, st)
 
     @test y ≈ x
-    @test haskey(st2, :cell)
+    @test haskey(st2, :reservoir)
     @test haskey(st2, :states_modifiers)
     @test haskey(st2, :readout)
 end

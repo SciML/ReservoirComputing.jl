@@ -3,7 +3,7 @@ using Test
 
 @testset "Common Utilities" begin
     @safetestset "Quality Assurance" include("qa.jl")
-    #@safetestset "States" include("test_states.jl")
+    @safetestset "States" include("test_states.jl")
 end
 
 @testset "Layers" begin

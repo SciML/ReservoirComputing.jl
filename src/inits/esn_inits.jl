@@ -791,7 +791,7 @@ function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     while tmp <= sparsity
         i = rand_range(rng, res_dim)
         j = rand_range(rng, res_dim)
-        θ = DeviceAgnostic.rand(rng, T) * T(2) - T(1)
+        θ = DeviceAgnostic.rand(rng, T) * T(2) .- T(1)
         reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
         tmp = get_sparsity(reservoir_matrix, res_dim)
     end
