@@ -3,6 +3,7 @@
 ## Base Layers
 
 ```@docs
+    ReservoirComputer
     ReservoirChain
     Collect
     StatefulLayer
@@ -21,7 +22,7 @@
     ESNCell
 ```
 
-## REservoir computing with cellualr automata
+## Reservoir computing with cellular automata
 
 ```@docs
     RECACell

@@ -304,7 +304,7 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for idx in 1:num_for_state
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
+        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:length(idxs))]
         random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(
             rng, T, 1:length(idxs))]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
