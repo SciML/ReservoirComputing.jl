@@ -30,9 +30,9 @@ function StandardRidge()
 end
 
 function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
-    @assert washout ≥ 0 "washout must be ≥ 0"
+    @assert washout≥0 "washout must be ≥ 0"
     len_states = size(states, 2)
-    @assert washout < len_states "washout=$washout is ≥ number of time steps=$len_states"
+    @assert washout<len_states "washout=$washout is ≥ number of time steps=$len_states"
     first_idx = washout + 1
     states_wo = states[:, (washout + 1):end]
     targets_wo = targets[:, (washout + 1):end]
@@ -74,7 +74,8 @@ additional changes.
   them inside `train_method` or exposing a separate API; keep `train`’s return
   value as the forward method only.
 """
-function train(sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...)
+function train(
+        sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...)
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
     b = [target_data'; zeros(n_states, size(target_data, 1))]

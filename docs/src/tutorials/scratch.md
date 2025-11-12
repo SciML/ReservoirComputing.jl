@@ -56,7 +56,7 @@ ps_s, st_s = setup(rng, esn_scratch)
 rng = MersenneTwister(17)
 ps, st = setup(rng, esn)
 
-ps_s.layer_1.input_matrix == ps.cell.input_matrix
+ps_s.layer_1.input_matrix == ps.reservoir.input_matrix
 ```
 
 Both the models can be trained using [`train!`](@ref), and predictions can be

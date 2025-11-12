@@ -86,7 +86,7 @@ end
 function apply_scale!(input_matrix::AbstractArray,
         scaling::Tuple{<:Number, <:Number}, ::Type{T}) where {T}
     lower, upper = T(scaling[1]), T(scaling[2])
-    @assert lower < upper "lower < upper required"
+    @assert lower<upper "lower < upper required"
     scale = upper - lower
     @. input_matrix = input_matrix * scale + lower
     return input_matrix
@@ -95,7 +95,7 @@ end
 function apply_scale!(input_matrix::AbstractMatrix,
         scaling::AbstractVector, ::Type{T}) where {T <: Number}
     ncols = size(input_matrix, 2)
-    @assert length(scaling) == ncols "need one scaling per column"
+    @assert length(scaling)==ncols "need one scaling per column"
     for (idx, col) in enumerate(eachcol(input_matrix))
         apply_scale!(col, scaling[idx], T)
     end
@@ -2020,9 +2020,9 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         \n"
     end
     weights = isa(weight, AbstractVector) ? T.(weight) : fill(T(weight), num_blocks)
-    @assert length(weights) == num_blocks "
-        weight vector must have length = number of blocks
-    "
+    @assert length(weights)==num_blocks "
+      weight vector must have length = number of blocks
+  "
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, n_rows, n_cols)
     for block in 1:num_blocks
         row_start = (block - 1) * block_size + 1

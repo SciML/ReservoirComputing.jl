@@ -44,7 +44,7 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
 
 - In ESN workflows, readout weights are typically replaced via ridge regression in
   [`train!`](@ref). Therefore, how `LinearReadout` gets initialized is of no consequence.
-  Additionally, the dimesions will also not be taken into account, as [`train!`](@ref)
+  Additionally, the dimensions will also not be taken into account, as [`train!`](@ref)
   will replace the weights.
 - If you set `include_collect=false`, make sure a [`Collect`](@ref) appears earlier in the chain.
   Otherwise training may operate on the post-readout signal,
@@ -60,7 +60,8 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
     include_collect <: StaticBool
 end
 
-function LinearReadout(mapping::Pair{<:IntegerType, <:IntegerType}, activation = identity; kwargs...)
+function LinearReadout(
+        mapping::Pair{<:IntegerType, <:IntegerType}, activation = identity; kwargs...)
     return LinearReadout(first(mapping), last(mapping), activation; kwargs...)
 end
 

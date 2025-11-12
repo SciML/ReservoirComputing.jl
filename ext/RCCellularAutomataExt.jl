@@ -30,10 +30,10 @@ function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
 end
 
 function single_encoding(input_vector, encoded_vector, map)
-    @assert length(map) == length(input_vector) """
-        RandomMaps mismatch: map length = $(length(map)) but input length = $(length(input_vector)).
-        (Build RandomMaps with in_dims = size(input, 1) used at training time.)
-        """
+    @assert length(map)==length(input_vector) """
+      RandomMaps mismatch: map length = $(length(map)) but input length = $(length(input_vector)).
+      (Build RandomMaps with in_dims = size(input, 1) used at training time.)
+      """
     new_enc_vec = copy(encoded_vector)
 
     for i in 1:size(input_vector, 1)

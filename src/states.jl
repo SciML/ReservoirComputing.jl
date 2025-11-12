@@ -1,6 +1,7 @@
 
-@inline function _apply_tomatrix(states_mod::F, states::AbstractMatrix) where {F <:
-                                                                               Function}
+@inline function _apply_tomatrix(
+        states_mod::F, states::AbstractMatrix) where {F <:
+                                                      Function}
     cols = axes(states, 2)
     states_1 = states_mod(states[:, first(cols)])
     new_states = similar(states_1, length(states_1), length(cols))
@@ -54,11 +55,12 @@ point with the input that it receives.
 esn = ReservoirChain(
     Extend(
         StatefulLayer(
-        ESNCell(3 => 300; init_reservoir = rand_sparse(; radius = 1.2, sparsity = 6/300))
+        ESNCell(
+        3 => 300; init_reservoir = rand_sparse(; radius = 1.2, sparsity = 6 / 300))
     )
     ),
     NLAT2(),
-    LinearReadout(300+3 => 3)
+    LinearReadout(300 + 3 => 3)
 )
 ```
 

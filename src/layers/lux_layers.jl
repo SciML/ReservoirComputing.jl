@@ -11,7 +11,7 @@ Base.show(io::IO, wf::WrappedFunction) = print(io, "WrappedFunction(", wf.func, 
 @doc raw"""
     StatefulLayer(cell::AbstractReservoirRecurrentCell)
 
-A lightweight wrapper that makes a recurrent cell carry its imput state to the
+A lightweight wrapper that makes a recurrent cell carry its input state to the
 next step.
 
 ## Arguments

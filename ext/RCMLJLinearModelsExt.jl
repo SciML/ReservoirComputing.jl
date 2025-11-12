@@ -5,7 +5,7 @@ using MLJLinearModels
 function ReservoirComputing.train(regressor::MLJLinearModels.GeneralizedLinearRegression,
         states::AbstractMatrix{<:Real}, target::AbstractMatrix{<:Real};
         kwargs...)
-    @assert size(states, 2) == size(target, 2) "states and target must share the same number of columns."
+    @assert size(states, 2)==size(target, 2) "states and target must share the same number of columns."
 
     if regressor.fit_intercept
         throw(ArgumentError("fit_intercept=true not supported here. \

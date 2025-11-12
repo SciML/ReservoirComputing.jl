@@ -84,7 +84,7 @@ end
     rc = ReservoirChain(ro)
 
     keys = propertynames(rc.layers)
-    ps0 = NamedTuple{keys}(ntuple(_->NamedTuple(), length(keys)))
+    ps0 = NamedTuple{keys}(ntuple(_ -> NamedTuple(), length(keys)))
     st0 = NamedTuple()
 
     ps1, st1 = ReservoirComputing.addreadout!(rc, model, ps0, st0)
@@ -123,7 +123,7 @@ end
     rc = ReservoirChain(ro)
 
     keys = propertynames(rc.layers)
-    ps0 = NamedTuple{keys}(ntuple(_->NamedTuple(), length(keys)))
+    ps0 = NamedTuple{keys}(ntuple(_ -> NamedTuple(), length(keys)))
     st0 = NamedTuple()
 
     ps1, st1 = ReservoirComputing.addreadout!(rc, models, ps0, st0)
@@ -167,7 +167,7 @@ end
     rc = ReservoirChain(ro)
 
     keys = propertynames(rc.layers)
-    ps0 = NamedTuple{keys}(ntuple(_->NamedTuple(), length(keys)))
+    ps0 = NamedTuple{keys}(ntuple(_ -> NamedTuple(), length(keys)))
 
     ps1, _ = ReservoirComputing.addreadout!(rc, model, ps0, NamedTuple())
 
@@ -197,7 +197,7 @@ end
     rc = ReservoirChain(ro)
 
     keys = propertynames(rc.layers)
-    ps0 = NamedTuple{keys}(ntuple(_->NamedTuple(), length(keys)))
+    ps0 = NamedTuple{keys}(ntuple(_ -> NamedTuple(), length(keys)))
     ps1, _ = ReservoirComputing.addreadout!(rc, model, ps0, NamedTuple())
 
     idx_svm = findfirst(k -> getfield(rc.layers, k) isa SVMReadout, keys)

@@ -7,7 +7,7 @@ import ReservoirComputing: train
 
 function train(svr::LIBSVM.AbstractSVR,
         states::AbstractArray, target::AbstractArray)
-    @assert size(states, 2) == size(target, 2) "states and target must share columns."
+    @assert size(states, 2)==size(target, 2) "states and target must share columns."
     perm_states = permutedims(states)
     size_target = size(target, 1)
 

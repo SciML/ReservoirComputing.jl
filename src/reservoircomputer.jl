@@ -29,7 +29,8 @@ features, and install trained readout weights.
 - `(y, st′)` where `y` is the readout output and `st′` contains the updated
   states of the reservoir, modifiers, and readout.
 """
-@concrete struct ReservoirComputer <: AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+@concrete struct ReservoirComputer <:
+                 AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
     reservoir::Any
     states_modifiers::Any
     readout::Any
@@ -72,7 +73,8 @@ function (rc::AbstractReservoirComputer)(inp, ps, st)
     return out, merge(new_st, (readout = st_ro,))
 end
 
-function collectstates(rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple)
+function collectstates(
+        rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
     collected = Any[]
     for inp in eachcol(data)
@@ -130,7 +132,8 @@ function is provided, it is called to create a new initial hidden state.
   Same as above, but also returns the unchanged `ps` for convenience.
 
 """
-function resetcarry!(rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing)
+function resetcarry!(
+        rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing)
     carry = get(st.reservoir, :carry, nothing)
     if carry === nothing
         outd = rc.reservoir.cell.out_dims

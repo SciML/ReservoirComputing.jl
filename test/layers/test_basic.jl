@@ -98,7 +98,7 @@ using LinearAlgebra
             first_layer = getfield(L, 1)
             @test first_layer isa Collect
         catch e
-            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception = (
+            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception=(
                 e, catch_backtrace())
         end
     end
