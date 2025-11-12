@@ -66,15 +66,15 @@ Created by `initialstates(rng, esn)`:
   - `rng`: a replicated RNG used to sample initial hidden states when needed.
 """
 @concrete struct ESNCell <: AbstractEchoStateNetworkCell
-    activation::Any
+    activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_bias::Any
-    init_reservoir::Any
-    init_input::Any
+    init_bias
+    init_reservoir
+    init_input
     #init_feedback::F
-    init_state::Any
-    leak_coefficient::Any
+    init_state
+    leak_coefficient
     use_bias <: StaticBool
 end
 

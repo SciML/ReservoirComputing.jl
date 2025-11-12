@@ -16,7 +16,7 @@ next step.
 
 ## Arguments
 
-- `cell`: Any `AbstractReservoirRecurrentCell` (e.g. [`ESNCell`](@ref)).
+- `cell`: `AbstractReservoirRecurrentCell` (e.g. [`ESNCell`](@ref)).
 
 ## States
 
@@ -118,7 +118,7 @@ updated states for every layer.
 """
 @concrete struct ReservoirChain <: AbstractLuxWrapperLayer{:layers}
     layers <: NamedTuple
-    name::Any
+    name
 end
 
 function ReservoirChain(xs...; name = nothing)

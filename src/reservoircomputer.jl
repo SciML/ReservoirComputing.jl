@@ -31,9 +31,9 @@ features, and install trained readout weights.
 """
 @concrete struct ReservoirComputer <:
                  AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
-    reservoir::Any
-    states_modifiers::Any
-    readout::Any
+    reservoir
+    states_modifiers
+    readout
 end
 
 function initialparameters(rng::AbstractRNG, rc::ReservoirComputer)

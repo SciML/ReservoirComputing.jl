@@ -51,11 +51,11 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
   which is usually unintended.
 """
 @concrete struct LinearReadout <: AbstractReservoirTrainableLayer
-    activation::Any
+    activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_weight::Any
-    init_bias::Any
+    init_weight
+    init_bias
     use_bias <: StaticBool
     include_collect <: StaticBool
 end
