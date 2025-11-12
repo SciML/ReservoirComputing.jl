@@ -115,9 +115,9 @@ Composition:
 
 """
 @concrete struct DeepESN <: AbstractEchoStateNetwork{(:cells, :states_modifiers, :readout)}
-    cells
-    states_modifiers
-    readout
+    cells::Any
+    states_modifiers::Any
+    readout::Any
 end
 
 function DeepESN(in_dims::IntegerType,

@@ -128,7 +128,7 @@ and [Yilmaz2014](@cite).
 
 """
 @concrete struct RECACell <: AbstractReservoirRecurrentCell
-    automaton
+    automaton::Any
     enc <: RandomMaps
 end
 

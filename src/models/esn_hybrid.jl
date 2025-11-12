@@ -79,10 +79,10 @@ Created by `initialstates(rng, hesn)`:
 """
 @concrete struct HybridESN <: AbstractEchoStateNetwork{(
     :cell, :states_modifiers, :readout, :knowledge_model)}
-    cell
-    knowledge_model
-    states_modifiers
-    readout
+    cell::Any
+    knowledge_model::Any
+    states_modifiers::Any
+    readout::Any
 end
 
 function HybridESN(km,
