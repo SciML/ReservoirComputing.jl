@@ -485,27 +485,27 @@ julia> add_jumps!(matrix, 1.0)
 ```
 """
 function add_jumps!(rng::AbstractRNG,
-                    reservoir_matrix::AbstractMatrix,
-                    weight::Number,
-                    jump_size::Integer;
-                    sampling_type = :no_sample,
-                    start::Integer = 1,
-                    kwargs...)
+        reservoir_matrix::AbstractMatrix,
+        weight::Number,
+        jump_size::Integer;
+        sampling_type = :no_sample,
+        start::Integer = 1,
+        kwargs...)
     N = size(reservoir_matrix, 1)
     g = gcd(N, jump_size)
     ring_len = (N % jump_size == 0) ? div(N, g) : fld(N, jump_size)
     weights = fill(weight, ring_len)
     return add_jumps!(rng, reservoir_matrix, weights, jump_size;
-                      sampling_type=sampling_type, start=start, kwargs...)
+        sampling_type = sampling_type, start = start, kwargs...)
 end
 
 function add_jumps!(rng::AbstractRNG,
-                    reservoir_matrix::AbstractMatrix,
-                    weight::AbstractVector,
-                    jump_size::Integer;
-                    sampling_type = :no_sample,
-                    start::Integer = 1,
-                    kwargs...)
+        reservoir_matrix::AbstractMatrix,
+        weight::AbstractVector,
+        jump_size::Integer;
+        sampling_type = :no_sample,
+        start::Integer = 1,
+        kwargs...)
     N = size(reservoir_matrix, 1)
     @assert N == size(reservoir_matrix, 2) "reservoir_matrix must be square"
     @assert 1 ≤ start ≤ N "start must be in 1:N"
@@ -548,7 +548,7 @@ function add_jumps!(rng::AbstractRNG,
 
     for k in 1:num_edges
         i = seq[k]
-        j = divisible ? (k == num_edges ? start : seq[k+1]) : seq[k+1]
+        j = divisible ? (k == num_edges ? start : seq[k + 1]) : seq[k + 1]
         wk = w[k]
         reservoir_matrix[i, j] = wk
         reservoir_matrix[j, i] = wk

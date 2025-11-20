@@ -304,9 +304,9 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for idx in 1:num_for_state
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:length(idxs))]
-        random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(
-            rng, T, 1:length(idxs))]
+        random_row_idx = idxs[rand(rng, 1:length(idxs))]
+        random_clm_idx = range(1, state_size; step = 1)[rand(
+            rng, 1:length(idxs))]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * T(scaling))
     end
@@ -314,9 +314,9 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     for idx in 1:num_for_model
         idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
                             for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:length(idxs))]
-        random_clm_idx = range(state_size + 1, in_size; step = 1)[DeviceAgnostic.rand(
-            rng, T, 1:length(idxs))]
+        random_row_idx = idxs[rand(rng, 1:length(idxs))]
+        random_clm_idx = range(state_size + 1, in_size; step = 1)[rand(
+            rng, 1:length(idxs))]
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
                                                         T(0.5)) .* (T(2) * T(scaling))
     end
@@ -1197,7 +1197,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
-        fb_weight::Union{Number, AbstractVector} = T(0.2), shift::Integer = 1,
+        fb_weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
