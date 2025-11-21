@@ -302,23 +302,29 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     num_for_model = floor(Int, res_size * (1 - gamma))
 
     for idx in 1:num_for_state
-        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
-                            for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[rand(rng, 1:length(idxs))]
-        random_clm_idx = range(1, state_size; step = 1)[rand(
-            rng, 1:length(idxs))]
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * T(scaling))
+        rowmask = [all(zero_connections .== input_matrix[jdx, :])
+                   for jdx in axes(input_matrix, 1)]
+        idxs = findall(rowmask)
+        isempty(idxs) && break
+
+        random_row_idx = rand(rng, idxs)
+        random_clm_idx = rand(rng, 1:state_size)
+
+        input_matrix[random_row_idx, random_clm_idx] =
+            (DeviceAgnostic.rand(rng, T) - T(0.5)) * (T(2) * T(scaling))
     end
 
     for idx in 1:num_for_model
-        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
-                            for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[rand(rng, 1:length(idxs))]
-        random_clm_idx = range(state_size + 1, in_size; step = 1)[rand(
-            rng, 1:length(idxs))]
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * T(scaling))
+        rowmask = [all(zero_connections .== input_matrix[jdx, :])
+                   for jdx in axes(input_matrix, 1)]
+        idxs = findall(rowmask)
+        isempty(idxs) && break
+
+        random_row_idx = rand(rng, idxs)
+        random_clm_idx = rand(rng, state_size + 1:in_size)
+
+        input_matrix[random_row_idx, random_clm_idx] =
+            (DeviceAgnostic.rand(rng, T) - T(0.5)) * (T(2) * T(scaling))
     end
 
     return input_matrix
