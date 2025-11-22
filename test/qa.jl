@@ -1,4 +1,5 @@
-using ReservoirComputing, Aqua
+using ReservoirComputing, Aqua, JET
+
 @testset "Aqua" begin
     Aqua.find_persistent_tasks_deps(ReservoirComputing)
     Aqua.test_ambiguities(ReservoirComputing; recursive = false)
@@ -9,3 +10,5 @@ using ReservoirComputing, Aqua
     Aqua.test_unbound_args(ReservoirComputing)
     Aqua.test_undefined_exports(ReservoirComputing)
 end
+
+JET.test_package(ReservoirComputing)

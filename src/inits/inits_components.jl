@@ -19,7 +19,7 @@ function check_modified_ressize(res_size::Integer, approx_res_size::Integer)
     if res_size != approx_res_size
         @warn """Reservoir size has changed!\n
             Computed reservoir size ($res_size) does not equal the \
-            provided reservoir size ($approx_res_size). \n 
+            provided reservoir size ($approx_res_size). \n
             Using computed value ($res_size). Make sure to modify the \
             reservoir initializer accordingly. \n
         """
@@ -484,28 +484,76 @@ julia> add_jumps!(matrix, 1.0)
   0.0  0.0   1.0   0.0   0.0
 ```
 """
-function add_jumps!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::Number, jump_size::Integer; kwargs...)
-    weights = fill(
-        weight, length(collect(1:jump_size:(size(reservoir_matrix, 1) - jump_size))))
-    return add_jumps!(rng, reservoir_matrix, weights, jump_size; kwargs...)
+function add_jumps!(rng::AbstractRNG,
+        reservoir_matrix::AbstractMatrix,
+        weight::Number,
+        jump_size::Integer;
+        sampling_type = :no_sample,
+        start::Integer = 1,
+        kwargs...)
+    N = size(reservoir_matrix, 1)
+    g = gcd(N, jump_size)
+    ring_len = (N % jump_size == 0) ? div(N, g) : fld(N, jump_size)
+    weights = fill(weight, ring_len)
+    return add_jumps!(rng, reservoir_matrix, weights, jump_size;
+        sampling_type = sampling_type, start = start, kwargs...)
 end
 
-function add_jumps!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::AbstractVector, jump_size::Integer;
-        sampling_type = :no_sample, kwargs...)
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
-    w_idx = 1
-    for idx in 1:jump_size:(size(reservoir_matrix, 1) - jump_size)
-        tmp = (idx + jump_size) % size(reservoir_matrix, 1)
-        if tmp == 0
-            tmp = size(reservoir_matrix, 1)
+function add_jumps!(rng::AbstractRNG,
+        reservoir_matrix::AbstractMatrix,
+        weight::AbstractVector,
+        jump_size::Integer;
+        sampling_type = :no_sample,
+        start::Integer = 1,
+        kwargs...)
+    N = size(reservoir_matrix, 1)
+    @assert N == size(reservoir_matrix, 2) "reservoir_matrix must be square"
+    @assert 1 ≤ start ≤ N "start must be in 1:N"
+    @assert 1 ≤ jump_size < N "jump_size must be in 1:(N-1)"
+
+    divisible = (N % jump_size == 0)
+
+    seq = Int[start]
+    cur = start
+    while true
+        nxt = cur + jump_size
+        if nxt > N
+            if divisible
+                nxt = ((cur + jump_size - 1) % N) + 1
+                if nxt == start
+                    break
+                end
+                push!(seq, nxt)
+                cur = nxt
+                continue
+            else
+                break
+            end
+        else
+            push!(seq, nxt)
+            cur = nxt
         end
-        reservoir_matrix[idx, tmp] = weight[w_idx]
-        reservoir_matrix[tmp, idx] = weight[w_idx]
-        w_idx += 1
     end
+
+    num_edges = divisible ? length(seq) : (length(seq) - 1)
+    @assert num_edges ≥ 0
+    f_sample = getfield(@__MODULE__, sampling_type)
+    w = collect(weight)
+    if length(w) < num_edges
+        append!(w, fill(last(w), num_edges - length(w)))
+    elseif length(w) > num_edges
+        resize!(w, num_edges)
+    end
+    f_sample(rng, w; kwargs...)
+
+    for k in 1:num_edges
+        i = seq[k]
+        j = divisible ? (k == num_edges ? start : seq[k + 1]) : seq[k + 1]
+        wk = w[k]
+        reservoir_matrix[i, j] = wk
+        reservoir_matrix[j, i] = wk
+    end
+
     return reservoir_matrix
 end
 

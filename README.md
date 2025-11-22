@@ -27,22 +27,18 @@ Use the
 [in-development documentation](https://docs.sciml.ai/ReservoirComputing/dev/)
 to take a look at not yet released features.
 
-## Citing
+## Features
 
-If you use this library in your work, please cite:
+ReservoirComputing.jl provides layers,models, and functions to help build and train
+reservoir computing models. More specifically the software offers
 
-```bibtex
-@article{martinuzzi2022reservoircomputing,
-  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
-  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
-  journal = {Journal of Machine Learning Research},
-  year    = {2022},
-  volume  = {23},
-  number  = {288},
-  pages   = {1--8},
-  url     = {http://jmlr.org/papers/v23/22-0611.html}
-}
-```
+- Base layers for reservoir computing model construction such as `ReservoirChain`,
+  `Readout`, `Collect`, and `ESNCell`
+- Fully built models such as `ESN`, and `DeepESN`
+- 15+ reservoir initializers and 5+ input layer initializers
+- 5+ reservoir states modification algorithms
+- Sparse matrix computation through
+  [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 
 ## Installation
 
@@ -63,19 +59,23 @@ Pkg.add("ReservoirComputing")
 
 To illustrate the workflow of this library we will showcase
 how it is possible to train an ESN to learn the dynamics of the
-Lorenz system. As a first step we gather the data.
-For the `Generative` prediction we need the target data
+Lorenz system.
+
+### 1. Generate data
+
+As a general first step wee fix the random seed for reproducibilty
+
+```julia
+using Random
+Random.seed!(42)
+rng = MersenneTwister(17)
+```
+
+For an autoregressive prediction we need the target data
 to be one step ahead of the training data:
 
 ```julia
-using ReservoirComputing, OrdinaryDiffEq, Random
-Random.seed!(42)
-rng = MersenneTwister(17)
-
-#lorenz system parameters
-u0 = [1.0, 0.0, 0.0]
-tspan = (0.0, 200.0)
-p = [10.0, 28.0, 8 / 3]
+using OrdinaryDiffEq
 
 #define lorenz system
 function lorenz(du, u, p, t)
@@ -83,10 +83,10 @@ function lorenz(du, u, p, t)
     du[2] = u[1] * (p[2] - u[3]) - u[2]
     du[3] = u[1] * u[2] - p[3] * u[3]
 end
-#solve and take data
-prob = ODEProblem(lorenz, u0, tspan, p)
-data = Array(solve(prob, ABM54(); dt=0.02))
 
+#solve and take data
+prob = ODEProblem(lorenz, [1.0f0, 0.0f0, 0.0f0], (0.0, 200.0), [10.0f0, 28.0f0, 8/3])
+data = Array(solve(prob, ABM54(); dt=0.02))
 shift = 300
 train_len = 5000
 predict_len = 1250
@@ -94,39 +94,47 @@ predict_len = 1250
 #one step ahead for generative prediction
 input_data = data[:, shift:(shift + train_len - 1)]
 target_data = data[:, (shift + 1):(shift + train_len)]
-
 test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 ```
 
-Now that we have the data we can initialize the ESN with the chosen parameters.
-Given that this is a quick example we are going to change the least amount of
-possible parameters:
+### 2. Build Echo State Network
+
+We can either use the provided `ESN` or build one from scratch.
+We showcase the second option:
 
 ```julia
+using ReservoirComputing
 input_size = 3
 res_size = 300
-esn = ESN(input_data, input_size, res_size;
-    reservoir=rand_sparse(; radius=1.2, sparsity=6 / res_size),
-    input_layer=weighted_init,
-    nla_type=NLAT2(),
-    rng=rng)
+esn = ESN(input_size, res_size, input_size;
+    init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
+    state_modifiers=NLAT2
+)
 ```
 
-The echo state network can now be trained and tested.
-If not specified, the training will always be ordinary least squares regression:
+### 3. Train the Echo State Network
+
+ReservoirComputing.jl builds on Lux(Core), so in order to train the model
+we first need to instantiate the parameters and the states:
 
 ```julia
-output_layer = train(esn, target_data)
-output = esn(Generative(predict_len), output_layer)
+ps, st = setup(rng, esn)
+ps, st = train!(esn, input_data, target_data, ps, st)
 ```
 
-The data is returned as a matrix, `output` in the code above,
-that contains the predicted trajectories.
-The results can now be easily plotted:
+### 4. Predict and visualize
+
+We can now use the trained ESN to forecast the Lorenz system dynamics
+
+```julia
+output, st = predict(esn, 1250, ps, st; initialdata=test[:, 1])
+```
+
+We can now visualize the results
 
 ```julia
 using Plots
-plot(transpose(output); layout=(3, 1), label="predicted")
+plot(transpose(output); layout=(3, 1), label="predicted");
 plot!(transpose(test); layout=(3, 1), label="actual")
 ```
 
@@ -144,6 +152,23 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3]; label
 ```
 
 ![lorenz_attractor](https://user-images.githubusercontent.com/10376688/81470281-5a34b580-91ea-11ea-9eea-d2b266da19f4.png)
+
+## Citing
+
+If you use this library in your work, please cite:
+
+```bibtex
+@article{martinuzzi2022reservoircomputing,
+  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  journal = {Journal of Machine Learning Research},
+  year    = {2022},
+  volume  = {23},
+  number  = {288},
+  pages   = {1--8},
+  url     = {http://jmlr.org/papers/v23/22-0611.html}
+}
+```
 
 ## Acknowledgements
 

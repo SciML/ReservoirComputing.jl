@@ -6,14 +6,14 @@ using Test
     @safetestset "States" include("test_states.jl")
 end
 
-@testset "Echo State Networks" begin
-    @safetestset "ESN Initializers" include("esn/test_inits.jl")
-    @safetestset "ESN Train and Predict" include("esn/test_train.jl")
-    @safetestset "ESN Drivers" include("esn/test_drivers.jl")
-    @safetestset "Hybrid ESN" include("esn/test_hybrid.jl")
-    @safetestset "Deep ESN" include("esn/deepesn.jl")
+@testset "Layers" begin
+    @safetestset "Basic layers" include("layers/test_basic.jl")
+    @safetestset "ESN Cell" include("layers/test_esncell.jl")
+    @safetestset "SVMReadout" include("layers/test_svmreadout.jl")
 end
 
-@testset "CA based Reservoirs" begin
-    @safetestset "RECA" include("reca/test_predictive.jl")
+@testset "Echo State Networks" begin
+    @safetestset "ESN Initializers" include("esn/test_inits.jl")
+    @safetestset "ESN model" include("esn/test_esn.jl")
+    @safetestset "DeepESN model" include("esn/test_esn_deep.jl")
 end

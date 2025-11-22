@@ -69,14 +69,17 @@ input_inits = [
         delay_line,
         delay_line_backward,
         cycle_jumps,
-        simple_cycle
+        simple_cycle,
+        true_double_cycle,
+        double_cycle,
+        selfloop_cycle,
+        selfloop_delayline_backward,
+        selfloop_feedback_cycle,
+        selfloop_forward_connection,
+        forward_connection
     ]
         dl = init(res_size, res_size)
-        if init === delay_line_backward
-            @test unique(dl) == Float32.([0.0, 0.1, 0.2])
-        else
-            @test unique(dl) == Float32.([0.0, 0.1])
-        end
+        @test sort(unique(dl)) == Float32.([0.0, 0.1])
     end
 end
 

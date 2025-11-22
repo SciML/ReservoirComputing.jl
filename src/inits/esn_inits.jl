@@ -78,12 +78,12 @@ function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return layer_matrix
 end
 
-function apply_scale!(input_matrix, scaling::Number, ::Type{T}) where {T}
+function apply_scale!(input_matrix::AbstractArray, scaling::Number, ::Type{T}) where {T}
     @. input_matrix = (input_matrix - T(0.5)) * (T(2) * T(scaling))
     return input_matrix
 end
 
-function apply_scale!(input_matrix,
+function apply_scale!(input_matrix::AbstractArray,
         scaling::Tuple{<:Number, <:Number}, ::Type{T}) where {T}
     lower, upper = T(scaling[1]), T(scaling[2])
     @assert lower<upper "lower < upper required"
@@ -92,7 +92,7 @@ function apply_scale!(input_matrix,
     return input_matrix
 end
 
-function apply_scale!(input_matrix,
+function apply_scale!(input_matrix::AbstractMatrix,
         scaling::AbstractVector, ::Type{T}) where {T <: Number}
     ncols = size(input_matrix, 2)
     @assert length(scaling)==ncols "need one scaling per column"
@@ -301,24 +301,28 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     num_for_state = floor(Int, res_size * gamma)
     num_for_model = floor(Int, res_size * (1 - gamma))
 
-    for idx in 1:num_for_state
-        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
-                            for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(1, state_size; step = 1)[DeviceAgnostic.rand(
-            rng, T, 1:end)]
+    same_as_zero_row(jdx::Int) = zero_connections == @view(input_matrix[jdx, :])
+
+    for _ in 1:num_for_state
+        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
+        isempty(idxs) && break
+
+        random_row_idx = rand(rng, idxs)
+        random_clm_idx = rand(rng, 1:state_size)
+
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * T(scaling))
+                                                        T(0.5)) * (T(2) * T(scaling))
     end
 
-    for idx in 1:num_for_model
-        idxs = findall(Bool[zero_connections .== input_matrix[jdx, :]
-                            for jdx in axes(input_matrix, 1)])
-        random_row_idx = idxs[DeviceAgnostic.rand(rng, T, 1:end)]
-        random_clm_idx = range(state_size + 1, in_size; step = 1)[DeviceAgnostic.rand(
-            rng, T, 1:end)]
+    for _ in 1:num_for_model
+        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
+        isempty(idxs) && break
+
+        random_row_idx = rand(rng, idxs)
+        random_clm_idx = rand(rng, (state_size + 1):in_size)
+
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) .* (T(2) * T(scaling))
+                                                        T(0.5)) * (T(2) * T(scaling))
     end
 
     return input_matrix
@@ -775,77 +779,78 @@ julia> res_matrix = pseudo_svd(5, 5)
 ```
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        max_value::Number = T(1.0), sparsity::Number = 0.1, sorted::Bool = true,
-        reverse_sort::Bool = false, return_sparse::Bool = false,
+        max_value::Number = T(1),
+        sparsity::Number = 0.1,
+        sorted::Bool = true,
+        reverse_sort::Bool = false,
+        return_sparse::Bool = false,
         return_diag::Bool = false) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    check_res_size(dims...)
-    reservoir_matrix = create_diag(rng, T, dims[1],
-        T(max_value);
-        sorted = sorted,
-        reverse_sort = reverse_sort)
-    tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
+    @assert !isempty(dims) "expected at least one dimension"
+    res_dim = Int(dims[1])
 
-    while tmp_sparsity <= sparsity
-        reservoir_matrix *= create_qmatrix(rng, T, dims[1],
-            rand_range(rng, T, dims[1]),
-            rand_range(rng, T, dims[1]),
-            DeviceAgnostic.rand(rng, T) * T(2) - T(1))
-        tmp_sparsity = get_sparsity(reservoir_matrix, dims[1])
+    reservoir_matrix = create_diag(rng, T, res_dim, T(max_value);
+        sorted = sorted, reverse_sort = reverse_sort)
+
+    tmp = get_sparsity(reservoir_matrix, res_dim)
+    while tmp <= sparsity
+        i = rand_range(rng, res_dim)
+        j = rand_range(rng, res_dim)
+        θ = DeviceAgnostic.rand(rng, T) * T(2) .- T(1)
+        reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
+        tmp = get_sparsity(reservoir_matrix, res_dim)
     end
 
     if return_diag
-        return Diagonal(reservoir_matrix)
+        return Diagonal(diag(reservoir_matrix))
     else
         return return_init_as(Val(return_sparse), reservoir_matrix)
     end
 end
 
-#hacky workaround for the moment
-function rand_range(rng, T, n::Int)
-    return Int(1 + floor(DeviceAgnostic.rand(rng, T) * n))
+rand_range(rng::AbstractRNG, n::Integer) = rand(rng, 1:n)
+
+function get_sparsity(reservoir_matrix::AbstractMatrix, res_dim::Integer)
+    num_notzeros = count(!iszero, reservoir_matrix)
+    num_zeros = res_dim * res_dim - num_notzeros
+    return num_notzeros / num_zeros
 end
 
-function create_diag(rng::AbstractRNG, ::Type{T}, dim::Number, max_value::Number;
+function create_diag(rng::AbstractRNG, ::Type{T}, res_dim::Integer, max_value::Number;
         sorted::Bool = true, reverse_sort::Bool = false) where {T <: Number}
-    diagonal_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
-    if sorted == true
-        if reverse_sort == true
-            diagonal_values = sort(
-                DeviceAgnostic.rand(rng, T, dim) .* max_value; rev = true)
-            diagonal_values[1] = max_value
+    diag_matrix = DeviceAgnostic.rand(rng, T, Int(res_dim)) .* T(max_value)
+
+    if sorted
+        sort!(diag_matrix)
+        if reverse_sort
+            reverse!(diag_matrix)
+            diag_matrix[1] = T(max_value)
         else
-            diagonal_values = sort(DeviceAgnostic.rand(rng, T, dim) .* max_value)
-            diagonal_values[end] = max_value
+            diag_matrix[end] = T(max_value)
         end
-    else
-        diagonal_values = DeviceAgnostic.rand(rng, T, dim) .* max_value
     end
 
-    for idx in 1:dim
-        diagonal_matrix[idx, idx] = diagonal_values[idx]
+    full_diag = DeviceAgnostic.zeros(rng, T, Int(res_dim), Int(res_dim))
+    @inbounds for i in 1:res_dim
+        full_diag[i, i] = diag_matrix[i]
     end
-
-    return diagonal_matrix
+    return full_diag
 end
 
-function create_qmatrix(rng::AbstractRNG, ::Type{T}, dim::Number,
-        coord_i::Number, coord_j::Number, theta::Number) where {T <: Number}
-    qmatrix = DeviceAgnostic.zeros(rng, T, dim, dim)
-
-    for idx in 1:dim
-        qmatrix[idx, idx] = 1.0
+function create_qmatrix(rng::AbstractRNG, ::Type{T}, n::Integer,
+        i::Integer, j::Integer, θ::Number) where {T <: Number}
+    Q = DeviceAgnostic.zeros(rng, T, Int(n), Int(n))
+    @inbounds for k in 1:n
+        Q[k, k] = one(T)
     end
-
-    qmatrix[coord_i, coord_i] = cos(T(theta))
-    qmatrix[coord_j, coord_j] = cos(T(theta))
-    qmatrix[coord_i, coord_j] = -sin(T(theta))
-    qmatrix[coord_j, coord_i] = sin(T(theta))
-    return qmatrix
-end
-
-function get_sparsity(M, dim)
-    return size(M[M .!= 0], 1) / (dim * dim - size(M[M .!= 0], 1)) #nonzero/zero elements
+    c = cos(T(θ))
+    s = sin(T(θ))
+    @inbounds begin
+        Q[i, i] = c
+        Q[j, j] = c
+        Q[i, j] = -s
+        Q[j, i] = s
+    end
+    return Q
 end
 
 """
@@ -1196,7 +1201,7 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Union{Number, AbstractVector} = T(0.1),
-        fb_weight::Union{Number, AbstractVector} = T(0.2), shift::Integer = 1,
+        fb_weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}

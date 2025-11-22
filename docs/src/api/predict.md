@@ -1,6 +1,5 @@
-# Prediction Types
+# Predict
 
 ```@docs
-    Generative
-    Predictive
+    predict
 ```
