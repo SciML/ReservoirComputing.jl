@@ -1056,8 +1056,8 @@ end
 
 """
     delay_line([rng], [T], dims...;
-        weight=0.1, return_sparse=false,
-        kwargs...)
+        delay_weight=0.1, delay_shift=1,
+        return_sparse=false, kwargs...)
 
 Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
@@ -1071,12 +1071,12 @@ Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
 # Keyword arguments
 
-  - `weight`: Determines the value of all connections in the reservoir.
+  - `delay_weight`: Determines the value of all connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
-  - `shift`: delay line shift. Default is 1.
+  - `delay_shift`: delay line shift. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
@@ -1106,7 +1106,7 @@ julia> res_matrix = delay_line(5, 5)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
 
-julia> res_matrix = delay_line(5, 5; weight = 1)
+julia> res_matrix = delay_line(5, 5; delay_weight = 1)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
  1.0  0.0  0.0  0.0  0.0
@@ -1116,18 +1116,18 @@ julia> res_matrix = delay_line(5, 5; weight = 1)
 ```
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
+        delay_weight::Union{Number, AbstractVector} = T(0.1), delay_shift::Integer = 1,
         return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, T.(weight), shift; kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(delay_weight), delay_shift; kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 """
     delay_line_backward([rng], [T], dims...;
-        weight=0.1, fb_weight=0.1, return_sparse=false,
+        delay_weight=0.1, fb_weight=0.1, return_sparse=false,
         delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
@@ -1143,13 +1143,12 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
 
 # Keyword arguments
 
-  - `weight`: The weight determines the absolute value of
+  - `delay_weight`: The weight determines the absolute value of
     forward connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1
-
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1157,7 +1156,7 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
     you want to populate.
     Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
-    Default is 2.
+    Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
@@ -1301,7 +1300,7 @@ end
 
 """
     simple_cycle([rng], [T], dims...;
-        weight=0.1, return_sparse=false,
+        cycle_weight=0.1, return_sparse=false,
         kwargs...)
 
 Create a simple cycle reservoir [Rodan2011](@cite).
@@ -1315,23 +1314,23 @@ Create a simple cycle reservoir [Rodan2011](@cite).
 
 # Keyword arguments
 
-  - `weight`: Weight of the connections in the reservoir matrix.
+  - `cycle_weight`: Weight of the connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+  - `sampling_type`: Sampling that decides the distribution of `cycle_weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    `cycle_weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `cycle_weight` is negative if the decimal number of the
     irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
     assigned a negative sign after the chosen `strides`. `strides` can be a single
     number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+  - `positive_prob`: probability of the `cycle_weight` being positive when `sampling_type` is
     set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+  - `irrational`: Irrational number whose decimals decide the sign of `cycle_weight`.
     Default is `pi`.
   - `start`: Which place after the decimal point the counting starts for the `irrational`
     sign counting. Default is 1.
@@ -1359,12 +1358,12 @@ julia> res_matrix = simple_cycle(5, 5; weight = 11)
 ```
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector} = T(0.1),
+        cycle_weight::Union{Number, AbstractVector} = T(0.1),
         return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, T.(weight); kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1442,7 +1441,6 @@ with cycles built on the definition by [Rodan2011](@cite).
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
     Default is 0.1.
-
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
