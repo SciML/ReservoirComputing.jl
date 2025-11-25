@@ -1127,7 +1127,8 @@ end
 
 """
     delay_line_backward([rng], [T], dims...;
-        delay_weight=0.1, fb_weight=0.1, return_sparse=false,
+        delay_weight=0.1, fb_weight=0.1,
+        delay_shift=1, fb_shift=1, return_sparse=false,
         delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
@@ -1148,7 +1149,7 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
-    Default is 0.1
+    Default is 0.1.
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1157,6 +1158,7 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
     Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
     Default is 1.
+  - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
@@ -1199,15 +1201,15 @@ julia> res_matrix = delay_line_backward(Float16, 5, 5)
 ```
 """
 function delay_line_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Union{Number, AbstractVector} = T(0.1),
-        fb_weight::Union{Number, AbstractVector} = T(0.1), shift::Integer = 1,
+        delay_weight::Union{Number, AbstractVector} = T(0.1),
+        fb_weight::Union{Number, AbstractVector} = T(0.1), delay_shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    delay_line!(rng, reservoir_matrix, T.(weight), shift; delay_kwargs...)
+    delay_line!(rng, reservoir_matrix, T.(delay_weight), delay_shift; delay_kwargs...)
     backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -1234,7 +1236,6 @@ Create a cycle jumps reservoir [Rodan2012](@cite).
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
-
   - `jump_weight`: The weight of jump connections.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the jumps
@@ -1666,7 +1667,7 @@ end
 
 @doc raw"""
     selfloop_delayline_backward([rng], [T], dims...;
-        weight=0.1, selfloop_weight=0.1, fb_weight=0.1,
+        delay_weight=0.1, selfloop_weight=0.1, fb_weight=0.1,
         fb_shift=2, return_sparse=false, fb_kwargs=(),
         selfloop_kwargs=(), delay_kwargs=())
 
@@ -1696,7 +1697,7 @@ W_{i,j} =
 
 # Keyword arguments
 
-  - `weight`: Weight of the cycle connections in the reservoir matrix.
+  - `delay_weight`: Weight of the delay line connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
@@ -1712,11 +1713,13 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `fb_shift`: How far the backward connection will be from the diagonal.
-    Default is 2.
+    Default is 1.
+  - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
+
     + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
         If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
         `weight` can be positive with a probability set by `positive_prob`. If set to
@@ -1754,8 +1757,8 @@ julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
 ```
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        shift::Integer = 1, fb_shift::Integer = 2,
-        weight::Union{Number, AbstractVector} = T(0.1f0),
+        delay_shift::Integer = 1, fb_shift::Integer = 2,
+        delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = weight,
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
         return_sparse::Bool = false, delay_kwargs::NamedTuple = NamedTuple(),
@@ -1815,6 +1818,7 @@ W_{i,j} =
     Default is `false`.
   - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the
     delay line weight and self loop weights respectively. The kwargs are as follows:
+
     + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
         If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
         `weight` can be positive with a probability set by `positive_prob`. If set to
