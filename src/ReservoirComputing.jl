@@ -50,10 +50,10 @@ export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
        modified_lm, scaled_rand, weighted_init, weighted_minimal
-export block_diagonal, chaotic_init, cycle_jumps, delay_line, delay_line_backward,
+export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
        double_cycle, forward_connection, low_connectivity, pseudo_svd, rand_sparse,
-       selfloop_cycle, selfloop_delayline_backward, selfloop_feedback_cycle,
-       selfloop_forward_connection, simple_cycle, true_double_cycle
+       selfloop_cycle, selfloop_delayline_backward, selfloop_backward_cycle,
+       selfloop_forwardconnection, simple_cycle, true_double_cycle
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
        scale_radius!, self_loop!, simple_cycle!
 export train
