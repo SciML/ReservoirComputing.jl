@@ -54,18 +54,13 @@ or `dev` the package.
 
 ## Features Overview
 
-  - **Multiple Training Algorithms**: Supports Ridge Regression, Linear Models,
-      and LIBSVM regression methods for Reservoir Computing models.
-  - **Diverse Prediction Methods**: Offers both generative and predictive methods
-      for Reservoir Computing predictions.
-  - **Modifiable Training and Prediction**: Allows modifications in Reservoir
-      Computing states, such as state extension, padding, and combination methods.
-  - **Non-linear Algorithm Options**: Includes options for non-linear
-      modifications in algorithms.
-  - **Echo State Networks (ESNs)**: Features various input layers, reservoirs,
-      and methods for driving ESN reservoir states.
-  - **Cellular Automata-Based Reservoir Computing**: Introduces models based
-      on one-dimensional Cellular Automata for Reservoir Computing.
+- Base layers for reservoir computing model construction such as `ReservoirChain`,
+  `Readout`, `Collect`, and `ESNCell`
+- Fully built models such as `ESN`, and `DeepESN`
+- 15+ reservoir initializers and 5+ input layer initializers
+- 5+ reservoir states modification algorithms
+- Sparse matrix computation through
+  [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 
 ## Contributing
 
@@ -84,7 +79,7 @@ If you use ReservoirComputing.jl in your work, we kindly ask you to cite it.
 Here is the BibTeX entry for your convenience:
 
 ```bibtex
-@article{JMLR:v23:22-0611,
+@article{martinuzzi2022reservoircomputing,
   author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
   title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
   journal = {Journal of Machine Learning Research},

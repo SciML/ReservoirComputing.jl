@@ -100,7 +100,7 @@ test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 ### 2. Build Echo State Network
 
 We can either use the provided `ESN` or build one from scratch.
-We showcase the second option:
+We showcase the first option:
 
 ```julia
 using ReservoirComputing
