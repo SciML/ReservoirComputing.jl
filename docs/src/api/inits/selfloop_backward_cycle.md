@@ -1,12 +1,12 @@
 # selfloop_feedback_cycle
 
 ```@docs
-    selfloop_feedback_cycle
+    selfloop_backward_cycle
 ```
 
 ## References
 
 ```@bibliography
-Pages = ["selfloop_feedback_cycle.md"]
+Pages = ["selfloop_backward_cycle.md"]
 Canonical = false
 ```

@@ -1,12 +1,12 @@
 # selfloop_forward_connection
 
 ```@docs
-    selfloop_forward_connection
+    selfloop_forwardconnection
 ```
 
 ## References
 
 ```@bibliography
-Pages = ["selfloop_forward_connection.md"]
+Pages = ["selfloop_forwardconnection.md"]
 Canonical = false
 ```

@@ -1,12 +1,12 @@
 # true_double_cycle
 
 ```@docs
-    true_double_cycle
+    true_doublecycle
 ```
 
 ## References
 
 ```@bibliography
-Pages = ["true_double_cycle.md"]
+Pages = ["true_doublecycle.md"]
 Canonical = false
 ```
