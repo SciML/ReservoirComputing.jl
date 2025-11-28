@@ -3,9 +3,6 @@ using ReservoirComputing, LinearAlgebra, Random, SparseArrays
 const res_size = 16
 const in_size = 4
 const radius = 1.0
-const sparsity = 0.1
-const weight = 0.2
-const jump_size = 3
 const rng = Random.default_rng()
 
 function check_radius(matrix, target_radius; tolerance = 1e-5)
@@ -23,7 +20,7 @@ reservoir_inits = [
     chaotic_init,
     cycle_jumps,
     delay_line,
-    delay_line_backward,
+    delayline_backward,
     double_cycle,
     forward_connection,
     low_connectivity,
@@ -31,10 +28,10 @@ reservoir_inits = [
     rand_sparse,
     selfloop_cycle,
     selfloop_delayline_backward,
-    selfloop_feedback_cycle,
-    selfloop_forward_connection,
+    selfloop_backward_cycle,
+    selfloop_forwardconnection,
     simple_cycle,
-    true_double_cycle
+    true_doublecycle
 ]
 input_inits = [
     chebyshev_mapping,
@@ -67,15 +64,15 @@ input_inits = [
 
     @testset "Minimum complexity: $init" for init in [
         delay_line,
-        delay_line_backward,
+        delayline_backward,
         cycle_jumps,
         simple_cycle,
-        true_double_cycle,
+        true_doublecycle,
         double_cycle,
         selfloop_cycle,
         selfloop_delayline_backward,
-        selfloop_feedback_cycle,
-        selfloop_forward_connection,
+        selfloop_backward_cycle,
+        selfloop_forwardconnection,
         forward_connection
     ]
         dl = init(res_size, res_size)
