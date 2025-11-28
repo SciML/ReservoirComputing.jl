@@ -53,7 +53,7 @@ export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
 export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
        double_cycle, forward_connection, low_connectivity, pseudo_svd, rand_sparse,
        selfloop_cycle, selfloop_delayline_backward, selfloop_backward_cycle,
-       selfloop_forwardconnection, simple_cycle, true_double_cycle
+       selfloop_forwardconnection, simple_cycle, true_doublecycle
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
        scale_radius!, self_loop!, simple_cycle!
 export train

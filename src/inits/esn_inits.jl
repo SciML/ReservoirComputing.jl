@@ -1114,7 +1114,7 @@ julia> res_matrix = delay_line(5, 5; delay_weight = 1)
  0.0  0.0  1.0  0.0  0.0
  0.0  0.0  0.0  1.0  0.0
 
-julia> res_matrix = delay_line(5, 5; delay_weight = 1, delay_shift=3)
+julia> res_matrix = delay_line(5, 5; delay_weight = 1, delay_shift = 3)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
@@ -1158,6 +1158,7 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
+
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1207,7 +1208,7 @@ julia> res_matrix = delayline_backward(5, 5; delay_shift = 3)
  0.1  0.0  0.0  0.0  0.1
  0.0  0.1  0.0  0.0  0.0
 
-julia> res_matrix = delayline_backward(5, 5; delay_shift = 3, fb_weight=rand(Float32, 4))
+julia> res_matrix = delayline_backward(5, 5; delay_shift = 3, fb_weight = rand(Float32, 4))
 5×5 Matrix{Float32}:
  0.0  0.393622  0.0      0.0       0.0
  0.0  0.0       0.21916  0.0       0.0
@@ -1252,6 +1253,7 @@ Create a cycle jumps reservoir [Rodan2012](@cite).
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
+
   - `jump_weight`: The weight of jump connections.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the jumps
@@ -1440,7 +1442,7 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 """
-    true_double_cycle([rng], [T], dims...;
+    true_doublecycle([rng], [T], dims...;
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false, cycle_kwargs=(), second_cycle_kwargs=())
 
@@ -1458,6 +1460,7 @@ with cycles built on the definition by [Rodan2011](@cite).
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
     Default is 0.1.
+
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
@@ -1484,7 +1487,7 @@ with cycles built on the definition by [Rodan2011](@cite).
 # Examples
 
 ```jldoctest
-julia> true_double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+julia> true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.1
  0.1  0.0  0.3  0.0  0.0
@@ -1493,7 +1496,7 @@ julia> true_double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
  0.3  0.0  0.0  0.1  0.0
 ```
 """
-function true_double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1),
         return_sparse::Bool = false, cycle_kwargs::NamedTuple = NamedTuple(),
@@ -2044,7 +2047,8 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         leaving $remainder row(s)/column(s) unused.
         \n"
     end
-    weights = isa(block_weight, AbstractVector) ? T.(block_weight) : fill(T(block_weight), num_blocks)
+    weights = isa(block_weight, AbstractVector) ? T.(block_weight) :
+              fill(T(block_weight), num_blocks)
     @assert length(weights)==num_blocks "
       weight vector must have length = number of blocks
   "
@@ -2054,7 +2058,7 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         row_end = row_start + block_size - 1
         col_start = (block - 1) * block_size + 1
         col_end = col_start + block_size - 1
-        @inbounds reservoir_matrix[row_start:row_end, col_start:col_end] .= block_weight[block]
+        reservoir_matrix[row_start:row_end, col_start:col_end] .= weights[block]
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -2067,7 +2071,7 @@ for initializer in (:rand_sparse, :delay_line, :delayline_backward, :cycle_jumps
     :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
     :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
-    :forward_connection, :true_double_cycle, :block_diagonal)
+    :forward_connection, :true_doublecycle, :block_diagonal)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
