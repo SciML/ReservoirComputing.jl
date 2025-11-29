@@ -12,15 +12,96 @@
     return new_states
 end
 
-"""
-Pad(padding)
+@doc raw"""
+    Pad(padding=1.0)
 
-Padding layer that adds `padding` (either a number or an array) at the
-end of a state.
+Padding layer that appends a constant value to the state (and hence to the
+layer output).
+
+```math
+\tilde{x} = \begin{bmatrix} x \\ \text{padding} \end{bmatrix}
+```
 
 ## Arguments
 
   - `padding`: value to append. Default is 1.0.
+
+## Forward
+
+    pad(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with chosen `padding` added, thus increasing the size by 1.
+
+## Examples
+
+```jldoctest pad
+julia> pad = Pad(1.0)
+(::Pad{Float64}) (generic function with 2 methods)
+
+julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+10-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+
+julia> x_new = pad(x_old)
+11-element Vector{Int64}:
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+ 1
+```
+
+```jldoctest pad
+julia> mat_old = [1  2  3;
+                   4  5  6;
+                   7  8  9;
+                  10 11 12;
+                  13 14 15;
+                  16 17 18;
+                  19 20 21]
+7×3 Matrix{Int64}:
+  1   2   3
+  4   5   6
+  7   8   9
+ 10  11  12
+ 13  14  15
+ 16  17  18
+ 19  20  21
+
+
+ julia> mat_new = pad(mat_old)
+ 8×3 Matrix{Int64}:
+   1   2   3
+   4   5   6
+   7   8   9
+  10  11  12
+  13  14  15
+  16  17  18
+  19  20  21
+   1   1   1
+```
+
 """
 struct Pad{P} <: Function
     padding::P
@@ -39,15 +120,26 @@ function (pad::Pad)(x_old::AbstractMatrix)
     return vcat(x_old, row)
 end
 
-"""
-Pad(padding)
+@doc raw"""
+    Extend(op)
 
-Wrapper layer that concatenates the reservoir state at that
-point with the input that it receives.
+Wrapper layer that concatenates the reservoir state produced by `op` with the
+input that `Extend` receives.
+
+For an input vector or matrix `x` and a wrapped layer producing state `s`,
+`Extend` computes:
+
+```math
+\begin{bmatrix}
+x \\
+s
+\end{bmatrix}
+```
 
 ## Arguments
 
-  - `op`: wrapped layer
+  - `op`: the wrapped layer whose output state will be concatenated with the input.
+
 
 ## Examples
 
@@ -88,12 +180,11 @@ end
 Base.show(io::IO, ex::Extend) = print(io, "Extend(", ex.op, ")")
 
 @doc raw"""
-    NLAT1(x)
+    NLAT1()
 
 `NLAT1` implements the T₁ transformation algorithm introduced
 in [Chattopadhyay2020](@cite) and [Pathak2017](@cite). The T₁ algorithm squares
 elements of the input array, targeting every second row.
-
 
 ```math
 \tilde{r}_{i,j} =
@@ -102,9 +193,30 @@ elements of the input array, targeting every second row.
     r_{i,j}, & \text{if } j \text{ is even}.
 \end{cases}
 ```
-# Example
 
-```jldoctest
+## Arguments
+
+None
+
+## Forward
+
+    nlat1(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with transformed elements according to NLAT1,
+    with same dimensionality as the original.
+
+## Example
+
+```jldoctest nlat1
+julia> nlat1 = NLAT1()
+NLAT1 (generic function with 3 methods)
+
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -118,7 +230,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = NLAT1(x_old)
+julia> n_new = nlat1(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -130,7 +242,9 @@ julia> n_new = NLAT1(x_old)
   7
  64
   9
+```
 
+```jldoctest nlat1
 julia> mat_old = [1  2  3;
                    4  5  6;
                    7  8  9;
@@ -147,7 +261,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = NLAT1(mat_old)
+julia> mat_new = nlat1(mat_old)
 7×3 Matrix{Int64}:
    1    4    9
    4    5    6
@@ -188,9 +302,30 @@ reservoir states by multiplying each odd-indexed row
     r_{i,j}, & \text{if } j \text{ is 1 or even}.
 \end{cases}
 ```
-# Example
 
-```jldoctest
+## Arguments
+
+None
+
+## Forward
+
+    nlat2(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with transformed elements according to NLAT2,
+    with same dimensionality as the original.
+
+## Example
+
+```jldoctest nlat2
+julia> nlat2 = NLAT2()
+NLAT2 (generic function with 3 methods)
+
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -204,7 +339,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = NLAT2(x_old)
+julia> n_new = nlat2(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -217,6 +352,9 @@ julia> n_new = NLAT2(x_old)
  42
   9
 
+```
+
+```jldoctest nlat2
 julia> mat_old = [1  2  3;
                    4  5  6;
                    7  8  9;
@@ -233,7 +371,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = NLAT2(mat_old)
+julia> mat_new = nlat2(mat_old)
 7×3 Matrix{Int64}:
   1   2    3
   4   5    6
@@ -260,7 +398,7 @@ NLAT2(x_old::AbstractMatrix) = _apply_tomatrix(NLAT2, x_old)
 NLAT2() = NLAT2
 
 @doc raw"""
-    NLAT3()
+    NLAT3(x)
 
 Implements the T₃ transformation algorithm as detailed
 in [Chattopadhyay2020](@cite). This algorithm modifies the reservoir's states by
@@ -274,9 +412,30 @@ r_{i,j-1} \times r_{i,j+1}, & \text{if } j > 1 \text{ is odd}; \\
 r_{i,j}, & \text{if } j = 1 \text{ or even.}
 \end{cases}
 ```
-# Example
 
-```jldoctest
+## Arguments
+
+None
+
+## Forward
+
+    nlat3(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with transformed elements according to NLAT3,
+    with same dimensionality as the original.
+
+## Example
+
+```jldoctest nlat3
+julia> nlat2 = NLAT3()
+NLAT3 (generic function with 3 methods)
+
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
  0
@@ -290,7 +449,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = NLAT3(x_old)
+julia> n_new = nlat2(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -303,6 +462,9 @@ julia> n_new = NLAT3(x_old)
  63
   9
 
+```
+
+```jldoctest nlat3
 julia> mat_old = [1  2  3;
                    4  5  6;
                    7  8  9;
@@ -319,7 +481,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = NLAT3(mat_old)
+julia> mat_new = nlat2(mat_old)
 7×3 Matrix{Int64}:
    1    2    3
    4    5    6
@@ -350,8 +512,6 @@ NLAT3() = NLAT3
 
 Implement a partial squaring of the states as described in [Barbosa2021](@cite).
 
-# Equations
-
 ```math
     \begin{equation}
     g(r_i) =
@@ -362,12 +522,28 @@ Implement a partial squaring of the states as described in [Barbosa2021](@cite).
     \end{equation}
 ```
 
-# Examples
+## Arguments
 
-```jldoctest
-julia> ps = PartialSquare(0.6)
+  - `eta`: Percentage of elements of the input vector to be squared.
+
+## Forward
+
+    partialsq(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with partial square components,
+    with same dimensionality as the original.
+
+## Example
+
+```jldoctest partialsq
+julia> partialsq = PartialSquare(0.6)
 PartialSquare(0.6)
-
 
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 10-element Vector{Int64}:
@@ -382,7 +558,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> x_new = ps(x_old)
+julia> x_new = partialsq(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -421,9 +597,7 @@ end
 
 Extension of the Lu initialization proposed in [Herteux2020](@cite).
 The state vector is extended with the squared elements of the initial
-state
-
-# Equations
+state.
 
 ```math
 \begin{equation}
@@ -431,9 +605,30 @@ state
 \end{equation}
 ```
 
-# Examples
+## Arguments
 
-```jldoctest
+None
+
+## Forward
+
+    extendedsq(state)
+
+## Arguments
+
+  - `state`: The reservoir computing state.
+
+## Returns
+
+  - A vector or matrix with the original elements
+    concatenated with the squared elements.
+    Dimensionality is double of the original.
+
+## Example
+
+```jldoctest extendedsq
+julia> extendedsq = ExtendedSquare()
+ExtendedSquare()
+
 julia> x_old = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 9-element Vector{Int64}:
  1
@@ -446,10 +641,7 @@ julia> x_old = [1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> es = ExtendedSquare()
-ExtendedSquare()
-
-julia> x_new = es(x_old)
+julia> x_new = extendedsq(x_old)
 18-element Vector{Int64}:
   1
   2
