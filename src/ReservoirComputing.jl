@@ -32,7 +32,8 @@ include("predict.jl")
 include("train.jl")
 #initializers
 include("inits/inits_components.jl")
-include("inits/esn_inits.jl")
+include("inits/inits_input.jl")
+include("inits/inits_reservoir.jl")
 #full models
 include("models/esn_generics.jl")
 include("models/esn.jl")

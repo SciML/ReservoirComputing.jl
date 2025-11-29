@@ -1,3 +1,27 @@
+function apply_scale!(input_matrix::AbstractArray, scaling::Number, ::Type{T}) where {T}
+    @. input_matrix = (input_matrix - T(0.5)) * (T(2) * T(scaling))
+    return input_matrix
+end
+
+function apply_scale!(input_matrix::AbstractArray,
+        scaling::Tuple{<:Number, <:Number}, ::Type{T}) where {T}
+    lower, upper = T(scaling[1]), T(scaling[2])
+    @assert lower<upper "lower < upper required"
+    scale = upper - lower
+    @. input_matrix = input_matrix * scale + lower
+    return input_matrix
+end
+
+function apply_scale!(input_matrix::AbstractMatrix,
+        scaling::AbstractVector, ::Type{T}) where {T <: Number}
+    ncols = size(input_matrix, 2)
+    @assert length(scaling)==ncols "need one scaling per column"
+    for (idx, col) in enumerate(eachcol(input_matrix))
+        apply_scale!(col, scaling[idx], T)
+    end
+    return input_matrix
+end
+
 # dispatch over dense inits
 function return_init_as(::Val{false}, layer_matrix::AbstractVecOrMat)
     return layer_matrix
