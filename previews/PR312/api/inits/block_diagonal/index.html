@@ -3,21 +3,30 @@
     block_weight=1, block_size=1,
     return_sparse=false)</code></pre><p>Creates a block‐diagonal matrix consisting of square blocks of size <code>block_size</code> along the main diagonal (<a href="../../../references/#Ma2023">Ma <em>et al.</em>, 2023</a>). Each block may be filled with</p><ul><li>a single scalar</li><li>a vector of per‐block weights (length = number of blocks)</li></ul><p><strong>Equations</strong></p><p class="math-container">\[W_{i,j} =
 \begin{cases}
-    w_b, &amp; \text{if }\left\lfloor\frac{i-1}{s}\right\rfloor = \left\lfloor\frac{j-1}{s}\right\rfloor = b,\;
-           s = \text{block\_size},\; b=0,\dots,nb-1, \\
+    w_b, &amp; \text{if }\left\lfloor\frac{i-1}{s}\right\rfloor =
+        \left\lfloor\frac{j-1}{s}\right\rfloor = b,\;
+           s = \text{block_size},\; b=0,\dots,nb-1, \\
     0,   &amp; \text{otherwise,}
-\end{cases}\]</p><p><strong>Arguments</strong></p><ul><li><code>rng</code>: Random number generator. Default is <code>Utils.default_rng()</code>.</li><li><code>T</code>: Element type of the matrix. Default is <code>Float32</code>.</li><li><code>dims</code>: Dimensions of the output matrix (must be two-dimensional).</li></ul><p><strong>Keyword arguments</strong></p><ul><li><code>block_weight</code>:<ul><li>scalar: every block is filled with that value</li><li>vector: length = number of blocks, one constant per block</li></ul>Default is <code>1.0</code>.</li><li><code>block_size</code>: Size(s) of each square block on the diagonal. Default is <code>1.0</code>.</li><li><code>return_sparse</code>: If <code>true</code>, returns the matrix as sparse. SparseArrays.jl must be lodead. Default is <code>false</code>.</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs"># 4×4 with two 2×2 blocks of 1.0
-julia&gt; W1 = block_diagonal(4, 4; block_size=2)
-4×4 Matrix{Float32}:
- 1.0  1.0  0.0  0.0
- 1.0  1.0  0.0  0.0
- 0.0  0.0  1.0  1.0
- 0.0  0.0  1.0  1.0
-
-# per-block weights [0.5, 2.0]
-julia&gt; W2 = block_diagonal(4, 4; block_size=2, block_weight=[0.5, 2.0])
-4×4 Matrix{Float32}:
- 0.5  0.5  0.0  0.0
- 0.5  0.5  0.0  0.0
- 0.0  0.0  2.0  2.0
- 0.0  0.0  2.0  2.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/e96dd3ed4b071df0b0fb3ab2151ec2d776284a13/src/inits/inits_reservoir.jl#L1286-L1344">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Ma, H.; Prosperino, D.; Haluszczynski, A. and Räth, C. (2023). <a href="http://dx.doi.org/10.1063/5.0151290"><em>Efficient forecasting of chaotic systems with block-diagonal and binary reservoir computing</em></a>. <a href="https://doi.org/10.1063/5.0151290">Chaos: An Interdisciplinary Journal of Nonlinear Science <strong>33</strong></a>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Saturday 29 November 2025 15:46">Saturday 29 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{cases}\]</p><p><strong>Arguments</strong></p><ul><li><code>rng</code>: Random number generator. Default is <code>Utils.default_rng()</code> from WeightInitializers.</li><li><code>T</code>: Element type of the matrix. Default is <code>Float32</code>.</li><li><code>dims</code>: Dimensions of the output matrix (must be two-dimensional).</li></ul><p><strong>Keyword arguments</strong></p><ul><li><code>block_weight</code>:<ul><li>scalar: every block is filled with that value</li><li>vector: length = number of blocks, one constant per block</li></ul>Default is <code>1.0</code>.</li><li><code>block_size</code>: Size(s) of each square block on the diagonal. Default is <code>1.0</code>.</li><li><code>return_sparse</code>: If <code>true</code>, returns the matrix as sparse. SparseArrays.jl must be lodead. Default is <code>false</code>.</li></ul><p><strong>Examples</strong></p><p>Changing the block size</p><pre><code class="language-julia-repl hljs">julia&gt; res_matrix = block_diagonal(10, 10; block_size=2)
+10×10 Matrix{Float32}:
+ 1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0</code></pre><p>Changing the weights, per block. Please note that you have to know the number of blocks that you are going to have (which usually is <code>res_size</code>/<code>block_size</code>).</p><pre><code class="language-julia-repl hljs">julia&gt; res_matrix = block_diagonal(10, 10; block_size=2, block_weight=[0.5, 2.0, -0.99, 1.0, -99.0])
+10×10 Matrix{Float32}:
+ 0.5  0.5  0.0  0.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.5  0.5  0.0  0.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  2.0  2.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  2.0  2.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0  -0.99  -0.99  0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0  -0.99  -0.99  0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   1.0  1.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   1.0  1.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   0.0  0.0  -99.0  -99.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   0.0  0.0  -99.0  -99.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/4106497d874a77d682624748257c675f92c8040d/src/inits/inits_reservoir.jl#L1513-L1591">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Ma, H.; Prosperino, D.; Haluszczynski, A. and Räth, C. (2023). <a href="http://dx.doi.org/10.1063/5.0151290"><em>Efficient forecasting of chaotic systems with block-diagonal and binary reservoir computing</em></a>. <a href="https://doi.org/10.1063/5.0151290">Chaos: An Interdisciplinary Journal of Nonlinear Science <strong>33</strong></a>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 30 November 2025 17:55">Sunday 30 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

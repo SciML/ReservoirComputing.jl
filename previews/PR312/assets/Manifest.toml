@@ -792,9 +792,9 @@ version = "3.7.0+0"
 
 [[deps.Git_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libiconv_jll", "OpenSSL_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "b6a684587ebe896d9f68ae777f648205940f0f70"
+git-tree-sha1 = "46bd50c245fe49ed87377c014a928a549b9ef7ed"
 uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
-version = "2.51.3+0"
+version = "2.52.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "GettextRuntime_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
@@ -1895,7 +1895,7 @@ version = "1.3.1"
 
 [[deps.ReservoirComputing]]
 deps = ["ArrayInterface", "Compat", "ConcreteStructs", "LinearAlgebra", "LuxCore", "NNlib", "Random", "Reexport", "Static", "WeightInitializers"]
-path = "/var/lib/buildkite-agent/builds/gpuci-11/julialang/reservoircomputing-dot-jl"
+path = "/var/lib/buildkite-agent/builds/gpuci-15/julialang/reservoircomputing-dot-jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 version = "0.12.0"
 
