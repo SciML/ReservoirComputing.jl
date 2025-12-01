@@ -409,7 +409,7 @@ julia> low_connectivity(10, 10)
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool = false, connected::Bool = false,
-        in_degree::Integer = 1, radius::Union{AbstractFloat, Nothing}=nothing,
+        in_degree::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
         kwargs...) where {T <: Number}
     check_res_size(dims...)
     res_size = dims[1]
@@ -430,8 +430,8 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
-                                                                                           Number}
+        in_degree::Integer = 1, radius::Number = T(1.0f0),
+        cut_cycle::Bool = false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -611,7 +611,7 @@ julia> res_matrix = delay_line(5, 5; return_sparse=true)
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing}=nothing,
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -777,7 +777,7 @@ function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
-        radius::Union{AbstractFloat, Nothing}=nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -953,7 +953,7 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_size::Integer = 3, return_sparse::Bool = false,
-        radius::Union{AbstractFloat, Nothing}=nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         cycle_kwargs::NamedTuple = NamedTuple(),
         jump_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1092,7 +1092,7 @@ julia> res_matrix = simple_cycle(5, 5; return_sparse=true)
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing}=nothing,
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1169,7 +1169,7 @@ julia> res_matrix = double_cycle(5, 5; cycle_weight = -0.1, second_cycle_weight 
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing}=nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1318,7 +1318,7 @@ julia> res_matrix = true_doublecycle(5, 5; return_sparse=true)
 function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing}=nothing,
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
         cycle_kwargs::NamedTuple = NamedTuple(),
         second_cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1470,7 +1470,7 @@ julia> res_matrix = selfloop_cycle(5, 5; return_sparse=true)
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing}=nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false, selfloop_kwargs::NamedTuple = NamedTuple(),
         cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1552,7 +1552,7 @@ function selfloop_backward_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing}=nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1741,7 +1741,7 @@ function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer.
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = delay_weight,
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing}=nothing,
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
@@ -1892,7 +1892,7 @@ julia> res_matrix = selfloop_forwardconnection(5, 5; return_sparse=true)
 function selfloop_forwardconnection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0), shift::Integer = 2,
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing}=nothing,
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -2042,7 +2042,7 @@ julia> reservoir_matrix = forward_connection(10, 10; return_sparse=true)
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing}=nothing, return_sparse::Bool = false,
+        radius::Union{AbstractFloat, Nothing} = nothing, return_sparse::Bool = false,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -2136,7 +2136,7 @@ julia> res_matrix = block_diagonal(10, 10; block_size=2, block_weight=[0.5, 2.0,
 """
 function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         block_weight::Union{Number, AbstractVector} = T(1),
-        block_size::Integer = 1, radius::Union{AbstractFloat, Nothing}=nothing,
+        block_size::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
