@@ -7,19 +7,19 @@
  0.0       0.325977  0.0       0.0       0.0
  0.0       0.0       0.549051  0.0       0.0
  0.0       0.0       0.0       0.726199  0.0
- 0.0       0.0       0.0       0.0       1.0</code></pre><p>With reversed sorting:</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; reverse_sort=true)
+ 0.0       0.0       0.0       0.0       1.0</code></pre><p>With reversed sorting:</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; reverse_sort = true)
 5×5 Matrix{Float32}:
  1.0  0.0       0.0       0.0       0.0
  0.0  0.726199  0.0       0.0       0.0
  0.0  0.0       0.549051  0.0       0.0
  0.0  0.0       0.0       0.325977  0.0
- 0.0  0.0       0.0       0.0       0.306998</code></pre><p>With no sorting</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; sorted=false)
+ 0.0  0.0       0.0       0.0       0.306998</code></pre><p>With no sorting</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; sorted = false)
 5×5 Matrix{Float32}:
  0.726199  0.0       0.0       0.0       0.0
  0.0       0.325977  0.0       0.0       0.0
  0.0       0.0       0.306998  0.0       0.0
  0.0       0.0       0.0       0.549051  0.0
- 0.0       0.0       0.0       0.0       0.788919</code></pre><p>Returning as a <code>Diagonal</code> or a <code>sparse</code> matrix:</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; return_diag=true)
+ 0.0       0.0       0.0       0.0       0.788919</code></pre><p>Returning as a <code>Diagonal</code> or a <code>sparse</code> matrix:</p><pre><code class="language-julia-repl hljs">julia&gt; pseudo_svd(5, 5; return_diag = true)
 5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
  0.306998   ⋅         ⋅         ⋅         ⋅
   ⋅        0.325977   ⋅         ⋅         ⋅
@@ -29,10 +29,10 @@
 
 julia&gt; using SparseArrays
 
-julia&gt; pseudo_svd(5, 5; return_sparse=true)
+julia&gt; pseudo_svd(5, 5; return_sparse = true)
 5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
  0.306998   ⋅         ⋅         ⋅         ⋅
   ⋅        0.325977   ⋅         ⋅         ⋅
   ⋅         ⋅        0.549051   ⋅         ⋅
   ⋅         ⋅         ⋅        0.726199   ⋅
-  ⋅         ⋅         ⋅         ⋅        1.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/4106497d874a77d682624748257c675f92c8040d/src/inits/inits_reservoir.jl#L82-L175">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Yang, C.; Qiao, J.; Han, H. and Wang, L. (2018). <a href="http://dx.doi.org/10.1016/j.neucom.2018.02.036"><em>Design of polynomial echo state networks for time series prediction</em></a>. <a href="https://doi.org/10.1016/j.neucom.2018.02.036">Neurocomputing <strong>290</strong>, 148–160</a>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 30 November 2025 17:55">Sunday 30 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  ⋅         ⋅         ⋅         ⋅        1.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/3bb59da77679f0ce756f322ac13d7ea3a382d068/src/inits/inits_reservoir.jl#L82-L174">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Yang, C.; Qiao, J.; Han, H. and Wang, L. (2018). <a href="http://dx.doi.org/10.1016/j.neucom.2018.02.036"><em>Design of polynomial echo state networks for time series prediction</em></a>. <a href="https://doi.org/10.1016/j.neucom.2018.02.036">Neurocomputing <strong>290</strong>, 148–160</a>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 1 December 2025 16:38">Monday 1 December 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
