@@ -133,22 +133,22 @@ warning.
       + A single number. In this case, the matrix elements will be randomly
         chosen from the range `[-scaling, scaling]`. Default option, with
         a the scaling value set to `0.1`.
+
       + A tuple `(lower, upper)`. The values define the range of the distribution.
         the matrix elements will be randomly created and scaled the range
         `[lower, upper]`.
       + A vector of length = `in_size`. In this case, the columns will be
         scaled individually by the entries of the vector. The entries can
         be numbers or tuples, which will mirror the behavior described above.
-
-    - `return_sparse`: flag for returning a `sparse` matrix.
-      Default is `false`.
+      + `return_sparse`: flag for returning a `sparse` matrix.
+        Default is `false`.
 
 ## Examples
 
 Standard call with scaling provided by a scalar:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling=0.1)
+julia> res_input = weighted_init(9, 3; scaling = 0.1)
 9×3 Matrix{Float32}:
   0.0452399   0.0         0.0
  -0.0348047   0.0         0.0
@@ -165,7 +165,7 @@ Scaling with a tuple, providing lower and upper bound of the uniform distributio
 from which the weights will be sampled:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling=(0.1, 0.5))
+julia> res_input = weighted_init(9, 3; scaling = (0.1, 0.5))
 9×3 Matrix{Float32}:
  0.39048   0.0       0.0
  0.230391  0.0       0.0
@@ -183,7 +183,7 @@ negative provides the lower bound. Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling=[0.1, 0.5, 0.9])
+julia> res_input = weighted_init(9, 3; scaling = [0.1, 0.5, 0.9])
 9×3 Matrix{Float32}:
   0.0452399   0.0        0.0
  -0.0348047   0.0        0.0
@@ -201,7 +201,7 @@ Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling=[(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
+julia> res_input = weighted_init(9, 3; scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
 9×3 Matrix{Float32}:
  0.17262    0.0       0.0
  0.132598   0.0       0.0
@@ -255,7 +255,6 @@ julia> res_input = weighted_init(9, 3; return_sparse = true)
 function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Union{Number, Tuple, Vector} = T(0.1),
         return_sparse::Bool = false) where {T <: Number}
-
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -334,22 +333,22 @@ julia> res_input = weighted_minimal(9, 3; weight = 0.99)
  0.0   0.0   0.99
  0.0   0.0   0.99
  0.0   0.0   0.99
- ```
+```
 
- Random sign for each weight, drawn from a bernoulli distribution:
+Random sign for each weight, drawn from a bernoulli distribution:
 
- ```jldoctest weightedminimal
+```jldoctest weightedminimal
 julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
 9×3 Matrix{Float32}:
-  0.1  -0.0  -0.0
- -0.1  -0.0  -0.0
-  0.1  -0.0   0.0
- -0.0   0.1   0.0
-  0.0   0.1  -0.0
-  0.0   0.1   0.0
- -0.0  -0.0  -0.1
- -0.0  -0.0   0.1
-  0.0  -0.0   0.1
+ 0.1  -0.0  -0.0
+-0.1  -0.0  -0.0
+ 0.1  -0.0   0.0
+-0.0   0.1   0.0
+ 0.0   0.1  -0.0
+ 0.0   0.1   0.0
+-0.0  -0.0  -0.1
+-0.0  -0.0   0.1
+ 0.0  -0.0   0.1
 ```
 
 Example of different reservoir size for the initializer:
@@ -522,33 +521,32 @@ julia> res_input = minimal_init(8, 3; sampling_type = :irrational)
   0.1   0.1   0.1
   0.1   0.1  -0.1
  -0.1   0.1  -0.1
- ```
+```
 
- Changing probability for the negative sign
+Changing probability for the negative sign
 
- ```jldoctest minimalinit
+```jldoctest minimalinit
 julia> res_input = minimal_init(8, 3; p = 0.1) # lower p -> more negative signs
 8×3 Matrix{Float32}:
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
-  0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
-
+-0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
+ 0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
+-0.1  -0.1  -0.1
 
 julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
 8×3 Matrix{Float32}:
-  0.1   0.1  0.1
- -0.1   0.1  0.1
- -0.1   0.1  0.1
-  0.1   0.1  0.1
-  0.1   0.1  0.1
-  0.1  -0.1  0.1
- -0.1   0.1  0.1
-  0.1   0.1  0.1
+ 0.1   0.1  0.1
+-0.1   0.1  0.1
+-0.1   0.1  0.1
+ 0.1   0.1  0.1
+ 0.1   0.1  0.1
+ 0.1  -0.1  0.1
+-0.1   0.1  0.1
+ 0.1   0.1  0.1
 ```
 """
 function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;

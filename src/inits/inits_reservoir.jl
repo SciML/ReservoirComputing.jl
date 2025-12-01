@@ -59,7 +59,7 @@ Returning a sparse matrix:
 ```jldoctest randsparse
 julia> using SparseArrays
 
-julia> res_matrix = rand_sparse(5, 5; sparsity = 0.4, return_sparse=true)
+julia> res_matrix = rand_sparse(5, 5; sparsity = 0.4, return_sparse = true)
 5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
   ⋅          ⋅          ⋅          ⋅        ⋅
   ⋅         0.794565    ⋅         0.26164   ⋅
@@ -129,7 +129,7 @@ julia> res_matrix = pseudo_svd(5, 5)
 With reversed sorting:
 
 ```jldoctest psvd
-julia> pseudo_svd(5, 5; reverse_sort=true)
+julia> pseudo_svd(5, 5; reverse_sort = true)
 5×5 Matrix{Float32}:
  1.0  0.0       0.0       0.0       0.0
  0.0  0.726199  0.0       0.0       0.0
@@ -141,7 +141,7 @@ julia> pseudo_svd(5, 5; reverse_sort=true)
 With no sorting
 
 ```jldoctest psvd
-julia> pseudo_svd(5, 5; sorted=false)
+julia> pseudo_svd(5, 5; sorted = false)
 5×5 Matrix{Float32}:
  0.726199  0.0       0.0       0.0       0.0
  0.0       0.325977  0.0       0.0       0.0
@@ -153,7 +153,7 @@ julia> pseudo_svd(5, 5; sorted=false)
 Returning as a `Diagonal` or a `sparse` matrix:
 
 ```jldoctest psvd
-julia> pseudo_svd(5, 5; return_diag=true)
+julia> pseudo_svd(5, 5; return_diag = true)
 5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
  0.306998   ⋅         ⋅         ⋅         ⋅
   ⋅        0.325977   ⋅         ⋅         ⋅
@@ -163,7 +163,7 @@ julia> pseudo_svd(5, 5; return_diag=true)
 
 julia> using SparseArrays
 
-julia> pseudo_svd(5, 5; return_sparse=true)
+julia> pseudo_svd(5, 5; return_sparse = true)
 5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
  0.306998   ⋅         ⋅         ⋅         ⋅
   ⋅        0.325977   ⋅         ⋅         ⋅
@@ -171,7 +171,6 @@ julia> pseudo_svd(5, 5; return_sparse=true)
   ⋅         ⋅         ⋅        0.726199   ⋅
   ⋅         ⋅         ⋅         ⋅        1.0
 ```
-
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number = T(1),
@@ -427,7 +426,7 @@ end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
         in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
-                                                                                         Number}
+                                                                                           Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -441,7 +440,7 @@ end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
         in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
-                                                                                         Number}
+                                                                                           Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for idx in 1:(res_size - 1)
@@ -520,7 +519,9 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest delayline
 julia> res_matrix = delay_line(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
@@ -528,7 +529,11 @@ julia> res_matrix = delay_line(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
+Changing weights:
+
+```jldoctest delayline
 julia> res_matrix = delay_line(5, 5; delay_weight = 1)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
@@ -536,14 +541,64 @@ julia> res_matrix = delay_line(5, 5; delay_weight = 1)
  0.0  1.0  0.0  0.0  0.0
  0.0  0.0  1.0  0.0  0.0
  0.0  0.0  0.0  1.0  0.0
+```
 
-julia> res_matrix = delay_line(5, 5; delay_weight = 1, delay_shift = 3)
+Changing weights to a custom array:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; delay_weight = rand(Float32, 4))
+5×5 Matrix{Float32}:
+ 0.0       0.0       0.0      0.0        0.0
+ 0.398408  0.0       0.0      0.0        0.0
+ 0.0       0.624473  0.0      0.0        0.0
+ 0.0       0.0       0.66302  0.0        0.0
+ 0.0       0.0       0.0      0.0780818  0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+ 0.0  0.0   0.0   0.0  0.0
+ -0.1  0.0   0.0   0.0  0.0
+ 0.0  0.1   0.0   0.0  0.0
+ 0.0  0.0  -0.1   0.0  0.0
+ 0.0  0.0   0.0  -0.1  0.0
+
+julia> res_matrix = delay_line(5, 5; sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.0  0.0
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+```
+
+Shifting the delay line:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; delay_shift = 3)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  0.0  0.0
- 0.0  1.0  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+```
+
+Returning as sparse:
+
+```jldoctest delayline
+julia> using SparseArrays
+
+julia> res_matrix = delay_line(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 4 stored entries:
+  ⋅    ⋅    ⋅    ⋅    ⋅
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -624,7 +679,9 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest dlbackward
 julia> res_matrix = delayline_backward(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.1  0.0  0.0  0.0
@@ -632,22 +689,76 @@ julia> res_matrix = delayline_backward(5, 5)
  0.0  0.1  0.0  0.1  0.0
  0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
+```
 
-julia> res_matrix = delayline_backward(5, 5; delay_shift = 3)
+Changing weights:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_weight = 0.99, fb_weight=-1.0)
 5×5 Matrix{Float32}:
- 0.0  0.1  0.0  0.0  0.0
+ 0.0   -1.0    0.0    0.0    0.0
+ 0.99   0.0   -1.0    0.0    0.0
+ 0.0    0.99   0.0   -1.0    0.0
+ 0.0    0.0    0.99   0.0   -1.0
+ 0.0    0.0    0.0    0.99   0.0
+```
+
+Changing weights to custom arrays:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_weight = rand(4), fb_weight=.-rand(4))
+5×5 Matrix{Float32}:
+ 0.0       -0.294809   0.0        0.0        0.0
+ 0.736006   0.0       -0.449479   0.0        0.0
+ 0.0        0.10892    0.0       -0.60118    0.0
+ 0.0        0.0        0.482435   0.0       -0.673392
+ 0.0        0.0        0.0        0.177982   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.1   0.0   0.0  0.0
+ -0.1  0.0   0.1   0.0  0.0
+  0.0  0.1   0.0   0.1  0.0
+  0.0  0.0  -0.1   0.0  0.1
+  0.0  0.0   0.0  -0.1  0.0
+
+julia> res_matrix = delayline_backward(5, 5; fb_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0  0.1   0.0  0.0   0.0
+ 0.1  0.0  -0.1  0.0   0.0
+ 0.0  0.1   0.0  0.1   0.0
+ 0.0  0.0   0.1  0.0  -0.1
+ 0.0  0.0   0.0  0.1   0.0
+```
+
+Shifting:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_shift=3, fb_shift=2)
+5×5 Matrix{Float32}:
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
- 0.1  0.0  0.0  0.0  0.1
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
  0.0  0.1  0.0  0.0  0.0
+```
 
-julia> res_matrix = delayline_backward(5, 5; delay_shift = 3, fb_weight = rand(Float32, 4))
-5×5 Matrix{Float32}:
- 0.0  0.393622  0.0      0.0       0.0
- 0.0  0.0       0.21916  0.0       0.0
- 0.0  0.0       0.0      0.895871  0.0
- 0.1  0.0       0.0      0.0       0.654846
- 0.0  0.1       0.0      0.0       0.0
+Returning as sparse:
+
+```jldoctest dlbackward
+julia> using SparseArrays
+
+julia> res_matrix = delayline_backward(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -731,7 +842,9 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest cyclejumps
 julia> res_matrix = cycle_jumps(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.1  0.1
@@ -739,7 +852,55 @@ julia> res_matrix = cycle_jumps(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.1  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
+Changing weights:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = 2, cycle_weight=-1)
+5×5 Matrix{Float32}:
+ 0.0   0.0   0.0   2.0  -1.0
+-1.0   0.0   0.0   0.0   0.0
+ 0.0  -1.0   0.0   0.0   0.0
+ 2.0   0.0  -1.0   0.0   0.0
+ 0.0   0.0   0.0  -1.0   0.0
+```
+
+Changing weights to custom arrays:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = .-rand(3), cycle_weight=rand(5))
+5×5 Matrix{Float32}:
+  0.0       0.0       0.0        -0.453905  0.443731
+  0.434804  0.0       0.0         0.0       0.0
+  0.0       0.520551  0.0         0.0       0.0
+ -0.453905  0.0       0.0665751   0.0       0.0
+  0.0       0.0       0.0         0.57811   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; cycle_kwargs = (;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.1  0.1
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+
+julia> res_matrix = cycle_jumps(5, 5; jump_kwargs = (;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.0  0.0  -0.1  0.1
+  0.1  0.0  0.0   0.0  0.0
+  0.0  0.1  0.0   0.0  0.0
+ -0.1  0.0  0.1   0.0  0.0
+  0.0  0.0  0.0   0.1  0.0
+```
+
+Changing cycle jumps length:
+
+```jldoctest cyclejumps
 julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
 5×5 Matrix{Float32}:
  0.0  0.0  0.1  0.0  0.1
@@ -747,7 +908,30 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
  0.1  0.1  0.0  0.0  0.1
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
+
+julia> res_matrix = cycle_jumps(5, 5; jump_size = 4)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.1  0.0  0.0  0.1  0.0
 ```
+
+Return as a sparse matrix:
+
+```jldoctest cyclejumps
+julia> using SparseArrays
+
+julia> res_matrix = cycle_jumps(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 7 stored entries:
+  ⋅    ⋅    ⋅   0.1  0.1
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
+```
+
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
@@ -815,7 +999,9 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest scycle
 julia> res_matrix = simple_cycle(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.1
@@ -823,14 +1009,64 @@ julia> res_matrix = simple_cycle(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
-julia> res_matrix = simple_cycle(5, 5; weight = 11)
+Changing weights:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; cycle_weight=0.99)
 5×5 Matrix{Float32}:
-  0.0   0.0   0.0   0.0  11.0
- 11.0   0.0   0.0   0.0   0.0
-  0.0  11.0   0.0   0.0   0.0
-  0.0   0.0  11.0   0.0   0.0
-  0.0   0.0   0.0  11.0   0.0
+ 0.0   0.0   0.0   0.0   0.99
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.99  0.0   0.0   0.0
+ 0.0   0.0   0.99  0.0   0.0
+ 0.0   0.0   0.0   0.99  0.0
+```
+
+Changing weights to a custom array:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; cycle_weight=rand(5))
+5×5 Matrix{Float32}:
+ 0.0       0.0        0.0       0.0       0.471823
+ 0.534782  0.0        0.0       0.0       0.0
+ 0.0       0.0764598  0.0       0.0       0.0
+ 0.0       0.0        0.507883  0.0       0.0
+ 0.0       0.0        0.0       0.546656  0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+  0.0  0.0   0.0   0.0  -0.1
+ -0.1  0.0   0.0   0.0   0.0
+  0.0  0.1   0.0   0.0   0.0
+  0.0  0.0  -0.1   0.0   0.0
+  0.0  0.0   0.0  -0.1   0.0
+
+julia> res_matrix = simple_cycle(5, 5; sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.0  0.1
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+```
+
+Returning as sparse:
+
+```jldoctest scycle
+julia> using SparseArrays
+
+julia> res_matrix = simple_cycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+  ⋅    ⋅    ⋅    ⋅   0.1
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -880,14 +1116,28 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
-julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+Default call:
+
+```jldoctest dcycle
+julia> res_matrix = double_cycle(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.3  0.0  0.0  0.3
- 0.1  0.0  0.3  0.0  0.0
- 0.0  0.1  0.0  0.3  0.0
- 0.0  0.0  0.1  0.0  0.3
+ 0.0  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.1  0.0  0.0  0.1  0.0
+```
+
+Changing weights:
+
+```jldoctest dcycle
+julia> res_matrix = double_cycle(5, 5; cycle_weight = -0.1, second_cycle_weight = 0.3)
+5×5 Matrix{Float32}:
+  0.0   0.3   0.0   0.0  0.3
+ -0.1   0.0   0.3   0.0  0.0
+  0.0  -0.1   0.0   0.3  0.0
+  0.0   0.0  -0.1   0.0  0.3
+ -0.1   0.0   0.0  -0.1  0.0
 ```
 """
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -967,14 +1217,72 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
-julia> true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+Default call:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.1  0.0
+```
+
+Changing weights:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.1
  0.1  0.0  0.3  0.0  0.0
  0.0  0.1  0.0  0.3  0.0
  0.0  0.0  0.1  0.0  0.3
  0.3  0.0  0.0  0.1  0.0
+```
+
+Changing weights to custom arrays:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_weight = rand(5), second_cycle_weight = .-rand(5))
+5×5 Matrix{Float32}:
+  0.0       -0.647066   0.0        0.0        0.604095
+  0.6687     0.0       -0.853307   0.0        0.0
+  0.0        0.40399    0.0       -0.565928   0.0
+  0.0        0.0        0.960196   0.0       -0.120321
+ -0.120321   0.0        0.0        0.874008   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.1   0.0   0.0  -0.1
+ -0.1  0.0   0.1   0.0   0.0
+  0.0  0.1   0.0   0.1   0.0
+  0.0  0.0  -0.1   0.0   0.1
+  0.1  0.0   0.0  -0.1   0.0
+
+julia> res_matrix = true_doublecycle(5, 5; second_cycle_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0  -0.1  0.0   0.0  0.1
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.1  0.0  -0.1  0.0
+ 0.0   0.0  0.1   0.0  0.1
+ 0.1   0.0  0.0   0.1  0.0
+```
+
+Returning as sparse:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+  ⋅   0.1   ⋅    ⋅   0.1
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
+ 0.1   ⋅    ⋅   0.1   ⋅
 ```
 """
 function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -1033,51 +1341,107 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
+    cycle and jump weights respectively. The kwargs are as follows:
+
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5.
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
 ## Examples
 
-```jldoctest
-julia> reservoir_matrix = selfloop_cycle(5, 5)
+Default call:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.0  0.0  0.1
  0.1  0.1  0.0  0.0  0.0
  0.0  0.1  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
+```jldoctest slcycle
 
-julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
+Changing weights:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=-0.2, selfloop_weight=0.5)
 5×5 Matrix{Float32}:
- 0.5  0.0  0.0  0.0  0.2
- 0.2  0.5  0.0  0.0  0.0
- 0.0  0.2  0.5  0.0  0.0
- 0.0  0.0  0.2  0.5  0.0
- 0.0  0.0  0.0  0.2  0.5
+  0.5   0.0   0.0   0.0  -0.2
+ -0.2   0.5   0.0   0.0   0.0
+  0.0  -0.2   0.5   0.0   0.0
+  0.0   0.0  -0.2   0.5   0.0
+  0.0   0.0   0.0  -0.2   0.5
+```
+
+Changing weights to custom arrays:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=rand(5), selfloop_weight=.-rand(5))
+5×5 Matrix{Float32}:
+ -0.902546   0.0          0.0        0.0          0.0987988
+  0.911585  -0.968998     0.0        0.0          0.0
+  0.0        0.00149246  -0.613033   0.0          0.0
+  0.0        0.0          0.777804  -0.727024     0.0
+  0.0        0.0          0.0        0.00441047  -0.310635
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.1  0.0   0.0   0.0  -0.1
+ -0.1  0.1   0.0   0.0   0.0
+  0.0  0.1   0.1   0.0   0.0
+  0.0  0.0  -0.1   0.1   0.0
+  0.0  0.0   0.0  -0.1   0.1
+
+julia> res_matrix = selfloop_cycle(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.1
+ 0.1  -0.1  0.0   0.0  0.0
+ 0.0   0.1  0.1   0.0  0.0
+ 0.0   0.0  0.1  -0.1  0.0
+ 0.0   0.0  0.0   0.1  0.1
+```
+
+Returning as sparse:
+
+```jldoctest slcycle
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_cycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+ 0.1   ⋅    ⋅    ⋅   0.1
+ 0.1  0.1   ⋅    ⋅    ⋅
+  ⋅   0.1  0.1   ⋅    ⋅
+  ⋅    ⋅   0.1  0.1   ⋅
+  ⋅    ⋅    ⋅   0.1  0.1
 ```
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, kwargs...) where {T <: Number}
+        return_sparse::Bool = false, selfloop_kwargs::NamedTuple = NamedTuple(),
+        cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
-    reservoir_matrix = simple_cycle(rng, T, dims...;
-        cycle_weight = T.(cycle_weight), return_sparse = false)
-    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); kwargs...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1238,22 +1602,93 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
-julia> reservoir_matrix = selfloop_delayline_backward(5, 5)
+Default call:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.1  0.0  0.0
  0.1  0.1  0.0  0.1  0.0
  0.0  0.1  0.1  0.0  0.1
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
+```
 
-julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
+Changing weights:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=0.3, fb_weight=0.99, delay_weight=-0.5)
 5×5 Matrix{Float32}:
- 0.1  0.0  0.3  0.0  0.0
- 0.3  0.1  0.0  0.3  0.0
- 0.0  0.3  0.1  0.0  0.3
- 0.0  0.0  0.3  0.1  0.0
- 0.0  0.0  0.0  0.3  0.1
+  0.3   0.0   0.99   0.0   0.0
+ -0.5   0.3   0.0    0.99  0.0
+  0.0  -0.5   0.3    0.0   0.99
+  0.0   0.0  -0.5    0.3   0.0
+  0.0   0.0   0.0   -0.5   0.3
+```
+
+Changing weights to custom arrays:
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=randn(5), fb_weight=rand(5), delay_weight=-rand(5))
+5×5 Matrix{Float32}:
+ -1.22847    0.0       0.384073   0.0        0.0
+ -0.699175   2.63937   0.0        0.345408   0.0
+  0.0       -0.5171   -0.452312   0.0        0.0205082
+  0.0        0.0      -0.193893   1.45921    0.0
+  0.0        0.0       0.0       -0.453015  -1.43402
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+ -0.1  0.0   0.1   0.0   0.0
+  0.1  0.1   0.0   0.1   0.0
+  0.0  0.1  -0.1   0.0   0.1
+  0.0  0.0   0.1  -0.1   0.0
+  0.0  0.0   0.0   0.1  -0.1
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; delay_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.1   0.0  0.0
+ 0.1   0.1  0.0   0.1  0.0
+ 0.0  -0.1  0.1   0.0  0.1
+ 0.0   0.0  0.1   0.1  0.0
+ 0.0   0.0  0.0  -0.1  0.1
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; fb_kwargs=(;sampling_type=:regular_sample!))
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.1   0.0  0.0
+ 0.1  0.1  0.0  -0.1  0.0
+ 0.0  0.1  0.1   0.0  0.1
+ 0.0  0.0  0.1   0.1  0.0
+ 0.0  0.0  0.0   0.1  0.1
+```
+
+Shifting the delay and the backward line:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; delay_shift=3, fb_shift=2)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.1  0.0
+ 0.0  0.1  0.0  0.0  0.1
+```
+
+Returning as sparse:
+
+```jldoctest sldlfb
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 12 stored entries:
+ 0.1   ⋅   0.1   ⋅    ⋅
+ 0.1  0.1   ⋅   0.1   ⋅
+  ⋅   0.1  0.1   ⋅   0.1
+  ⋅    ⋅   0.1  0.1   ⋅
+  ⋅    ⋅    ⋅   0.1  0.1
 ```
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -1336,22 +1771,72 @@ W_{i,j} =
 
 ## Examples
 
-```jldoctest
-julia> reservoir_matrix = selfloop_forwardconnection(5, 5)
+Default call:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.0  0.0  0.0
  0.0  0.1  0.0  0.0  0.0
  0.1  0.0  0.1  0.0  0.0
  0.0  0.1  0.0  0.1  0.0
  0.0  0.0  0.1  0.0  0.1
+```
 
-julia> reservoir_matrix = selfloop_forwardconnection(5, 5; forward_weight=0.5)
+Changing weights:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=0.5, selfloop_weight=0.99)
 5×5 Matrix{Float32}:
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.5  0.0  0.1  0.0  0.0
- 0.0  0.5  0.0  0.1  0.0
- 0.0  0.0  0.5  0.0  0.1
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.99  0.0   0.0   0.0
+ 0.5   0.0   0.99  0.0   0.0
+ 0.0   0.5   0.0   0.99  0.0
+ 0.0   0.0   0.5   0.0   0.99
+```
+
+Changing weights to custom arrays:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=rand(5), selfloop_weight=.-rand(5))
+5×5 Matrix{Float32}:
+ -0.0420509   0.0        0.0        0.0        0.0
+  0.0        -0.116113   0.0        0.0        0.0
+  0.69173     0.0       -0.513592   0.0        0.0
+  0.0         0.522245   0.0       -0.199966   0.0
+  0.0         0.0        0.784556   0.0       -0.918653
+```
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.1  0.0   0.0  0.0  0.0
+  0.0  0.1   0.0  0.0  0.0
+ -0.1  0.0   0.1  0.0  0.0
+  0.0  0.1   0.0  0.1  0.0
+  0.0  0.0  -0.1  0.0  0.1
+
+julia> res_matrix = selfloop_forwardconnection(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.1  0.0  -0.1  0.0
+ 0.0   0.0  0.1   0.0  0.1
+```
+
+Returning as sparse:
+
+```jldoctest slfc
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_forwardconnection(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
 ```
 """
 function selfloop_forwardconnection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
