@@ -1,691 +1,3 @@
-### input layers
-"""
-    scaled_rand([rng], [T], dims...;
-        scaling=0.1)
-
-Create and return a matrix with random values, uniformly distributed within
-a range defined by `scaling`.
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `scaling`: A scaling factor to define the range of the uniform distribution.
-    The factor can be passed in three different ways:
-
-      + A single number. In this case, the matrix elements will be randomly
-        chosen from the range `[-scaling, scaling]`. Default option, with
-        a the scaling value set to `0.1`.
-      + A tuple `(lower, upper)`. The values define the range of the distribution.
-      + A vector. In this case, the columns will be scaled individually by the
-        entries of the vector. The entries can be numbers or tuples, which will mirror
-        the behavior described above.
-
-# Examples
-
-```jldoctest
-julia> res_input = scaled_rand(8, 3)
-8×3 Matrix{Float32}:
- -0.0669356  -0.0292692  -0.0188943
-  0.0159724   0.004071   -0.0737949
-  0.026355   -0.0191563   0.0714962
- -0.0177412   0.0279123   0.0892906
- -0.0184405   0.0567368   0.0190222
-  0.0944272   0.0679244   0.0148647
- -0.0799005  -0.0891089  -0.0444782
- -0.0970182   0.0934286   0.03553
-
-julia> tt = scaled_rand(5, 3, scaling = (0.1, 0.15))
-5×3 Matrix{Float32}:
-  0.13631   0.110929  0.116177
-  0.116299  0.136038  0.119713
-  0.11535   0.144712  0.110029
-  0.127453  0.12657   0.147656
-  0.139446  0.117656  0.104712
-```
-
-Example with vector:
-
-```jldoctest
-julia> tt = scaled_rand(5, 3, scaling = [0.1, 0.2, 0.3])
-5×3 Matrix{Float32}:
-  0.0452399   -0.112565   -0.105874
- -0.0348047    0.0883044  -0.0634468
- -0.0386004    0.157698   -0.179648
-  0.00981022   0.012559    0.271875
-  0.0577838   -0.0587553  -0.243451
-
-julia> tt = scaled_rand(5, 3, scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
-5×3 Matrix{Float32}:
-  0.17262   -0.178141  0.364709
-  0.132598  -0.127924  0.378851
-  0.1307    -0.110575  0.340117
-  0.154905  -0.14686   0.490625
-  0.178892  -0.164689  0.31885
-```
-"""
-function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Union{Number, Tuple, Vector} = T(0.1)) where {T <: Number}
-    res_size, in_size = dims
-    layer_matrix = DeviceAgnostic.rand(rng, T, res_size, in_size)
-    apply_scale!(layer_matrix, scaling, T)
-    return layer_matrix
-end
-
-function apply_scale!(input_matrix::AbstractArray, scaling::Number, ::Type{T}) where {T}
-    @. input_matrix = (input_matrix - T(0.5)) * (T(2) * T(scaling))
-    return input_matrix
-end
-
-function apply_scale!(input_matrix::AbstractArray,
-        scaling::Tuple{<:Number, <:Number}, ::Type{T}) where {T}
-    lower, upper = T(scaling[1]), T(scaling[2])
-    @assert lower<upper "lower < upper required"
-    scale = upper - lower
-    @. input_matrix = input_matrix * scale + lower
-    return input_matrix
-end
-
-function apply_scale!(input_matrix::AbstractMatrix,
-        scaling::AbstractVector, ::Type{T}) where {T <: Number}
-    ncols = size(input_matrix, 2)
-    @assert length(scaling)==ncols "need one scaling per column"
-    for (idx, col) in enumerate(eachcol(input_matrix))
-        apply_scale!(col, scaling[idx], T)
-    end
-    return input_matrix
-end
-
-"""
-    weighted_init([rng], [T], dims...;
-        scaling=0.1, return_sparse=false)
-
-Create and return a matrix representing a weighted input layer.
-This initializer generates a weighted input matrix with random non-zero
-elements distributed uniformly within the range
-[-`scaling`, `scaling`] [Lu2017](@cite).
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `scaling`: The scaling factor for the weight distribution.
-    Defaults to `0.1`.
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-
-# Examples
-
-```jldoctest
-julia> res_input = weighted_init(8, 3)
-6×3 Matrix{Float32}:
-  0.0452399   0.0          0.0
- -0.0348047   0.0          0.0
-  0.0        -0.0386004    0.0
-  0.0         0.00981022   0.0
-  0.0         0.0          0.0577838
-  0.0         0.0         -0.0562827
-```
-"""
-function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Number = T(0.1), return_sparse::Bool = false) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    approx_res_size, in_size = dims
-    res_size = Int(floor(approx_res_size / in_size) * in_size)
-    check_modified_ressize(res_size, approx_res_size)
-    layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    q = floor(Int, res_size / in_size)
-
-    for idx in 1:in_size
-        sc_rand = (DeviceAgnostic.rand(rng, T, q) .- T(0.5)) .* (T(2) * T(scaling))
-        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = sc_rand
-    end
-
-    return return_init_as(Val(return_sparse), layer_matrix)
-end
-
-"""
-    weighted_minimal([rng], [T], dims...;
-        weight=0.1, return_sparse=false,
-        sampling_type=:no_sample)
-
-Create and return a minimal weighted input layer matrix.
-This initializer generates a weighted input matrix with equal, deterministic
-elements in the same construction as [`weighted_minimal]`(@ref),
-inspired by [Lu2017](@cite).
-
-Please note that this initializer computes its own reservoir size! If
-the computed reservoir size is different than the provided one it will raise a
-warning.
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `weight`: The value for all the weights in the input matrix.
-    Defaults to `0.1`.
-  - `return_sparse`: flag for returning a `sparse` matrix.
-    Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
-
-# Examples
-
-```jldoctest
-julia> res_input = weighted_minimal(8, 3)
-┌ Warning: Reservoir size has changed!
-│
-│     Computed reservoir size (6) does not equal the provided reservoir size (8).
-│
-│     Using computed value (6). Make sure to modify the reservoir initializer accordingly.
-│
-└ @ ReservoirComputing ~/.julia/dev/ReservoirComputing/src/esn/esn_inits.jl:159
-6×3 Matrix{Float32}:
- 0.1  0.0  0.0
- 0.1  0.0  0.0
- 0.0  0.1  0.0
- 0.0  0.1  0.0
- 0.0  0.0  0.1
- 0.0  0.0  0.1
-
-julia> res_input = weighted_minimal(9, 3; weight = 0.99)
-9×3 Matrix{Float32}:
- 0.99  0.0   0.0
- 0.99  0.0   0.0
- 0.99  0.0   0.0
- 0.0   0.99  0.0
- 0.0   0.99  0.0
- 0.0   0.99  0.0
- 0.0   0.0   0.99
- 0.0   0.0   0.99
- 0.0   0.0   0.99
-
-julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
-9×3 Matrix{Float32}:
-  0.1  -0.0  -0.0
- -0.1  -0.0  -0.0
-  0.1  -0.0   0.0
- -0.0   0.1   0.0
-  0.0   0.1  -0.0
-  0.0   0.1   0.0
- -0.0  -0.0  -0.1
- -0.0  -0.0   0.1
-  0.0  -0.0   0.1
-```
-"""
-function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number = T(0.1), return_sparse::Bool = false,
-        sampling_type = :no_sample, kwargs...) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    approx_res_size, in_size = dims
-    res_size = Int(floor(approx_res_size / in_size) * in_size)
-    check_modified_ressize(res_size, approx_res_size)
-    layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    q = floor(Int, res_size / in_size)
-
-    for idx in 1:in_size
-        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = T(weight) .* ones(T, q)
-    end
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, layer_matrix; kwargs...)
-    return return_init_as(Val(return_sparse), layer_matrix)
-end
-
-"""
-    informed_init([rng], [T], dims...;
-        scaling=0.1, model_in_size, gamma=0.5)
-
-Create an input layer for informed echo state
-networks [Pathak2018](@cite).
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `scaling`: The scaling factor for the input matrix.
-    Default is 0.1.
-  - `model_in_size`: The size of the input model.
-  - `gamma`: The gamma value. Default is 0.5.
-
-# Examples
-"""
-function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Number = T(0.1), model_in_size::Integer,
-        gamma::Number = T(0.5)) where {T <: Number}
-    res_size, in_size = dims
-    state_size = in_size - model_in_size
-
-    if state_size <= 0
-        throw(DimensionMismatch("in_size must be greater than model_in_size"))
-    end
-
-    input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    zero_connections = DeviceAgnostic.zeros(rng, T, in_size)
-    num_for_state = floor(Int, res_size * gamma)
-    num_for_model = floor(Int, res_size * (1 - gamma))
-
-    same_as_zero_row(jdx::Int) = zero_connections == @view(input_matrix[jdx, :])
-
-    for _ in 1:num_for_state
-        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
-        isempty(idxs) && break
-
-        random_row_idx = rand(rng, idxs)
-        random_clm_idx = rand(rng, 1:state_size)
-
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) * (T(2) * T(scaling))
-    end
-
-    for _ in 1:num_for_model
-        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
-        isempty(idxs) && break
-
-        random_row_idx = rand(rng, idxs)
-        random_clm_idx = rand(rng, (state_size + 1):in_size)
-
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) * (T(2) * T(scaling))
-    end
-
-    return input_matrix
-end
-
-"""
-    minimal_init([rng], [T], dims...;
-        sampling_type=:bernoulli_sample!, weight=0.1, irrational=pi,
-        start=1, p=0.5)
-
-Create a layer matrix with uniform weights determined by
-`weight` [Rodan2011](@cite). The sign difference is randomly
-determined by the `sampling` chosen.
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `weight`: The weight used to fill the layer matrix. Default is 0.1.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
-
-# Examples
-
-```jldoctest
-julia> res_input = minimal_init(8, 3)
-8×3 Matrix{Float32}:
-  0.1  -0.1   0.1
- -0.1   0.1   0.1
- -0.1  -0.1   0.1
- -0.1  -0.1  -0.1
-  0.1   0.1   0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1   0.1
-  0.1  -0.1   0.1
-
-julia> res_input = minimal_init(8, 3; sampling_type = :irrational)
-8×3 Matrix{Float32}:
- -0.1   0.1  -0.1
-  0.1  -0.1  -0.1
-  0.1   0.1  -0.1
-  0.1   0.1   0.1
- -0.1  -0.1  -0.1
-  0.1   0.1   0.1
-  0.1   0.1  -0.1
- -0.1   0.1  -0.1
-
-julia> res_input = minimal_init(8, 3; p = 0.1) # lower p -> more negative signs
-8×3 Matrix{Float32}:
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
-  0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1  -0.1
-
-julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
-8×3 Matrix{Float32}:
-  0.1   0.1  0.1
- -0.1   0.1  0.1
- -0.1   0.1  0.1
-  0.1   0.1  0.1
-  0.1   0.1  0.1
-  0.1  -0.1  0.1
- -0.1   0.1  0.1
-  0.1   0.1  0.1
-```
-"""
-function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
-        kwargs...) where {T <: Number}
-    res_size, in_size = dims
-    input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    input_matrix .+= T(weight)
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, input_matrix; kwargs...)
-    return input_matrix
-end
-
-@doc raw"""
-    chebyshev_mapping([rng], [T], dims...;
-        amplitude=one(T), sine_divisor=one(T),
-        chebyshev_parameter=one(T), return_sparse=false)
-
-Generate a Chebyshev-mapped matrix [Xie2024](@cite).
-The first row is initialized
-using a sine function and subsequent rows are iteratively generated
-via the Chebyshev mapping. The first row is defined as:
-
-```math
-    W[1, j] = \text{amplitude} \cdot \sin(j \cdot \pi / (\text{sine_divisor}
-        \cdot \text{n_cols}))
-```
-
-for j = 1, 2, …, n_cols (with n_cols typically equal to K+1, where K is the number of input layer neurons).
-Subsequent rows are generated by applying the mapping:
-
-```math
-    W[i+1, j] = \cos( \text{chebyshev_parameter} \cdot \acos(W[pi, j]))
-```
-
-# Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-    `res_size` is assumed to be K+1.
-
-# Keyword arguments
-
-  - `amplitude`: Scaling factor used to initialize the first row.
-    This parameter adjusts the amplitude of the sine function. Default value is one.
-  - `sine_divisor`: Divisor applied in the sine function's phase. Default value is one.
-  - `chebyshev_parameter`: Control parameter for the Chebyshev mapping in
-    subsequent rows. This parameter influences the distribution of the
-    matrix elements. Default is one.
-  - `return_sparse`: If `true`, the function returns the matrix as a sparse matrix.
-    Default is `false`.
-
-# Examples
-
-```jldoctest
-julia> input_matrix = chebyshev_mapping(10, 3)
-10×3 Matrix{Float32}:
- 0.866025  0.866025   1.22465f-16
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
-```
-"""
-function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat = one(T), sine_divisor::AbstractFloat = one(T),
-        chebyshev_parameter::AbstractFloat = one(T),
-        return_sparse::Bool = false) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    n_rows, n_cols = dims[1], dims[2]
-
-    for idx_cols in 1:n_cols
-        input_matrix[1, idx_cols] = amplitude * sin(idx_cols * pi / (sine_divisor * n_cols))
-    end
-    for idx_rows in 2:n_rows
-        for idx_cols in 1:n_cols
-            input_matrix[idx_rows, idx_cols] = cos(chebyshev_parameter * acos(input_matrix[
-                idx_rows - 1, idx_cols]))
-        end
-    end
-
-    return return_init_as(Val(return_sparse), input_matrix)
-end
-
-@doc raw"""
-    logistic_mapping([rng], [T], dims...;
-        amplitude=0.3, sine_divisor=5.9, logistic_parameter=3.7,
-        return_sparse=false)
-
-Generate an input weight matrix using a logistic mapping [Wang2022](@cite)
-The first row is initialized using a sine function:
-
-```math
-    W[1, j] = \text{amplitude} \cdot \sin(j \cdot \pi /
-        (\text{sine_divisor} \cdot in_size))
-```
-
-for each input index `j`, with `in_size` being the number of columns provided in `dims`. Subsequent rows
-are generated recursively using the logistic map recurrence:
-
-```math
-    W[i+1, j] = \text{logistic_parameter} \cdot W(i, j) \cdot (1 - W[i, j])
-```
-
-# Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `amplitude`: Scaling parameter used in the sine initialization of the
-    first row. Default is 0.3.
-  - `sine_divisor`: Parameter used to adjust the phase in the sine initialization.
-    Default is 5.9.
-  - `logistic_parameter`: The parameter in the logistic mapping recurrence that
-    governs the dynamics. Default is 3.7.
-  - `return_sparse`: If `true`, returns the resulting matrix as a sparse matrix.
-    Default is `false`.
-
-# Examples
-
-```jldoctest
-julia> logistic_mapping(8, 3)
-8×3 Matrix{Float32}:
- 0.0529682  0.104272  0.1523
- 0.185602   0.345578  0.477687
- 0.559268   0.836769  0.923158
- 0.912003   0.50537   0.262468
- 0.296938   0.924893  0.716241
- 0.772434   0.257023  0.751987
- 0.650385   0.70656   0.69006
- 0.841322   0.767132  0.791346
-
-```
-"""
-function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
-        logistic_parameter::AbstractFloat = 3.7,
-        return_sparse::Bool = false) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    num_rows, num_columns = dims[1], dims[2]
-    for idx_col in 1:num_columns
-        input_matrix[1, idx_col] = amplitude *
-                                   sin(idx_col * pi / (sine_divisor * num_columns))
-    end
-    for idx_row in 2:num_rows
-        for idx_col in 1:num_columns
-            previous_value = input_matrix[idx_row - 1, idx_col]
-            input_matrix[idx_row, idx_col] = logistic_parameter * previous_value *
-                                             (1 - previous_value)
-        end
-    end
-
-    return return_init_as(Val(return_sparse), input_matrix)
-end
-
-@doc raw"""
-    modified_lm([rng], [T], dims...;
-        factor, amplitude=0.3, sine_divisor=5.9, logistic_parameter=2.35,
-        return_sparse=false)
-
-Generate a input weight matrix based on the logistic mapping [Viehweg2025](@cite).
-Thematrix is built so that each input is transformed into a high-dimensional feature
-space via a recursive logistic map. For each input, a chain of weights is generated
-as follows:
-- The first element of the chain is initialized using a sine function:
-
-```math
-      W[1,j] = \text{amplitude} \cdot \sin( (j \cdot \pi) /
-          (\text{factor} \cdot \text{n} \cdot \text{sine_divisor}) )
-```
-  where `j` is the index corresponding to the input and `n` is the number of inputs.
-
-- Subsequent elements are recursively computed using the logistic mapping:
-
-```math
-      W[i+1,j] = \text{logistic_parameter} \cdot W[i,j] \cdot (1 - W[i,j])
-```
-
-The resulting matrix has dimensions `(factor * in_size) x in_size`, where
-`in_size` corresponds to the number of columns provided in `dims`.
-If the provided number of rows does not match `factor * in_size`
-the number of rows is overridden.
-
-# Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
-
-# Keyword arguments
-
-  - `factor`: The number of logistic map iterations (chain length) per input,
-    determining the number of rows per input.
-  - `amplitude`: Scaling parameter A for the sine-based initialization of
-    the first element in each logistic chain. Default is 0.3.
-  - `sine_divisor`: Parameter B used to adjust the phase in the sine initialization.
-    Default is 5.9.
-  - `logistic_parameter`: The parameter r in the logistic recurrence that governs
-    the chain dynamics. Default is 2.35.
-  - `return_sparse`: If `true`, returns the resulting matrix as a sparse matrix.
-    Default is `false`.
-
-# Examples
-
-```jldoctest
-julia> modified_lm(20, 10; factor=2)
-20×10 SparseArrays.SparseMatrixCSC{Float32, Int64} with 18 stored entries:
-⎡⢠⠀⠀⠀⠀⎤
-⎢⠀⢣⠀⠀⠀⎥
-⎢⠀⠀⢣⠀⠀⎥
-⎢⠀⠀⠀⢣⠀⎥
-⎣⠀⠀⠀⠀⢣⎦
-
-julia> modified_lm(12, 4; factor=3)
-12×4 SparseArrays.SparseMatrixCSC{Float32, Int64} with 9 stored entries:
-  ⋅    ⋅          ⋅          ⋅
-  ⋅    ⋅          ⋅          ⋅
-  ⋅    ⋅          ⋅          ⋅
-  ⋅   0.0133075   ⋅          ⋅
-  ⋅   0.0308564   ⋅          ⋅
-  ⋅   0.070275    ⋅          ⋅
-  ⋅    ⋅         0.0265887   ⋅
-  ⋅    ⋅         0.0608222   ⋅
-  ⋅    ⋅         0.134239    ⋅
-  ⋅    ⋅          ⋅         0.0398177
-  ⋅    ⋅          ⋅         0.0898457
-  ⋅    ⋅          ⋅         0.192168
-
-```
-"""
-function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        factor::Integer, amplitude::AbstractFloat = 0.3,
-        sine_divisor::AbstractFloat = 5.9, logistic_parameter::AbstractFloat = 2.35,
-        return_sparse::Bool = false) where {T <: Number}
-    throw_sparse_error(return_sparse)
-    num_columns = dims[2]
-    expected_num_rows = factor * num_columns
-    if dims[1] != expected_num_rows
-        @warn """\n
-        Provided dims[1] ($(dims[1])) is not equal to factor*num_columns ($expected_num_rows).
-        Overriding number of rows to $expected_num_rows. \n
-        """
-    end
-    output_matrix = DeviceAgnostic.zeros(rng, T, expected_num_rows, num_columns)
-    for idx_col in 1:num_columns
-        base_row = (idx_col - 1) * factor + 1
-        output_matrix[base_row, idx_col] = amplitude * sin(((idx_col - 1) * pi) /
-                                               (factor * num_columns * sine_divisor))
-        for jdx in 1:(factor - 1)
-            current_row = base_row + jdx
-            previous_value = output_matrix[current_row - 1, idx_col]
-            output_matrix[current_row, idx_col] = logistic_parameter * previous_value *
-                                                  (1 - previous_value)
-        end
-    end
-
-    return return_init_as(Val(return_sparse), output_matrix)
-end
-
-### reservoirs
-
 """
     rand_sparse([rng], [T], dims...;
         radius=1.0, sparsity=0.1, std=1.0, return_sparse=false)
@@ -694,26 +6,29 @@ Create and return a random sparse reservoir matrix.
 The matrix will be of size specified by `dims`, with specified `sparsity`
 and scaled spectral radius according to `radius`.
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `radius`: The desired spectral radius of the reservoir.
     Defaults to 1.0.
   - `sparsity`: The sparsity level of the reservoir matrix,
     controlling the fraction of zero elements. Defaults to 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
 
-# Examples
+## Examples
 
-```jldoctest
+Changing the sparsity:
+
+```jldoctest randsparse
 julia> res_matrix = rand_sparse(5, 5; sparsity = 0.5)
 5×5 Matrix{Float32}:
  0.0        0.0        0.0        0.0      0.0
@@ -721,6 +36,36 @@ julia> res_matrix = rand_sparse(5, 5; sparsity = 0.5)
  0.0        0.0       -0.931294   0.0      0.553706
  0.723235  -0.524727   0.0        0.0      0.0
  1.23723    0.0        0.181824  -1.5478   0.465328
+
+julia> res_matrix = rand_sparse(5, 5; sparsity = 0.2)
+5×5 Matrix{Float32}:
+ 0.0       0.0        0.0   0.0      0.0
+ 0.0       0.853184   0.0   0.0      0.0
+ 0.0       0.0       -1.0   0.0      0.0
+ 0.776591  0.0        0.0   0.0      0.0
+ 0.0       0.0        0.0  -1.66199  0.499657
+
+julia> res_matrix = rand_sparse(5, 5; sparsity = 0.8)
+5×5 Matrix{Float32}:
+ 0.0        0.229011   0.625026    -0.660061  -1.39078
+ -0.295761   0.32544    0.0          0.107163   0.0
+ 0.766352   1.44836   -0.381442    -0.435473   0.226788
+ 0.296224  -0.214919   0.00956791   0.0        0.210393
+ 0.506746   0.0        0.0744718   -0.633951   0.19059
+```
+
+Returning a sparse matrix:
+
+```jldoctest randsparse
+julia> using SparseArrays
+
+julia> res_matrix = rand_sparse(5, 5; sparsity = 0.4, return_sparse = true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+  ⋅          ⋅          ⋅          ⋅        ⋅
+  ⋅         0.794565    ⋅         0.26164   ⋅
+  ⋅          ⋅        -0.931294    ⋅       0.553706
+ 0.723235  -0.524727    ⋅          ⋅        ⋅
+ 1.23723     ⋅         0.181824  -1.5478   0.465328
 ```
 """
 function rand_sparse(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -742,15 +87,15 @@ end
 Returns an initializer to build a sparse reservoir matrix with the given
 `sparsity` by using a pseudo-SVD approach as described in [Yang2018](@cite).
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `max_value`: The maximum absolute value of elements in the matrix.
     Default is 1.0
@@ -761,14 +106,17 @@ Returns an initializer to build a sparse reservoir matrix with the given
   - `reverse_sort`: A boolean indicating whether to reverse the sorted
     singular values. Default is `false`.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `return_diag`: flag for returning a `Diagonal` matrix. If both `return_diag`
     and `return_sparse` are set to `true` priority is given to `return_diag`.
     Default is `false`.
 
-# Examples
+## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest psvd
 julia> res_matrix = pseudo_svd(5, 5)
 5×5 Matrix{Float32}:
  0.306998  0.0       0.0       0.0       0.0
@@ -777,10 +125,56 @@ julia> res_matrix = pseudo_svd(5, 5)
  0.0       0.0       0.0       0.726199  0.0
  0.0       0.0       0.0       0.0       1.0
 ```
+
+With reversed sorting:
+
+```jldoctest psvd
+julia> pseudo_svd(5, 5; reverse_sort = true)
+5×5 Matrix{Float32}:
+ 1.0  0.0       0.0       0.0       0.0
+ 0.0  0.726199  0.0       0.0       0.0
+ 0.0  0.0       0.549051  0.0       0.0
+ 0.0  0.0       0.0       0.325977  0.0
+ 0.0  0.0       0.0       0.0       0.306998
+```
+
+With no sorting
+
+```jldoctest psvd
+julia> pseudo_svd(5, 5; sorted = false)
+5×5 Matrix{Float32}:
+ 0.726199  0.0       0.0       0.0       0.0
+ 0.0       0.325977  0.0       0.0       0.0
+ 0.0       0.0       0.306998  0.0       0.0
+ 0.0       0.0       0.0       0.549051  0.0
+ 0.0       0.0       0.0       0.0       0.788919
+```
+
+Returning as a `Diagonal` or a `sparse` matrix:
+
+```jldoctest psvd
+julia> pseudo_svd(5, 5; return_diag = true)
+5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
+ 0.306998   ⋅         ⋅         ⋅         ⋅
+  ⋅        0.325977   ⋅         ⋅         ⋅
+  ⋅         ⋅        0.549051   ⋅         ⋅
+  ⋅         ⋅         ⋅        0.726199   ⋅
+  ⋅         ⋅         ⋅         ⋅        1.0
+
+julia> using SparseArrays
+
+julia> pseudo_svd(5, 5; return_sparse = true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+ 0.306998   ⋅         ⋅         ⋅         ⋅
+  ⋅        0.325977   ⋅         ⋅         ⋅
+  ⋅         ⋅        0.549051   ⋅         ⋅
+  ⋅         ⋅         ⋅        0.726199   ⋅
+  ⋅         ⋅         ⋅         ⋅        1.0
+```
 """
 function pseudo_svd(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         max_value::Number = T(1),
-        sparsity::Number = 0.1,
+        sparsity::Number = 0.1f0,
         sorted::Bool = true,
         reverse_sort::Bool = false,
         return_sparse::Bool = false,
@@ -865,24 +259,25 @@ matrix based on a digital chaotic system operating at finite precision.
 If the requested matrix order does not exactly match a valid order the
 closest valid order is used.
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `extra_edge_probability`: Probability of adding extra random edges in
     the adjacency matrix to enhance connectivity. Default is 0.1.
   - `desired_spectral_radius`: The target spectral radius for the
     reservoir matrix. Default is one.
-  - `return_sparse`: If `true`, the function returns the
-    reservoir matrix as a sparse matrix. Default is `false`.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
+    Default is `false`.
 
-# Examples
+## Examples
 
 ```jldoctest
 julia> res_matrix = chaotic_init(8, 8)
@@ -901,7 +296,7 @@ julia> res_matrix = chaotic_init(8, 8)
 ```
 """
 function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        extra_edge_probability::AbstractFloat = T(0.1), spectral_radius::AbstractFloat = one(T),
+        extra_edge_probability::AbstractFloat = T(0.1f0), spectral_radius::AbstractFloat = one(T),
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -970,18 +365,16 @@ for each node [Griffith2019](@cite). When `in_degree` is 1, the function can enf
 a fully connected cycle if `connected` is `true`;
 otherwise, it generates a random connectivity pattern.
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword Arguments
+## Keyword Arguments
 
-  - `return_sparse`: If `true`, the function returns the
-    reservoir matrix as a sparse matrix. Default is `false`.
   - `connected`: For `in_degree == 1`, if `true` a connected cycle is enforced.
     Default is `false`.
   - `in_degree`: The number of incoming connections per node.
@@ -990,6 +383,26 @@ otherwise, it generates a random connectivity pattern.
     Defaults to 1.0.
   - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
     Default is `false`.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
+    Default is `false`.
+
+## Examples
+
+```jldoctest lowcon
+julia> low_connectivity(10, 10)
+10×10 Matrix{Float32}:
+ 0.0        0.0       0.0       …  0.0      0.0   0.2207
+ 0.0        0.0       0.0          0.0      0.0   0.564821
+ 0.318999   0.0       0.0          0.0      0.0   0.0
+ 0.670023   0.0       0.0          0.0      0.0   0.0
+ 0.0        0.0       0.0          1.79705  0.0   0.0
+ 0.0       -1.95711   0.0       …  0.0      0.0   0.0
+ 0.0        0.0       0.0          0.0      0.0   0.0
+ 0.0        0.0       0.0          0.0      0.0   0.0
+ 0.0        0.0      -0.650657     0.0      0.0   0.0
+ 0.0        0.0       0.0          0.0      0.0  -1.0
+```
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool = false, connected::Bool = false,
@@ -1012,8 +425,8 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0), cut_cycle::Bool = false) where {T <:
-                                                                                         Number}
+        in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
+                                                                                           Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -1026,8 +439,8 @@ function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
 end
 
 function build_cycle(::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0), cut_cycle::Bool = false) where {T <:
-                                                                                         Number}
+        in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
+                                                                                           Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     perm = randperm(rng, res_size)
     for idx in 1:(res_size - 1)
@@ -1054,22 +467,30 @@ function cut_cycle_edge!(
     return reservoir_matrix
 end
 
-"""
+@doc raw"""
     delay_line([rng], [T], dims...;
         delay_weight=0.1, delay_shift=1,
         return_sparse=false, kwargs...)
 
 Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r, & \text{if } i = j + 1, j \in [1, D_{\mathrm{res}} - 1], \\[6pt]
+    0, & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `delay_weight`: Determines the value of all connections in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1078,6 +499,7 @@ Create and return a delay line reservoir matrix [Rodan2011](@cite).
     Default is 0.1.
   - `delay_shift`: delay line shift. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
@@ -1095,9 +517,11 @@ Create and return a delay line reservoir matrix [Rodan2011](@cite).
   - `strides`: number of strides for assigning negative value to a weight. It can be an
     integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest delayline
 julia> res_matrix = delay_line(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
@@ -1105,7 +529,11 @@ julia> res_matrix = delay_line(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
+Changing weights:
+
+```jldoctest delayline
 julia> res_matrix = delay_line(5, 5; delay_weight = 1)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
@@ -1113,18 +541,68 @@ julia> res_matrix = delay_line(5, 5; delay_weight = 1)
  0.0  1.0  0.0  0.0  0.0
  0.0  0.0  1.0  0.0  0.0
  0.0  0.0  0.0  1.0  0.0
+```
 
-julia> res_matrix = delay_line(5, 5; delay_weight = 1, delay_shift = 3)
+Changing weights to a custom array:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; delay_weight = rand(Float32, 4))
+5×5 Matrix{Float32}:
+ 0.0       0.0       0.0      0.0        0.0
+ 0.398408  0.0       0.0      0.0        0.0
+ 0.0       0.624473  0.0      0.0        0.0
+ 0.0       0.0       0.66302  0.0        0.0
+ 0.0       0.0       0.0      0.0780818  0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+ 0.0  0.0   0.0   0.0  0.0
+ -0.1  0.0   0.0   0.0  0.0
+ 0.0  0.1   0.0   0.0  0.0
+ 0.0  0.0  -0.1   0.0  0.0
+ 0.0  0.0   0.0  -0.1  0.0
+
+julia> res_matrix = delay_line(5, 5; sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.0  0.0
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+```
+
+Shifting the delay line:
+
+```jldoctest delayline
+julia> res_matrix = delay_line(5, 5; delay_shift = 3)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  0.0  0.0
- 0.0  1.0  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+```
+
+Returning as sparse:
+
+```jldoctest delayline
+julia> using SparseArrays
+
+julia> res_matrix = delay_line(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 4 stored entries:
+  ⋅    ⋅    ⋅    ⋅    ⋅
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        delay_weight::Union{Number, AbstractVector} = T(0.1), delay_shift::Integer = 1,
+        delay_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
         return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1133,7 +611,7 @@ function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     delayline_backward([rng], [T], dims...;
         delay_weight=0.1, fb_weight=0.1,
         delay_shift=1, fb_shift=1, return_sparse=false,
@@ -1142,15 +620,24 @@ end
 Create a delay line backward reservoir with the specified by `dims` and weights.
 Creates a matrix with backward connections as described in [Rodan2011](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r, & \text{if } i = j + 1,\;\; j \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    b, & \text{if } j = i + 1,\;\; i \in [1, D_{\mathrm{res}} - 1], \\[6pt]
+    0, & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `delay_weight`: The weight determines the absolute value of
     forward connections in the reservoir.
@@ -1169,6 +656,7 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
     Default is 1.
   - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
     delay line weight and feedback weights respectively. The kwargs are as follows:
@@ -1189,9 +677,11 @@ Creates a matrix with backward connections as described in [Rodan2011](@cite).
       + `strides`: number of strides for assigning negative value to a weight. It can be an
         integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest dlbackward
 julia> res_matrix = delayline_backward(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.1  0.0  0.0  0.0
@@ -1199,27 +689,81 @@ julia> res_matrix = delayline_backward(5, 5)
  0.0  0.1  0.0  0.1  0.0
  0.0  0.0  0.1  0.0  0.1
  0.0  0.0  0.0  0.1  0.0
+```
 
-julia> res_matrix = delayline_backward(5, 5; delay_shift = 3)
+Changing weights:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_weight = 0.99, fb_weight=-1.0)
 5×5 Matrix{Float32}:
- 0.0  0.1  0.0  0.0  0.0
+ 0.0   -1.0    0.0    0.0    0.0
+ 0.99   0.0   -1.0    0.0    0.0
+ 0.0    0.99   0.0   -1.0    0.0
+ 0.0    0.0    0.99   0.0   -1.0
+ 0.0    0.0    0.0    0.99   0.0
+```
+
+Changing weights to custom arrays:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_weight = rand(4), fb_weight=.-rand(4))
+5×5 Matrix{Float32}:
+ 0.0       -0.294809   0.0        0.0        0.0
+ 0.736006   0.0       -0.449479   0.0        0.0
+ 0.0        0.10892    0.0       -0.60118    0.0
+ 0.0        0.0        0.482435   0.0       -0.673392
+ 0.0        0.0        0.0        0.177982   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.1   0.0   0.0  0.0
+ -0.1  0.0   0.1   0.0  0.0
+  0.0  0.1   0.0   0.1  0.0
+  0.0  0.0  -0.1   0.0  0.1
+  0.0  0.0   0.0  -0.1  0.0
+
+julia> res_matrix = delayline_backward(5, 5; fb_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0  0.1   0.0  0.0   0.0
+ 0.1  0.0  -0.1  0.0   0.0
+ 0.0  0.1   0.0  0.1   0.0
+ 0.0  0.0   0.1  0.0  -0.1
+ 0.0  0.0   0.0  0.1   0.0
+```
+
+Shifting:
+
+```jldoctest dlbackward
+julia> res_matrix = delayline_backward(5, 5; delay_shift=3, fb_shift=2)
+5×5 Matrix{Float32}:
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
- 0.1  0.0  0.0  0.0  0.1
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
  0.0  0.1  0.0  0.0  0.0
+```
 
-julia> res_matrix = delayline_backward(5, 5; delay_shift = 3, fb_weight = rand(Float32, 4))
-5×5 Matrix{Float32}:
- 0.0  0.393622  0.0      0.0       0.0
- 0.0  0.0       0.21916  0.0       0.0
- 0.0  0.0       0.0      0.895871  0.0
- 0.1  0.0       0.0      0.0       0.654846
- 0.0  0.1       0.0      0.0       0.0
+Returning as sparse:
+
+```jldoctest dlbackward
+julia> using SparseArrays
+
+julia> res_matrix = delayline_backward(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        delay_weight::Union{Number, AbstractVector} = T(0.1),
-        fb_weight::Union{Number, AbstractVector} = T(0.1), delay_shift::Integer = 1,
+        delay_weight::Union{Number, AbstractVector} = T(0.1f0),
+        fb_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
@@ -1231,22 +775,35 @@ function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     cycle_jumps([rng], [T], dims...;
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
         cycle_kwargs=(), jump_kwargs=())
 
-Create a cycle jumps reservoir [Rodan2012](@cite).
+Create a cycle reservoir with jumps [Rodan2012](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r,   & \text{if } i = j + 1,\;\; j \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    r,   & \text{if } i = 1,\;\; j = D_{\mathrm{res}}, \\[8pt]
+    r_j, & \text{if } i = j + \ell, \\[4pt]
+    r_j, & \text{if } j = i + \ell, \\[4pt]
+    r_j, & \text{if } (i,j) = (1+\ell, 1), \\[4pt]
+    r_j, & \text{if } (i,j) = (1,\, D_{\mathrm{res}}+1-\ell), \\[8pt]
+    0, & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`:  The weight of cycle connections.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1262,6 +819,7 @@ Create a cycle jumps reservoir [Rodan2012](@cite).
   - `jump_size`:  The number of steps between jump connections.
     Default is 3.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
@@ -1282,9 +840,11 @@ Create a cycle jumps reservoir [Rodan2012](@cite).
       + `strides`: number of strides for assigning negative value to a weight. It can be an
         integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest cyclejumps
 julia> res_matrix = cycle_jumps(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.1  0.1
@@ -1292,7 +852,55 @@ julia> res_matrix = cycle_jumps(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.1  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
+Changing weights:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = 2, cycle_weight=-1)
+5×5 Matrix{Float32}:
+ 0.0   0.0   0.0   2.0  -1.0
+-1.0   0.0   0.0   0.0   0.0
+ 0.0  -1.0   0.0   0.0   0.0
+ 2.0   0.0  -1.0   0.0   0.0
+ 0.0   0.0   0.0  -1.0   0.0
+```
+
+Changing weights to custom arrays:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = .-rand(3), cycle_weight=rand(5))
+5×5 Matrix{Float32}:
+  0.0       0.0       0.0        -0.453905  0.443731
+  0.434804  0.0       0.0         0.0       0.0
+  0.0       0.520551  0.0         0.0       0.0
+ -0.453905  0.0       0.0665751   0.0       0.0
+  0.0       0.0       0.0         0.57811   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest cyclejumps
+julia> res_matrix = cycle_jumps(5, 5; cycle_kwargs = (;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.1  0.1
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+
+julia> res_matrix = cycle_jumps(5, 5; jump_kwargs = (;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.0  0.0  -0.1  0.1
+  0.1  0.0  0.0   0.0  0.0
+  0.0  0.1  0.0   0.0  0.0
+ -0.1  0.0  0.1   0.0  0.0
+  0.0  0.0  0.0   0.1  0.0
+```
+
+Changing cycle jumps length:
+
+```jldoctest cyclejumps
 julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
 5×5 Matrix{Float32}:
  0.0  0.0  0.1  0.0  0.1
@@ -1300,11 +908,34 @@ julia> res_matrix = cycle_jumps(5, 5; jump_size = 2)
  0.1  0.1  0.0  0.0  0.1
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
+
+julia> res_matrix = cycle_jumps(5, 5; jump_size = 4)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.1
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.1  0.0  0.0  0.1  0.0
 ```
+
+Return as a sparse matrix:
+
+```jldoctest cyclejumps
+julia> using SparseArrays
+
+julia> res_matrix = cycle_jumps(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 7 stored entries:
+  ⋅    ⋅    ⋅   0.1  0.1
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
+```
+
 """
 function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector} = T(0.1),
-        jump_weight::Union{Number, AbstractVector} = T(0.1),
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        jump_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_size::Integer = 3, return_sparse::Bool = false,
         cycle_kwargs::NamedTuple = NamedTuple(),
         jump_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
@@ -1317,21 +948,30 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     simple_cycle([rng], [T], dims...;
         cycle_weight=0.1, return_sparse=false,
         kwargs...)
 
 Create a simple cycle reservoir [Rodan2011](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r, & \text{if } i = j + 1,\;\; j \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    r, & \text{if } i = 1,\;\; j = D_{\mathrm{res}}, \\[6pt]
+    0, & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`: Weight of the connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1339,6 +979,7 @@ Create a simple cycle reservoir [Rodan2011](@cite).
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `sampling_type`: Sampling that decides the distribution of `cycle_weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
@@ -1356,9 +997,11 @@ Create a simple cycle reservoir [Rodan2011](@cite).
   - `strides`: number of strides for assigning negative value to a weight. It can be an
     integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
+Default call:
+
+```jldoctest scycle
 julia> res_matrix = simple_cycle(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.1
@@ -1366,18 +1009,68 @@ julia> res_matrix = simple_cycle(5, 5)
  0.0  0.1  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+```
 
-julia> res_matrix = simple_cycle(5, 5; weight = 11)
+Changing weights:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; cycle_weight=0.99)
 5×5 Matrix{Float32}:
-  0.0   0.0   0.0   0.0  11.0
- 11.0   0.0   0.0   0.0   0.0
-  0.0  11.0   0.0   0.0   0.0
-  0.0   0.0  11.0   0.0   0.0
-  0.0   0.0   0.0  11.0   0.0
+ 0.0   0.0   0.0   0.0   0.99
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.99  0.0   0.0   0.0
+ 0.0   0.0   0.99  0.0   0.0
+ 0.0   0.0   0.0   0.99  0.0
+```
+
+Changing weights to a custom array:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; cycle_weight=rand(5))
+5×5 Matrix{Float32}:
+ 0.0       0.0        0.0       0.0       0.471823
+ 0.534782  0.0        0.0       0.0       0.0
+ 0.0       0.0764598  0.0       0.0       0.0
+ 0.0       0.0        0.507883  0.0       0.0
+ 0.0       0.0        0.0       0.546656  0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest scycle
+julia> res_matrix = simple_cycle(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+  0.0  0.0   0.0   0.0  -0.1
+ -0.1  0.0   0.0   0.0   0.0
+  0.0  0.1   0.0   0.0   0.0
+  0.0  0.0  -0.1   0.0   0.0
+  0.0  0.0   0.0  -0.1   0.0
+
+julia> res_matrix = simple_cycle(5, 5; sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.0   0.0  0.0   0.0  0.1
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+```
+
+Returning as sparse:
+
+```jldoctest scycle
+julia> using SparseArrays
+
+julia> res_matrix = simple_cycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+  ⋅    ⋅    ⋅    ⋅   0.1
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
 ```
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         return_sparse::Bool = false, kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1386,44 +1079,70 @@ function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     double_cycle([rng], [T], dims...;
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false)
 
 Creates a double cycle reservoir [Fu2023](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r_1, & \text{if } i = j + 1,\;\; j \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    r_1, & \text{if } i = D_{\mathrm{res}},\;\; j = 1, \\[6pt]
+    r_2, & \text{if } i = 1,\;\; j = D_{\mathrm{res}}, \\[6pt]
+    r_2, & \text{if } j = i + 1,\;\; i \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    0,   & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
     Default is 0.1.
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
 
-# Examples
+## Examples
 
-```jldoctest
-julia> reservoir_matrix = double_cycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+Default call:
+
+```jldoctest dcycle
+julia> res_matrix = double_cycle(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.3  0.0  0.0  0.3
- 0.1  0.0  0.3  0.0  0.0
- 0.0  0.1  0.0  0.3  0.0
- 0.0  0.0  0.1  0.0  0.3
+ 0.0  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
  0.1  0.0  0.0  0.1  0.0
+```
+
+Changing weights:
+
+```jldoctest dcycle
+julia> res_matrix = double_cycle(5, 5; cycle_weight = -0.1, second_cycle_weight = 0.3)
+5×5 Matrix{Float32}:
+  0.0   0.3   0.0   0.0  0.3
+ -0.1   0.0   0.3   0.0  0.0
+  0.0  -0.1   0.0   0.3  0.0
+  0.0   0.0  -0.1   0.0  0.3
+ -0.1   0.0   0.0  -0.1  0.0
 ```
 """
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector} = T(0.1),
-        second_cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1441,7 +1160,7 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
-"""
+@doc raw"""
     true_doublecycle([rng], [T], dims...;
         cycle_weight=0.1, second_cycle_weight=0.1,
         return_sparse=false, cycle_kwargs=(), second_cycle_kwargs=())
@@ -1449,14 +1168,25 @@ end
 Creates a true double cycle reservoir, ispired by [Fu2023](@cite),
 with cycles built on the definition by [Rodan2011](@cite).
 
-# Arguments
+```math
+W_{i,j} =
+\begin{cases}
+    r_1, & \text{if } i = j + 1,\;\; j \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    r_1, & \text{if } i = 1,\;\; j = D_{\mathrm{res}}, \\[6pt]
+    r_2, & \text{if } j = i + 1,\;\; i \in [1, D_{\mathrm{res}} - 1], \\[4pt]
+    r_2, & \text{if } i = D_{\mathrm{res}},\;\; j = 1, \\[6pt]
+    0,   & \text{otherwise.}
+\end{cases}
+```
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
     Default is 0.1.
@@ -1464,6 +1194,7 @@ with cycles built on the definition by [Rodan2011](@cite).
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `cycle_kwargs`, and `second_cycle_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
@@ -1484,10 +1215,24 @@ with cycles built on the definition by [Rodan2011](@cite).
       + `strides`: number of strides for assigning negative value to a weight. It can be an
         integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
-julia> true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
+Default call:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.1  0.0  0.0  0.1
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.1  0.0
+```
+
+Changing weights:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
 5×5 Matrix{Float32}:
  0.0  0.3  0.0  0.0  0.1
  0.1  0.0  0.3  0.0  0.0
@@ -1495,10 +1240,54 @@ julia> true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weight = 0.3)
  0.0  0.0  0.1  0.0  0.3
  0.3  0.0  0.0  0.1  0.0
 ```
+
+Changing weights to custom arrays:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_weight = rand(5), second_cycle_weight = .-rand(5))
+5×5 Matrix{Float32}:
+  0.0       -0.647066   0.0        0.0        0.604095
+  0.6687     0.0       -0.853307   0.0        0.0
+  0.0        0.40399    0.0       -0.565928   0.0
+  0.0        0.0        0.960196   0.0       -0.120321
+ -0.120321   0.0        0.0        0.874008   0.0
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.0  0.1   0.0   0.0  -0.1
+ -0.1  0.0   0.1   0.0   0.0
+  0.0  0.1   0.0   0.1   0.0
+  0.0  0.0  -0.1   0.0   0.1
+  0.1  0.0   0.0  -0.1   0.0
+
+julia> res_matrix = true_doublecycle(5, 5; second_cycle_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.0  -0.1  0.0   0.0  0.1
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.1  0.0  -0.1  0.0
+ 0.0   0.0  0.1   0.0  0.1
+ 0.1   0.0  0.0   0.1  0.0
+```
+
+Returning as sparse:
+
+```jldoctest tdcycle
+julia> res_matrix = true_doublecycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+  ⋅   0.1   ⋅    ⋅   0.1
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
+ 0.1   ⋅    ⋅   0.1   ⋅
+```
 """
 function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        cycle_weight::Union{Number, AbstractVector} = T(0.1),
-        second_cycle_weight::Union{Number, AbstractVector} = T(0.1),
+        cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         return_sparse::Bool = false, cycle_kwargs::NamedTuple = NamedTuple(),
         second_cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1520,8 +1309,6 @@ addition of self loops [Elsarraj2019](@cite).
 
 This architecture is referred to as TP1 in the original paper.
 
-# Equations
-
 ```math
 W_{i,j} =
 \begin{cases}
@@ -1532,14 +1319,14 @@ W_{i,j} =
 \end{cases}
 ```
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1552,52 +1339,109 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
+    cycle and jump weights respectively. The kwargs are as follows:
 
-# Examples
+      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+        `weight` can be positive with a probability set by `positive_prob`. If set to
+        `:irrational_sample!` the `weight` is negative if the decimal number of the
+        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+        assigned a negative sign after the chosen `strides`. `strides` can be a single
+        number or an array. Default is `:no_sample`.
+      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+        set to `:bernoulli_sample!`. Default is 0.5.
+      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
+        Default is `pi`.
+      + `start`: Which place after the decimal point the counting starts for the `irrational`
+        sign counting. Default is 1.
+      + `strides`: number of strides for assigning negative value to a weight. It can be an
+        integer or an array. Default is 2.
 
-```jldoctest
-julia> reservoir_matrix = selfloop_cycle(5, 5)
+## Examples
+
+Default call:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.0  0.0  0.1
  0.1  0.1  0.0  0.0  0.0
  0.0  0.1  0.1  0.0  0.0
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
+```jldoctest slcycle
 
-julia> reservoir_matrix = selfloop_cycle(5, 5; weight=0.2, selfloop_weight=0.5)
+Changing weights:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=-0.2, selfloop_weight=0.5)
 5×5 Matrix{Float32}:
- 0.5  0.0  0.0  0.0  0.2
- 0.2  0.5  0.0  0.0  0.0
- 0.0  0.2  0.5  0.0  0.0
- 0.0  0.0  0.2  0.5  0.0
- 0.0  0.0  0.0  0.2  0.5
+  0.5   0.0   0.0   0.0  -0.2
+ -0.2   0.5   0.0   0.0   0.0
+  0.0  -0.2   0.5   0.0   0.0
+  0.0   0.0  -0.2   0.5   0.0
+  0.0   0.0   0.0  -0.2   0.5
+```
+
+Changing weights to custom arrays:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=rand(5), selfloop_weight=.-rand(5))
+5×5 Matrix{Float32}:
+ -0.902546   0.0          0.0        0.0          0.0987988
+  0.911585  -0.968998     0.0        0.0          0.0
+  0.0        0.00149246  -0.613033   0.0          0.0
+  0.0        0.0          0.777804  -0.727024     0.0
+  0.0        0.0          0.0        0.00441047  -0.310635
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest slcycle
+julia> res_matrix = selfloop_cycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.1  0.0   0.0   0.0  -0.1
+ -0.1  0.1   0.0   0.0   0.0
+  0.0  0.1   0.1   0.0   0.0
+  0.0  0.0  -0.1   0.1   0.0
+  0.0  0.0   0.0  -0.1   0.1
+
+julia> res_matrix = selfloop_cycle(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.1
+ 0.1  -0.1  0.0   0.0  0.0
+ 0.0   0.1  0.1   0.0  0.0
+ 0.0   0.0  0.1  -0.1  0.0
+ 0.0   0.0  0.0   0.1  0.1
+```
+
+Returning as sparse:
+
+```jldoctest slcycle
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_cycle(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+ 0.1   ⋅    ⋅    ⋅   0.1
+ 0.1  0.1   ⋅    ⋅    ⋅
+  ⋅   0.1  0.1   ⋅    ⋅
+  ⋅    ⋅   0.1  0.1   ⋅
+  ⋅    ⋅    ⋅   0.1  0.1
 ```
 """
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, kwargs...) where {T <: Number}
+        return_sparse::Bool = false, selfloop_kwargs::NamedTuple = NamedTuple(),
+        cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
-    reservoir_matrix = simple_cycle(rng, T, dims...;
-        cycle_weight = T.(cycle_weight), return_sparse = false)
-    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); kwargs...)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -1611,8 +1455,6 @@ self loops on odd neurons [Elsarraj2019](@cite).
 
 This architecture is referred to as TP2 in the original paper.
 
-# Equations
-
 ```math
 W_{i,j} =
 \begin{cases}
@@ -1624,14 +1466,14 @@ W_{i,j} =
 \end{cases}
 ```
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `cycle_weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1643,9 +1485,10 @@ W_{i,j} =
   - `fb_weight`: Weight of the self loops in the reservoir matrix.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
 
-# Examples
+## Examples
 
 ```jldoctest
 julia> reservoir_matrix = selfloop_backward_cycle(5, 5)
@@ -1698,8 +1541,6 @@ backward connections shifted by one [Elsarraj2019](@cite).
 
 This architecture is referred to as TP3 in the original paper.
 
-# Equations
-
 ```math
 W_{i,j} =
 \begin{cases}
@@ -1710,14 +1551,14 @@ W_{i,j} =
 \end{cases}
 ```
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `delay_weight`: Weight of the delay line connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1738,6 +1579,7 @@ W_{i,j} =
     Default is 1.
   - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
@@ -1758,24 +1600,95 @@ W_{i,j} =
       + `strides`: number of strides for assigning negative value to a weight. It can be an
         integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
-julia> reservoir_matrix = selfloop_delayline_backward(5, 5)
+Default call:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.1  0.0  0.0
  0.1  0.1  0.0  0.1  0.0
  0.0  0.1  0.1  0.0  0.1
  0.0  0.0  0.1  0.1  0.0
  0.0  0.0  0.0  0.1  0.1
+```
 
-julia> reservoir_matrix = selfloop_delayline_backward(5, 5; weight=0.3)
+Changing weights:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=0.3, fb_weight=0.99, delay_weight=-0.5)
 5×5 Matrix{Float32}:
- 0.1  0.0  0.3  0.0  0.0
- 0.3  0.1  0.0  0.3  0.0
- 0.0  0.3  0.1  0.0  0.3
- 0.0  0.0  0.3  0.1  0.0
- 0.0  0.0  0.0  0.3  0.1
+  0.3   0.0   0.99   0.0   0.0
+ -0.5   0.3   0.0    0.99  0.0
+  0.0  -0.5   0.3    0.0   0.99
+  0.0   0.0  -0.5    0.3   0.0
+  0.0   0.0   0.0   -0.5   0.3
+```
+
+Changing weights to custom arrays:
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=randn(5), fb_weight=rand(5), delay_weight=-rand(5))
+5×5 Matrix{Float32}:
+ -1.22847    0.0       0.384073   0.0        0.0
+ -0.699175   2.63937   0.0        0.345408   0.0
+  0.0       -0.5171   -0.452312   0.0        0.0205082
+  0.0        0.0      -0.193893   1.45921    0.0
+  0.0        0.0       0.0       -0.453015  -1.43402
+```
+
+Changing sign of the weights with different samplings:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+ -0.1  0.0   0.1   0.0   0.0
+  0.1  0.1   0.0   0.1   0.0
+  0.0  0.1  -0.1   0.0   0.1
+  0.0  0.0   0.1  -0.1   0.0
+  0.0  0.0   0.0   0.1  -0.1
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; delay_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.1   0.0  0.0
+ 0.1   0.1  0.0   0.1  0.0
+ 0.0  -0.1  0.1   0.0  0.1
+ 0.0   0.0  0.1   0.1  0.0
+ 0.0   0.0  0.0  -0.1  0.1
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; fb_kwargs=(;sampling_type=:regular_sample!))
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.1   0.0  0.0
+ 0.1  0.1  0.0  -0.1  0.0
+ 0.0  0.1  0.1   0.0  0.1
+ 0.0  0.0  0.1   0.1  0.0
+ 0.0  0.0  0.0   0.1  0.1
+```
+
+Shifting the delay and the backward line:
+
+```jldoctest sldlfb
+julia> res_matrix = selfloop_delayline_backward(5, 5; delay_shift=3, fb_shift=2)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.1  0.0  0.0
+ 0.0  0.1  0.0  0.1  0.0
+ 0.0  0.0  0.1  0.0  0.1
+ 0.1  0.0  0.0  0.1  0.0
+ 0.0  0.1  0.0  0.0  0.1
+```
+
+Returning as sparse:
+
+```jldoctest sldlfb
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_delayline_backward(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 12 stored entries:
+ 0.1   ⋅   0.1   ⋅    ⋅
+ 0.1  0.1   ⋅   0.1   ⋅
+  ⋅   0.1  0.1   ⋅   0.1
+  ⋅    ⋅   0.1  0.1   ⋅
+  ⋅    ⋅    ⋅   0.1  0.1
 ```
 """
 function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -1806,8 +1719,6 @@ with the addition of self loops [Elsarraj2019](@cite).
 
 This architecture is referred to as TP4 in the original paper.
 
-# Equations
-
 ```math
 W_{i,j} =
 \begin{cases}
@@ -1817,14 +1728,14 @@ W_{i,j} =
 \end{cases}
 ```
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `forward_weight`: Weight of the forward connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1837,6 +1748,7 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the
     delay line weight and self loop weights respectively. The kwargs are as follows:
@@ -1857,24 +1769,74 @@ W_{i,j} =
       + `strides`: number of strides for assigning negative value to a weight. It can be an
         integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
-julia> reservoir_matrix = selfloop_forwardconnection(5, 5)
+Default call:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5)
 5×5 Matrix{Float32}:
  0.1  0.0  0.0  0.0  0.0
  0.0  0.1  0.0  0.0  0.0
  0.1  0.0  0.1  0.0  0.0
  0.0  0.1  0.0  0.1  0.0
  0.0  0.0  0.1  0.0  0.1
+```
 
-julia> reservoir_matrix = selfloop_forwardconnection(5, 5; forward_weight=0.5)
+Changing weights:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=0.5, selfloop_weight=0.99)
 5×5 Matrix{Float32}:
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.5  0.0  0.1  0.0  0.0
- 0.0  0.5  0.0  0.1  0.0
- 0.0  0.0  0.5  0.0  0.1
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.99  0.0   0.0   0.0
+ 0.5   0.0   0.99  0.0   0.0
+ 0.0   0.5   0.0   0.99  0.0
+ 0.0   0.0   0.5   0.0   0.99
+```
+
+Changing weights to custom arrays:
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=rand(5), selfloop_weight=.-rand(5))
+5×5 Matrix{Float32}:
+ -0.0420509   0.0        0.0        0.0        0.0
+  0.0        -0.116113   0.0        0.0        0.0
+  0.69173     0.0       -0.513592   0.0        0.0
+  0.0         0.522245   0.0       -0.199966   0.0
+  0.0         0.0        0.784556   0.0       -0.918653
+```
+
+```jldoctest slfc
+julia> res_matrix = selfloop_forwardconnection(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+5×5 Matrix{Float32}:
+  0.1  0.0   0.0  0.0  0.0
+  0.0  0.1   0.0  0.0  0.0
+ -0.1  0.0   0.1  0.0  0.0
+  0.0  0.1   0.0  0.1  0.0
+  0.0  0.0  -0.1  0.0  0.1
+
+julia> res_matrix = selfloop_forwardconnection(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.1   0.0  0.1   0.0  0.0
+ 0.0   0.1  0.0  -0.1  0.0
+ 0.0   0.0  0.1   0.0  0.1
+```
+
+Returning as sparse:
+
+```jldoctest slfc
+julia> using SparseArrays
+
+julia> res_matrix = selfloop_forwardconnection(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅   0.1   ⋅    ⋅
+  ⋅   0.1   ⋅   0.1   ⋅
+  ⋅    ⋅   0.1   ⋅   0.1
 ```
 """
 function selfloop_forwardconnection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
@@ -1899,8 +1861,6 @@ Creates a reservoir based on a forward connection of weights [Elsarraj2019](@cit
 
 This architecture is referred to as TP5 in the original paper.
 
-# Equations
-
 ```math
 W_{i,j} =
 \begin{cases}
@@ -1909,14 +1869,14 @@ W_{i,j} =
 \end{cases}
 ```
 
-# Arguments
+## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
-# Keyword arguments
+## Keyword arguments
 
   - `forward_weight`: Weight of the cycle connections in the reservoir matrix.
     This can be provided as a single value or an array. In case it is provided as an
@@ -1924,6 +1884,7 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
     Default is `false`.
   - `sampling_type`: Sampling that decides the distribution of `forward_weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
@@ -1941,9 +1902,11 @@ W_{i,j} =
   - `strides`: number of strides for assigning negative value to a weight. It can be an
     integer or an array. Default is 2.
 
-# Examples
+## Examples
 
-```jldoctest
+Default kwargs:
+
+```jldoctest forcon
 julia> reservoir_matrix = forward_connection(5, 5)
 5×5 Matrix{Float32}:
  0.0  0.0  0.0  0.0  0.0
@@ -1951,15 +1914,76 @@ julia> reservoir_matrix = forward_connection(5, 5)
  0.1  0.0  0.0  0.0  0.0
  0.0  0.1  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
-
-julia> reservoir_matrix = forward_connection(5, 5; forward_weight=0.5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.5  0.0  0.0  0.0  0.0
- 0.0  0.5  0.0  0.0  0.0
- 0.0  0.0  0.5  0.0  0.0
 ```
+
+Changing the weights magnitudes to a different unique value:
+
+```jldoctest forcon
+julia> forward_connection(5, 5; forward_weight=0.99)
+5×5 Matrix{Float32}:
+ 0.0   0.0   0.0   0.0  0.0
+ 0.0   0.0   0.0   0.0  0.0
+ 0.99  0.0   0.0   0.0  0.0
+ 0.0   0.99  0.0   0.0  0.0
+ 0.0   0.0   0.99  0.0  0.0
+```
+
+Changing the weights signs with different sampling techniques:
+
+```jldoctest forcon
+julia> forward_connection(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+  0.0  0.0   0.0  0.0  0.0
+  0.0  0.0   0.0  0.0  0.0
+ -0.1  0.0   0.0  0.0  0.0
+  0.0  0.1   0.0  0.0  0.0
+  0.0  0.0  -0.1  0.0  0.0
+
+julia> forward_connection(5, 5; sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+  0.0  0.0   0.0  0.0  0.0
+  0.0  0.0   0.0  0.0  0.0
+  -0.1  0.0   0.0  0.0  0.0
+  0.0  0.1   0.0  0.0  0.0
+  0.0  0.0  -0.1  0.0  0.0
+```
+
+Changing the weights to random numbers. Note that the length of the given array
+must be at least as long as the subdiagonal one wants to fill:
+
+```jldoctest forcon
+julia> reservoir_matrix = forward_connection(5, 5; forward_weight=rand(Float32, 3))
+5×5 Matrix{Float32}:
+ 0.0       0.0       0.0       0.0  0.0
+ 0.0       0.0       0.0       0.0  0.0
+ 0.274221  0.0       0.0       0.0  0.0
+ 0.0       0.111511  0.0       0.0  0.0
+ 0.0       0.0       0.618345  0.0  0.0
+```
+
+```jldoctest forcon
+
+```
+
+Returning a sparse matrix:
+
+```jldoctest forcon
+
+julia> reservoir_matrix = forward_connection(10, 10; return_sparse=true)
+10×10 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
+  ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+ 0.1   ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅   0.1   ⋅    ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅    ⋅   0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅    ⋅    ⋅   0.1   ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅   0.1   ⋅    ⋅
+```
+
+
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0), return_sparse::Bool = false,
@@ -1987,15 +2011,17 @@ Each block may be filled with
 ```math
 W_{i,j} =
 \begin{cases}
-    w_b, & \text{if }\left\lfloor\frac{i-1}{s}\right\rfloor = \left\lfloor\frac{j-1}{s}\right\rfloor = b,\;
-           s = \text{block\_size},\; b=0,\dots,nb-1, \\
+    w_b, & \text{if }\left\lfloor\frac{i-1}{s}\right\rfloor =
+        \left\lfloor\frac{j-1}{s}\right\rfloor = b,\;
+           s = \text{block_size},\; b=0,\dots,nb-1, \\
     0,   & \text{otherwise,}
 \end{cases}
 ```
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`.
+  - `rng`: Random number generator. Default is `Utils.default_rng()` from
+    WeightInitializers.
   - `T`: Element type of the matrix. Default is `Float32`.
   - `dims`: Dimensions of the output matrix (must be two-dimensional).
 
@@ -2012,22 +2038,40 @@ W_{i,j} =
 
 # Examples
 
-```jldoctest
-# 4×4 with two 2×2 blocks of 1.0
-julia> W1 = block_diagonal(4, 4; block_size=2)
-4×4 Matrix{Float32}:
- 1.0  1.0  0.0  0.0
- 1.0  1.0  0.0  0.0
- 0.0  0.0  1.0  1.0
- 0.0  0.0  1.0  1.0
+Changing the block size
 
-# per-block weights [0.5, 2.0]
-julia> W2 = block_diagonal(4, 4; block_size=2, block_weight=[0.5, 2.0])
-4×4 Matrix{Float32}:
- 0.5  0.5  0.0  0.0
- 0.5  0.5  0.0  0.0
- 0.0  0.0  2.0  2.0
- 0.0  0.0  2.0  2.0
+```jldoctest blockdiag
+julia> res_matrix = block_diagonal(10, 10; block_size=2)
+10×10 Matrix{Float32}:
+ 1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  1.0
+```
+
+Changing the weights, per block. Please note that you have to
+know the number of blocks that you are going to have
+(which usually is `res_size`/`block_size`).
+
+```jldoctest blockdiag
+julia> res_matrix = block_diagonal(10, 10; block_size=2, block_weight=[0.5, 2.0, -0.99, 1.0, -99.0])
+10×10 Matrix{Float32}:
+ 0.5  0.5  0.0  0.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.5  0.5  0.0  0.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  2.0  2.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  2.0  2.0   0.0    0.0   0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0  -0.99  -0.99  0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0  -0.99  -0.99  0.0  0.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   1.0  1.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   1.0  1.0    0.0    0.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   0.0  0.0  -99.0  -99.0
+ 0.0  0.0  0.0  0.0   0.0    0.0   0.0  0.0  -99.0  -99.0
 ```
 """
 function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
