@@ -83,6 +83,10 @@ function scale_radius!(reservoir_matrix::AbstractMatrix, radius::AbstractFloat)
     return reservoir_matrix
 end
 
+function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Nothing)
+    return reservoir_matrix
+end
+
 function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
     return vecormat
 end

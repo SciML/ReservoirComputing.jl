@@ -249,7 +249,7 @@ end
 
 """
     chaotic_init([rng], [T], dims...;
-        extra_edge_probability=T(0.1), spectral_radius=one(T),
+        extra_edge_probability=T(0.1), radius=one(T),
         return_sparse=false)
 
 Construct a chaotic reservoir matrix using a digital chaotic system [Xie2024](@cite).
@@ -271,7 +271,7 @@ closest valid order is used.
 
   - `extra_edge_probability`: Probability of adding extra random edges in
     the adjacency matrix to enhance connectivity. Default is 0.1.
-  - `desired_spectral_radius`: The target spectral radius for the
+  - `radius`: The target spectral radius for the
     reservoir matrix. Default is one.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
@@ -296,7 +296,7 @@ julia> res_matrix = chaotic_init(8, 8)
 ```
 """
 function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        extra_edge_probability::AbstractFloat = T(0.1f0), spectral_radius::AbstractFloat = one(T),
+        extra_edge_probability::AbstractFloat = T(0.1f0), radius::AbstractFloat = one(T),
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -329,7 +329,7 @@ function chaotic_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = random_weight_matrix .* adjacency_matrix
     current_spectral_radius = maximum(abs, eigvals(reservoir_matrix))
     if current_spectral_radius != 0
-        reservoir_matrix .*= spectral_radius / current_spectral_radius
+        reservoir_matrix .*= radius / current_spectral_radius
     end
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -355,12 +355,12 @@ end
 
 """
     low_connectivity([rng], [T], dims...;
-                     return_sparse = false, connected=false,
-                     in_degree = 1, radius = 1.0, cut_cycle = false)
+        connected=false, in_degree = 1, radius = 1.0,
+        cut_cycle = false, radius=nothing, return_sparse = false)
 
 Construct an internal reservoir connectivity matrix with low connectivity.
 
-This function creates a square reservoir matrix with the specified in-degree
+This function creates a reservoir matrix with the specified in-degree
 for each node [Griffith2019](@cite). When `in_degree` is 1, the function can enforce
 a fully connected cycle if `connected` is `true`;
 otherwise, it generates a random connectivity pattern.
@@ -383,6 +383,9 @@ otherwise, it generates a random connectivity pattern.
     Defaults to 1.0.
   - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
     Default is `false`.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -406,7 +409,8 @@ julia> low_connectivity(10, 10)
 """
 function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool = false, connected::Bool = false,
-        in_degree::Integer = 1, kwargs...) where {T <: Number}
+        in_degree::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
+        kwargs...) where {T <: Number}
     check_res_size(dims...)
     res_size = dims[1]
     if in_degree > res_size
@@ -421,12 +425,13 @@ function low_connectivity(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         reservoir_matrix = build_cycle(
             Val(false), rng, T, res_size; in_degree = in_degree, kwargs...)
     end
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 function build_cycle(::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false) where {T <:
-                                                                                           Number}
+        in_degree::Integer = 1, radius::Number = T(1.0f0),
+        cut_cycle::Bool = false) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
         selected = randperm(rng, res_size)[1:in_degree]
@@ -470,7 +475,7 @@ end
 @doc raw"""
     delay_line([rng], [T], dims...;
         delay_weight=0.1, delay_shift=1,
-        return_sparse=false, kwargs...)
+        return_sparse=false, radius=nothing, kwargs...)
 
 Create and return a delay line reservoir matrix [Rodan2011](@cite).
 
@@ -498,6 +503,9 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `delay_shift`: delay line shift. Default is 1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -603,11 +611,13 @@ julia> res_matrix = delay_line(5, 5; return_sparse=true)
 """
 function delay_line(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
-        return_sparse::Bool = false, kwargs...) where {T <: Number}
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(delay_weight), delay_shift; kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -615,7 +625,7 @@ end
     delayline_backward([rng], [T], dims...;
         delay_weight=0.1, fb_weight=0.1,
         delay_shift=1, fb_shift=1, return_sparse=false,
-        delay_kwargs=(), fb_kwargs=())
+        radius=nothing, delay_kwargs=(), fb_kwargs=())
 
 Create a delay line backward reservoir with the specified by `dims` and weights.
 Creates a matrix with backward connections as described in [Rodan2011](@cite).
@@ -645,7 +655,6 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
-
   - `fb_weight`: Determines the absolute value of backward connections
     in the reservoir.
     This can be provided as a single value or an array. In case it is provided as an
@@ -655,6 +664,9 @@ W_{i,j} =
   - `fb_shift`: How far the backward connection will be from the diagonal.
     Default is 1.
   - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -765,6 +777,7 @@ function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -772,13 +785,14 @@ function delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(delay_weight), delay_shift; delay_kwargs...)
     backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     cycle_jumps([rng], [T], dims...;
         cycle_weight=0.1, jump_weight=0.1, jump_size=3, return_sparse=false,
-        cycle_kwargs=(), jump_kwargs=())
+        radius=nothing, cycle_kwargs=(), jump_kwargs=())
 
 Create a cycle reservoir with jumps [Rodan2012](@cite).
 
@@ -810,7 +824,6 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
-
   - `jump_weight`: The weight of jump connections.
     This can be provided as a single value or an array. In case it is provided as an
     array please make sure that the length of the array matches the length of the jumps
@@ -818,6 +831,9 @@ W_{i,j} =
     Default is 0.1.
   - `jump_size`:  The number of steps between jump connections.
     Default is 3.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -937,6 +953,7 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_size::Integer = 3, return_sparse::Bool = false,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         cycle_kwargs::NamedTuple = NamedTuple(),
         jump_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -945,13 +962,14 @@ function cycle_jumps(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
     add_jumps!(rng, reservoir_matrix, T.(jump_weight), jump_size; jump_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     simple_cycle([rng], [T], dims...;
         cycle_weight=0.1, return_sparse=false,
-        kwargs...)
+        radius=nothing, kwargs...)
 
 Create a simple cycle reservoir [Rodan2011](@cite).
 
@@ -978,6 +996,9 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the cycle
     you want to populate.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1071,18 +1092,20 @@ julia> res_matrix = simple_cycle(5, 5; return_sparse=true)
 """
 function simple_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, kwargs...) where {T <: Number}
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     double_cycle([rng], [T], dims...;
         cycle_weight=0.1, second_cycle_weight=0.1,
-        return_sparse=false)
+        radius=nothing, return_sparse=false)
 
 Creates a double cycle reservoir [Fu2023](@cite).
 
@@ -1110,6 +1133,9 @@ W_{i,j} =
     Default is 0.1.
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1143,6 +1169,7 @@ julia> res_matrix = double_cycle(5, 5; cycle_weight = -0.1, second_cycle_weight 
 function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1157,12 +1184,13 @@ function double_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
 
     reservoir_matrix[1, dims[1]] = T.(second_cycle_weight)
     reservoir_matrix[dims[1], 1] = T.(cycle_weight)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     true_doublecycle([rng], [T], dims...;
-        cycle_weight=0.1, second_cycle_weight=0.1,
+        cycle_weight=0.1, second_cycle_weight=0.1, radius=nothing,
         return_sparse=false, cycle_kwargs=(), second_cycle_kwargs=())
 
 Creates a true double cycle reservoir, ispired by [Fu2023](@cite),
@@ -1190,9 +1218,11 @@ W_{i,j} =
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
     Default is 0.1.
-
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1288,7 +1318,8 @@ julia> res_matrix = true_doublecycle(5, 5; return_sparse=true)
 function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, cycle_kwargs::NamedTuple = NamedTuple(),
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        cycle_kwargs::NamedTuple = NamedTuple(),
         second_cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1296,13 +1327,14 @@ function true_doublecycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     simple_cycle!(rng, reservoir_matrix, cycle_weight; cycle_kwargs...)
     reverse_simple_cycle!(
         rng, reservoir_matrix, second_cycle_weight; second_cycle_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     selfloop_cycle([rng], [T], dims...;
         cycle_weight=0.1, selfloop_weight=0.1,
-        return_sparse=false, kwargs...)
+        radius=nothing, return_sparse=false, kwargs...)
 
 Creates a simple cycle reservoir with the
 addition of self loops [Elsarraj2019](@cite).
@@ -1338,6 +1370,9 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1435,6 +1470,7 @@ julia> res_matrix = selfloop_cycle(5, 5; return_sparse=true)
 function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false, selfloop_kwargs::NamedTuple = NamedTuple(),
         cycle_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1442,13 +1478,14 @@ function selfloop_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
     simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     selfloop_backward_cycle([rng], [T], dims...;
         cycle_weight=0.1, selfloop_weight=0.1,
-        fb_weight = 0.1, return_sparse=false)
+        fb_weight = 0.1, radius=nothing, return_sparse=false)
 
 Creates a cycle reservoir with feedback connections on even neurons and
 self loops on odd neurons [Elsarraj2019](@cite).
@@ -1484,6 +1521,9 @@ W_{i,j} =
     Default is 0.1.
   - `fb_weight`: Weight of the self loops in the reservoir matrix.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1512,6 +1552,7 @@ function selfloop_backward_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0),
+        radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -1527,13 +1568,14 @@ function selfloop_backward_cycle(rng::AbstractRNG, ::Type{T}, dims::Integer...;
             reservoir_matrix[idx - 1, idx] = T.(fb_weight)
         end
     end
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     selfloop_delayline_backward([rng], [T], dims...;
         delay_weight=0.1, selfloop_weight=0.1, fb_weight=0.1,
-        fb_shift=2, delya_shift=1, return_sparse=false,
+        fb_shift=2, delya_shift=1, radius=nothing, return_sparse=false,
         fb_kwargs=(), selfloop_kwargs=(), delay_kwargs=())
 
 Creates a reservoir based on a delay line with the addition of self loops and
@@ -1578,6 +1620,9 @@ W_{i,j} =
   - `fb_shift`: How far the backward connection will be from the diagonal.
     Default is 1.
   - `delay_shift`: delay line shift relative to the diagonal. Default is 1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1696,7 +1741,8 @@ function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer.
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = delay_weight,
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, delay_kwargs::NamedTuple = NamedTuple(),
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1705,14 +1751,15 @@ function selfloop_delayline_backward(rng::AbstractRNG, ::Type{T}, dims::Integer.
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
     delay_line!(rng, reservoir_matrix, T.(delay_weight), delay_shift; delay_kwargs...)
     backward_connection!(rng, reservoir_matrix, T.(fb_weight), fb_shift; fb_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     selfloop_forwardconnection([rng], [T], dims...;
         delay_weight=0.1, selfloop_weight=0.1,
-        return_sparse=false, selfloop_kwargs=(),
-        delay_kwargs=())
+        radius=nothing, return_sparse=false,
+        selfloop_kwargs=(), delay_kwargs=())
 
 Creates a reservoir based on a forward connection of weights between even nodes
 with the addition of self loops [Elsarraj2019](@cite).
@@ -1747,6 +1794,9 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the diagonal
     you want to populate.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1842,19 +1892,21 @@ julia> res_matrix = selfloop_forwardconnection(5, 5; return_sparse=true)
 function selfloop_forwardconnection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0), shift::Integer = 2,
-        return_sparse::Bool = false, delay_kwargs::NamedTuple = NamedTuple(),
+        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        delay_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, T.(selfloop_weight); selfloop_kwargs...)
     delay_line!(rng, reservoir_matrix, T.(forward_weight), shift; delay_kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     forward_connection([rng], [T], dims...;
-        forward_weight=0.1, return_sparse=false,
+        forward_weight=0.1, radius=nothing, return_sparse=false,
         kwargs...)
 
 Creates a reservoir based on a forward connection of weights [Elsarraj2019](@cite).
@@ -1883,6 +1935,9 @@ W_{i,j} =
     array please make sure that the length of the array matches the length of the sub-diagonal
     you want to populate.
     Default is 0.1.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -1986,19 +2041,21 @@ julia> reservoir_matrix = forward_connection(10, 10; return_sparse=true)
 
 """
 function forward_connection(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        forward_weight::Union{Number, AbstractVector} = T(0.1f0), return_sparse::Bool = false,
+        forward_weight::Union{Number, AbstractVector} = T(0.1f0),
+        radius::Union{AbstractFloat, Nothing} = nothing, return_sparse::Bool = false,
         kwargs...) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     delay_line!(rng, reservoir_matrix, T.(forward_weight), 2; kwargs...)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     block_diagonal([rng], [T], dims...;
         block_weight=1, block_size=1,
-        return_sparse=false)
+        radius=nothing, return_sparse=false)
 
 Creates a block‐diagonal matrix consisting of square blocks of size
 `block_size` along the main diagonal [Ma2023](@cite).
@@ -2032,6 +2089,9 @@ W_{i,j} =
     - vector: length = number of blocks, one constant per block
     Default is `1.0`.
   - `block_size`: Size\(s\) of each square block on the diagonal. Default is `1.0`.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `return_sparse`: If `true`, returns the matrix as sparse.
     SparseArrays.jl must be lodead.
     Default is `false`.
@@ -2076,7 +2136,7 @@ julia> res_matrix = block_diagonal(10, 10; block_size=2, block_weight=[0.5, 2.0,
 """
 function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         block_weight::Union{Number, AbstractVector} = T(1),
-        block_size::Integer = 1,
+        block_size::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
         return_sparse::Bool = false) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
@@ -2104,6 +2164,7 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         col_end = col_start + block_size - 1
         reservoir_matrix[row_start:row_end, col_start:col_end] .= weights[block]
     end
+    scale_radius!(reservoir_matrix, radius)
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
