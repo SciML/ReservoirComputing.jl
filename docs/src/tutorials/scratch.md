@@ -4,7 +4,7 @@ ReservoirComputing.jl provides utilities to build reservoir reservoir
 computing models from scratch. In this tutorial we are going to build
 an echo state network ([`ESN`](@ref)) and showcase how this custom
 implementation is equivalent to the provided model (minus some comfort
-utilities)
+utilities).
 
 ## Using provided layers: ReservoirChain, ESNCell, and LinearReadout
 
@@ -14,7 +14,7 @@ to the chain will concatenate them, and will allow the flow of the input
 data through the model.
 
 To build an ESN we also need a [`ESNCell`](@ref) to provide the ESN
-forward pass. However, the cell is stateless, so to keep the memoruy of
+forward pass. However, the cell is stateless, so to keep the memory of
 the input we need to wrap it in a [`StatefulLayer`](@ref), which saves the
 internal state in the model states `st` and feeds it to the cell in the
 next step.

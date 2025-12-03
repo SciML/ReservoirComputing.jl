@@ -32,15 +32,32 @@ This approach can be thought as a kernel method with an explicit kernel trick.
     For faster computations on the CPU it is suggested to add `using MKL`
     to the script. For clarity's sake this library will not be indicated 
     under every example in the documentation.
+    
+!!! warn "Lux's states vs reservoir computing states"
+    
+    ReservoirComputing.jl builds on Lux.jl. As such, it inherits the model’s states `st`
+    juggling and naming. This contrasts with the naming of the internal expansions
+    of the input data, which in reservoir computing literature are also known as states.
+    Since we cannot avoid using the same name for two different things, we tried to make
+    it as explicit as possible in the documentation when we refer to one or the other.
+    If you feel that this is causing confusion in some places, please open an issue!
+
 
 ## Installation
 
 To install ReservoirComputing.jl, ensure you have Julia version 1.10 or higher.
 Follow these steps:
 
-    1. Open the Julia command line.
-    2. Enter the Pkg REPL mode by pressing ].
-    3. Type `add ReservoirComputing` and press Enter.
+1. Open the Julia command line.
+2. Enter the Pkg REPL mode by pressing ].
+3. Type `add ReservoirComputing` and press Enter.
+
+Alternatively, do:
+
+```julia
+using Pkg
+Pkg.add("ReservoirComputing")
+```
 
 For a more customized installation or to contribute to the package,
 consider cloning the repository:
@@ -61,7 +78,9 @@ or `dev` the package.
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
-
+- Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
+  and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
+  
 ## Contributing
 
 Contributions to ReservoirComputing.jl are highly encouraged and appreciated.

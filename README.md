@@ -39,6 +39,8 @@ reservoir computing models. More specifically the software offers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
+- Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
+  and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
 
 ## Installation
 

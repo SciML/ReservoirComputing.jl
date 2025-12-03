@@ -149,13 +149,13 @@ vectors are concatenated with `vcat` in order of appearance.
   `Collect` only when you want to control where/what is collected (or to stack
   multiple features).
 
-  ```julia
-  rc = ReservoirChain(
-          StatefulLayer(ESNCell(3 => 300)),
-          NLAT2(),
-          Collect(), # <-- collect the 300-dim reservoir after NLAT2
-          LinearReadout(300 => 3; include_collect=false) # <-- toggle off the default Collect()
-      )
+```julia
+rc = ReservoirChain(
+    StatefulLayer(ESNCell(3 => 300)),
+    NLAT2(),
+    Collect(), # <-- collect the 300-dim reservoir after NLAT2
+    LinearReadout(300 => 3; include_collect=false) # <-- toggle off the default Collect()
+)
 ```
 """
 struct Collect <: AbstractReservoirCollectionLayer end
