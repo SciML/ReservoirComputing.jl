@@ -51,11 +51,11 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
   which is usually unintended.
 """
 @concrete struct LinearReadout <: AbstractReservoirTrainableLayer
-    activation::Any
+    activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_weight::Any
-    init_bias::Any
+    init_weight
+    init_bias
     use_bias <: StaticBool
     include_collect <: StaticBool
 end
@@ -224,4 +224,50 @@ end
 
 function collectstates(rc::AbstractLuxLayer, data::AbstractVector, ps, st::NamedTuple)
     return collectstates(rc, reshape(data, :, 1), ps, st)
+end
+
+"""
+    DenseLayer()
+"""
+@concrete struct DelayLayer <: AbstractLuxLayer
+    in_dims <: IntegerType
+    num_delays <: IntegerType
+    stride <: IntegerType
+end
+
+function DelayLayer(in_dims; num_delays::IntegerType=2, stride::IntegerType=1)
+    return DelayLayer(input_dim, num_delays, stride)
+end
+
+function initialparameters(rng::AbstractRNG, dl::DelayLayer)
+    return NamedTuple()
+end
+
+function initialstates(rng::AbstractRNG, dl::DelayLayer)
+    history = nothing
+    clock = 0
+    return (history = history, clock = clock)
+end
+
+function init_delay_history(::Nothing, dl::DelayLayer, inp::AbstractVecOrMat)
+    history = similar(inp, dl.in_dims, dl.num_delays)
+    fill!(history, zero(eltype(inp)))
+    return history
+end
+
+function init_delay_history(history::AbstractMatrix, dl::DelayLayer, inp::AbstractVecOrMat)
+    return history
+end
+
+function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
+    @assert size(inp, 1) == dl.in_dims
+    history = init_delay_history(st.history, dl, inp)
+    inp_with_delay = vcat(inp, vec(history))
+    clock = st.clock + 1
+    if dl.num_delays > 0 && (clock % dl.stride == 0)
+        @views history[:, 2:end] .= history[:, 1:end-1]
+        @views history[:, 1] .= inp
+    end
+
+    return inp_with_delay, (history = history, clock = clock)
 end
