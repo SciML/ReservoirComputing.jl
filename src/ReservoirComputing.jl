@@ -44,8 +44,7 @@ include("extensions/reca.jl")
 
 export ReservoirComputer
 export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
-       train!,
-       predict, resetcarry!
+       DelayLayer
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
@@ -57,7 +56,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
        selfloop_forwardconnection, simple_cycle, true_doublecycle
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
        scale_radius!, self_loop!, simple_cycle!
-export train
+export train, train!, predict, resetcarry!
 export ESN, HybridESN, DeepESN
 #reca
 export RECACell, RECA
