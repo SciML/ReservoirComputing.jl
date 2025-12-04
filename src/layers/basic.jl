@@ -51,11 +51,11 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
   which is usually unintended.
 """
 @concrete struct LinearReadout <: AbstractReservoirTrainableLayer
-    activation::Any
+    activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_weight::Any
-    init_bias::Any
+    init_weight
+    init_bias
     use_bias <: StaticBool
     include_collect <: StaticBool
 end
@@ -285,25 +285,31 @@ None
     updated when `clock % stride == 0`.
 """
 @concrete struct DelayLayer <: AbstractLuxLayer
-    in_dims <: IntegerType
-    num_delays <: IntegerType
-    stride <: IntegerType
-    init_delay::Any
+    in_dims <: Int
+    num_delays <: Int
+    stride <: Int
+    init_delay
 end
 
-function DelayLayer(in_dims; num_delays::IntegerType = 2, stride::IntegerType = 1, init_delay = zeros32)
-    init_delay isa NTuple{num_delays} ||
-        (init_delay = ntuple(Returns(init_delay), num_delays))
+function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
+    if init_delay isa Tuple
+            @assert length(init_delay) == num_delays
+        else
+            init_delay = ntuple(_ -> init_delay, num_delays)
+        end
+
     return DelayLayer(in_dims, num_delays, stride, init_delay)
 end
 
 function initialparameters(rng::AbstractRNG, dl::DelayLayer)
+
     return NamedTuple()
 end
 
 function initialstates(rng::AbstractRNG, dl::DelayLayer)
     history = nothing
     clock = 0
+
     return (history = history, clock = clock, rng = rng)
 end
 
@@ -317,6 +323,7 @@ function init_delay_history(::Nothing, rng::AbstractRNG, dl::DelayLayer, inp::Ab
 end
 
 function init_delay_history(history::AbstractMatrix, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
+
     return history
 end
 
