@@ -51,11 +51,11 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
   which is usually unintended.
 """
 @concrete struct LinearReadout <: AbstractReservoirTrainableLayer
-    activation::Any
+    activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    init_weight::Any
-    init_bias::Any
+    init_weight
+    init_bias
     use_bias <: StaticBool
     include_collect <: StaticBool
 end
@@ -288,7 +288,7 @@ None
     in_dims <: Int
     num_delays <: Int
     stride <: Int
-    init_delay::Any
+    init_delay
 end
 
 function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
