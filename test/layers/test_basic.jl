@@ -248,3 +248,87 @@ end
         @test_throws AssertionError dl(badx, ps, st)
     end
 end
+
+@testset "NonlinearFeaturesLayer" begin
+    rng = MersenneTwister(123)
+
+    @testset "constructor & flags" begin
+        sq = x -> x .^ 2
+        cb = x -> x .^ 3
+
+        nfl = NonlinearFeaturesLayer(sq, cb; include_input = true)
+        @test length(nfl.features) == 2
+        ii = ReservoirComputing.known(nfl.include_input)
+        @test ii === true
+
+        nfl2 = NonlinearFeaturesLayer(sq; include_input = false)
+        @test length(nfl2.features) == 1
+        ii2 = ReservoirComputing.known(nfl2.include_input)
+        @test ii2 === false
+
+        nfl_id = NonlinearFeaturesLayer(; include_input = true)
+        @test length(nfl_id.features) == 0
+        ii_id = ReservoirComputing.known(nfl_id.include_input)
+        @test ii_id === true
+    end
+
+    @testset "initialparameters / initialstates" begin
+        sq = x -> x .^ 2
+        nfl = NonlinearFeaturesLayer(sq; include_input = true)
+
+        ps = initialparameters(rng, nfl)
+        st = initialstates(rng, nfl)
+
+        @test ps == NamedTuple()
+        @test st == NamedTuple()
+    end
+
+    @testset "forward: include_input=true" begin
+        sq = x -> x .^ 2
+        cb = x -> x .^ 3
+        nfl = NonlinearFeaturesLayer(sq, cb; include_input = true)
+
+        ps = initialparameters(rng, nfl)
+        st = initialstates(rng, nfl)
+
+        x = Float32[1, 2, 3]
+
+        y, st2 = nfl(x, ps, st)
+
+        @test length(y) == 3 * 3
+        @test y[1:3] == x
+        @test y[4:6] == x .^ 2
+        @test y[7:9] == x .^ 3
+
+        @test st2 === st
+    end
+
+    @testset "forward: include_input=false" begin
+        sq = x -> x .^ 2
+        cb = x -> x .^ 3
+        nfl = NonlinearFeaturesLayer(sq, cb; include_input = false)
+
+        ps = initialparameters(rng, nfl)
+        st = initialstates(rng, nfl)
+
+        x = Float32[1, 2, 3]
+
+        y, _ = nfl(x, ps, st)
+
+        @test length(y) == 2 * 3
+        @test y[1:3] == x .^ 2
+        @test y[4:6] == x .^ 3
+    end
+
+    @testset "identity case: no features, include_input=true" begin
+        nfl = NonlinearFeaturesLayer(; include_input = true)
+        ps = initialparameters(rng, nfl)
+        st = initialstates(rng, nfl)
+
+        x = rand(rng, Float32, 4)
+
+        y, _ = nfl(x, ps, st)
+
+        @test y == x
+    end
+end
