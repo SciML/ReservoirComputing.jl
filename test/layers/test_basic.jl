@@ -160,3 +160,91 @@ end
         end
     end
 end
+
+@testset "DelayLayer" begin
+    rng = MersenneTwister(123)
+
+    @testset "constructor & init_delay expansion" begin
+        dl = DelayLayer(3; num_delays = 2, init_delay = zeros32)
+        @test dl.in_dims == 3
+        @test dl.num_delays == 2
+        @test dl.stride == 1
+        @test dl.init_delay isa NTuple{2}
+        @test all(fn === zeros32 for fn in dl.init_delay)
+
+        init1(rng, d, b) = fill(Float32(1), d, b)
+        init2(rng, d, b) = fill(Float32(2), d, b)
+        dl2 = DelayLayer(3; num_delays = 2, init_delay = (init1, init2))
+        @test dl2.init_delay === (init1, init2)
+    end
+
+    @testset "initialstates & init_delay_history" begin
+        init1(rng, d, b) = fill(Float32(1), d, b)
+        init2(rng, d, b) = fill(Float32(2), d, b)
+        dl = DelayLayer(2; num_delays = 2, stride = 2, init_delay = (init1, init2))
+
+        ps = initialparameters(rng, dl)
+        st = initialstates(rng, dl)
+
+        x = rand(rng, Float32, 2)
+        y, st2 = dl(x, ps, st)
+
+        @test size(st2.history) == (2, 2)
+        @test st2.clock == 1
+        @test st2.history[:, 1] == fill(Float32(1), 2)
+        @test st2.history[:, 2] == fill(Float32(2), 2)
+        @test length(y) == 2 * (dl.num_delays + 1)
+    end
+
+    @testset "temporal behavior: num_delays=2, stride=1" begin
+        dl = DelayLayer(1; num_delays = 2, stride = 1, init_delay = zeros32)
+        ps = initialparameters(rng, dl)
+        st = initialstates(rng, dl)
+
+        inputs = [Float32(t) for t in 1:5]
+        outputs = Vector{Vector{Float32}}()
+
+        for x in inputs
+            xvec = Float32[x]          # (1,)
+            y, st = dl(xvec, ps, st)
+            push!(outputs, vec(y))
+        end
+
+        @test outputs[1] ≈ Float32[1, 0, 0]
+        @test outputs[2] ≈ Float32[2, 1, 0]
+        @test outputs[3] ≈ Float32[3, 2, 1]
+        @test outputs[4] ≈ Float32[4, 3, 2]
+        @test outputs[5] ≈ Float32[5, 4, 3]
+    end
+
+    @testset "stride > 1 behavior" begin
+        dl = DelayLayer(1; num_delays = 2, stride = 2, init_delay = zeros32)
+        ps = initialparameters(rng, dl)
+        st = initialstates(rng, dl)
+
+        inputs = [Float32(t) for t in 1:6]
+        hists = Vector{Vector{Float32}}()
+        outputs = Vector{Vector{Float32}}()
+
+        for x in inputs
+            xvec = Float32[x]
+            push!(hists, st.history === nothing ? Float32[] : vec(st.history))
+            y, st = dl(xvec, ps, st)
+            push!(outputs, vec(y))
+        end
+
+        @test outputs[1] ≈ Float32[1, 0, 0]
+        @test outputs[2] ≈ Float32[2, 0, 0]
+        @test outputs[3] ≈ Float32[3, 2, 0]
+        @test outputs[4] ≈ Float32[4, 2, 0]
+    end
+
+    @testset "dimension mismatch assertion" begin
+        dl = DelayLayer(3; num_delays = 2)
+        ps = initialparameters(rng, dl)
+        st = initialstates(rng, dl)
+
+        badx = rand(rng, Float32, 2)
+        @test_throws AssertionError dl(badx, ps, st)
+    end
+end

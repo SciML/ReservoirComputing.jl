@@ -225,3 +225,115 @@ end
 function collectstates(rc::AbstractLuxLayer, data::AbstractVector, ps, st::NamedTuple)
     return collectstates(rc, reshape(data, :, 1), ps, st)
 end
+
+@doc raw"""
+    DelayLayer(input_dim; num_delays=2, stride=1)
+
+Stateful delay layer that augments the current vector with a fixed number of
+time-delayed copies of itself. Intended to be used as a `state_modifier` in a
+`ReservoirComputer`, for example to build NVAR-style feature vectors.
+
+At each call, the layer:
+
+1. Takes the current input vector `h(t)` of length `input_dim`.
+2. Produces an output vector that concatenates:
+- the current input `h(t)`, and
+- `num_delays` previous inputs stored in an internal buffer.
+3. Updates its internal delay buffer with `h(t)` every `stride` calls.
+
+Newly initialized buffers are filled with zeros, so at the beginning of a
+sequence, delayed entries correspond to zero padding.
+
+## Arguments
+
+- `input_dim`: Dimension of the input/state vector at each time step.
+
+## Keyword arguments
+
+  - `num_delays`: Number of delayed copies to keep. The output
+    will have `(num_delays + 1) * input_dim` entries: the current vector plus
+    `num_delays` past vectors. Default is 2.
+  - `stride`: Delay stride in layer calls. The internal buffer
+    is updated only when `clock % stride == 0`. Default is 1.
+  - `init_delay`: Initializer(s) for the delays. Must be either a
+    single function (e.g. `zeros32`, `randn32`) or an `NTuple` of
+    `num_delays` functions, e.g. `(zeros32, randn32)`. If a single function
+    `fn` is provided, it is automatically expanded into a
+    `num_delays`-element tuple `(fn, fn, ..., fn)`.
+    Default is `zeros32`.
+
+## Inputs
+
+- `h(t) :: AbstractVector (input_dim,)`
+Typically the current reservoir state at time `t`.
+
+## Returns
+
+- `z :: AbstractVector ((num_delays + 1) * input_dim,)`
+Concatenation of the current input and its delayed copies.
+
+## Parameters
+
+None
+
+## States
+
+  - `history`: a matrix whose column j holds the j-th most recent stored input.
+    On a stride update, the columns are shifted and the current input is placed
+    in column 1.
+  - `clock`: A counter that updates each call of the layer. The delay buffer is
+    updated when `clock % stride == 0`.
+"""
+@concrete struct DelayLayer <: AbstractLuxLayer
+    in_dims <: Int
+    num_delays <: Int
+    stride <: Int
+    init_delay::Any
+end
+
+function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
+    if init_delay isa Tuple
+        @assert length(init_delay) == num_delays
+    else
+        init_delay = ntuple(_ -> init_delay, num_delays)
+    end
+
+    return DelayLayer(in_dims, num_delays, stride, init_delay)
+end
+
+function initialparameters(rng::AbstractRNG, dl::DelayLayer)
+    return NamedTuple()
+end
+
+function initialstates(rng::AbstractRNG, dl::DelayLayer)
+    history = nothing
+    clock = 0
+
+    return (history = history, clock = clock, rng = rng)
+end
+
+function init_delay_history(::Nothing, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
+    history = similar(inp, dl.in_dims, dl.num_delays)
+    for (init, delay_col) in zip(dl.init_delay, eachcol(history))
+        delay_col .= init(rng, dl.in_dims, 1)
+    end
+
+    return history
+end
+
+function init_delay_history(history::AbstractMatrix, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
+    return history
+end
+
+function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
+    @assert size(inp, 1) == dl.in_dims
+    history = init_delay_history(st.history, st.rng, dl, inp)
+    inp_with_delay = vcat(inp, vec(history))
+    clock = st.clock + 1
+    if dl.num_delays > 0 && (clock % dl.stride == 0)
+        @views history[:, 2:end] .= history[:, 1:(end - 1)]
+        @views history[:, 1] .= inp
+    end
+
+    return inp_with_delay, (history = history, clock = clock, rng = st.rng)
+end

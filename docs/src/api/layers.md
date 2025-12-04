@@ -7,6 +7,7 @@
     ReservoirChain
     Collect
     StatefulLayer
+    DelayLayer
 ```
 
 ## Readout Layers
