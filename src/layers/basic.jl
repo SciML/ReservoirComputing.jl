@@ -337,3 +337,39 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
 
     return inp_with_delay, (history = history, clock = clock, rng = st.rng)
 end
+
+"""
+    NonlinearFeaturesLayer(features...; include_input=true)
+"""
+@concrete struct NonlinearFeaturesLayer <: AbstractLuxLayer
+    features
+    include_input <: StaticBool
+end
+
+function NonlinearFeaturesLayer(features...; include_input::BoolType = True())
+    feats = features isa Tuple ? features : (features,)
+
+    return NonlinearFeaturesLayer(feats, static(include_input))
+end
+
+function initialparameters(rng::AbstractRNG, l::NonlinearFeaturesLayer)
+    return NamedTuple()
+end
+
+function initialstates(rng::AbstractRNG, l::NonlinearFeaturesLayer)
+    return NamedTuple()
+end
+
+function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
+    feature_vector = Any[]
+    if known(nfl.include_input) === true
+        push!(feature_vector, inp)
+    end
+    for func in nfl.features
+        nonlin_feat = func(inp)
+        push!(feature_vector, nonlin_feat)
+    end
+    out = vcat(feature_vector...)
+
+    return out, st
+end

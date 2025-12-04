@@ -8,6 +8,7 @@
     Collect
     StatefulLayer
     DelayLayer
+    NonlinearFeaturesLayer
 ```
 
 ## Readout Layers
