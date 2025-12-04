@@ -201,7 +201,7 @@ end
         ps = initialparameters(rng, dl)
         st = initialstates(rng, dl)
 
-        inputs  = [Float32(t) for t in 1:5]
+        inputs = [Float32(t) for t in 1:5]
         outputs = Vector{Vector{Float32}}()
 
         for x in inputs
@@ -222,8 +222,8 @@ end
         ps = initialparameters(rng, dl)
         st = initialstates(rng, dl)
 
-        inputs  = [Float32(t) for t in 1:6]
-        hists   = Vector{Vector{Float32}}()
+        inputs = [Float32(t) for t in 1:6]
+        hists = Vector{Vector{Float32}}()
         outputs = Vector{Vector{Float32}}()
 
         for x in inputs
