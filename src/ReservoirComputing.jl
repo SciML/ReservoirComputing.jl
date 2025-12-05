@@ -44,7 +44,7 @@ include("extensions/reca.jl")
 
 export ReservoirComputer
 export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
-       DelayLayer
+       DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge

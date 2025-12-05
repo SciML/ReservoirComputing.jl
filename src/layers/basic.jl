@@ -337,3 +337,83 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
 
     return inp_with_delay, (history = history, clock = clock, rng = st.rng)
 end
+
+@doc raw"""
+    NonlinearFeaturesLayer(features...; include_input=true)
+
+Layer that builds a feature vector by applying one or more user-defined
+functions to a single input vector and concatenating the results. Intended to
+be used as a `state_modifier` (for example, after a `DelayLayer`) to construct
+NGRC/NVAR-style feature maps.
+
+At each call, for an input vector `x`, the layer:
+
+1. Optionally includes `x` itself (if `include_input=true`).
+2. Applies each function in `features` to `x`.
+3. Returns the vertical concatenation of all results.
+
+## Arguments
+
+- `features...`: One or more functions `f(x)` that map a vector to a vector.
+  Each function is called as `f(inp)` and must return an `AbstractVector`.
+
+## Keyword arguments
+
+- `include_input`: If `true` (default), the original input vector `inp` is
+  included as the first block in the feature vector. If `false`, the output
+  contains only the concatenation of `features(inp)`.
+
+## Inputs
+
+- `inp :: AbstractVector`
+  The current feature vector, typically the output of a `DelayLayer` or a
+  reservoir state.
+
+## Returns
+
+- `out :: AbstractVector`
+  Concatenation of:
+  - the original input `inp` (if `include_input=true`), and
+  - the outputs of each function in `features` applied to `inp`.
+- The unchanged state `st` (this layer is stateless).
+
+## Parameters
+
+- None. `NonlinearFeaturesLayer` has no trainable parameters.
+
+## States
+
+- None. `initialstates` returns an empty `NamedTuple`.
+"""
+@concrete struct NonlinearFeaturesLayer <: AbstractLuxLayer
+    features
+    include_input <: StaticBool
+end
+
+function NonlinearFeaturesLayer(features...; include_input::BoolType = True())
+    feats = features isa Tuple ? features : (features,)
+
+    return NonlinearFeaturesLayer(feats, static(include_input))
+end
+
+function initialparameters(rng::AbstractRNG, l::NonlinearFeaturesLayer)
+    return NamedTuple()
+end
+
+function initialstates(rng::AbstractRNG, l::NonlinearFeaturesLayer)
+    return NamedTuple()
+end
+
+function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
+    feature_vector = Any[]
+    if known(nfl.include_input) === true
+        push!(feature_vector, inp)
+    end
+    for func in nfl.features
+        nonlin_feat = func(inp)
+        push!(feature_vector, nonlin_feat)
+    end
+    out = vcat(feature_vector...)
+
+    return out, st
+end
