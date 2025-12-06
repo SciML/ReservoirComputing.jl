@@ -38,6 +38,7 @@ include("inits/inits_reservoir.jl")
 include("models/esn_generics.jl")
 include("models/esn.jl")
 include("models/esn_deep.jl")
+include("models/esn_delay.jl")
 include("models/esn_hybrid.jl")
 #extensions
 include("extensions/reca.jl")
@@ -57,7 +58,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
        scale_radius!, self_loop!, simple_cycle!
 export train, train!, predict, resetcarry!
-export ESN, HybridESN, DeepESN
+export ESN, DeepESN, DelayESN, HybridESN
 #reca
 export RECACell, RECA
 export RandomMapping, RandomMaps

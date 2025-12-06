@@ -31,19 +31,19 @@ features, and install trained readout weights.
 """
 @concrete struct ReservoirComputer <:
                  AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
-    reservoir::Any
-    states_modifiers::Any
-    readout::Any
+    reservoir
+    states_modifiers
+    readout
 end
 
-function initialparameters(rng::AbstractRNG, rc::ReservoirComputer)
+function initialparameters(rng::AbstractRNG, rc::AbstractReservoirComputer)
     ps_res = initialparameters(rng, rc.reservoir)
     ps_mods = map(l -> initialparameters(rng, l), rc.states_modifiers) |> Tuple
     ps_ro = initialparameters(rng, rc.readout)
     return (reservoir = ps_res, states_modifiers = ps_mods, readout = ps_ro)
 end
 
-function initialstates(rng::AbstractRNG, rc::ReservoirComputer)
+function initialstates(rng::AbstractRNG, rc::AbstractReservoirComputer)
     st_res = initialstates(rng, rc.reservoir)
     st_mods = map(l -> initialstates(rng, l), rc.states_modifiers) |> Tuple
     st_ro = initialstates(rng, rc.readout)
@@ -59,7 +59,7 @@ end
     return inp, tuple(new_st_parts...)
 end
 
-function _partial_apply(rc::ReservoirComputer, inp, ps, st)
+function _partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
     out,
     st_mods = _apply_seq(
