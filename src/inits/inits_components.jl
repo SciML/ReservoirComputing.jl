@@ -130,7 +130,6 @@ end
 #TODO: @MartinuzziFrancesco maybe change name here #wait, for sure change name here
 function irrational_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
         irrational::Irrational = pi, start::Int = 1)
-
     total_elements = length(vecormat)
     required_precision = Int(ceil(log2(10) * (total_elements + start + 1)))
 
@@ -162,7 +161,6 @@ function irrational_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
 
     return vecormat
 end
-
 
 """
     delay_line!([rng], reservoir_matrix, weight, shift;
