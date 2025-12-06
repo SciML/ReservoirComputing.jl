@@ -74,7 +74,7 @@ or `dev` the package.
 - Base layers for reservoir computing model construction. Main layers provide high level
   reservoir computing building blocks, such as [`ReservoirComputer`](@ref)
   and [`ReservoirChain`](@ref). Additional, lower level layers provide the
-  building blocks for custom reservoir computers, such as [`Readout`](@ref),
+  building blocks for custom reservoir computers, such as [`LinearReadout`](@ref),
   [`Collect`](@ref), [`ESNCell`](@ref), [`DelayLayer`](@ref),
   [`NonlinearFeaturesLayer`](@ref), and more
 - Fully built models:
