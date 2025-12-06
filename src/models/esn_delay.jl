@@ -93,7 +93,7 @@ Composition:
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
 @concrete struct DelayESN <:
-                 AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+                 AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout

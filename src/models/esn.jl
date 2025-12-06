@@ -85,6 +85,13 @@ Composition:
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
+@concrete struct ESN <:
+                 AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    reservoir
+    states_modifiers
+    readout
+end
+
 function ESN(in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh;
         readout_activation = identity,

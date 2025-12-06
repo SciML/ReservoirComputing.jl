@@ -71,9 +71,17 @@ or `dev` the package.
 
 ## Features Overview
 
-- Base layers for reservoir computing model construction such as `ReservoirChain`,
-  `Readout`, `Collect`, and `ESNCell`
-- Fully built models such as `ESN`, and `DeepESN`
+- Base layers for reservoir computing model construction. Main layers provide high level
+  reservoir computing building blocks, such as [`ReservoirComputer`](@ref)
+  and [`ReservoirChain`](@ref). Additional, lower level layers provide the
+  building blocks for custom reservoir computers, such as [`LinearReadout`](@ref),
+  [`Collect`](@ref), [`ESNCell`](@ref), [`DelayLayer`](@ref),
+  [`NonlinearFeaturesLayer`](@ref), and more
+- Fully built models:
+    + Echo state networks [`ESN`](@ref)
+    + Deep echo state networks [`DeepESN`](@ref)
+    + Echo state networks with delayed states [`DelayESN`](@ref)
+    + Hybrid echo state networks [`HybridESN`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
