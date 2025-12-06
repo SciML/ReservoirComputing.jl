@@ -428,13 +428,23 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     num_for_state = floor(Int, res_size * gamma)
     num_for_model = floor(Int, res_size * (1 - gamma))
 
-    same_as_zero_row(jdx::Int) = zero_connections == @view(input_matrix[jdx, :])
+    same_as_zero_row(row_index::Int) = zero_connections == @view(input_matrix[row_index, :])
+
+    function zero_row_indices()
+        zero_indices = Int[]
+        for row_index in axes(input_matrix, 1)
+            if same_as_zero_row(row_index)
+                push!(zero_indices, row_index)
+            end
+        end
+        return zero_indices
+    end
 
     for _ in 1:num_for_state
-        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
-        isempty(idxs) && break
+        candidate_row_indices = zero_row_indices()
+        isempty(candidate_row_indices) && break
 
-        random_row_idx = rand(rng, idxs)
+        random_row_idx = rand(rng, candidate_row_indices)
         random_clm_idx = rand(rng, 1:state_size)
 
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
@@ -442,10 +452,10 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
 
     for _ in 1:num_for_model
-        idxs = findall(same_as_zero_row, axes(input_matrix, 1))
-        isempty(idxs) && break
+        candidate_row_indices = zero_row_indices()
+        isempty(candidate_row_indices) && break
 
-        random_row_idx = rand(rng, idxs)
+        random_row_idx = rand(rng, candidate_row_indices)
         random_clm_idx = rand(rng, (state_size + 1):in_size)
 
         input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
