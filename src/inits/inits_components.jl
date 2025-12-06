@@ -130,27 +130,39 @@ end
 #TODO: @MartinuzziFrancesco maybe change name here #wait, for sure change name here
 function irrational_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
         irrational::Irrational = pi, start::Int = 1)
-    total_elements = length(vecormat)
-    setprecision(BigFloat, Int(ceil(log2(10) * (total_elements + start + 1))))
-    ir_string = collect(string(BigFloat(irrational)))
-    deleteat!(ir_string, findall(x -> x == '.', ir_string))
-    ir_array = zeros(Int, length(ir_string))
-    for idx in eachindex(ir_string)
-        ir_array[idx] = parse(Int, ir_string[idx])
-    end
 
-    for idx in eachindex(vecormat)
-        digit_index = start + idx
-        if digit_index > length(ir_array)
+    total_elements = length(vecormat)
+    required_precision = Int(ceil(log2(10) * (total_elements + start + 1)))
+
+    setprecision(BigFloat, required_precision) do
+        ir_string = string(BigFloat(irrational))
+        ir_array = Int[]
+        for character in ir_string
+            if character == '.'
+                continue
+            end
+            push!(ir_array, parse(Int, string(character)))
+        end
+
+        required_digits = start + total_elements
+        if length(ir_array) < required_digits
             error("Not enough digits available. Increase precision or adjust start.")
         end
-        if isodd(ir_array[digit_index])
-            vecormat[idx] = -vecormat[idx]
+
+        element_index = 0
+        for storage_index in eachindex(vecormat)
+            element_index += 1
+            digit_index = start + element_index
+
+            if isodd(ir_array[digit_index])
+                vecormat[storage_index] = -vecormat[storage_index]
+            end
         end
     end
 
     return vecormat
 end
+
 
 """
     delay_line!([rng], reservoir_matrix, weight, shift;
