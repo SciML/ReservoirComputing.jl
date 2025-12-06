@@ -5,6 +5,7 @@
 ```@docs
     ESN
     DeepESN
+    DelayESN
     HybridESN
 ```
 
