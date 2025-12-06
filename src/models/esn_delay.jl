@@ -92,7 +92,6 @@ Composition:
     (its delay buffer and clock) and each additional modifier layer.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
-
 @concrete struct DelayESN <:
                  AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
     reservoir
