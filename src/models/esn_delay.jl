@@ -111,5 +111,32 @@ function DelayESN(
     ro_in_dims = res_dims * (num_delays + 1)
     ro = LinearReadout(ro_in_dims => out_dims, readout_activation)
 
-    return ReservoirComputer(cell, mods, ro)
+    return DelayESN(cell, mods, ro)
+end
+
+function Base.show(io::IO, esn::DelayESN)
+    print(io, "DelayESN(\n")
+
+    print(io, "    reservoir = ")
+    show(io, esn.reservoir)
+    print(io, ",\n")
+
+    print(io, "    state_modifiers = ")
+    if isempty(esn.states_modifiers)
+        print(io, "()")
+    else
+        print(io, "(")
+        for (i, m) in enumerate(esn.states_modifiers)
+            i > 1 && print(io, ", ")
+            show(io, m)
+        end
+        print(io, ")")
+    end
+    print(io, ",\n")
+
+    print(io, "    readout = ")
+    show(io, esn.readout)
+    print(io, "\n)")
+
+    return
 end

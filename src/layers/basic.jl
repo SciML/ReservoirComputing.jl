@@ -338,6 +338,32 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
     return inp_with_delay, (history = history, clock = clock, rng = st.rng)
 end
 
+function Base.show(io::IO, dl::DelayLayer)
+    print(io, "DelayLayer(", dl.in_dims, "; num_delays=", dl.num_delays)
+
+    if dl.stride != 1
+        print(io, ", stride=", dl.stride)
+    end
+
+    inits = dl.init_delay
+    if !isempty(inits)
+        all_same = all(f -> f === first(inits), inits)
+        if all_same && first(inits) === zeros32
+        elseif all_same
+            print(io, ", init_delay=", first(inits))
+        else
+            print(io, ", init_delay=(")
+            for (i, f) in enumerate(inits)
+                i > 1 && print(io, ", ")
+                show(io, f)
+            end
+            print(io, ")")
+        end
+    end
+
+    print(io, ")")
+end
+
 @doc raw"""
     NonlinearFeaturesLayer(features...; include_input=true)
 
@@ -416,4 +442,28 @@ function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
     out = vcat(feature_vector...)
 
     return out, st
+end
+
+function Base.show(io::IO, nfl::NonlinearFeaturesLayer)
+    print(io, "NonlinearFeaturesLayer(")
+
+    if isempty(nfl.features)
+        print(io, "features=()")
+    else
+        print(io, "features=(")
+        for (i, f) in enumerate(nfl.features)
+            i > 1 && print(io, ", ")
+            show(io, f)
+        end
+        print(io, ")")
+    end
+
+    inc = ReservoirComputing.known(nfl.include_input)
+    if inc === true
+        print(io, ", include_input=true")
+    elseif inc === false
+        print(io, ", include_input=false")
+    end
+
+    print(io, ")")
 end

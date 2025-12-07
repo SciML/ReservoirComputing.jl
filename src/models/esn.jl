@@ -102,5 +102,32 @@ function ESN(in_dims::IntegerType, res_dims::IntegerType,
                  Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-    return ReservoirComputer(cell, mods, ro)
+    return ESN(cell, mods, ro)
+end
+
+function Base.show(io::IO, esn::ESN)
+    print(io, "ESN(\n")
+
+    print(io, "    reservoir = ")
+    show(io, esn.reservoir)
+    print(io, ",\n")
+
+    print(io, "    state_modifiers = ")
+    if isempty(esn.states_modifiers)
+        print(io, "()")
+    else
+        print(io, "(")
+        for (i, m) in enumerate(esn.states_modifiers)
+            i > 1 && print(io, ", ")
+            show(io, m)
+        end
+        print(io, ")")
+    end
+    print(io, ",\n")
+
+    print(io, "    readout = ")
+    show(io, esn.readout)
+    print(io, "\n)")
+
+    return
 end
