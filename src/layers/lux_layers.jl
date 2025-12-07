@@ -45,6 +45,12 @@ function applyrecurrentcell(sl::AbstractReservoirRecurrentCell, inp, ps, st, ::N
     return apply(sl, inp, ps, st)
 end
 
+function Base.show(io::IO, sl::StatefulLayer)
+    print(io, "StatefulLayer(")
+    show(io, sl.cell)
+    print(io, ")")
+end
+
 @doc raw"""
     ReservoirChain(layers...; name=nothing)
     ReservoirChain(xs::AbstractVector; name=nothing)

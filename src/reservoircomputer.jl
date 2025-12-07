@@ -97,6 +97,30 @@ function addreadout!(::AbstractReservoirComputer, output_matrix::AbstractMatrix,
     return merge(ps, (readout = new_readout,)), st
 end
 
+function Base.show(io::IO, rc::ReservoirComputer)
+    print(io, "ReservoirComputer(")
+
+    print(io, "reservoir = ")
+    show(io, rc.reservoir)
+
+    nmods = length(rc.states_modifiers)
+    if nmods == 0
+        print(io, ", state_modifiers = ()")
+    else
+        print(io, ", state_modifiers = (")
+        for (i, m) in enumerate(rc.states_modifiers)
+            i > 1 && print(io, ", ")
+            show(io, m)
+        end
+        print(io, ")")
+    end
+
+    print(io, ", readout = ")
+    show(io, rc.readout)
+
+    print(io, ")")
+end
+
 @doc raw"""
     resetcarry!(rng, rc::ReservoirComputer, st; init_carry=nothing)
     resetcarry!(rng, rc::ReservoirComputer, ps, st; init_carry=nothing)
