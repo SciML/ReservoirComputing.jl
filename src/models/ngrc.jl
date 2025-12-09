@@ -69,7 +69,8 @@ Internally, `NGRC` is represented as an [`AbstractReservoirComputer`](@ref) with
   - Output `y :: (out_dims, batch)` (or `(out_dims,)` for vector input).
   - Updated layer state (NamedTuple).
 """
-@concrete struct NGRC <: AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+@concrete struct NGRC <:
+                 AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
@@ -77,13 +78,12 @@ end
 
 function NGRC(in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerType = 2,
         stride::IntegerType = 1, features = (), include_input::BoolType = True(), init_delay = zeros32,
-        readout_activation = identity,state_modifiers = (), ro_dims = nothing)
+        readout_activation = identity, state_modifiers = (), ro_dims = nothing)
     reservoir = DelayLayer(in_dims; num_delays = Int(num_delays), stride = Int(stride), init_delay = init_delay)
     feats_tuple = features isa Tuple ? features : (features,)
     nfl = NonlinearFeaturesLayer(feats_tuple...; include_input = include_input)
-    mods_tuple_raw =
-        state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-            (nfl, state_modifiers...) : (nfl, state_modifiers)
+    mods_tuple_raw = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+                     (nfl, state_modifiers...) : (nfl, state_modifiers)
     mods = _wrap_layers(mods_tuple_raw)
     if ro_dims === nothing
         n_taps = in_dims * (num_delays + 1)
@@ -105,4 +105,14 @@ function NGRC(in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerTy
     readout = LinearReadout(ro_dims => out_dims, readout_activation)
 
     return NGRC(reservoir, mods, readout)
+end
+
+function resetcarry!(
+        rng::AbstractRNG, rc::NGRC, st; init_carry = nothing)
+    carry = get(st.reservoir, :carry, nothing)
+    @warn("""
+        Next generation reservoir computing has no internal state to reset.
+        Returning untouched model states.
+        """)
+    return merge(st, (reservoir = new_cell,))
 end

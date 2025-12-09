@@ -9,6 +9,12 @@
     HybridESN
 ```
 
+## Next generation reservoir computing
+
+```@docs
+    NGRC
+```
+
 ### Utilities
 
 ```@docs
