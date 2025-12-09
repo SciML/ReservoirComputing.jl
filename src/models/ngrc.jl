@@ -100,6 +100,9 @@ function NGRC(in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerTy
 
             If your feature functions change the length (e.g. constant features,
             quadratic monomials with cross terms), please pass `ro_dims` explicitly.
+
+            Please note that, if dimensions are not correct, training will change them and
+            no error will occur.
         """
     end
     readout = LinearReadout(ro_dims => out_dims, readout_activation)
@@ -114,5 +117,39 @@ function resetcarry!(
         Next generation reservoir computing has no internal state to reset.
         Returning untouched model states.
         """)
-    return merge(st, (reservoir = new_cell,))
+    return st
+end
+
+function polynomial_monomials(input_vector::AbstractVector;
+        degrees = 1:2, include_constant::Bool = true)
+    element_type = eltype(input_vector)
+    output_monomials = element_type[]
+    num_variables = length(input_vector)
+    for degree in degrees
+        degree < 1 && continue
+        index_buffer = Vector{Int}(undef, degree)
+        _polynomial_monomials_recursive!(output_monomials, input_vector,
+            index_buffer, 1, 1, num_variables
+        )
+    end
+
+    return output_monomials
+end
+
+function _polynomial_monomials_recursive!(output_monomials, input_vector,
+        index_buffer, position::Int, start_index::Int, num_variables::Int)
+    if position > length(index_buffer)
+        element_type = eltype(input_vector)
+        product_value = one(element_type)
+        @inbounds for variable_index in index_buffer
+            product_value *= input_vector[variable_index]
+        end
+        push!(output_monomials, product_value)
+    else
+        @inbounds for variable_index in start_index:num_variables
+            index_buffer[position] = variable_index
+            _polynomial_monomials_recursive!(output_monomials, input_vector,
+                index_buffer, position + 1, variable_index, num_variables)
+        end
+    end
 end
