@@ -13,7 +13,13 @@ end
 end
 
 @testset "Echo State Networks" begin
-    @safetestset "ESN Initializers" include("esn/test_inits.jl")
-    @safetestset "ESN model" include("esn/test_esn.jl")
-    @safetestset "DeepESN model" include("esn/test_esn_deep.jl")
+    @safetestset "ESN Initializers" include("test_inits.jl")
+    @safetestset "ESN model" include("models/test_esn.jl")
+    @safetestset "DeepESN model" include("models/test_esn_deep.jl")
+    @safetestset "DelayESN model" include("models/test_esn_delay.jl")
+    @safetestset "HybridESN model" include("models/test_esn_hybrid.jl")
+end
+
+@testset "Next Generation Reservoir Computing" begin
+    @safetestset "NGRC model" include("models/test_ngrc.jl")
 end

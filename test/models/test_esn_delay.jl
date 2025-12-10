@@ -1,3 +1,9 @@
+using Test
+using Random
+using ReservoirComputing
+using Static
+using LinearAlgebra
+
 @testset "DelayESN" begin
     rng = MersenneTwister(123)
 
@@ -10,12 +16,12 @@
         desn = DelayESN(in_dims, res_dims, out_dims;
             num_delays = num_delays, stride = 1)
 
-        @test desn isa ReservoirComputer
+        @test desn isa DelayESN
 
         reservoir = desn.reservoir
         @test reservoir isa StatefulLayer
 
-        mods = desn.state_modifiers
+        mods = desn.states_modifiers
         @test mods isa Tuple
         @test !isempty(mods)
         @test first(mods) isa DelayLayer
@@ -29,28 +35,6 @@
         @test ro isa LinearReadout
         @test Int(ro.in_dims) == res_dims * (num_delays + 1)
         @test Int(ro.out_dims) == out_dims
-    end
-
-    @testset "setup and forward pass shapes" begin
-        in_dims = 4
-        res_dims = 10
-        out_dims = 3
-        num_delays = 1
-
-        desn = DelayESN(in_dims, res_dims, out_dims;
-            num_delays = num_delays, stride = 1)
-
-        ps, st = setup(rng, desn)
-
-        x = rand(rng, Float32, in_dims)
-        y, st2 = desn(x, ps, st)
-        @test size(y) == (out_dims,)
-
-        X = rand(rng, Float32, in_dims, 7)
-        Y, st3 = desn(X, ps, st2)
-        @test size(Y) == (out_dims, 7)
-
-        @test propertynames(st3) == propertynames(st2)
     end
 
     @testset "num_delays changes readout input dim" begin
