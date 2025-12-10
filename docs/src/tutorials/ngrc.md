@@ -26,6 +26,7 @@ using OrdinaryDiffEq
 using Random
 using ReservoirComputing
 using Plots
+using Statistics
 ```
 
 ## 2. Define Lorenz system and generate data
@@ -101,7 +102,7 @@ out_dims = 3
 num_delays = 1
 ```
 
-With `in_dims=3` and `num_delays=1` the delayed imput length is 6.
+With `in_dims=3` and `num_delays=1` the delayed input length is 6.
 Adding the polinomial of degrees 1 and 2 will put give us 21 more. Finally, the constant
 term adds 1 more feature. In total we have 28 features. 
 
@@ -144,11 +145,11 @@ We now perform generative prediction on the increments to obtain the predicted t
 
 ```@example ngrc
 single_step = copy(test_norm_x[:, 1]) # normalized initial condition
-st_pred = st
 traj_norm = similar(test_norm_x, 3, predict_len)
 
 for step in 1:predict_len
-    delta_step, st_pred = ngrc(single_step, ps, st_pred)
+    global st
+    delta_step, st = ngrc(single_step, ps, st)
     single_step .= single_step .+ delta_step # increment update in normalized space
     traj_norm[:, step] .= single_step
 end

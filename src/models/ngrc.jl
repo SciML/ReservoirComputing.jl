@@ -16,7 +16,7 @@ come from explicit input delays rather than a recurrent state.
      this delayed vector and concatenates the results, and
   3) a [`LinearReadout`](@ref) mapping the resulting feature vector to outputs.
 
-Internally, `NGRC` is represented as an [`AbstractReservoirComputer`](@ref) with:
+Internally, `NGRC` is represented as a [`ReservoirComputer`](@ref) with:
   - `reservoir` = the [`DelayLayer`](@ref),
   - `states_modifiers` = the [`NonlinearFeaturesLayer`](@ref) plus any extra
     `state_modifiers`,
@@ -37,7 +37,7 @@ Internally, `NGRC` is represented as an [`AbstractReservoirComputer`](@ref) with
     the internal clock is a multiple of `stride`. Default: `1`.
   - `init_delay`: Initializer (or tuple of initializers) for the delay history,
     passed to [`DelayLayer`](@ref). Each initializer function is called as
-    `init(rng, in_dims, 1)` to fill one delay column. Default: [`zeros32`](@ref).
+    `init(rng, in_dims, 1)` to fill one delay column. Default: `zeros32`.
   - `features`: A function or tuple of functions `(f₁, f₂, ...)` used by
     [`NonlinearFeaturesLayer`](@ref). Each `f` is called as `f(x)` where `x` is
     the delayed input vector. By default it is assumed that each `f` returns a
