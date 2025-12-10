@@ -120,8 +120,45 @@ function resetcarry!(
     return st
 end
 
+@doc raw"""
+    polynomial_monomials(input_vector;
+        degrees = 1:2)
+
+Generate all unordered polynomial monomials of the entries in `input_vector`
+for the given set of degrees.
+
+For each `d` in `degrees`, this function produces all degree-`d` monomials
+of the form
+
+- degree 1: `x₁, x₂, …`
+- degree 2: `x₁², x₁x₂, x₁x₃, x₂², …`
+- degree 3: `x₁³, x₁²x₂, x₁x₂x₃, x₂³, …`
+
+where combinations are taken with repetition and in non-decreasing index
+order. This means that, for example, `x₁x₂` and `x₂x₁` are represented only
+once.
+
+The returned vector is a flat list of all such products, in a deterministic
+order determined by the recursive enumeration.
+
+## Arguments
+
+- `input_vector`
+  Input vector whose entries define the variables used to build monomials.
+
+## Keyword arguments
+
+- `degrees`: An iterable of positive integers specifying which monomial degrees
+  to generate. Each degree less than `1` is skipped. Default: `1:2`.
+
+## Returns
+
+- `output_monomials` a vector of the same type as `input_vector`
+  containing all generated monomials, concatenated across the requested
+  degrees, in a deterministic order.
+"""
 function polynomial_monomials(input_vector::AbstractVector;
-        degrees = 1:2, include_constant::Bool = true)
+        degrees = 1:2)
     element_type = eltype(input_vector)
     output_monomials = element_type[]
     num_variables = length(input_vector)

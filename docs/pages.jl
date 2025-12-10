@@ -3,6 +3,7 @@ pages = [
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",
         "Chaos forecasting with an ESN" => "tutorials/lorenz_basic.md",
+        "Fitting a Next Generation Reservoir Computer" => "tutorials/ngrc.md",
         #"Using Different Training Methods" => "esn_tutorials/different_training.md",
         "Deep Echo State Networks" => "tutorials/deep_esn.md",
         #"Hybrid Echo State Networks" => "tutorials/hybrid.md",

@@ -15,6 +15,10 @@
     NGRC
 ```
 
+```@docs
+    polynomial_monomials
+```
+
 ### Utilities
 
 ```@docs
