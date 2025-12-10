@@ -2,6 +2,7 @@ using Test
 using Random
 using ReservoirComputing
 using Static
+using LinearAlgebra
 
 const _I32 = (m, n) -> Matrix{Float32}(I, m, n)
 const _Z32 = m -> zeros(Float32, m)
@@ -35,11 +36,11 @@ end
             state_modifiers = (),
             readout_activation = identity)
         ps, st = setup(rng, hesn)
-        @test haskey(ps, :cell) && haskey(ps, :knowledge_model) &&
+        @test haskey(ps, :reservoir) && haskey(ps, :knowledge_model) &&
               haskey(ps, :states_modifiers) && haskey(ps, :readout)
-        @test size(ps.cell.input_matrix) == (res_dims, in_dims + km_dims)
+        @test size(ps.reservoir.input_matrix) == (res_dims, in_dims + km_dims)
         @test size(ps.readout.weight) == (out_dims, res_dims + km_dims)
-        @test haskey(st, :cell) && haskey(st, :knowledge_model) &&
+        @test haskey(st, :reservoir) && haskey(st, :knowledge_model) &&
               haskey(st, :states_modifiers) && haskey(st, :readout)
     end
 

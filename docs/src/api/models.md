@@ -9,6 +9,16 @@
     HybridESN
 ```
 
+## Next generation reservoir computing
+
+```@docs
+    NGRC
+```
+
+```@docs
+    polynomial_monomials
+```
+
 ### Utilities
 
 ```@docs

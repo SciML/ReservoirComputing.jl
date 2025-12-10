@@ -42,6 +42,7 @@ reservoir computing models. More specifically the software offers:
     + Deep echo state networks `DeepESN`
     + Echo state networks with delayed states `DelayESN`
     + Hybrid echo state networks `HybridESN`
+    + Next generation reservoir computing `NGRC`
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
