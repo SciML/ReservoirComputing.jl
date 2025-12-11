@@ -25,6 +25,7 @@ include("reservoircomputer.jl")
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
+include("layers/es2n_cell.jl")
 include("layers/svmreadout.jl")
 #general
 include("states.jl")
@@ -45,7 +46,8 @@ include("models/ngrc.jl")
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
+export ESNCell, ES2NCell
+export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
        DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
