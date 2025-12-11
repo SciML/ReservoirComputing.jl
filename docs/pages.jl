@@ -1,5 +1,6 @@
 pages = [
     "ReservoirComputing.jl" => "index.md",
+    "Getting Started with ReservoirComputing.jl" => "getting_started.md",
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",
         "Chaos forecasting with an ESN" => "tutorials/lorenz_basic.md",
