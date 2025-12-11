@@ -21,8 +21,9 @@ block provides an end=to-end simplified runnable example. The rest of this
 page will delve into more details, expanding on various aspects of the example.
 
 ```@example first-esn
-using Random
 using OrdinaryDiffEq
+using Plots
+using Random
 using ReservoirComputing
 
 Random.seed!(42)
@@ -128,8 +129,8 @@ esn = ESN(in_size, res_size, in_size; #autoregressive so in_size = out_size
     leak_coefficient=1.0, # default value
     init_state = randn32, # default value
     use_bias=false, # default value
+    init_bias = zeros32, # default value, not used since use_bias=false
     readout_activation=identity, # default value
-    use_bias=false, # default value
 )
 ```
 
@@ -232,6 +233,6 @@ plot(p1, p2, p3; plot_title="Lorenz System Coordinates",
 ## References
 
 ```@bibliography
-Pages = ["lorenz_basic.md"]
+Pages = ["getting_started.md"]
 Canonical = false
 ```
