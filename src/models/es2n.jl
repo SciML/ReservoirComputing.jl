@@ -1,30 +1,19 @@
 @doc raw"""
-    ESN(in_dims, res_dims, out_dims, activation=tanh;
-        leak_coefficient=1.0, init_reservoir=rand_sparse, init_input=scaled_rand,
-        init_bias=zeros32, init_state=randn32, use_bias=false,
-        state_modifiers=(), readout_activation=identity)
+    ES2N(in_dims, res_dims, out_dims, activation=tanh;
+        proximity=1.0, init_reservoir=rand_sparse, init_input=scaled_rand,
+        init_bias=zeros32, init_state=randn32, use_bias=False(),
+        state_modifiers=(), readout_activation=identity,
+        init_orthogonal=orthogonal,)
 
-Echo State Network (ESN): a reservoir (recurrent) layer followed by an optional
-sequence of state-modifier layers and a linear readout.
+Edge of Stability Echo State Network (ES2N).
 
-`ESN` composes:
-  1) a stateful [`ESNCell`](@ref) (reservoir),
-  2) zero or more `state_modifiers` applied to the reservoir state, and
-  3) a [`LinearReadout`](@ref) mapping reservoir features to outputs.
 
 ## Equations
 
-For input `\mathbf{x}(t) ∈ \mathbb{R}^{in\_dims}`, reservoir state
-`\mathbf{h}(t) ∈ \mathbb{R}^{res\_dims}`, and output
-`\mathbf{y}(t) ∈ \mathbb{R}^{out\_dims}`:
-
 ```math
 \begin{aligned}
-    \tilde{\mathbf{h}}(t) &= \phi\!\left(\mathbf{W}_{in}\,\mathbf{x}(t) +
-        \mathbf{W}_{res}\,\mathbf{h}(t-1) + \mathbf{b}\right) \\
-    \mathbf{h}(t) &= (1-\alpha)\,\mathbf{h}(t-1) + \alpha\,\tilde{\mathbf{h}}(t) \\
-    \mathbf{z}(t) &= \psi\!\left(\mathrm{Mods}\big(\mathbf{h}(t)\big)\right) \\
-    \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{out}\,\mathbf{z}(t) + \mathbf{b}_{out}\right)
+x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
+    \mathbf{W}_{in} u(t) \right) + (1-\beta)\, \mathbf{O}\, x(t-1),
 \end{aligned}
 ```
 
@@ -39,9 +28,10 @@ For input `\mathbf{x}(t) ∈ \mathbb{R}^{in\_dims}`, reservoir state
 
 Reservoir (passed to [`ESNCell`](@ref)):
 
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
+  - `proximity`: proximity `α ∈ (0,1]`. Default: `1.0`.
   - `init_reservoir`: Initializer for `W_res`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_input`: Initializer for `O`. Default: [`orthogonal`].
   - `init_bias`: Initializer for reservoir bias (used if `use_bias=true`).
     Default: `zeros32`.
   - `init_state`: Initializer used when an external state is not provided.
@@ -69,6 +59,7 @@ Composition:
   - `reservoir` — parameters of the internal [`ESNCell`](@ref), including:
       - `input_matrix :: (res_dims × in_dims)` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
+      - `orthogonal_matrix :: (res_dims × res_dims)` — `O`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
   - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
@@ -80,33 +71,33 @@ Composition:
 
 ## States
 
-  - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng` used to sample initial hidden states).
+  - `reservoir` — states for the internal [`ES2NCell`](@ref) (e.g. `rng` used to sample initial hidden states).
   - `states_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
-@concrete struct ESN <:
+@concrete struct ES2N <:
                  AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function ESN(in_dims::IntegerType, res_dims::IntegerType,
+function ES2N(in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh;
         readout_activation = identity,
         state_modifiers = (),
         kwargs...)
-    cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
+    cell = StatefulLayer(ES2NCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
                  Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-    return ESN(cell, mods, ro)
+    return ES2N(cell, mods, ro)
 end
 
-function Base.show(io::IO, esn::ESN)
-    print(io, "ESN(\n")
+function Base.show(io::IO, esn::ES2N)
+    print(io, "ES2N(\n")
 
     print(io, "    reservoir = ")
     show(io, esn.reservoir)

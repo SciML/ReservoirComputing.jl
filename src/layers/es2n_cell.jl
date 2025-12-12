@@ -27,7 +27,7 @@ function ES2NCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         init_state = randn32, init_orthogonal = orthogonal,
         proximity::AbstractFloat = 1.0)
     return ES2NCell(activation, in_dims, out_dims, init_bias, init_reservoir,
-        init_input, init_orthogonal, init_state, proximity, use_bias)
+        init_input, init_orthogonal, init_state, proximity, static(use_bias))
 end
 
 function initialparameters(rng::AbstractRNG, esn::ES2NCell)
