@@ -15,11 +15,12 @@ approach.
 using ReservoirComputing
 using ConcreteStructs
 using Static
+using Random
 
 using ReservoirComputing: IntegerType, BoolType, InputType, has_bias, _wrap_layers
 import ReservoirComputing: initialparameters
 
-@concrete struct CustomES2NCell <: AbstractEchoStateNetworkCell
+@concrete struct CustomES2NCell <: ReservoirComputing.AbstractEchoStateNetworkCell
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
@@ -41,7 +42,7 @@ function CustomES2NCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         init_input, init_orthogonal, init_state, proximity, static(use_bias))
 end
 
-function initialparameters(rng::AbstractRNG, esn::CustomES2NCell)
+function initialparameters(rng::Random.AbstractRNG, esn::CustomES2NCell)
     ps = (input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
         reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims),
         orthogonal_matrix = esn.init_orthogonal(rng, esn.out_dims, esn.out_dims))
@@ -77,8 +78,8 @@ Now you can build a full model in two different ways:
   - Building from scratch with a proper `CustomES2N` struct
 
 ```@example es2n_scratch
-function CustomES2NApproach1(in_dims::IntegerType, res_dims::IntegerType,
-      out_dims::IntegerType, activation = tanh;
+function CustomES2NApproach1(in_dims, res_dims,
+      out_dims, activation = tanh;
       readout_activation = identity,
       state_modifiers = (),
       kwargs...)
@@ -89,14 +90,14 @@ end
 
 ```@example es2n_scratch
 @concrete struct CustomES2NApproach2 <:
-                 AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+                 ReservoirComputing.AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function CustomES2NApproach2(in_dims::IntegerType, res_dims::IntegerType,
-        out_dims::IntegerType, activation = tanh;
+function CustomES2NApproach2(in_dims::Int, res_dims::Int,
+        out_dims::Int, activation = tanh;
         readout_activation = identity,
         state_modifiers = (),
         kwargs...)
@@ -107,4 +108,43 @@ function CustomES2NApproach2(in_dims::IntegerType, res_dims::IntegerType,
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return CustomES2NApproach2(cell, mods, ro)
 end
+```
+
+Now we can use the model like any other in ReservoirComputing.jl.
+Following the example in the getting started page:
+
+```@example es2n_scratch
+using OrdinaryDiffEq
+using Plots
+
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+function lorenz(du, u, p, t)
+    du[1] = p[1] * (u[2] - u[1])
+    du[2] = u[1] * (p[2] - u[3]) - u[2]
+    du[3] = u[1] * u[2] - p[3] * u[3]
+end
+
+prob = ODEProblem(lorenz, [1.0f0, 0.0f0, 0.0f0], (0.0, 200.0), [10.0f0, 28.0f0, 8/3])
+data = Array(solve(prob, ABM54(); dt=0.02))
+shift = 300
+train_len = 5000
+predict_len = 1250
+
+input_data = data[:, shift:(shift + train_len - 1)]
+target_data = data[:, (shift + 1):(shift + train_len)]
+test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
+
+esn = CustomES2NApproach2(3, 300, 3; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
+    state_modifiers=NLAT2)
+
+ps, st = setup(rng, esn)
+ps, st = train!(esn, input_data, target_data, ps, st)
+output, st = predict(esn, predict_len, ps, st; initialdata=test[:, 1])
+
+plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
+    label="predicted")
+plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
+    label="actual")
 ```
