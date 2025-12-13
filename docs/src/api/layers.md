@@ -22,6 +22,7 @@
 
 ```@docs
     ESNCell
+    ES2NCell
 ```
 
 ## Reservoir computing with cellular automata

@@ -9,6 +9,9 @@ pages = [
         "Deep Echo State Networks" => "tutorials/deep_esn.md",
         #"Hybrid Echo State Networks" => "tutorials/hybrid.md",
         "Reservoir Computing with Cellular Automata" => "tutorials/reca.md"],
+    "Examples" => Any[
+        "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
+    ],
     "API Documentation" => Any[
         "Layers" => "api/layers.md",
         "Models" => "api/models.md",

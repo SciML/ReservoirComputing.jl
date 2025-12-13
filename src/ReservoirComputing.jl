@@ -25,6 +25,7 @@ include("reservoircomputer.jl")
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
+include("layers/es2n_cell.jl")
 include("layers/svmreadout.jl")
 #general
 include("states.jl")
@@ -36,6 +37,7 @@ include("inits/inits_input.jl")
 include("inits/inits_reservoir.jl")
 #full models
 include("models/esn_generics.jl")
+include("models/es2n.jl")
 include("models/esn.jl")
 include("models/esn_deep.jl")
 include("models/esn_delay.jl")
@@ -45,7 +47,8 @@ include("models/ngrc.jl")
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
+export ESNCell, ES2NCell
+export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
        DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
@@ -59,7 +62,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
        scale_radius!, self_loop!, simple_cycle!
 export train, train!, predict, resetcarry!, polynomial_monomials
-export ESN, DeepESN, DelayESN, HybridESN
+export ES2N, ESN, DeepESN, DelayESN, HybridESN
 export NGRC
 #ext
 export RECACell, RECA

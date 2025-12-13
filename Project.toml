@@ -1,7 +1,7 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 authors = ["Francesco Martinuzzi"]
-version = "0.12.5"
+version = "0.12.6"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"

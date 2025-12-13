@@ -29,11 +29,23 @@ features, and install trained readout weights.
 - `(y, st′)` where `y` is the readout output and `st′` contains the updated
   states of the reservoir, modifiers, and readout.
 """
-@concrete struct ReservoirComputer <:
-                 AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
-    reservoir
-    states_modifiers
-    readout
+struct ReservoirComputer{R, S, L} <:
+       AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    reservoir::R
+    states_modifiers::S
+    readout::L
+
+    function ReservoirComputer(reservoir::R, state_modifiers::S, readout::L) where {R, S, L}
+        mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+                     Tuple(state_modifiers) : (state_modifiers,)
+        mods = _wrap_layers(mods_tuple)
+
+        return new{R, typeof(mods), L}(reservoir, mods, readout)
+    end
+end
+
+function ReservoirComputer(reservoir, readout)
+    return ReservoirComputer(reservoir, (), readout)
 end
 
 function initialparameters(rng::AbstractRNG, rc::AbstractReservoirComputer)
@@ -98,27 +110,30 @@ function addreadout!(::AbstractReservoirComputer, output_matrix::AbstractMatrix,
 end
 
 function Base.show(io::IO, rc::ReservoirComputer)
-    print(io, "ReservoirComputer(")
+    print(io, "ReservoirComputer(\n")
 
-    print(io, "reservoir = ")
+    print(io, "    reservoir = ")
     show(io, rc.reservoir)
+    print(io, ",\n")
 
-    nmods = length(rc.states_modifiers)
-    if nmods == 0
-        print(io, ", state_modifiers = ()")
+    print(io, "    state_modifiers = ")
+    if isempty(rc.states_modifiers)
+        print(io, "()")
     else
-        print(io, ", state_modifiers = (")
+        print(io, "(")
         for (i, m) in enumerate(rc.states_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end
         print(io, ")")
     end
+    print(io, ",\n")
 
-    print(io, ", readout = ")
+    print(io, "    readout = ")
     show(io, rc.readout)
+    print(io, "\n)")
 
-    print(io, ")")
+    return
 end
 
 @doc raw"""

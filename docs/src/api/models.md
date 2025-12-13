@@ -3,6 +3,7 @@
 ## Echo State Networks
 
 ```@docs
+    ES2N
     ESN
     DeepESN
     DelayESN

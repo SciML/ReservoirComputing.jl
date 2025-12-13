@@ -73,7 +73,7 @@ Lorenz system.
 
 ### 1. Generate data
 
-As a general first step wee fix the random seed for reproducibilty
+As a general first step we fix the random seed for reproducibilty
 
 ```julia
 using Random
