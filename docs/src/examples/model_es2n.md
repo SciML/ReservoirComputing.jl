@@ -1,7 +1,7 @@
 # Building a model to add to ReservoirComputing.jl
 
 This examples showcases how to build custom models such that they could
-be also included in the libarary. In this example we will be building a
+be also included in ReservoirComputing.jl. In this example we will be building a
 edge of stability echo state network [`ES2N`](@ref). Since the model is
 already available in the library, we will change the names of cells and
 models, to not cause problems.

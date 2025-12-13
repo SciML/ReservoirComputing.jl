@@ -116,7 +116,7 @@ end
 function Base.show(io::IO, esn::ES2NCell)
     print(io, "ES2NCell($(esn.in_dims) => $(esn.out_dims)")
     if esn.proximity != eltype(esn.proximity)(1.0)
-        print(io, ", leak_coefficient=$(esn.proximity)")
+        print(io, ", proximity=$(esn.proximity)")
     end
     has_bias(esn) || print(io, ", use_bias=false")
     print(io, ")")
