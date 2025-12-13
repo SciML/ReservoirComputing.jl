@@ -5,7 +5,7 @@
         state_modifiers=(), readout_activation=identity,
         init_orthogonal=orthogonal,)
 
-Edge of Stability Echo State Network (ES2N).
+Edge of Stability Echo State Network (ES2N) [Ceni2025](@cite).
 
 
 ## Equations
@@ -26,20 +26,15 @@ x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
 
 ## Keyword arguments
 
-Reservoir (passed to [`ESNCell`](@ref)):
-
   - `proximity`: proximity `α ∈ (0,1]`. Default: `1.0`.
   - `init_reservoir`: Initializer for `W_res`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
-  - `init_input`: Initializer for `O`. Default: [`orthogonal`].
+  - `init_orthogonal`: Initializer for `O`. Default: [`orthogonal`].
   - `init_bias`: Initializer for reservoir bias (used if `use_bias=true`).
     Default: `zeros32`.
   - `init_state`: Initializer used when an external state is not provided.
     Default: `randn32`.
   - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
-
-Composition:
-
   - `state_modifiers`: A layer or collection of layers applied to the reservoir
     state before the readout. Accepts a single layer, an `AbstractVector`, or a
     `Tuple`. Default: empty `()`.
