@@ -75,12 +75,13 @@ or `dev` the package.
   reservoir computing building blocks, such as [`ReservoirComputer`](@ref)
   and [`ReservoirChain`](@ref). Additional, lower level layers provide the
   building blocks for custom reservoir computers, such as [`LinearReadout`](@ref),
-  [`Collect`](@ref), [`ESNCell`](@ref), [`DelayLayer`](@ref),
+  [`Collect`](@ref), [`ESNCell`](@ref), [`ES2NCell`](@ref), [`DelayLayer`](@ref),
   [`NonlinearFeaturesLayer`](@ref), and more
 - Fully built models:
     + Echo state networks [`ESN`](@ref)
     + Deep echo state networks [`DeepESN`](@ref)
     + Echo state networks with delayed states [`DelayESN`](@ref)
+    + Edge of stability echo state networks [`ES2N`](@ref)
     + Hybrid echo state networks [`HybridESN`](@ref)
     + Next generation reservoir computing [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
