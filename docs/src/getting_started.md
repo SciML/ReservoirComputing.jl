@@ -35,8 +35,8 @@ function lorenz(du, u, p, t)
     du[3] = u[1] * u[2] - p[3] * u[3]
 end
 
-prob = ODEProblem(lorenz, [1.0f0, 0.0f0, 0.0f0], (0.0, 200.0), [10.0f0, 28.0f0, 8/3])
-data = Array(solve(prob, ABM54(); dt=0.02))
+prob = ODEProblem(lorenz, [1.0f0, 0.0f0, 0.0f0], (0.0, 200.0), Float32[10.0, 28.0, 8/3])
+data = Array(solve(prob, ABM54(); dt=0.02f0))
 shift = 300
 train_len = 5000
 predict_len = 1250
