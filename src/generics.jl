@@ -16,13 +16,13 @@ end
     return v in names ? :(x.$v) : :(nothing)
 end
 
-function dense_bias(generic_mat::StridedMatrix{T},
-        generic_vec::Union{StridedVector{T}, StridedMatrix{T}},
-        bias::StridedVector{T}) where {T}
+function dense_bias(generic_mat::AbstractMatrix,
+        generic_vec::AbstractVecOrMat,
+        bias::AbstractVector)
     return generic_mat * generic_vec .+ bias
 end
 
-function dense_bias(generic_mat::StridedMatrix{T},
-        generic_vec::Union{StridedVector{T}, StridedMatrix{T}}, ::Nothing) where {T}
+function dense_bias(generic_mat::AbstractMatrix,
+        generic_vec::AbstractVecOrMat, ::Nothing)
     return generic_mat * generic_vec
 end
