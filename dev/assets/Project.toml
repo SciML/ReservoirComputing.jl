@@ -13,7 +13,7 @@ Static = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [sources]
-ReservoirComputing = {path = "/var/lib/buildkite-agent/builds/gpuci-17/julialang/reservoircomputing-dot-jl"}
+ReservoirComputing = {path = "/var/lib/buildkite-agent/builds/gpuci-7/julialang/reservoircomputing-dot-jl"}
 
 [compat]
 CellularAutomata = "0.0.6"

@@ -916,9 +916,9 @@ version = "0.2.1"
 
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "4255f0032eafd6451d707a51d5f0248b8a165e4d"
+git-tree-sha1 = "b6893345fd6658c8e475d40155789f4860ac3b21"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
-version = "3.1.3+0"
+version = "3.1.4+0"
 
 [[deps.JuliaSyntaxHighlighting]]
 deps = ["StyledStrings"]
@@ -1840,9 +1840,9 @@ version = "0.6.12"
 
 [[deps.RecursiveArrayTools]]
 deps = ["Adapt", "ArrayInterface", "DocStringExtensions", "GPUArraysCore", "LinearAlgebra", "RecipesBase", "StaticArraysCore", "Statistics", "SymbolicIndexingInterface"]
-git-tree-sha1 = "51bdb23afaaa551f923a0e990f7c44a4451a26f1"
+git-tree-sha1 = "a1b9f699b363245333a0e4d21054e7e160d196ba"
 uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
-version = "3.39.0"
+version = "3.40.0"
 
     [deps.RecursiveArrayTools.extensions]
     RecursiveArrayToolsFastBroadcastExt = "FastBroadcast"
@@ -1895,7 +1895,7 @@ version = "1.3.1"
 
 [[deps.ReservoirComputing]]
 deps = ["ArrayInterface", "Compat", "ConcreteStructs", "LinearAlgebra", "LuxCore", "NNlib", "Random", "Reexport", "Static", "WeightInitializers"]
-path = "/var/lib/buildkite-agent/builds/gpuci-17/julialang/reservoircomputing-dot-jl"
+path = "/var/lib/buildkite-agent/builds/gpuci-7/julialang/reservoircomputing-dot-jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 version = "0.12.6"
 
