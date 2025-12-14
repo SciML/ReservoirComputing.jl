@@ -4,12 +4,12 @@ on:
     branches:
       - master
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   push:
     branches:
       - master
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,15 +17,15 @@ jobs:
       matrix:
         group:
           - Core
-        downgrade_mode: ['alldeps']
-        julia-version: ['1.10']
+        downgrade_mode: ["alldeps"]
+        julia-version: ["1.10"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/julia-downgrade-compat@v2
-#        if: ${{ matrix.version == '1.6' }}
+        #        if: ${{ matrix.version == '1.6' }}
         with:
           skip: Pkg,TOML
       - uses: julia-actions/julia-buildpkg@v1
