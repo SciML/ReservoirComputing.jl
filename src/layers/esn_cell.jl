@@ -107,15 +107,12 @@ end
 
 function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
-    if has_bias(esn)
-        candidate_h = esn.activation.(ps.input_matrix * inp .+
-                                      ps.reservoir_matrix * hidden_state .+ ps.bias)
-    else
-        candidate_h = esn.activation.(ps.input_matrix * inp .+
-                                      ps.reservoir_matrix * hidden_state)
-    end
-    h_new = (T(1.0) - esn.leak_coefficient) .* hidden_state .+
-            esn.leak_coefficient .* candidate_h
+    bias = safe_getproperty(ps, Val(:bias))
+    t_lc = T(esn.leak_coefficient)
+    win_inp = dense_bias(ps.input_matrix, inp, nothing)
+    w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
+    candidate_h = esn.activation.(win_inp .+ w_state)
+    h_new = (one(T) - t_lc) .* hidden_state .+ t_lc .* candidate_h
     return (h_new, (h_new,)), st
 end
 

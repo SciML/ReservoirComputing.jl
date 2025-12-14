@@ -11,4 +11,7 @@ using ReservoirComputing, Aqua, JET
     Aqua.test_undefined_exports(ReservoirComputing)
 end
 
-JET.test_package(ReservoirComputing)
+JET.test_package(ReservoirComputing;
+    target_modules = (ReservoirComputing,),
+    toplevel_logger = nothing
+)

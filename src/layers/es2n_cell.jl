@@ -101,15 +101,13 @@ end
 
 function (esn::ES2NCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
-    if has_bias(esn)
-        candidate_h = esn.activation.(ps.input_matrix * inp .+
-                                      ps.reservoir_matrix * hidden_state .+ ps.bias)
-    else
-        candidate_h = esn.activation.(ps.input_matrix * inp .+
-                                      ps.reservoir_matrix * hidden_state)
-    end
-    h_new = (one(T) - esn.proximity) .* ps.orthogonal_matrix * hidden_state .+
-            esn.proximity .* candidate_h
+    bias = safe_getproperty(ps, Val(:bias))
+    t_prox = T(esn.proximity)
+    win_inp = dense_bias(ps.input_matrix, inp, nothing)
+    w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
+    candidate_h = esn.activation.(win_inp .+ w_state)
+    h_new = (one(T) - t_prox) .* ps.orthogonal_matrix * hidden_state .+
+            t_prox .* candidate_h
     return (h_new, (h_new,)), st
 end
 
