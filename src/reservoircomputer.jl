@@ -88,15 +88,21 @@ end
 function collectstates(
         rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
-    collected = Any[]
-    for inp in eachcol(data)
-        state_t, partial_st = _partial_apply(rc, inp, ps, newst)
-        push!(collected, copy(state_t))
+    nsteps = size(data, 2)
+    cols = eachcol(data)
+    @assert !isempty(cols)
+    x1 = first(cols)
+    current_state, partial_st = _partial_apply(rc, x1, ps, newst)
+    state_dims = size(current_state, 1)
+    states = similar(data, state_dims, nsteps)
+    states[:, 1] .= current_state
+    newst = merge(partial_st, (readout = newst.readout,))
+    for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
+        current_state, partial_st = _partial_apply(rc, inp, ps, newst)
+        states[:, idx] .= current_state
         newst = merge(partial_st, (readout = newst.readout,))
     end
-    @assert !isempty(collected)
-    states_raw = reduce(hcat, collected)
-    states = eltype(data).(states_raw)
+
     return states, newst
 end
 
