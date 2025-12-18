@@ -4,7 +4,7 @@
         init_bias=zeros32, init_state=randn32, use_bias=false,
         state_modifiers=(), readout_activation=identity)
 
-Euler State Network (ESN).
+Euler State Network (ESN) [Gallicchio2024](@cite).
 
 ## Equations
 

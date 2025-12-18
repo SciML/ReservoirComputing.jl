@@ -4,7 +4,7 @@
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=randn32, leak_coefficient=1.0, diffusion=1.0)
 
-Euler State Network (EuSN) cell.
+Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 
 ## Equations
 
