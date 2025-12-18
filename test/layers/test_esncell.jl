@@ -18,16 +18,19 @@ cell_name(::Type{C}) where {C} = string(nameof(C))
 
 mix_kw(::Type{ESNCell}) = :leak_coefficient
 mix_kw(::Type{ES2NCell}) = :proximity
+mix_kw(::Type{EuSNCell}) = :leak_coefficient
 
-# Whatever show() actually prints:
 mix_label(::Type{ESNCell}) = "leak_coefficient"
 mix_label(::Type{ES2NCell}) = "proximity"
+mix_label(::Type{EuSNCell}) = "leak_coefficient"
 
 default_extra_ctor_kwargs(::Type{ESNCell}) = NamedTuple()
 default_extra_ctor_kwargs(::Type{ES2NCell}) = (init_orthogonal = _W_I,)
+default_extra_ctor_kwargs(::Type{EuSNCell}) = NamedTuple()  # diffusion exists but we leave default unless overridden
 
 extra_param_keys(::Type{ESNCell}) = ()
 extra_param_keys(::Type{ES2NCell}) = (:orthogonal_matrix,)
+extra_param_keys(::Type{EuSNCell}) = ()
 
 function build_cell(::Type{C}, in_dims::Integer, out_dims::Integer;
         activation = tanh,
@@ -192,7 +195,7 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
 end
 
 @testset "AbstractEchoStateNetworkCell contract" begin
-    for C in (ESNCell, ES2NCell)
+    for C in (ESNCell, ES2NCell, EuSNCell)
         test_echo_state_cell_contract(C)
     end
 end

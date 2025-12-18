@@ -82,6 +82,7 @@ or `dev` the package.
     + Deep echo state networks [`DeepESN`](@ref)
     + Echo state networks with delayed states [`DelayESN`](@ref)
     + Edge of stability echo state networks [`ES2N`](@ref)
+    + Euler state networks [`Eu2N`](@ref)
     + Hybrid echo state networks [`HybridESN`](@ref)
     + Next generation reservoir computing [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
