@@ -25,12 +25,15 @@ model_name(::Type{M}) where {M} = string(nameof(M))
 
 mix_kw(::Type{ESN}) = :leak_coefficient
 mix_kw(::Type{ES2N}) = :proximity
+mix_kw(::Type{EuSN}) = :leak_coefficient
 
 reservoir_param_keys(::Type{ESN}) = (:input_matrix, :reservoir_matrix)
 reservoir_param_keys(::Type{ES2N}) = (:input_matrix, :reservoir_matrix, :orthogonal_matrix)
+reservoir_param_keys(::Type{EuSN}) = (:input_matrix, :reservoir_matrix)
 
 default_reservoir_kwargs(::Type{ESN}) = NamedTuple()
 default_reservoir_kwargs(::Type{ES2N}) = (init_orthogonal = _W_I,)
+default_reservoir_kwargs(::Type{EuSN}) = NamedTuple()
 
 function build_model(::Type{M}, in_dims::Int, res_dims::Int, out_dims::Int, activation;
         state_modifiers = (),
@@ -69,7 +72,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
 
@@ -104,7 +108,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -130,7 +135,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -153,7 +159,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -175,7 +182,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -194,7 +202,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_input = _W_I,
             init_reservoir = _W_ZZ,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -219,7 +228,8 @@ function test_esn_family_contract(::Type{M}) where {M}
             init_reservoir = _W_ZZ,
             init_bias = _O32,
             init_state = init_state3,
-            mix = 1.0)
+            mix = 1.0
+        )
 
         ps, st = setup(rng, model)
         ps = _with_identity_readout(ps; out_dims = D, in_dims = D)
@@ -231,7 +241,7 @@ function test_esn_family_contract(::Type{M}) where {M}
 end
 
 @testset "ESN-family model contract" begin
-    for M in (ESN, ES2N)
+    for M in (ESN, ES2N, EuSN)
         test_esn_family_contract(M)
     end
 end

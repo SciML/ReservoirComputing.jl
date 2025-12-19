@@ -21,8 +21,9 @@
 ## Echo State Networks
 
 ```@docs
-    ESNCell
     ES2NCell
+    ESNCell
+    EuSNCell
 ```
 
 ## Reservoir computing with cellular automata
