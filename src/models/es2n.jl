@@ -12,8 +12,13 @@ Edge of Stability Echo State Network (ES2N) [Ceni2025](@cite).
 
 ```math
 \begin{aligned}
-x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
-    \mathbf{W}_{in} u(t) \right) + (1-\beta)\, \mathbf{O}\, x(t-1),
+    \mathbf{x}(t) &= (1-\beta)\, \mathbf{O}\, \mathbf{x}(t-1) +
+        \beta\, \phi\!\left(\mathbf{W}_{\text{in}} \mathbf{u}(t)
+        + \mathbf{W}_r \mathbf{x}(t-1) + \mathbf{b} \right) \\
+    \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
+    \mathbf{y}(t) &= \rho\!\left(
+        \mathbf{W}_{\text{out}}\, \mathbf{z}(t)
+        + \mathbf{b}_{\text{out}} \right)
 \end{aligned}
 ```
 
