@@ -6,10 +6,7 @@
              init_bias=zeros32, init_state=randn32, use_bias=false,
              state_modifiers=(), readout_activation=identity)
 
-Echo State Network whose reservoir state is first passed through a delay
-feature expansion before the readout. This implements a state-delayed
-ESN [Fleddermann2025](@cite), where the readout sees the current reservoir
-state together with a fixed number of its past values.
+Echo State Network with state delays [Fleddermann2025](@cite).
 
 `DelayESN` composes:
   1) a stateful [`ESNCell`](@ref) (reservoir),

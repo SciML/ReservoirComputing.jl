@@ -13,10 +13,10 @@ the final, trainable mapping from collected features (e.g., reservoir state) to
 outputs. When `include_collect=true`, training will collect features immediately
 before this layer (logically inserting a [`Collect`](@ref) right before it).
 
-## Equation
+## Equations
 
 ```math
-\mathbf{y} = \psi\!\left(\mathbf{W}\,\mathbf{z} + \mathbf{b}\right)
+\mathbf{y} = \psi\!\left(\mathbf{W}\,\mathbf{x} + \mathbf{b}\right)
 ```
 
 ## Arguments
@@ -237,8 +237,8 @@ At each call, the layer:
 
 1. Takes the current input vector `h(t)` of length `input_dim`.
 2. Produces an output vector that concatenates:
-- the current input `h(t)`, and
-- `num_delays` previous inputs stored in an internal buffer.
+  + the current input `h(t)`, and
+  + `num_delays` previous inputs stored in an internal buffer.
 3. Updates its internal delay buffer with `h(t)` every `stride` calls.
 
 Newly initialized buffers are filled with zeros, so at the beginning of a

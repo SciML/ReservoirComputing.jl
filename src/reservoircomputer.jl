@@ -1,10 +1,11 @@
 
 @doc raw"""
     ReservoirComputer(reservoir, states_modifiers, readout)
+    ReservoirComputer(reservoir, readout)
 
-Generic reservoir-computing container that wires together:
+Generic reservoir computing container that wires together:
   1) a `reservoir` (any Lux-compatible layer producing features),
-  2) zero or more `states_modifiers` applied sequentially to the reservoir features,
+  2) (Optional) zero or more `states_modifiers` applied sequentially to the reservoir features,
   3) a `readout` layer (typically [`LinearReadout`](@ref)).
 
 The container exposes a standard `(x, ps, st) -> (y, st′)` interface and
@@ -15,7 +16,7 @@ features, and install trained readout weights.
 
 - `reservoir`: a layer that consumes inputs and produces feature vectors.
 - `states_modifiers`: a tuple (or vector converted to `Tuple`) of layers applied
-  after the reservoir (may be empty).
+  after the reservoir (optional. May be empty).
 - `readout`: the final trainable layer mapping features to outputs.
 
 ## Inputs

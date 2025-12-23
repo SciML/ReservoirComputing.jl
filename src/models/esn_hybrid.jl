@@ -4,9 +4,7 @@
         state_modifiers=(), readout_activation=identity,
         include_collect=true, kwargs...)
 
-Hybrid Echo State Network (HybridESN): an Echo State Network augmented with a
-knowledge model whose outputs are concatenated to the ESN’s input and used
-throughout the reservoir and readout computations.
+Hybrid Echo State Network [Pathak2018](@cite).
 
 `HybridESN` composes:
   1) a knowledge model `km` producing auxiliary features from the input,

@@ -4,10 +4,7 @@
          readout_activation=identity, state_modifiers=(),
          ro_dims=nothing)
 
-Next Generation Reservoir Computing (NGRC) / NVAR-style model [Gauthier2021](@cite):
-a tapped-delay embedding of the input, followed by user-defined nonlinear feature
-maps and a linear readout. This is a "reservoir-free" architecture where all dynamics
-come from explicit input delays rather than a recurrent state.
+Next Generation Reservoir Computing [Gauthier2021](@cite).
 
 `NGRC` composes:
   1) a [`DelayLayer`](@ref) applied directly to the input, producing a vector
@@ -15,12 +12,6 @@ come from explicit input delays rather than a recurrent state.
   2) a [`NonlinearFeaturesLayer`](@ref) that applies user-provided functions to
      this delayed vector and concatenates the results, and
   3) a [`LinearReadout`](@ref) mapping the resulting feature vector to outputs.
-
-Internally, `NGRC` is represented as a [`ReservoirComputer`](@ref) with:
-  - `reservoir` = the [`DelayLayer`](@ref),
-  - `states_modifiers` = the [`NonlinearFeaturesLayer`](@ref) plus any extra
-    `state_modifiers`,
-  - `readout` = the [`LinearReadout`](@ref).
 
 ## Arguments
 
