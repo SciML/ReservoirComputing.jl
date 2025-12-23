@@ -4,8 +4,7 @@
         init_bias=zeros32, init_state=randn32, use_bias=false,
         state_modifiers=(), readout_activation=identity)
 
-Echo State Network (ESN): a reservoir (recurrent) layer followed by an optional
-sequence of state-modifier layers and a linear readout.
+Echo State Network [Jaeger2004](@cite).
 
 `ESN` composes:
   1) a stateful [`ESNCell`](@ref) (reservoir),

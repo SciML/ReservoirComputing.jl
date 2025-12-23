@@ -4,8 +4,7 @@
             init_input=scaled_rand, init_bias=zeros32, init_state=randn32,
             use_bias=false, state_modifiers=(), readout_activation=identity)
 
-Deep Echo State Network (DeepESN): a stack of stateful [`ESNCell`](@ref) layers
-(optionally with per-layer state modifiers) followed by a linear readout.
+Deep Echo State Network [Gallicchio2017](@cite).
 
 `DeepESN` composes, for `L = length(res_dims)` layers:
   1) a sequence of stateful [`ESNCell`](@ref) with widths `res_dims[ℓ]`,
