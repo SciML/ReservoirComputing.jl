@@ -20,6 +20,25 @@ At each time step, the reservoir produces a state vector `h(t)` of length
 `h(t)` together with `num_delays` past states, spaced according to `stride`,
 before passing it on to any further modifiers and the readout.
 
+## Equations
+
+```math
+\begin{aligned}
+    \mathbf{x}(t) &= (1-\alpha)\, \mathbf{x}(t-1) + \alpha\, \phi\!\left(
+        \mathbf{W}_{\text{in}}\, \mathbf{u}(t) + \mathbf{W}_r\, \mathbf{x}(t-1)
+        + \mathbf{b} \right), \\
+    \mathbf{x}_{\mathrm{d}}(t) &= \begin{bmatrix} \mathbf{x}(t) \\
+    \mathbf{x}(t-s) \\
+    \vdots \\
+    \mathbf{x}\!\bigl(t-Ds\bigr) \end{bmatrix},
+        \qquad D=\text{num\_delays},\ \ s=\text{stride}, \\
+    \mathbf{z}(t) &= \psi\!\left(\mathrm{Mods}\!\left(
+        \mathbf{x}_{\mathrm{d}}(t)\right)\right), \\
+        \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{\text{out}}\,
+        \mathbf{z}(t) + \mathbf{b}_{\text{out}} \right)
+\end{aligned}
+```
+
 ## Arguments
 
   - `in_dims`: Input dimension.
