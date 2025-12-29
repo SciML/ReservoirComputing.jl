@@ -3,16 +3,16 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using Compat: @compat
 using ConcreteStructs: @concrete
-using LinearAlgebra: eigvals, mul!, I, qr, Diagonal, diag
+using LinearAlgebra: eigvals, I, qr, Diagonal, diag
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
                setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
-using NNlib: fast_act, sigmoid
+using NNlib: NNlib
 using Random: Random, AbstractRNG, randperm
-using Static: StaticBool, StaticInt, StaticSymbol,
-              True, False, static, known, dynamic, StaticInteger
+using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
 using Reexport: Reexport, @reexport
-using WeightInitializers: DeviceAgnostic, PartialFunction, Utils
+using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, Utils,
+                          orthogonal, rand32, randn32, sparse_init, zeros32
 @reexport using WeightInitializers
 @reexport using LuxCore: setup, apply, initialparameters, initialstates
 
