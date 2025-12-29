@@ -1,4 +1,4 @@
-using ReservoirComputing, Aqua, JET
+using ReservoirComputing, Aqua, ExplicitImports, JET
 
 @testset "Aqua" begin
     Aqua.find_persistent_tasks_deps(ReservoirComputing)
@@ -9,6 +9,11 @@ using ReservoirComputing, Aqua, JET
     Aqua.test_stale_deps(ReservoirComputing)
     Aqua.test_unbound_args(ReservoirComputing)
     Aqua.test_undefined_exports(ReservoirComputing)
+end
+
+@testset "ExplicitImports" begin
+    @test check_no_implicit_imports(ReservoirComputing) === nothing
+    @test check_no_stale_explicit_imports(ReservoirComputing) === nothing
 end
 
 JET.test_package(ReservoirComputing;
