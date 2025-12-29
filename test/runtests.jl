@@ -18,6 +18,7 @@ end
     @safetestset "DeepESN model" include("models/test_esn_deep.jl")
     @safetestset "DelayESN model" include("models/test_esn_delay.jl")
     @safetestset "HybridESN model" include("models/test_esn_hybrid.jl")
+    @safetestset "ParameterAwareESN model" include("models/test_paesn.jl")
 end
 
 @testset "Next Generation Reservoir Computing" begin
