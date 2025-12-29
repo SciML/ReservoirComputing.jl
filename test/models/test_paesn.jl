@@ -316,7 +316,8 @@ end
         # Target: just use the input shifted by param contribution
         target_data = state_data
 
-        ps2, st2 = train!(model, (state_data, param_data), target_data, ps, st,
+        ps2,
+        st2 = train!(model, (state_data, param_data), target_data, ps, st,
             StandardRidge(1e-6); washout = 2)
 
         # Test prediction
@@ -345,7 +346,8 @@ end
         p0 = Float32(0.0)
 
         # Constant parameter schedule
-        Y, st2 = predict(model, steps, ps, st;
+        Y,
+        st2 = predict(model, steps, ps, st;
             initialdata = x0,
             initialparam = p0,
             param_schedule = 0.0)
@@ -379,7 +381,8 @@ end
         x0 = Float32[0, 0, 0]
         schedule = t -> Float32(t)  # parameter = step number
 
-        Y, st2 = predict(model, steps, ps, st;
+        Y,
+        st2 = predict(model, steps, ps, st;
             initialdata = x0,
             initialparam = 0.0,
             param_schedule = schedule)

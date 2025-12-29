@@ -126,7 +126,8 @@ function initialparameters(rng::AbstractRNG, paesn::ParameterAwareESNCell)
 end
 
 # Input type for parameter-aware ESN: ((x, param), (hidden_state,))
-const PAESNInputType = Tuple{Tuple{<:AbstractArray, <:AbstractVecOrMat}, Tuple{<:AbstractArray}}
+const PAESNInputType = Tuple{
+    Tuple{<:AbstractArray, <:AbstractVecOrMat}, Tuple{<:AbstractArray}}
 
 # Case 1: Only (x, param) input - create initial hidden state
 function (paesn::ParameterAwareESNCell)(inp::Tuple{<:AbstractArray, <:AbstractVecOrMat},
