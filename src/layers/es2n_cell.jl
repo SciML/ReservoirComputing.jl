@@ -21,7 +21,7 @@ x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
 
     - `in_dims`: Input dimension.
     - `out_dims`: Reservoir (hidden state) dimension.
-    - `activation`: Activation function. Default: `tanh`.
+    - `activation`: Activation function. Default: `tanh_fast`.
 
 ## Keyword arguments
 
@@ -81,7 +81,7 @@ Created by `initialstates(rng, esn)`:
 end
 
 function ES2NCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
-        activation = tanh; use_bias::BoolType = False(), init_bias = zeros32,
+        activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
         proximity::AbstractFloat = 1.0)

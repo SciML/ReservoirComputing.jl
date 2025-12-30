@@ -7,7 +7,7 @@ using LinearAlgebra: eigvals, I, qr, Diagonal, diag
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
                setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
-using NNlib: NNlib
+using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
 using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
 using Reexport: Reexport, @reexport
