@@ -20,9 +20,9 @@ Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
 ```
 ## Arguments
 
-  - `in_dims`: Input dimension.
-  - `out_dims`: Reservoir (hidden state) dimension.
-  - `activation`: Activation function. Default: `tanh`.
+    - `in_dims`: Input dimension.
+    - `out_dims`: Reservoir (hidden state) dimension.
+    - `activation`: Activation function. Default: `tanh_fast`.
 
 ## Keyword arguments
 
@@ -81,7 +81,7 @@ Created by `initialstates(rng, esn)`:
 end
 
 function ES2NCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
-        activation = tanh; use_bias::BoolType = False(), init_bias = zeros32,
+        activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
         proximity::AbstractFloat = 1.0)
