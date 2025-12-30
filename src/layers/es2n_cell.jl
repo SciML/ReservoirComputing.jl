@@ -32,7 +32,7 @@ Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_orthogonal`: Initializer for the orthogonal matrix `O`.
-    Default is [`orthogonal`](@ref).
+    Default is `orthogonal`.
   - `init_input`: Initializer for the input matrix `W_in`.
     Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
