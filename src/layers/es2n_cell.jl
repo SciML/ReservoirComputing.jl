@@ -13,8 +13,9 @@ Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
 
 ```math
 \begin{aligned}
-x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
-    \mathbf{W}_{in} u(t) \right) + (1-\beta)\, \mathbf{O}\, x(t-1),
+    \mathbf{x}(t) &= (1-\beta)\, \mathbf{O}\, \mathbf{x}(t-1) +
+        \beta\, \phi\!\left(\mathbf{W}_{\text{in}} \mathbf{u}(t) +
+        \mathbf{W}_r \mathbf{x}(t-1) + \mathbf{b} \right)
 \end{aligned}
 ```
 ## Arguments
@@ -25,24 +26,24 @@ x(t) = \beta\, \phi\!\left( \rho\, \mathbf{W}_r x(t-1) + \omega\,
 
 ## Keyword arguments
 
-    - `use_bias`: Whether to include a bias term. Default: `false`.
-    - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
-    - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
-      Default is [`rand_sparse`](@ref).
-    - `init_orthogonal`: Initializer for the orthogonal matrix `O`.
-      Default is [`orthogonal`](@ref).
-    - `init_input`: Initializer for the input matrix `W_in`.
-      Default is [`scaled_rand`](@ref).
-    - `init_state`: Initializer for the hidden state when an external
-      state is not provided. Default is `randn32`.
-    - `proximity`: Proximity coefficient `α ∈ (0,1]`. Default: `1.0`.
+  - `use_bias`: Whether to include a bias term. Default: `false`.
+  - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
+    Default is `rand32`.
+  - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
+    Default is [`rand_sparse`](@ref).
+  - `init_orthogonal`: Initializer for the orthogonal matrix `O`.
+    Default is `orthogonal`.
+  - `init_input`: Initializer for the input matrix `W_in`.
+    Default is [`scaled_rand`](@ref).
+  - `init_state`: Initializer for the hidden state when an external
+    state is not provided. Default is `randn32`.
+  - `proximity`: Proximity coefficient `α ∈ (0,1]`. Default: `1.0`.
 
 ## Inputs
 
-    - **Case 1:** `x :: AbstractArray (in_dims, batch)`
+  - **Case 1:** `x :: AbstractArray (in_dims, batch)`
     A fresh state is created via `init_state`; the call is forwarded to Case 2.
-    - **Case 2:** `(x, (h,))` where `h :: AbstractArray (out_dims, batch)`
+  - **Case 2:** `(x, (h,))` where `h :: AbstractArray (out_dims, batch)`
     Computes the update and returns the new state.
 
 In both cases, the forward returns `((h_new, (h_new,)), st_out)` where `st_out`
@@ -50,22 +51,21 @@ contains any updated internal state.
 
 ## Returns
 
-    - Output/hidden state `h_new :: out_dims` and state tuple `(h_new,)`.
-    - Updated layer state (NamedTuple).
+  - Output/hidden state `h_new :: out_dims` and state tuple `(h_new,)`.
+  - Updated layer state (NamedTuple).
 
 ## Parameters
 
-
-    - `input_matrix :: (out_dims × in_dims)` — `W_in`
-    - `reservoir_matrix :: (out_dims × out_dims)` — `W_res`
-    - `orthogonal_matrix :: (res_dims × res_dims)` — `O`
-    - `bias :: (out_dims,)` — present only if `use_bias=true`
+  - `input_matrix :: (out_dims × in_dims)` — `W_in`
+  - `reservoir_matrix :: (out_dims × out_dims)` — `W_res`
+  - `orthogonal_matrix :: (res_dims × res_dims)` — `O`
+  - `bias :: (out_dims,)` — present only if `use_bias=true`
 
 ## States
 
 Created by `initialstates(rng, esn)`:
 
-    - `rng`: a replicated RNG used to sample initial hidden states when needed.
+  - `rng`: a replicated RNG used to sample initial hidden states when needed.
 """
 @concrete struct ES2NCell <: AbstractEchoStateNetworkCell
     activation

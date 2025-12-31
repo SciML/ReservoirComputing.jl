@@ -6,10 +6,7 @@
              init_bias=zeros32, init_state=randn32, use_bias=false,
              state_modifiers=(), readout_activation=identity)
 
-Echo State Network whose reservoir state is first passed through a delay
-feature expansion before the readout. This implements a state-delayed
-ESN [Fleddermann2025](@cite), where the readout sees the current reservoir
-state together with a fixed number of its past values.
+Echo State Network with state delays [Fleddermann2025](@cite).
 
 `DelayESN` composes:
   1) a stateful [`ESNCell`](@ref) (reservoir),
@@ -22,6 +19,25 @@ At each time step, the reservoir produces a state vector `h(t)` of length
 `res_dims`. The `DelayLayer` then constructs a feature vector that stacks
 `h(t)` together with `num_delays` past states, spaced according to `stride`,
 before passing it on to any further modifiers and the readout.
+
+## Equations
+
+```math
+\begin{aligned}
+    \mathbf{x}(t) &= (1-\alpha)\, \mathbf{x}(t-1) + \alpha\, \phi\!\left(
+        \mathbf{W}_{\text{in}}\, \mathbf{u}(t) + \mathbf{W}_r\, \mathbf{x}(t-1)
+        + \mathbf{b} \right), \\
+    \mathbf{x}_{\mathrm{d}}(t) &= \begin{bmatrix} \mathbf{x}(t) \\
+    \mathbf{x}(t-s) \\
+    \vdots \\
+    \mathbf{x}\!\bigl(t-Ds\bigr) \end{bmatrix},
+        \qquad D=\text{num\_delays},\ \ s=\text{stride}, \\
+    \mathbf{z}(t) &= \psi\!\left(\mathrm{Mods}\!\left(
+        \mathbf{x}_{\mathrm{d}}(t)\right)\right), \\
+        \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{\text{out}}\,
+        \mathbf{z}(t) + \mathbf{b}_{\text{out}} \right)
+\end{aligned}
+```
 
 ## Arguments
 

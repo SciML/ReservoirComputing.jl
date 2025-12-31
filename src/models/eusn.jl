@@ -10,9 +10,14 @@ Euler State Network (ESN) [Gallicchio2024](@cite).
 
 ```math
 \begin{aligned}
-    \mathbf{h}(t) = \mathbf{h}(t-1) + \varepsilon \tanh\!\left((\mathbf{W}_h
-        - \gamma \mathbf{I})\mathbf{h}(t-1) + \mathbf{W}_x \mathbf{x}(t)
-        + \mathbf{b}\right)
+    \mathbf{x}(t) &= \mathbf{x}(t-1) + \varepsilon\, \phi\!\left(
+        \mathbf{W}_{\text{in}}\, \mathbf{u}(t) +
+        (\mathbf{W}_r - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
+        + \mathbf{b} \right) \\
+    \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
+    \mathbf{y}(t) &= \rho\!\left(
+        \mathbf{W}_{\text{out}}\, \mathbf{z}(t)
+        + \mathbf{b}_{\text{out}} \right)
 \end{aligned}
 ```
 

@@ -12,9 +12,9 @@ Echo State Network (ESN) recurrent cell with optional leaky integration.
 
 ```math
 \begin{aligned}
-    \tilde{\mathbf{h}}(t) &= \phi\!\left(\mathbf{W}_{in}\,\mathbf{x}(t) +
-        \mathbf{W}_{res}\,\mathbf{h}(t-1) + \mathbf{b}\right) \\
-    \mathbf{h}(t) &= (1-\alpha)\,\mathbf{h}(t-1) + \alpha\,\tilde{\mathbf{h}}(t)
+    \mathbf{x}(t) &= (1-\alpha)\, \mathbf{x}(t-1)
+        + \alpha\, \phi\!\left(\mathbf{W}_{\text{in}}\, \mathbf{u}(t)
+        + \mathbf{W}_r\, \mathbf{x}(t-1) + \mathbf{b} \right)
 \end{aligned}
 ```
 ## Arguments
