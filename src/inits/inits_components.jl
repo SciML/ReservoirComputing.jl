@@ -665,6 +665,34 @@ function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
     return reservoir_matrix
 end
 
+"""
+    permute_matrix!(rng, reservoir_matrix,
+        [permutation_matrix])
+"""
+function permute_matrix!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix{T},
+        permutation_matrix::Union{Nothing,AbstractMatrix}=nothing) where {T}
+    if permutation_matrix === nothing
+        perm_array = randperm(rng, size(reservoir_matrix, 1))
+        permutation_matrix = create_permutation_matrix(perm_array, reservoir_matrix)
+    end
+    t_pm = eltype(permutation_matrix) === T ? permutation_matrix : T.(permutation_matrix)
+    tmp = similar(reservoir_matrix)
+    mul!(tmp, reservoir_matrix, t_pm)
+    copyto!(reservoir_matrix, tmp)
+    return reservoir_matrix
+end
+
+function create_permutation_matrix(perm_array::AbstractVector{Int}, reservoir_matrix)
+    num_perm = length(perm_array)
+    T = eltype(reservoir_matrix)
+    permutation_matrix = similar(reservoir_matrix, num_perm, num_perm)
+    fill!(permutation_matrix, zero(T))
+    for idx in eachindex(perm_array)
+        permutation_matrix[perm_array[idx], idx] = one(T)
+    end
+    return permutation_matrix
+end
+
 for init_component in (:delay_line!, :add_jumps!, :backward_connection!,
     :simple_cycle!, :reverse_simple_cycle!, :self_loop!)
     @eval begin

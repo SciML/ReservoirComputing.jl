@@ -2169,6 +2169,23 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+"""
+    permutation_init([rng], [Type{T}], dims...;
+        weight=T(0.1), return_sparse = false,
+        permutation_matrix = nothing,
+        kwargs...)
+"""
+function permutation_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight=T(0.1), return_sparse::Bool = false,
+        permutation_matrix::Union{Nothing,AbstractMatrix} = nothing,
+        kwargs...) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    permute_matrix!(rng, reservoir_matrix, permutation_matrix)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delayline_backward, :cycle_jumps,
@@ -2176,7 +2193,7 @@ for initializer in (:rand_sparse, :delay_line, :delayline_backward, :cycle_jumps
     :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
     :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
-    :forward_connection, :true_doublecycle, :block_diagonal)
+    :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
