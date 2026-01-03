@@ -665,6 +665,50 @@ function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
     return reservoir_matrix
 end
 
+@doc raw"""
+    permute_matrix!([rng], reservoir_matrix,
+        permutation_matrix=nothing)
+
+Right-multiply `reservoir_matrix` by a permutation matrix to permute its columns.
+The update overwrites the contents of `reservoir_matrix`.
+
+If `permutation_matrix` is `nothing`, a random permutation is generated and converted
+to a permutation matrix.
+
+## Arguments
+
+  - `rng`: Random number generator used when `permutation_matrix === nothing`.
+    Default is typically `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+    (if you provide a wrapper method without `rng`).
+  - `reservoir_matrix`: The reservoir weight matrix to be permuted.
+  - `permutation_matrix`: A square permutation matrix of matching size. If `nothing`,
+    a random permutation is used.
+"""
+function permute_matrix!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix{T},
+        permutation_matrix::Union{Nothing, AbstractMatrix} = nothing) where {T}
+    if permutation_matrix === nothing
+        perm_array = randperm(rng, size(reservoir_matrix, 1))
+        permutation_matrix = create_permutation_matrix(perm_array, reservoir_matrix)
+    end
+    t_pm = eltype(permutation_matrix) === T ? permutation_matrix : T.(permutation_matrix)
+    tmp = similar(reservoir_matrix)
+    mul!(tmp, reservoir_matrix, t_pm)
+    copyto!(reservoir_matrix, tmp)
+    return reservoir_matrix
+end
+
+function create_permutation_matrix(perm_array::AbstractVector{Int}, reservoir_matrix)
+    num_perm = length(perm_array)
+    T = eltype(reservoir_matrix)
+    permutation_matrix = similar(reservoir_matrix, num_perm, num_perm)
+    fill!(permutation_matrix, zero(T))
+    for idx in eachindex(perm_array)
+        permutation_matrix[perm_array[idx], idx] = one(T)
+    end
+    return permutation_matrix
+end
+
 for init_component in (:delay_line!, :add_jumps!, :backward_connection!,
     :simple_cycle!, :reverse_simple_cycle!, :self_loop!)
     @eval begin

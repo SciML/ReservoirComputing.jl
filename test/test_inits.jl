@@ -31,7 +31,8 @@ reservoir_inits = [
     selfloop_backward_cycle,
     selfloop_forwardconnection,
     simple_cycle,
-    true_doublecycle
+    true_doublecycle,
+    permutation_init
 ]
 input_inits = [
     chebyshev_mapping,
@@ -73,7 +74,8 @@ input_inits = [
         selfloop_delayline_backward,
         selfloop_backward_cycle,
         selfloop_forwardconnection,
-        forward_connection
+        forward_connection,
+        permutation_init
     ]
         dl = init(res_size, res_size)
         @test sort(unique(dl)) == Float32.([0.0, 0.1])

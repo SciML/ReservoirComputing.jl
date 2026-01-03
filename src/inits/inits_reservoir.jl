@@ -2169,6 +2169,128 @@ function block_diagonal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+@doc raw"""
+    permutation_init([rng], [T], dims...;
+        weight=0.1, permutation_matrix=nothing, return_sparse=false,
+        kwargs...)
+
+Creates a permutation reservoir as described in [Boedecker2009](@cite), by first
+initializing a scaled identity (self-loops) and then
+applying a column permutation.
+
+This construction yields:
+
+```math
+    \widehat{W} = \lambda P
+```
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+  - `weight`: Weight used for the initial self-loop initialization (and the magnitude
+    of the nonzeros after permutation). Default is 0.1.
+  - `permutation_matrix`: Optional permutation matrix to apply. If `nothing`, a random
+    permutation is generated (using `rng`) and applied.
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
+    Default is `false`.
+  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+    `forward_weight` can be positive with a probability set by `positive_prob`. If set to
+    `:irrational_sample!` the `weight` is negative if the decimal number of the
+    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+    assigned a negative sign after the chosen `strides`. `strides` can be a single
+    number or an array. Default is `:no_sample`.
+  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+    set to `:bernoulli_sample!`. Default is 0.5.
+  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
+    Default is `pi`.
+  - `start`: Which place after the decimal point the counting starts for the `irrational`
+    sign counting. Default is 1.
+  - `strides`: number of strides for assigning negative value to a weight. It can be an
+    integer or an array. Default is 2.
+
+## Examples
+
+Default kwargs:
+
+```jldoctest forcon
+julia> reservoir_matrix = permutation_init(5, 5)
+5×5 Matrix{Float32}:
+ 0.0  0.0  0.0  0.0  0.1
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+```
+
+Changing the weights magnitudes to a different unique value:
+
+```jldoctest forcon
+julia> reservoir_matrix = permutation_init(5, 5; weight=0.99)
+5×5 Matrix{Float32}:
+ 0.0   0.0   0.0   0.0   0.99
+ 0.0   0.99  0.0   0.0   0.0
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.0   0.99  0.0   0.0
+ 0.0   0.0   0.0   0.99  0.0
+```
+
+Changing the weights signs with different sampling techniques:
+
+```jldoctest forcon
+julia> reservoir_matrix = permutation_init(5, 5; sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.0  0.1   0.0  0.0   0.0
+ 0.0  0.0  -0.1  0.0   0.0
+ 0.1  0.0   0.0  0.0   0.0
+ 0.0  0.0   0.0  0.0  -0.1
+ 0.0  0.0   0.0  0.1   0.0
+```
+
+Changing the weights to random numbers. Note that the length of the given array
+must be at least as long as the subdiagonal one wants to fill:
+
+```jldoctest forcon
+julia> reservoir_matrix = permutation_init(5, 5; weight=rand(Float32, 5))
+5×5 Matrix{Float32}:
+ 0.0       0.0       0.0       0.0       0.0263106
+ 0.0       0.923927  0.0       0.0       0.0
+ 0.255075  0.0       0.0       0.0       0.0
+ 0.0       0.0       0.585589  0.0       0.0
+ 0.0       0.0       0.0       0.353418  0.0
+```
+
+Returning a sparse matrix:
+
+```jldoctest forcon
+julia> reservoir_matrix = permutation_init(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+  ⋅    ⋅    ⋅    ⋅   0.1
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
+```
+
+"""
+function permutation_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = T(0.1), return_sparse::Bool = false,
+        permutation_matrix::Union{Nothing, AbstractMatrix} = nothing,
+        kwargs...) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    permute_matrix!(rng, reservoir_matrix, permutation_matrix)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (:rand_sparse, :delay_line, :delayline_backward, :cycle_jumps,
@@ -2176,7 +2298,7 @@ for initializer in (:rand_sparse, :delay_line, :delayline_backward, :cycle_jumps
     :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
     :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
     :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
-    :forward_connection, :true_doublecycle, :block_diagonal)
+    :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init)
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
             return $initializer(Utils.default_rng(), Float32, dims...; kwargs...)
