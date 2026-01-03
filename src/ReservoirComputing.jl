@@ -62,7 +62,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
        selfloop_cycle, selfloop_delayline_backward, selfloop_backward_cycle,
        selfloop_forwardconnection, simple_cycle, true_doublecycle, permutation_init
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
-       scale_radius!, self_loop!, simple_cycle!
+       scale_radius!, self_loop!, simple_cycle!, permute_matrix!
 export train, train!, predict, resetcarry!, polynomial_monomials
 export ES2N, ESN, EuSN, DeepESN, DelayESN, HybridESN
 export NGRC
