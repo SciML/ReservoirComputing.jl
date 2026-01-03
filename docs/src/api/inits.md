@@ -57,6 +57,8 @@ where full details and examples are provided.
     reservoir with uniform weights.
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.
+- [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
+    a permutation of the identity matrix.
 
 ## Building functions
 
@@ -74,3 +76,4 @@ where full details and examples are provided.
     along the diagonal of an existing matrix.
 - [`simple_cycle!`](inits/simple_cycle!.md): Writes a directed
     cycle pattern into a preallocated reservoir matrix.
+- [`permute_matrix!`](inits/permute_matrix!.md): Permutes a given matrix.

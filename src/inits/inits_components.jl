@@ -665,12 +665,28 @@ function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
     return reservoir_matrix
 end
 
-"""
-    permute_matrix!(rng, reservoir_matrix,
-        [permutation_matrix])
+@doc raw"""
+    permute_matrix!([rng], reservoir_matrix,
+        permutation_matrix=nothing)
+
+Right-multiply `reservoir_matrix` by a permutation matrix to permute its columns.
+The update overwrites the contents of `reservoir_matrix`.
+
+If `permutation_matrix` is `nothing`, a random permutation is generated and converted
+to a permutation matrix.
+
+## Arguments
+
+  - `rng`: Random number generator used when `permutation_matrix === nothing`.
+    Default is typically `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+    (if you provide a wrapper method without `rng`).
+  - `reservoir_matrix`: The reservoir weight matrix to be permuted.
+  - `permutation_matrix`: A square permutation matrix of matching size. If `nothing`,
+    a random permutation is used.
 """
 function permute_matrix!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix{T},
-        permutation_matrix::Union{Nothing,AbstractMatrix}=nothing) where {T}
+        permutation_matrix::Union{Nothing, AbstractMatrix} = nothing) where {T}
     if permutation_matrix === nothing
         perm_array = randperm(rng, size(reservoir_matrix, 1))
         permutation_matrix = create_permutation_matrix(perm_array, reservoir_matrix)
