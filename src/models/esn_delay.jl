@@ -1,4 +1,3 @@
-
 @doc raw"""
     DelayESN(in_dims, res_dims, out_dims, activation=tanh;
              num_delays=1, stride=1, leak_coefficient=1.0,
@@ -109,7 +108,7 @@ Composition:
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
 @concrete struct DelayESN <:
-                 AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
@@ -118,11 +117,12 @@ end
 function DelayESN(
         in_dims::IntegerType, res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
-        state_modifiers = (), kwargs...)
+        state_modifiers = (), kwargs...
+    )
     cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
     delay = DelayLayer(res_dims; num_delays = num_delays, stride = stride)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-                 (delay, state_modifiers...) : (delay, state_modifiers)
+        (delay, state_modifiers...) : (delay, state_modifiers)
     mods = _wrap_layers(mods_tuple)
     ro_in_dims = res_dims * (num_delays + 1)
     ro = LinearReadout(ro_in_dims => out_dims, readout_activation)

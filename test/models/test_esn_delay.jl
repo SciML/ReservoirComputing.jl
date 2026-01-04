@@ -13,8 +13,10 @@ using LinearAlgebra
         out_dims = 2
         num_delays = 2
 
-        desn = DelayESN(in_dims, res_dims, out_dims;
-            num_delays = num_delays, stride = 1)
+        desn = DelayESN(
+            in_dims, res_dims, out_dims;
+            num_delays = num_delays, stride = 1
+        )
 
         @test desn isa DelayESN
 

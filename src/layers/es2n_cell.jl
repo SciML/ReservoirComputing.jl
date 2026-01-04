@@ -80,19 +80,25 @@ Created by `initialstates(rng, esn)`:
     use_bias <: StaticBool
 end
 
-function ES2NCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
+function ES2NCell(
+        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
-        proximity::AbstractFloat = 1.0)
-    return ES2NCell(activation, in_dims, out_dims, init_bias, init_reservoir,
-        init_input, init_orthogonal, init_state, proximity, static(use_bias))
+        proximity::AbstractFloat = 1.0
+    )
+    return ES2NCell(
+        activation, in_dims, out_dims, init_bias, init_reservoir,
+        init_input, init_orthogonal, init_state, proximity, static(use_bias)
+    )
 end
 
 function initialparameters(rng::AbstractRNG, esn::ES2NCell)
-    ps = (input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
+    ps = (
+        input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
         reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims),
-        orthogonal_matrix = esn.init_orthogonal(rng, esn.out_dims, esn.out_dims))
+        orthogonal_matrix = esn.init_orthogonal(rng, esn.out_dims, esn.out_dims),
+    )
     if has_bias(esn)
         ps = merge(ps, (bias = esn.init_bias(rng, esn.out_dims),))
     end
@@ -107,7 +113,7 @@ function (esn::ES2NCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
     h_new = (one(T) - t_prox) .* ps.orthogonal_matrix * hidden_state .+
-            t_prox .* candidate_h
+        t_prox .* candidate_h
     return (h_new, (h_new,)), st
 end
 
@@ -117,5 +123,5 @@ function Base.show(io::IO, esn::ES2NCell)
         print(io, ", proximity=$(esn.proximity)")
     end
     has_bias(esn) || print(io, ", use_bias=false")
-    print(io, ")")
+    return print(io, ")")
 end

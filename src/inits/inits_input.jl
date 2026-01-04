@@ -96,8 +96,10 @@ julia> res_input = scaled_rand(8, 3, scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 
  0.101491  -0.103286  0.43553
 ```
 """
-function scaled_rand(rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Union{Number, Tuple, Vector} = T(0.1)) where {T <: Number}
+function scaled_rand(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        scaling::Union{Number, Tuple, Vector} = T(0.1)
+    ) where {T <: Number}
     res_size, in_size = dims
     layer_matrix = DeviceAgnostic.rand(rng, T, res_size, in_size)
     apply_scale!(layer_matrix, scaling, T)
@@ -252,9 +254,11 @@ julia> res_input = weighted_init(9, 3; return_sparse = true)
    ⋅           ⋅         -0.0352914
 ```
 """
-function weighted_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function weighted_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Union{Number, Tuple, Vector} = T(0.1),
-        return_sparse::Bool = false) where {T <: Number}
+        return_sparse::Bool = false
+    ) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -371,9 +375,11 @@ julia> res_input = weighted_minimal(8, 3)
  0.0  0.0  0.1
 ```
 """
-function weighted_minimal(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function weighted_minimal(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), return_sparse::Bool = false,
-        sampling_type = :no_sample, kwargs...) where {T <: Number}
+        sampling_type = :no_sample, kwargs...
+    ) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
     res_size = Int(floor(approx_res_size / in_size) * in_size)
@@ -413,9 +419,11 @@ networks [Pathak2018](@cite).
 
 ## Examples
 """
-function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function informed_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         scaling::Number = T(0.1), model_in_size::Integer,
-        gamma::Number = T(0.5)) where {T <: Number}
+        gamma::Number = T(0.5)
+    ) where {T <: Number}
     res_size, in_size = dims
     state_size = in_size - model_in_size
 
@@ -447,8 +455,10 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         random_row_idx = rand(rng, candidate_row_indices)
         random_clm_idx = rand(rng, 1:state_size)
 
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) * (T(2) * T(scaling))
+        input_matrix[random_row_idx, random_clm_idx] = (
+            DeviceAgnostic.rand(rng, T) -
+                T(0.5)
+        ) * (T(2) * T(scaling))
     end
 
     for _ in 1:num_for_model
@@ -458,8 +468,10 @@ function informed_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
         random_row_idx = rand(rng, candidate_row_indices)
         random_clm_idx = rand(rng, (state_size + 1):in_size)
 
-        input_matrix[random_row_idx, random_clm_idx] = (DeviceAgnostic.rand(rng, T) -
-                                                        T(0.5)) * (T(2) * T(scaling))
+        input_matrix[random_row_idx, random_clm_idx] = (
+            DeviceAgnostic.rand(rng, T) -
+                T(0.5)
+        ) * (T(2) * T(scaling))
     end
 
     return input_matrix
@@ -559,9 +571,11 @@ julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
  0.1   0.1  0.1
 ```
 """
-function minimal_init(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function minimal_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
-        kwargs...) where {T <: Number}
+        kwargs...
+    ) where {T <: Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     input_matrix .+= T(weight)
@@ -630,10 +644,12 @@ julia> input_matrix = chebyshev_mapping(10, 3)
  0.866025  0.866025  -4.37114f-8
 ```
 """
-function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function chebyshev_mapping(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat = one(T), sine_divisor::AbstractFloat = one(T),
         chebyshev_parameter::AbstractFloat = one(T),
-        return_sparse::Bool = false) where {T <: Number}
+        return_sparse::Bool = false
+    ) where {T <: Number}
     throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     n_rows, n_cols = dims[1], dims[2]
@@ -643,8 +659,13 @@ function chebyshev_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     end
     for idx_rows in 2:n_rows
         for idx_cols in 1:n_cols
-            input_matrix[idx_rows, idx_cols] = cos(chebyshev_parameter * acos(input_matrix[
-                idx_rows - 1, idx_cols]))
+            input_matrix[idx_rows, idx_cols] = cos(
+                chebyshev_parameter * acos(
+                    input_matrix[
+                        idx_rows - 1, idx_cols,
+                    ]
+                )
+            )
         end
     end
 
@@ -706,22 +727,24 @@ julia> logistic_mapping(8, 3)
 
 ```
 """
-function logistic_mapping(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function logistic_mapping(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
         logistic_parameter::AbstractFloat = 3.7,
-        return_sparse::Bool = false) where {T <: Number}
+        return_sparse::Bool = false
+    ) where {T <: Number}
     throw_sparse_error(return_sparse)
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     num_rows, num_columns = dims[1], dims[2]
     for idx_col in 1:num_columns
         input_matrix[1, idx_col] = amplitude *
-                                   sin(idx_col * pi / (sine_divisor * num_columns))
+            sin(idx_col * pi / (sine_divisor * num_columns))
     end
     for idx_row in 2:num_rows
         for idx_col in 1:num_columns
             previous_value = input_matrix[idx_row - 1, idx_col]
             input_matrix[idx_row, idx_col] = logistic_parameter * previous_value *
-                                             (1 - previous_value)
+                (1 - previous_value)
         end
     end
 
@@ -804,10 +827,12 @@ julia> modified_lm(12, 4; factor=3)
 
 ```
 """
-function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
+function modified_lm(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
         factor::Integer, amplitude::AbstractFloat = 0.3,
         sine_divisor::AbstractFloat = 5.9, logistic_parameter::AbstractFloat = 2.35,
-        return_sparse::Bool = false) where {T <: Number}
+        return_sparse::Bool = false
+    ) where {T <: Number}
     throw_sparse_error(return_sparse)
     num_columns = dims[2]
     expected_num_rows = factor * num_columns
@@ -820,13 +845,15 @@ function modified_lm(rng::AbstractRNG, ::Type{T}, dims::Integer...;
     output_matrix = DeviceAgnostic.zeros(rng, T, expected_num_rows, num_columns)
     for idx_col in 1:num_columns
         base_row = (idx_col - 1) * factor + 1
-        output_matrix[base_row, idx_col] = amplitude * sin(((idx_col - 1) * pi) /
-                                               (factor * num_columns * sine_divisor))
+        output_matrix[base_row, idx_col] = amplitude * sin(
+            ((idx_col - 1) * pi) /
+                (factor * num_columns * sine_divisor)
+        )
         for jdx in 1:(factor - 1)
             current_row = base_row + jdx
             previous_value = output_matrix[current_row - 1, idx_col]
             output_matrix[current_row, idx_col] = logistic_parameter * previous_value *
-                                                  (1 - previous_value)
+                (1 - previous_value)
         end
     end
 

@@ -5,14 +5,14 @@ using Compat: @compat
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
-               setup, apply, replicate
+    setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
 using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
 using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
 using Reexport: Reexport, @reexport
 using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, Utils,
-                          orthogonal, rand32, randn32, sparse_init, zeros32
+    orthogonal, rand32, randn32, sparse_init, zeros32
 @reexport using WeightInitializers
 @reexport using LuxCore: setup, apply, initialparameters, initialstates
 
@@ -51,18 +51,18 @@ include("extensions/reca.jl")
 export ReservoirComputer
 export ESNCell, ES2NCell, EuSNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
-       DelayLayer, NonlinearFeaturesLayer
+    DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
 export Pad, Extend, NLAT1, NLAT2, NLAT3, PartialSquare, ExtendedSquare
 export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
-       modified_lm, scaled_rand, weighted_init, weighted_minimal
+    modified_lm, scaled_rand, weighted_init, weighted_minimal
 export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
-       double_cycle, forward_connection, low_connectivity, pseudo_svd, rand_sparse,
-       selfloop_cycle, selfloop_delayline_backward, selfloop_backward_cycle,
-       selfloop_forwardconnection, simple_cycle, true_doublecycle, permutation_init
+    double_cycle, forward_connection, low_connectivity, pseudo_svd, rand_sparse,
+    selfloop_cycle, selfloop_delayline_backward, selfloop_backward_cycle,
+    selfloop_forwardconnection, simple_cycle, true_doublecycle, permutation_init
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
-       scale_radius!, self_loop!, simple_cycle!, permute_matrix!
+    scale_radius!, self_loop!, simple_cycle!, permute_matrix!
 export train, train!, predict, resetcarry!, polynomial_monomials
 export ES2N, ESN, EuSN, DeepESN, DelayESN, HybridESN
 export NGRC

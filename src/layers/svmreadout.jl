@@ -1,4 +1,3 @@
-
 """
     SVMReadout(in_dims => out_dims;
         include_collect=true, kwargs...)
@@ -30,12 +29,14 @@ function Base.show(io::IO, ro::SVMReadout)
 end
 
 function SVMReadout(mapping::Pair{<:IntegerType, <:IntegerType}; kwargs...)
-    SVMReadout(first(mapping), last(mapping); kwargs...)
+    return SVMReadout(first(mapping), last(mapping); kwargs...)
 end
 
-function SVMReadout(in_dims::IntegerType, out_dims::IntegerType;
-        include_collect::BoolType = True())
-    SVMReadout(in_dims, out_dims, static(include_collect))
+function SVMReadout(
+        in_dims::IntegerType, out_dims::IntegerType;
+        include_collect::BoolType = True()
+    )
+    return SVMReadout(in_dims, out_dims, static(include_collect))
 end
 
 initialparameters(::AbstractRNG, ::SVMReadout) = NamedTuple()
@@ -48,7 +49,7 @@ outputsize(ro::SVMReadout, _, ::AbstractRNG) = (ro.out_dims,)
 
 function _svmreadout_include_collect(ro::SVMReadout)
     ic = known(getproperty(ro, Val(:include_collect)))
-    ic === nothing ? false : ic
+    return ic === nothing ? false : ic
 end
 
 function wrap_functions_in_chain_call(ro::SVMReadout)
@@ -83,12 +84,18 @@ end
     Kq = _quote_keys(K)
     tailKq = _quote_keys(tailK)
 
-    head_val = :((getfield(layers, 1) isa SVMReadout)
-                 ? _setmodels_rt(getfield(ps, 1), M)
-                 : getfield(ps, 1))
+    head_val = :(
+        (getfield(layers, 1) isa SVMReadout)
+            ? _setmodels_rt(getfield(ps, 1), M)
+            : getfield(ps, 1)
+    )
 
-    tail_call = :(_addsvm(NamedTuple{$tailKq}(Base.tail(layers)),
-        NamedTuple{$tailKq}(Base.tail(ps)), M))
+    tail_call = :(
+        _addsvm(
+            NamedTuple{$tailKq}(Base.tail(layers)),
+            NamedTuple{$tailKq}(Base.tail(ps)), M
+        )
+    )
 
     return :(NamedTuple{$Kq}(($head_val, Base.values($tail_call)...)))
 end
@@ -97,7 +104,7 @@ function addreadout!(rc::ReservoirChain, models, ps::NamedTuple, st::NamedTuple)
     @assert propertynames(rc.layers) == propertynames(ps)
     new_vals = map(Base.OneTo(length(propertynames(rc.layers)))) do i
         getfield(rc.layers, i) isa SVMReadout ? merge(getfield(ps, i), (models = models,)) :
-        getfield(ps, i)
+            getfield(ps, i)
     end
     new_ps = NamedTuple{propertynames(rc.layers)}(Tuple(new_vals))
     return new_ps, st

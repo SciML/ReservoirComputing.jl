@@ -3,19 +3,23 @@ function apply_scale!(input_matrix::AbstractArray, scaling::Number, ::Type{T}) w
     return input_matrix
 end
 
-function apply_scale!(input_matrix::AbstractArray,
-        scaling::Tuple{<:Number, <:Number}, ::Type{T}) where {T}
+function apply_scale!(
+        input_matrix::AbstractArray,
+        scaling::Tuple{<:Number, <:Number}, ::Type{T}
+    ) where {T}
     lower, upper = T(scaling[1]), T(scaling[2])
-    @assert lower<upper "lower < upper required"
+    @assert lower < upper "lower < upper required"
     scale = upper - lower
     @. input_matrix = input_matrix * scale + lower
     return input_matrix
 end
 
-function apply_scale!(input_matrix::AbstractMatrix,
-        scaling::AbstractVector, ::Type{T}) where {T <: Number}
+function apply_scale!(
+        input_matrix::AbstractMatrix,
+        scaling::AbstractVector, ::Type{T}
+    ) where {T <: Number}
     ncols = size(input_matrix, 2)
-    @assert length(scaling)==ncols "need one scaling per column"
+    @assert length(scaling) == ncols "need one scaling per column"
     for (idx, col) in enumerate(eachcol(input_matrix))
         apply_scale!(col, scaling[idx], T)
     end
@@ -29,33 +33,37 @@ end
 
 # error for sparse inits with no SparseArrays.jl call
 function throw_sparse_error(return_sparse::Bool)
-    if return_sparse && !isdefined(Main, :SparseArrays)
-        error("""\n
+    return if return_sparse && !isdefined(Main, :SparseArrays)
+        error(
+            """\n
             Sparse output requested but SparseArrays.jl is not loaded.
             Please load it with:
 
                 using SparseArrays\n
-            """)
+            """
+        )
     end
 end
 
 function check_modified_ressize(res_size::Integer, approx_res_size::Integer)
-    if res_size != approx_res_size
+    return if res_size != approx_res_size
         @warn """Reservoir size has changed!\n
             Computed reservoir size ($res_size) does not equal the \
-            provided reservoir size ($approx_res_size). \n
+        provided reservoir size ($approx_res_size). \n
             Using computed value ($res_size). Make sure to modify the \
-            reservoir initializer accordingly. \n
+        reservoir initializer accordingly. \n
         """
     end
 end
 
 function check_res_size(dims::Integer...)
-    if length(dims) != 2 || dims[1] != dims[2]
-        error("""\n
-            Internal reservoir matrix must be square (e.g., (100, 100)).
-            Got dims = $(dims)\n
-        """)
+    return if length(dims) != 2 || dims[1] != dims[2]
+        error(
+            """\n
+                Internal reservoir matrix must be square (e.g., (100, 100)).
+                Got dims = $(dims)\n
+            """
+        )
     end
 end
 
@@ -75,10 +83,12 @@ function scale_radius!(reservoir_matrix::AbstractMatrix, radius::AbstractFloat)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
     reservoir_matrix .*= radius / rho_w
     if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
-        error("""\n
-            Sparsity too low for size of the matrix.
-            Increase res_size or increase sparsity.\n
-          """)
+        error(
+            """\n
+              Sparsity too low for size of the matrix.
+              Increase res_size or increase sparsity.\n
+            """
+        )
     end
     return reservoir_matrix
 end
@@ -91,8 +101,10 @@ function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
     return vecormat
 end
 
-function regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
-        strides::Union{Integer, AbstractVector{<:Integer}} = 2)
+function regular_sample!(
+        rng::AbstractRNG, vecormat::AbstractVecOrMat;
+        strides::Union{Integer, AbstractVector{<:Integer}} = 2
+    )
     return _regular_sample!(rng, vecormat, strides)
 end
 
@@ -102,10 +114,12 @@ function _regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides:
             vecormat[idx] = -vecormat[idx]
         end
     end
+    return
 end
 
 function _regular_sample!(
-        rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::AbstractVector{<:Integer})
+        rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::AbstractVector{<:Integer}
+    )
     next_flip = strides[1]
     strides_idx = 1
 
@@ -116,20 +130,25 @@ function _regular_sample!(
             next_flip += strides[strides_idx]
         end
     end
+    return
 end
 
 function bernoulli_sample!(
-        rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number = 0.5)
+        rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number = 0.5
+    )
     for idx in eachindex(vecormat)
         if rand(rng) > positive_prob
             vecormat[idx] = -vecormat[idx]
         end
     end
+    return
 end
 
 #TODO: @MartinuzziFrancesco maybe change name here #wait, for sure change name here
-function irrational_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat;
-        irrational::Irrational = pi, start::Int = 1)
+function irrational_sample!(
+        rng::AbstractRNG, vecormat::AbstractVecOrMat;
+        irrational::Irrational = pi, start::Int = 1
+    )
     total_elements = length(vecormat)
     required_precision = Int(ceil(log2(10) * (total_elements + start + 1)))
 
@@ -225,15 +244,18 @@ julia> delay_line!(matrix, 5.0, 2)
  0.0   0.0  5.0  0.0  0.0
 ```
 """
-function delay_line!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number,
-        shift::Integer; kwargs...)
+function delay_line!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number,
+        shift::Integer; kwargs...
+    )
     weights = fill(weight, size(reservoir_matrix, 1) - shift)
     return delay_line!(rng, reservoir_matrix, weights, shift; kwargs...)
 end
 
 function delay_line!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type = :no_sample, kwargs...)
+        shift::Integer; sampling_type = :no_sample, kwargs...
+    )
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -307,14 +329,16 @@ julia> backward_connection!(matrix, 3.0, 1; sampling_type = :bernoulli_sample!)
 """
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number,
-        shift::Integer; kwargs...)
+        shift::Integer; kwargs...
+    )
     weights = fill(weight, size(reservoir_matrix, 1) - shift)
     return backward_connection!(rng, reservoir_matrix, weights, shift; kwargs...)
 end
 
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type = :no_sample, kwargs...)
+        shift::Integer; sampling_type = :no_sample, kwargs...
+    )
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
@@ -378,14 +402,16 @@ julia> simple_cycle!(matrix, 1.0; sampling_type = :irrational_sample!)
 ```
 """
 function simple_cycle!(
-        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number; kwargs...)
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number; kwargs...
+    )
     weights = fill(weight, size(reservoir_matrix, 1))
     return simple_cycle!(rng, reservoir_matrix, weights; kwargs...)
 end
 
 function simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type = :no_sample, kwargs...)
+        sampling_type = :no_sample, kwargs...
+    )
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
@@ -450,14 +476,16 @@ julia> reverse_simple_cycle!(matrix, 1.0; sampling_type = :regular_sample!)
 ```
 """
 function reverse_simple_cycle!(
-        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number; kwargs...)
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::Number; kwargs...
+    )
     weights = fill(weight, size(reservoir_matrix, 1))
     return reverse_simple_cycle!(rng, reservoir_matrix, weights; kwargs...)
 end
 
 function reverse_simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type = :no_sample, kwargs...)
+        sampling_type = :no_sample, kwargs...
+    )
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
@@ -522,28 +550,34 @@ julia> add_jumps!(matrix, 1.0)
   0.0  0.0   1.0   0.0   0.0
 ```
 """
-function add_jumps!(rng::AbstractRNG,
+function add_jumps!(
+        rng::AbstractRNG,
         reservoir_matrix::AbstractMatrix,
         weight::Number,
         jump_size::Integer;
         sampling_type = :no_sample,
         start::Integer = 1,
-        kwargs...)
+        kwargs...
+    )
     N = size(reservoir_matrix, 1)
     g = gcd(N, jump_size)
     ring_len = (N % jump_size == 0) ? div(N, g) : fld(N, jump_size)
     weights = fill(weight, ring_len)
-    return add_jumps!(rng, reservoir_matrix, weights, jump_size;
-        sampling_type = sampling_type, start = start, kwargs...)
+    return add_jumps!(
+        rng, reservoir_matrix, weights, jump_size;
+        sampling_type = sampling_type, start = start, kwargs...
+    )
 end
 
-function add_jumps!(rng::AbstractRNG,
+function add_jumps!(
+        rng::AbstractRNG,
         reservoir_matrix::AbstractMatrix,
         weight::AbstractVector,
         jump_size::Integer;
         sampling_type = :no_sample,
         start::Integer = 1,
-        kwargs...)
+        kwargs...
+    )
     N = size(reservoir_matrix, 1)
     @assert N == size(reservoir_matrix, 2) "reservoir_matrix must be square"
     @assert 1 ≤ start ≤ N "start must be in 1:N"
@@ -649,14 +683,18 @@ julia> self_loop!(matrix, 1.0)
   0.0  0.0   0.0   0.0   1.0
 ```
 """
-function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::Number; kwargs...)
+function self_loop!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
+        weight::Number; kwargs...
+    )
     weights = fill(weight, size(reservoir_matrix, 1))
     return self_loop!(rng, reservoir_matrix, weights; kwargs...)
 end
 
-function self_loop!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::AbstractVector; sampling_type = :no_sample, kwargs...)
+function self_loop!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
+        weight::AbstractVector; sampling_type = :no_sample, kwargs...
+    )
     f_sample = getfield(@__MODULE__, sampling_type)
     f_sample(rng, weight; kwargs...)
     for idx in axes(reservoir_matrix, 1)
@@ -685,8 +723,10 @@ to a permutation matrix.
   - `permutation_matrix`: A square permutation matrix of matching size. If `nothing`,
     a random permutation is used.
 """
-function permute_matrix!(rng::AbstractRNG, reservoir_matrix::AbstractMatrix{T},
-        permutation_matrix::Union{Nothing, AbstractMatrix} = nothing) where {T}
+function permute_matrix!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix{T},
+        permutation_matrix::Union{Nothing, AbstractMatrix} = nothing
+    ) where {T}
     if permutation_matrix === nothing
         perm_array = randperm(rng, size(reservoir_matrix, 1))
         permutation_matrix = create_permutation_matrix(perm_array, reservoir_matrix)
@@ -709,8 +749,10 @@ function create_permutation_matrix(perm_array::AbstractVector{Int}, reservoir_ma
     return permutation_matrix
 end
 
-for init_component in (:delay_line!, :add_jumps!, :backward_connection!,
-    :simple_cycle!, :reverse_simple_cycle!, :self_loop!)
+for init_component in (
+        :delay_line!, :add_jumps!, :backward_connection!,
+        :simple_cycle!, :reverse_simple_cycle!, :self_loop!,
+    )
     @eval begin
         function ($init_component)(args...; kwargs...)
             return $init_component(Utils.default_rng(), args...; kwargs...)

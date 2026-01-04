@@ -42,8 +42,8 @@ end
 @inline _asvec(x) = (ndims(x) == 2 ? vec(x) : x)
 
 function _coerce_layer_mods(x)
-    x === nothing ? () :
-    x isa Tuple ? x :
-    x isa AbstractVector ? Tuple(x) :
-    (x,)
+    return x === nothing ? () :
+        x isa Tuple ? x :
+        x isa AbstractVector ? Tuple(x) :
+        (x,)
 end

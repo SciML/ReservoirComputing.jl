@@ -79,13 +79,17 @@ Created by `initialstates(rng, esn)`:
     use_bias <: StaticBool
 end
 
-function EuSNCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
+function EuSNCell(
+        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, leak_coefficient::AbstractFloat = 1.0,
-        diffusion::AbstractFloat = 1.0)
-    return EuSNCell(activation, in_dims, out_dims, init_bias, init_reservoir,
-        init_input, init_state, leak_coefficient, diffusion, static(use_bias))
+        diffusion::AbstractFloat = 1.0
+    )
+    return EuSNCell(
+        activation, in_dims, out_dims, init_bias, init_reservoir,
+        init_input, init_state, leak_coefficient, diffusion, static(use_bias)
+    )
 end
 
 function (esn::EuSNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
@@ -110,10 +114,10 @@ function Base.show(io::IO, esn::EuSNCell)
         print(io, ", diffusion=$(esn.diffusion)")
     end
     has_bias(esn) || print(io, ", use_bias=false")
-    print(io, ")")
+    return print(io, ")")
 end
 
 function compute_asym_recurrent(weight_hh::AbstractMatrix, gamma::AbstractFloat)
     return weight_hh .- transpose(weight_hh) .-
-           gamma .* Matrix{eltype(weight_hh)}(I, size(weight_hh, 1), size(weight_hh, 1))
+        gamma .* Matrix{eltype(weight_hh)}(I, size(weight_hh, 1), size(weight_hh, 1))
 end

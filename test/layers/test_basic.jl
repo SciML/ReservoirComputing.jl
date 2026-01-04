@@ -68,8 +68,10 @@ using LinearAlgebra
     @testset "forward pass: matrix (batch), activation" begin
         ro = LinearReadout(2 => 2, tanh; use_bias = False())
         ps = (weight = Float32[1 0; 0 2],)
-        X = Float32[0.0 1.0 -1.0;
-                    0.5 0.5 0.5]
+        X = Float32[
+            0.0 1.0 -1.0;
+            0.5 0.5 0.5
+        ]
         Y, _ = ro(X, ps, NamedTuple())
         @test size(Y) == (2, 3)
         @test Y[:, 1] ≈ tanh.(ps.weight * X[:, 1])
@@ -98,8 +100,9 @@ using LinearAlgebra
             first_layer = getfield(L, 1)
             @test first_layer isa Collect
         catch e
-            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception=(
-                e, catch_backtrace())
+            @info "Skipping Collect insertion test (no auto-wrap for LinearReadout?)" exception = (
+                e, catch_backtrace(),
+            )
         end
     end
 end

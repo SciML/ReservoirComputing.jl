@@ -10,14 +10,14 @@ const _O32 = (rng, m) -> zeros(Float32, m)
 const _W_I = (rng, m, n) -> _I32(m, n)
 const _W_ZZ = (rng, m, n) -> zeros(Float32, m, n)
 function init_state3(rng::AbstractRNG, m::Integer, B::Integer)
-    B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
+    return B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
 end
 
 function _pin_identity_readout(ps::NamedTuple; out_dims::Integer, in_dims::Integer)
     ro_ps = haskey(ps.readout, :bias) ?
-            (weight = _I32(out_dims, in_dims), bias = _Z32(out_dims)) :
-            (weight = _I32(out_dims, in_dims),)
-    merge(ps, (readout = ro_ps,))
+        (weight = _I32(out_dims, in_dims), bias = _Z32(out_dims)) :
+        (weight = _I32(out_dims, in_dims),)
+    return merge(ps, (readout = ro_ps,))
 end
 
 @testset "DeepESN model" begin
@@ -26,7 +26,8 @@ end
         in_dims = 4
         res_dims = [5, 6, 7]
         out_dims = 3
-        desn = DeepESN(in_dims, res_dims, out_dims, identity;
+        desn = DeepESN(
+            in_dims, res_dims, out_dims, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -34,7 +35,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         @test length(desn.cells) == length(res_dims)
         @test length(ps.cells) == length(res_dims)
@@ -48,7 +50,8 @@ end
         rng = MersenneTwister(2)
         D = 3
         depth = 3
-        desn = DeepESN(D, fill(D, depth), D, identity;
+        desn = DeepESN(
+            D, fill(D, depth), D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -56,7 +59,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
         x = Float32[1, 2, 3]
@@ -70,7 +74,8 @@ end
     @testset "forward: batch matrix, identity across layers" begin
         rng = MersenneTwister(3)
         D, B = 4, 5
-        desn = DeepESN(D, [D, D], D, identity;
+        desn = DeepESN(
+            D, [D, D], D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -78,7 +83,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
         X = reshape(Float32.(1:(D * B)), D, B)
@@ -91,7 +97,8 @@ end
         rng = MersenneTwister(4)
         D = 3
         mods = (x -> x .+ 1.0f0, x -> 2.0f0 .* x)
-        desn = DeepESN(D, [D, D], D, identity;
+        desn = DeepESN(
+            D, [D, D], D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -99,7 +106,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = mods,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
         x = Float32[0, 1, -2]
@@ -111,7 +119,8 @@ end
     @testset "depth convenience constructor" begin
         rng = MersenneTwister(5)
         D = 2
-        desn = DeepESN(D, D, D, identity; depth = 4,
+        desn = DeepESN(
+            D, D, D, identity; depth = 4,
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -119,7 +128,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         @test length(desn.cells) == 4
         ps, st = setup(rng, desn)
         ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
@@ -132,7 +142,8 @@ end
     @testset "resetcarry! sets carries using a function" begin
         rng = MersenneTwister(6)
         D = 3
-        desn = DeepESN(D, [4, 5], 2, identity;
+        desn = DeepESN(
+            D, [4, 5], 2, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -140,7 +151,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         f = (rng, m) -> ones(Float32, m)
         st2 = resetcarry!(rng, desn, st; init_carry = f)
@@ -154,7 +166,8 @@ end
     @testset "resetcarry! with per-layer initializers" begin
         rng = MersenneTwister(7)
         D = 3
-        desn = DeepESN(D, [D, D, D], D, identity;
+        desn = DeepESN(
+            D, [D, D, D], D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -162,7 +175,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         st = initialstates(rng, desn)
         inits = ((rng, m) -> fill(1.0f0, m), nothing, (rng, m) -> fill(3.0f0, m))
         st2 = resetcarry!(rng, desn, st; init_carry = inits)
@@ -177,7 +191,8 @@ end
         rng = MersenneTwister(8)
         D = 3
         Tlen = 5
-        desn = DeepESN(D, [D, D], D, identity;
+        desn = DeepESN(
+            D, [D, D], D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -185,7 +200,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         X = reshape(Float32.(1:(D * Tlen)), D, Tlen)
         S, st2 = collectstates(desn, X, ps, st)
@@ -197,7 +213,8 @@ end
     @testset "collectstates over vector" begin
         rng = MersenneTwister(9)
         D = 4
-        desn = DeepESN(D, [D], D, identity;
+        desn = DeepESN(
+            D, [D], D, identity;
             leak_coefficient = 1.0,
             init_reservoir = _W_ZZ,
             init_input = _W_I,
@@ -205,7 +222,8 @@ end
             init_state = init_state3,
             use_bias = False(),
             state_modifiers = nothing,
-            readout_activation = identity)
+            readout_activation = identity
+        )
         ps, st = setup(rng, desn)
         x = Float32[1, 2, 3, 4]
         S, _ = collectstates(desn, x, ps, st)

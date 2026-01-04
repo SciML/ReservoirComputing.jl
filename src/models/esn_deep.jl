@@ -95,7 +95,8 @@ Composition:
     readout
 end
 
-function DeepESN(in_dims::IntegerType,
+function DeepESN(
+        in_dims::IntegerType,
         res_dims::AbstractVector{<:IntegerType},
         out_dims::IntegerType,
         activation = tanh;
@@ -106,7 +107,8 @@ function DeepESN(in_dims::IntegerType,
         init_state = randn32,
         use_bias = false,
         state_modifiers = (),
-        readout_activation = identity)
+        readout_activation = identity
+    )
     n_layers = length(res_dims)
     acts = _asvec(activation, n_layers)
     leaks = _asvec(leak_coefficient, n_layers)
@@ -122,13 +124,15 @@ function DeepESN(in_dims::IntegerType,
 
     prev = in_dims
     for idx in firstindex(res_dims):lastindex(res_dims)
-        cell = ESNCell(prev => res_dims[idx], acts[idx];
+        cell = ESNCell(
+            prev => res_dims[idx], acts[idx];
             use_bias = static(ub[idx]),
             init_bias = ibias[idx],
             init_reservoir = ires[idx],
             init_input = iinp[idx],
             init_state = istate[idx],
-            leak_coefficient = leaks[idx])
+            leak_coefficient = leaks[idx]
+        )
         cells[idx] = StatefulLayer(cell)
         states_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])
         prev = res_dims[idx]
@@ -138,19 +142,24 @@ function DeepESN(in_dims::IntegerType,
     return DeepESN(Tuple(cells), mods_per_layer, ro)
 end
 
-function DeepESN(in_dims::Int, res_dim::Int, out_dims::Int,
-        activation = tanh; depth::Int = 2, kwargs...)
-    DeepESN(in_dims, fill(res_dim, depth), out_dims, activation; kwargs...)
+function DeepESN(
+        in_dims::Int, res_dim::Int, out_dims::Int,
+        activation = tanh; depth::Int = 2, kwargs...
+    )
+    return DeepESN(in_dims, fill(res_dim, depth), out_dims, activation; kwargs...)
 end
 
 function initialparameters(rng::AbstractRNG, desn::DeepESN)
     ps_cells = map(l -> initialparameters(rng, l), desn.cells) |> Tuple
     mods = desn.states_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
-           desn.states_modifiers
+        desn.states_modifiers
     ps_mods = map(
-        layer_mods -> (layer_mods === nothing ? () :
-                       map(l -> initialparameters(rng, l), layer_mods) |> Tuple),
-        mods) |> Tuple
+        layer_mods -> (
+            layer_mods === nothing ? () :
+                map(l -> initialparameters(rng, l), layer_mods) |> Tuple
+        ),
+        mods
+    ) |> Tuple
 
     ps_ro = initialparameters(rng, desn.readout)
     return (cells = ps_cells, states_modifiers = ps_mods, readout = ps_ro)
@@ -160,12 +169,15 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
     st_cells = map(l -> initialstates(rng, l), desn.cells) |> Tuple
 
     mods = desn.states_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
-           desn.states_modifiers
+        desn.states_modifiers
 
     st_mods = map(
-        layer_mods -> (layer_mods === nothing ? () :
-                       map(l -> initialstates(rng, l), layer_mods) |> Tuple),
-        mods) |> Tuple
+        layer_mods -> (
+            layer_mods === nothing ? () :
+                map(l -> initialstates(rng, l), layer_mods) |> Tuple
+        ),
+        mods
+    ) |> Tuple
 
     st_ro = initialstates(rng, desn.readout)
     return (cells = st_cells, states_modifiers = st_mods, readout = st_ro)
@@ -180,16 +192,18 @@ function _partial_apply(desn::DeepESN, inp, ps, st)
         inp_t, st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], st.cells[idx])
         new_cell_st[idx] = st_cell_i
         inp_t,
-        st_mods_i = _apply_seq(desn.states_modifiers[idx], inp_t,
-            ps.states_modifiers[idx], st.states_modifiers[idx])
+            st_mods_i = _apply_seq(
+            desn.states_modifiers[idx], inp_t,
+            ps.states_modifiers[idx], st.states_modifiers[idx]
+        )
         new_mods_st[idx] = st_mods_i
     end
 
     return inp_t,
-    (;
-        cells = tuple(new_cell_st...),
-        states_modifiers = tuple(new_mods_st...)
-    )
+        (;
+            cells = tuple(new_cell_st...),
+            states_modifiers = tuple(new_mods_st...),
+        )
 end
 
 function (desn::DeepESN)(inp, ps, st)
@@ -225,16 +239,18 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
         end
     end
 
-    new_cells = ntuple(idx -> begin
+    new_cells = ntuple(
+        idx -> begin
             st_i = st.cells[idx]
             new_carry = _init_for(idx)
             merge(st_i, (; carry = new_carry))
-        end, n_layers)
+        end, n_layers
+    )
 
     return (;
         cells = new_cells,
         states_modifiers = st.states_modifiers,
-        readout = st.readout
+        readout = st.readout,
     )
 end
 
@@ -248,10 +264,10 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
         mods_st_parts = Vector{Any}(undef, n_layers)
         for idx in firstindex(desn.cells):lastindex(desn.cells)
             inp_t,
-            st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], newst.cells[idx])
+                st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], newst.cells[idx])
             cell_st_parts[idx] = st_cell_i
             inp_t,
-            st_mods_i = _apply_seq(
+                st_mods_i = _apply_seq(
                 desn.states_modifiers[idx], inp_t,
                 ps.states_modifiers[idx], newst.states_modifiers[idx]
             )
@@ -261,7 +277,7 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
         newst = (;
             cells = tuple(cell_st_parts...),
             states_modifiers = tuple(mods_st_parts...),
-            readout = newst.readout
+            readout = newst.readout,
         )
     end
     @assert !isempty(collected)
@@ -271,5 +287,5 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
 end
 
 function collectstates(m::DeepESN, data::AbstractVector, ps, st::NamedTuple)
-    collectstates(m, reshape(data, :, 1), ps, st)
+    return collectstates(m, reshape(data, :, 1), ps, st)
 end

@@ -10,9 +10,11 @@ using Static
     square_feature = x -> x .^ 2
 
     @testset "constructor & composition" begin
-        ngrc = NGRC(3, 2; num_delays = 1, stride = 2,
+        ngrc = NGRC(
+            3, 2; num_delays = 1, stride = 2,
             features = (const_feature, square_feature), include_input = True(),
-            init_delay = zeros32, readout_activation = tanh)
+            init_delay = zeros32, readout_activation = tanh
+        )
 
         @test ngrc isa NGRC
         @test ngrc.reservoir isa DelayLayer
@@ -29,8 +31,10 @@ using Static
     end
 
     @testset "initialparameters & initialstates" begin
-        ngrc = NGRC(3, 2; num_delays = 1, features = (square_feature,),
-            include_input = True())
+        ngrc = NGRC(
+            3, 2; num_delays = 1, features = (square_feature,),
+            include_input = True()
+        )
 
         ps = initialparameters(rng, ngrc)
         st = initialstates(rng, ngrc)
@@ -47,8 +51,10 @@ using Static
     end
 
     @testset "forward pass: vector input" begin
-        ngrc = NGRC(3, 2; num_delays = 1, features = (square_feature,),
-            include_input = True())
+        ngrc = NGRC(
+            3, 2; num_delays = 1, features = (square_feature,),
+            include_input = True()
+        )
 
         ps, st = setup(rng, ngrc)
 
@@ -60,8 +66,10 @@ using Static
     end
 
     @testset "forward pass: matrix input via collectstates" begin
-        ngrc = NGRC(3, 2; num_delays = 1, features = (square_feature,),
-            include_input = True())
+        ngrc = NGRC(
+            3, 2; num_delays = 1, features = (square_feature,),
+            include_input = True()
+        )
 
         ps, st = setup(rng, ngrc)
 
@@ -87,13 +95,17 @@ using Static
         X_in = reshape(x[1:(end - 1)], 1, :)
         Y_out = reshape(x[2:end], 1, :)
 
-        ngrc = NGRC(1, 1; num_delays = 0, stride = 1, features = (),
-            include_input = True(), ro_dims = 1)
+        ngrc = NGRC(
+            1, 1; num_delays = 0, stride = 1, features = (),
+            include_input = True(), ro_dims = 1
+        )
 
         ps, st = setup(rng, ngrc)
 
-        ps_tr, st_tr = train!(ngrc, X_in, Y_out, ps, st;
-            train_method = StandardRidge(1e-6))
+        ps_tr, st_tr = train!(
+            ngrc, X_in, Y_out, ps, st;
+            train_method = StandardRidge(1.0e-6)
+        )
 
         @test hasproperty(ps_tr, :readout)
         w = ps_tr.readout.weight

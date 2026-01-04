@@ -30,9 +30,9 @@ function StandardRidge()
 end
 
 function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
-    @assert washout≥0 "washout must be ≥ 0"
+    @assert washout ≥ 0 "washout must be ≥ 0"
     len_states = size(states, 2)
-    @assert washout<len_states "washout=$washout is ≥ number of time steps=$len_states"
+    @assert washout < len_states "washout=$washout is ≥ number of time steps=$len_states"
     first_idx = washout + 1
     states_wo = states[:, (washout + 1):end]
     targets_wo = targets[:, (washout + 1):end]
@@ -75,7 +75,8 @@ additional changes.
   value as the forward method only.
 """
 function train(
-        sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...)
+        sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...
+    )
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
     b = [target_data'; zeros(n_states, size(target_data, 1))]
@@ -126,13 +127,15 @@ The learned weights/layer are written into `ps`.
   `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the
   [`ReservoirChain`](@ref).
 """
-function train!(rc, train_data, target_data, ps, st,
+function train!(
+        rc, train_data, target_data, ps, st,
         train_method = StandardRidge(0.0);
-        washout::Int = 0, return_states::Bool = false, kwargs...)
+        washout::Int = 0, return_states::Bool = false, kwargs...
+    )
     states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-    traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
-                   (states, target_data)
+        traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
+        (states, target_data)
     output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
@@ -166,21 +169,29 @@ end
     Kq = _quote_keys(K)
     tailKq = _quote_keys(tailK)
 
-    head_val = :((getfield(layers, 1) isa LinearReadout)
-                 ? _setweight_rt(getfield(ps, 1), W)
-                 : getfield(ps, 1))
+    head_val = :(
+        (getfield(layers, 1) isa LinearReadout)
+            ? _setweight_rt(getfield(ps, 1), W)
+            : getfield(ps, 1)
+    )
 
-    tail_call = :(_addreadout(NamedTuple{$tailKq}(Base.tail(layers)),
-        NamedTuple{$tailKq}(Base.tail(ps)),
-        W))
+    tail_call = :(
+        _addreadout(
+            NamedTuple{$tailKq}(Base.tail(layers)),
+            NamedTuple{$tailKq}(Base.tail(ps)),
+            W
+        )
+    )
 
     return :(NamedTuple{$Kq}(($head_val, Base.values($tail_call)...)))
 end
 
-function addreadout!(rc::ReservoirChain,
+function addreadout!(
+        rc::ReservoirChain,
         W::AbstractMatrix,
         ps::NamedTuple,
-        st::NamedTuple)
+        st::NamedTuple
+    )
     @assert propertynames(rc.layers) == propertynames(ps)
     new_ps = _addreadout(rc.layers, ps, W)
     return new_ps, st

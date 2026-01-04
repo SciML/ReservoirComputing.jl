@@ -83,20 +83,22 @@ Composition:
 
 """
 @concrete struct ESN <:
-                 AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function ESN(in_dims::IntegerType, res_dims::IntegerType,
+function ESN(
+        in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh;
         readout_activation = identity,
         state_modifiers = (),
-        kwargs...)
+        kwargs...
+    )
     cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-                 Tuple(state_modifiers) : (state_modifiers,)
+        Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return ESN(cell, mods, ro)
