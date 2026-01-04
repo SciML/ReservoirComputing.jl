@@ -10,19 +10,27 @@ abstract type AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fie
 function safe_getproperty(x, ::Union{Val{v}, StaticSymbol{v}}) where {v}
     return v in Base.propertynames(x) ? Base.getproperty(x, v) : nothing
 end
-@generated function safe_getproperty(x::NamedTuple{names}, ::Union{
-        Val{v}, StaticSymbol{v}}) where {
-        names, v}
+@generated function safe_getproperty(
+        x::NamedTuple{names}, ::Union{
+            Val{v}, StaticSymbol{v},
+        }
+    ) where {
+        names, v,
+    }
     return v in names ? :(x.$v) : :(nothing)
 end
 
-function dense_bias(generic_mat::AbstractMatrix,
+function dense_bias(
+        generic_mat::AbstractMatrix,
         generic_vec::AbstractVecOrMat,
-        bias::AbstractVector)
+        bias::AbstractVector
+    )
     return generic_mat * generic_vec .+ bias
 end
 
-function dense_bias(generic_mat::AbstractMatrix,
-        generic_vec::AbstractVecOrMat, ::Nothing)
+function dense_bias(
+        generic_mat::AbstractMatrix,
+        generic_vec::AbstractVecOrMat, ::Nothing
+    )
     return generic_mat * generic_vec
 end

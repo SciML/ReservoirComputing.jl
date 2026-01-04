@@ -16,7 +16,8 @@ end
     @test check_no_stale_explicit_imports(ReservoirComputing) === nothing
 end
 
-JET.test_package(ReservoirComputing;
+JET.test_package(
+    ReservoirComputing;
     target_modules = (ReservoirComputing,),
     toplevel_logger = nothing
 )

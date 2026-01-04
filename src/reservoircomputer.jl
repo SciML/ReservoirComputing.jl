@@ -1,4 +1,3 @@
-
 @doc raw"""
     ReservoirComputer(reservoir, states_modifiers, readout)
     ReservoirComputer(reservoir, readout)
@@ -31,14 +30,14 @@ features, and install trained readout weights.
   states of the reservoir, modifiers, and readout.
 """
 struct ReservoirComputer{R, S, L} <:
-       AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
     reservoir::R
     states_modifiers::S
     readout::L
 
     function ReservoirComputer(reservoir::R, state_modifiers::S, readout::L) where {R, S, L}
         mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-                     Tuple(state_modifiers) : (state_modifiers,)
+            Tuple(state_modifiers) : (state_modifiers,)
         mods = _wrap_layers(mods_tuple)
 
         return new{R, typeof(mods), L}(reservoir, mods, readout)
@@ -75,8 +74,9 @@ end
 function _partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
     out,
-    st_mods = _apply_seq(
-        rc.states_modifiers, out, ps.states_modifiers, st.states_modifiers)
+        st_mods = _apply_seq(
+        rc.states_modifiers, out, ps.states_modifiers, st.states_modifiers
+    )
     return out, (reservoir = st_res, states_modifiers = st_mods)
 end
 
@@ -87,7 +87,8 @@ function (rc::AbstractReservoirComputer)(inp, ps, st)
 end
 
 function collectstates(
-        rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple)
+        rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
+    )
     newst = st
     nsteps = size(data, 2)
     cols = eachcol(data)
@@ -109,8 +110,10 @@ end
 
 _set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
 
-function addreadout!(::AbstractReservoirComputer, output_matrix::AbstractMatrix,
-        ps::NamedTuple, st::NamedTuple)
+function addreadout!(
+        ::AbstractReservoirComputer, output_matrix::AbstractMatrix,
+        ps::NamedTuple, st::NamedTuple
+    )
     @assert hasproperty(ps, :readout)
     new_readout = _set_readout_weight(ps.readout, output_matrix)
     return merge(ps, (readout = new_readout,)), st
@@ -179,7 +182,8 @@ function is provided, it is called to create a new initial hidden state.
 
 """
 function resetcarry!(
-        rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing)
+        rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing
+    )
     carry = get(st.reservoir, :carry, nothing)
     if carry === nothing
         outd = rc.reservoir.cell.out_dims
@@ -199,7 +203,9 @@ function resetcarry!(
     return merge(st, (reservoir = new_cell,))
 end
 
-function resetcarry!(rng::AbstractRNG, rc::AbstractReservoirComputer,
-        ps, st; init_carry = nothing)
+function resetcarry!(
+        rng::AbstractRNG, rc::AbstractReservoirComputer,
+        ps, st; init_carry = nothing
+    )
     return ps, resetcarry!(rng, rc, st; init_carry = init_carry)
 end

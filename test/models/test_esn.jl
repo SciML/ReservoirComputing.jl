@@ -11,13 +11,13 @@ const _W_I = (rng, m, n) -> _I32(m, n)
 const _W_ZZ = (rng, m, n) -> zeros(Float32, m, n)
 
 function init_state3(rng::AbstractRNG, m::Integer, B::Integer)
-    B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
+    return B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
 end
 
 function _with_identity_readout(ps::NamedTuple; out_dims::Integer, in_dims::Integer)
     ro_ps = haskey(ps.readout, :bias) ?
-            (weight = _I32(out_dims, in_dims), bias = _Z32(out_dims)) :
-            (weight = _I32(out_dims, in_dims),)
+        (weight = _I32(out_dims, in_dims), bias = _Z32(out_dims)) :
+        (weight = _I32(out_dims, in_dims),)
     return merge(ps, (readout = ro_ps,))
 end
 
@@ -35,7 +35,8 @@ default_reservoir_kwargs(::Type{ESN}) = NamedTuple()
 default_reservoir_kwargs(::Type{ES2N}) = (init_orthogonal = _W_I,)
 default_reservoir_kwargs(::Type{EuSN}) = NamedTuple()
 
-function build_model(::Type{M}, in_dims::Int, res_dims::Int, out_dims::Int, activation;
+function build_model(
+        ::Type{M}, in_dims::Int, res_dims::Int, out_dims::Int, activation;
         state_modifiers = (),
         readout_activation = identity,
         mix::Real = 1.0,
@@ -45,20 +46,24 @@ function build_model(::Type{M}, in_dims::Int, res_dims::Int, out_dims::Int, acti
         init_bias = _O32,
         init_state = init_state3,
         extra::NamedTuple = NamedTuple()
-) where {M}
-    base = (use_bias = use_bias,
+    ) where {M}
+    base = (
+        use_bias = use_bias,
         init_input = init_input,
         init_reservoir = init_reservoir,
         init_bias = init_bias,
-        init_state = init_state)
+        init_state = init_state,
+    )
 
     mixnt = NamedTuple{(mix_kw(M),)}((mix,))
     kw = merge(base, default_reservoir_kwargs(M), mixnt, extra)
 
-    return M(in_dims, res_dims, out_dims, activation;
+    return M(
+        in_dims, res_dims, out_dims, activation;
         state_modifiers = state_modifiers,
         readout_activation = readout_activation,
-        kw...)
+        kw...
+    )
 end
 
 function test_esn_family_contract(::Type{M}) where {M}
@@ -66,7 +71,8 @@ function test_esn_family_contract(::Type{M}) where {M}
         rng = MersenneTwister(42)
         in_dims, res_dims, out_dims = 3, 5, 4
 
-        model = build_model(M, in_dims, res_dims, out_dims, identity;
+        model = build_model(
+            M, in_dims, res_dims, out_dims, identity;
             use_bias = False(),
             init_input = _W_I,
             init_reservoir = _W_ZZ,
@@ -102,7 +108,8 @@ function test_esn_family_contract(::Type{M}) where {M}
         rng = MersenneTwister(0)
         D = 3
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             use_bias = False(),
             init_input = _W_I,
             init_reservoir = _W_ZZ,
@@ -122,14 +129,15 @@ function test_esn_family_contract(::Type{M}) where {M}
         @test size(Y) == (D, 1)
         @test vec(Y) ≈ x
         @test haskey(st2, :reservoir) && haskey(st2, :states_modifiers) &&
-              haskey(st2, :readout)
+            haskey(st2, :readout)
     end
 
     @testset "$(model_name(M)): forward (batch matrix) with identity pipeline -> Y == X" begin
         rng = MersenneTwister(1)
         D, B = 3, 2
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             use_bias = False(),
             init_input = _W_I,
             init_reservoir = _W_ZZ,
@@ -152,7 +160,8 @@ function test_esn_family_contract(::Type{M}) where {M}
         rng = MersenneTwister(2)
         D = 3
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             state_modifiers = (x -> 2.0f0 .* x,),
             use_bias = False(),
             init_input = _W_I,
@@ -175,7 +184,8 @@ function test_esn_family_contract(::Type{M}) where {M}
         D = 3
         mods = (x -> x .+ 1.0f0, x -> 3.0f0 .* x)
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             state_modifiers = mods,
             use_bias = False(),
             init_input = _W_I,
@@ -197,7 +207,8 @@ function test_esn_family_contract(::Type{M}) where {M}
         rng = MersenneTwister(123)
         D = 2
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             use_bias = False(),
             init_input = _W_I,
             init_reservoir = _W_ZZ,
@@ -217,11 +228,12 @@ function test_esn_family_contract(::Type{M}) where {M}
         @test haskey(st2, :readout)
     end
 
-    @testset "$(model_name(M)): readout_activation is honored" begin
+    return @testset "$(model_name(M)): readout_activation is honored" begin
         rng = MersenneTwister(4)
         D = 3
 
-        model = build_model(M, D, D, D, identity;
+        model = build_model(
+            M, D, D, D, identity;
             readout_activation = x -> max.(x, 0.0f0),
             use_bias = False(),
             init_input = _W_I,

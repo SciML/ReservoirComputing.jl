@@ -78,17 +78,23 @@ Created by `initialstates(rng, esn)`:
     use_bias <: StaticBool
 end
 
-function ESNCell((in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
+function ESNCell(
+        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_state = randn32, leak_coefficient::AbstractFloat = 1.0)
-    return ESNCell(activation, in_dims, out_dims, init_bias, init_reservoir,
-        init_input, init_state, leak_coefficient, static(use_bias))
+        init_state = randn32, leak_coefficient::AbstractFloat = 1.0
+    )
+    return ESNCell(
+        activation, in_dims, out_dims, init_bias, init_reservoir,
+        init_input, init_state, leak_coefficient, static(use_bias)
+    )
 end
 
 function initialparameters(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
-    ps = (input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
-        reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims))
+    ps = (
+        input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
+        reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims),
+    )
     if has_bias(esn)
         ps = merge(ps, (bias = esn.init_bias(rng, esn.out_dims),))
     end
@@ -122,5 +128,5 @@ function Base.show(io::IO, esn::ESNCell)
         print(io, ", leak_coefficient=$(esn.leak_coefficient)")
     end
     has_bias(esn) || print(io, ", use_bias=false")
-    print(io, ")")
+    return print(io, ")")
 end

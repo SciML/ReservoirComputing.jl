@@ -57,11 +57,11 @@ struct RandomMapping{I, T} <: AbstractInputEncoding
 end
 
 function RandomMapping(; permutations = 8, expansion_size = 40)
-    RandomMapping(permutations, expansion_size)
+    return RandomMapping(permutations, expansion_size)
 end
 
 function RandomMapping(permutations; expansion_size = 40)
-    RandomMapping(permutations, expansion_size)
+    return RandomMapping(permutations, expansion_size)
 end
 
 struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
@@ -133,10 +133,12 @@ and [Yilmaz2014](@cite).
 end
 
 function Base.show(io::IO, reca::RECACell)
-    print(io,
+    return print(
+        io,
         "RECACell(in ⇒ ", reca.enc.ca_size, ", out=", reca.enc.states_size,
         ", gens=", reca.enc.generations, ", perms=", reca.enc.permutations,
-        ", exp=", reca.enc.expansion_size, ")")
+        ", exp=", reca.enc.expansion_size, ")"
+    )
 end
 
 initialparameters(::AbstractRNG, ::RECACell) = NamedTuple()

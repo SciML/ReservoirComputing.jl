@@ -48,7 +48,7 @@ end
 function Base.show(io::IO, sl::StatefulLayer)
     print(io, "StatefulLayer(")
     show(io, sl.cell)
-    print(io, ")")
+    return print(io, ")")
 end
 
 @doc raw"""
@@ -155,7 +155,7 @@ wrap_functions_in_chain_call(x) = x
 
 function _readout_include_collect(ro::LinearReadout)
     res = known(getproperty(ro, Val(:include_collect)))
-    res === nothing ? false : res
+    return res === nothing ? false : res
 end
 
 function wrap_functions_in_chain_call(ro::LinearReadout)
@@ -166,15 +166,22 @@ end
 
 @generated function applychain(
         layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}
-) where {fields}
+    ) where {fields}
     @assert isa(fields, NTuple{<:Any, Symbol})
     N = length(fields)
     x_symbols = vcat([:x], [gensym() for _ in 1:N])
     st_symbols = [gensym() for _ in 1:N]
-    calls = [:(($(x_symbols[i + 1]),
-                 $(st_symbols[i])) = @inline apply(
-                 layers.$(fields[i]), $(x_symbols[i]), ps.$(fields[i]), st.$(fields[i])))
-             for i in 1:N]
+    calls = [
+        :(
+                (
+                    $(x_symbols[i + 1]),
+                    $(st_symbols[i]),
+                ) = @inline apply(
+                    layers.$(fields[i]), $(x_symbols[i]), ps.$(fields[i]), st.$(fields[i])
+                )
+            )
+            for i in 1:N
+    ]
     push!(calls, :(st = NamedTuple{$fields}((($(Tuple(st_symbols)...),)))))
     push!(calls, :(return $(x_symbols[N + 1]), st))
     return Expr(:block, calls...)
@@ -182,7 +189,7 @@ end
 
 Base.getindex(c::ReservoirChain, i::Int) = c.layers[i]
 function Base.getindex(c::ReservoirChain, i::AbstractArray)
-    ReservoirChain(index_namedtuple(c.layers, i))
+    return ReservoirChain(index_namedtuple(c.layers, i))
 end
 
 function Base.getproperty(c::ReservoirChain, name::Symbol)

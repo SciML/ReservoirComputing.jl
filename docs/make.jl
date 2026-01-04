@@ -17,16 +17,20 @@ links = InterLinks(
     "Lux" => "https://lux.csail.mit.edu/stable/"
 )
 
-makedocs(; modules = [ReservoirComputing],
+makedocs(;
+    modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
     clean = true, doctest = false, linkcheck = true,
     plugins = [links, bib],
     format = Documenter.HTML(;
         mathengine,
         assets = ["assets/favicon.ico"],
-        canonical = "https://docs.sciml.ai/ReservoirComputing/stable/"),
+        canonical = "https://docs.sciml.ai/ReservoirComputing/stable/"
+    ),
     pages = pages
 )
 
-deploydocs(; repo = "github.com/SciML/ReservoirComputing.jl.git",
-    push_preview = true)
+deploydocs(;
+    repo = "github.com/SciML/ReservoirComputing.jl.git",
+    push_preview = true
+)

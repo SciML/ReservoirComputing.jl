@@ -11,7 +11,8 @@ nlas = [
     (NLAT3(), [1, 2, 8, 4, 24, 6, 48, 8, 9]),
     (PartialSquare(0.6), [1, 4, 9, 16, 25, 6, 7, 8, 9]),
     (ExtendedSquare(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 4, 9, 16, 25, 36, 49, 64, 81]),
-    (Pad(padding), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])]
+    (Pad(padding), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+]
 
 @testset "States Testing" for T in test_types
     @testset "Nonlinear Algorithms Testing: $algo $T" for (algo, expected_output) in nlas

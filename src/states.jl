@@ -1,7 +1,9 @@
-
 @inline function _apply_tomatrix(
-        states_mod::F, states::AbstractMatrix) where {F <:
-                                                      Function}
+        states_mod::F, states::AbstractMatrix
+    ) where {
+        F <:
+        Function,
+    }
     cols = axes(states, 2)
     states_1 = states_mod(states[:, first(cols)])
     new_states = similar(states_1, length(states_1), length(cols))

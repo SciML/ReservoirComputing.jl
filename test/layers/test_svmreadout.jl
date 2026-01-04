@@ -174,8 +174,8 @@ end
     idx_svm = findfirst(k -> getfield(rc.layers, k) isa SVMReadout, keys)
     ps_svm_entry = getfield(ps1, idx_svm)
     ps_svm = ps_svm_entry isa NamedTuple ? ps_svm_entry :
-             ps_svm_entry isa Expr ? (models = model,) :
-             (models = model,)
+        ps_svm_entry isa Expr ? (models = model,) :
+        (models = model,)
 
     x2d = randn(in_dims, 1)
     y_pred, _ = ro(x2d, ps_svm, NamedTuple())
@@ -203,8 +203,8 @@ end
     idx_svm = findfirst(k -> getfield(rc.layers, k) isa SVMReadout, keys)
     ps_svm_entry = getfield(ps1, idx_svm)
     ps_svm = ps_svm_entry isa NamedTuple ? ps_svm_entry :
-             ps_svm_entry isa Expr ? (models = model,) :
-             (models = model,)
+        ps_svm_entry isa Expr ? (models = model,) :
+        (models = model,)
 
     badx = randn(in_dims, 2, 2)
     @test_throws ArgumentError ro(badx, ps_svm, NamedTuple())

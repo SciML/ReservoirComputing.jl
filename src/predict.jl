@@ -48,8 +48,10 @@ sequence.
 - `output`: Outputs for each input column, shape `(out_dims, T)`.
 - `st`: Updated minal model states.
 """
-function predict(rc::AbstractLuxLayer,
-        steps::Integer, ps, st; initialdata::AbstractVector)
+function predict(
+        rc::AbstractLuxLayer,
+        steps::Integer, ps, st; initialdata::AbstractVector
+    )
     output = zeros(eltype(initialdata), length(initialdata), steps)
     for step in 1:steps
         initialdata, st = apply(rc, initialdata, ps, st)
@@ -60,7 +62,7 @@ end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
     T = size(data, 2)
-    @assert T≥1 "data must have at least one time step (columns)."
+    @assert T ≥ 1 "data must have at least one time step (columns)."
 
     y1, st = apply(rc, data[:, 1], ps, st)
     Y = similar(y1, size(y1, 1), T)

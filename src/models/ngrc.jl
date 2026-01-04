@@ -61,20 +61,22 @@ Next Generation Reservoir Computing [Gauthier2021](@cite).
   - Updated layer state (NamedTuple).
 """
 @concrete struct NGRC <:
-                 AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function NGRC(in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerType = 2,
+function NGRC(
+        in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerType = 2,
         stride::IntegerType = 1, features = (), include_input::BoolType = True(), init_delay = zeros32,
-        readout_activation = identity, state_modifiers = (), ro_dims = nothing)
+        readout_activation = identity, state_modifiers = (), ro_dims = nothing
+    )
     reservoir = DelayLayer(in_dims; num_delays = Int(num_delays), stride = Int(stride), init_delay = init_delay)
     feats_tuple = features isa Tuple ? features : (features,)
     nfl = NonlinearFeaturesLayer(feats_tuple...; include_input = include_input)
     mods_tuple_raw = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-                     (nfl, state_modifiers...) : (nfl, state_modifiers)
+        (nfl, state_modifiers...) : (nfl, state_modifiers)
     mods = _wrap_layers(mods_tuple_raw)
     if ro_dims === nothing
         n_taps = in_dims * (num_delays + 1)
@@ -102,12 +104,15 @@ function NGRC(in_dims::IntegerType, out_dims::IntegerType; num_delays::IntegerTy
 end
 
 function resetcarry!(
-        rng::AbstractRNG, rc::NGRC, st; init_carry = nothing)
+        rng::AbstractRNG, rc::NGRC, st; init_carry = nothing
+    )
     carry = get(st.reservoir, :carry, nothing)
-    @warn("""
+    @warn(
+        """
         Next generation reservoir computing has no internal state to reset.
         Returning untouched model states.
-        """)
+        """
+    )
     return st
 end
 
@@ -148,15 +153,18 @@ order determined by the recursive enumeration.
   containing all generated monomials, concatenated across the requested
   degrees, in a deterministic order.
 """
-function polynomial_monomials(input_vector::AbstractVector;
-        degrees = 1:2)
+function polynomial_monomials(
+        input_vector::AbstractVector;
+        degrees = 1:2
+    )
     element_type = eltype(input_vector)
     output_monomials = element_type[]
     num_variables = length(input_vector)
     for degree in degrees
         degree < 1 && continue
         index_buffer = Vector{Int}(undef, degree)
-        _polynomial_monomials_recursive!(output_monomials, input_vector,
+        _polynomial_monomials_recursive!(
+            output_monomials, input_vector,
             index_buffer, 1, 1, num_variables
         )
     end
@@ -164,9 +172,11 @@ function polynomial_monomials(input_vector::AbstractVector;
     return output_monomials
 end
 
-function _polynomial_monomials_recursive!(output_monomials, input_vector,
-        index_buffer, position::Int, start_index::Int, num_variables::Int)
-    if position > length(index_buffer)
+function _polynomial_monomials_recursive!(
+        output_monomials, input_vector,
+        index_buffer, position::Int, start_index::Int, num_variables::Int
+    )
+    return if position > length(index_buffer)
         element_type = eltype(input_vector)
         product_value = one(element_type)
         @inbounds for variable_index in index_buffer
@@ -176,8 +186,10 @@ function _polynomial_monomials_recursive!(output_monomials, input_vector,
     else
         @inbounds for variable_index in start_index:num_variables
             index_buffer[position] = variable_index
-            _polynomial_monomials_recursive!(output_monomials, input_vector,
-                index_buffer, position + 1, variable_index, num_variables)
+            _polynomial_monomials_recursive!(
+                output_monomials, input_vector,
+                index_buffer, position + 1, variable_index, num_variables
+            )
         end
     end
 end

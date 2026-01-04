@@ -5,7 +5,7 @@ const in_size = 4
 const radius = 1.0
 const rng = Random.default_rng()
 
-function check_radius(matrix, target_radius; tolerance = 1e-5)
+function check_radius(matrix, target_radius; tolerance = 1.0e-5)
     if matrix isa SparseArrays.SparseMatrixCSC
         matrix = Matrix(matrix)
     end
@@ -32,7 +32,7 @@ reservoir_inits = [
     selfloop_forwardconnection,
     simple_cycle,
     true_doublecycle,
-    permutation_init
+    permutation_init,
 ]
 input_inits = [
     chebyshev_mapping,
@@ -42,7 +42,7 @@ input_inits = [
     modified_lm(; factor = 4),
     scaled_rand,
     weighted_init,
-    weighted_minimal
+    weighted_minimal,
 ]
 
 @testset "Reservoir Initializers" begin
@@ -64,19 +64,19 @@ input_inits = [
     end
 
     @testset "Minimum complexity: $init" for init in [
-        delay_line,
-        delayline_backward,
-        cycle_jumps,
-        simple_cycle,
-        true_doublecycle,
-        double_cycle,
-        selfloop_cycle,
-        selfloop_delayline_backward,
-        selfloop_backward_cycle,
-        selfloop_forwardconnection,
-        forward_connection,
-        permutation_init
-    ]
+            delay_line,
+            delayline_backward,
+            cycle_jumps,
+            simple_cycle,
+            true_doublecycle,
+            double_cycle,
+            selfloop_cycle,
+            selfloop_delayline_backward,
+            selfloop_backward_cycle,
+            selfloop_forwardconnection,
+            forward_connection,
+            permutation_init,
+        ]
         dl = init(res_size, res_size)
         @test sort(unique(dl)) == Float32.([0.0, 0.1])
     end
@@ -97,9 +97,9 @@ end
     end
 
     @testset "Minimum complexity: $init" for init in [
-        minimal_init,
-        minimal_init(; sampling_type = :irrational_sample!)
-    ]
+            minimal_init,
+            minimal_init(; sampling_type = :irrational_sample!),
+        ]
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
     end
