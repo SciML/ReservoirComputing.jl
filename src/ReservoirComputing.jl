@@ -70,4 +70,7 @@ export NGRC
 export RECACell, RECA
 export RandomMapping, RandomMaps
 
+#precompilation
+include("precompilation.jl")
+
 end #module
