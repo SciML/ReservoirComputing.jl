@@ -17,7 +17,7 @@ Pkg.add("ReservoirComputing")
 ## Copy-Pastable Simplified Example
 
 If you wish to just get some code running to get started, the following code
-block provides an end=to-end simplified runnable example. The rest of this
+block provides an end-to-end simplified runnable example. The rest of this
 page will delve into more details, expanding on various aspects of the example.
 
 ```@example first-esn
@@ -156,7 +156,7 @@ the best results.
 ## Training and Prediction
 
 Training for ESNs usually means solving a linear regression. The library supports
-solvers from ['MLILinearModels.jl'](https://github.com/JuliaAI/MLJLinearModels.jl),
+solvers from [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl),
 in addition to a custom implementation of ridge regression [`StandardRidge`](@ref).
 In this example we will use the latter.
 

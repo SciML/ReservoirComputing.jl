@@ -14,7 +14,7 @@
 [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![Julia](https://img.shields.io/badge/julia-v1.10+-blue.svg)](https://julialang.org/)
-[![JET](https://img.shields.io/badge/%E2%9C%88%EF%B8%8F%20tested%20with%20-%20JET.jl%20-%20red)](jet-urlhttps://github.com/aviatesk/JET.jl)
+[![JET](https://img.shields.io/badge/%E2%9C%88%EF%B8%8F%20tested%20with%20-%20JET.jl%20-%20red)](https://github.com/aviatesk/JET.jl)
 
 </div>
 
@@ -57,7 +57,7 @@ reservoir computing models. More specifically the software offers:
 ReservoirComputing.jl can be installed using either of
 
 ```julia_repl
-julia> ] #actually press the closing square brackets
+julia> ] # press the closing square bracket to enter Pkg mode
 pkg> add ReservoirComputing
 ```
 or
