@@ -1,6 +1,6 @@
 # Building a model from scratch
 
-ReservoirComputing.jl provides utilities to build reservoir reservoir
+ReservoirComputing.jl provides utilities to build reservoir
 computing models from scratch. In this tutorial we are going to build
 an echo state network ([`ESN`](@ref)) and showcase how this custom
 implementation is equivalent to the provided model (minus some comfort
@@ -71,7 +71,7 @@ collection happens. In a [`ReservoirChain`](@ref), the collection of states is
 controlled by the layer [`Collect`](@ref). The role of this layer is to tell
 the [`collectstates`](@ref) function where to stop for state collection. All
 the readout layers have a `include_collect=true` keyword, which forces a
-[`Collect`](@ref) layer bvefore the readout. The model we wrote before can
+[`Collect`](@ref) layer before the readout. The model we wrote before can
 be written as
 
 ```@example scratch
