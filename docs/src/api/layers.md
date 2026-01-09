@@ -24,6 +24,11 @@
     ES2NCell
     ESNCell
     EuSNCell
+    MemoryESNCell
+```
+
+```@docs
+    RMNCell
 ```
 
 ## Reservoir computing with cellular automata
