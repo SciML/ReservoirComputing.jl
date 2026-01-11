@@ -12,6 +12,7 @@ on:
       - "docs/**"
 jobs:
   test:
+    if: false  # Disabled: waiting on dependency updates. See issue #359 for details.
     runs-on: ubuntu-latest
     strategy:
       matrix:
