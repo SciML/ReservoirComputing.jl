@@ -7,7 +7,7 @@ const GROUP = get(ENV, "GROUP", "All")
 function activate_nopre_env()
     Pkg.activate("nopre")
     Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    Pkg.instantiate()
+    return Pkg.instantiate()
 end
 
 if GROUP == "All" || GROUP == "Core"
