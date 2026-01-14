@@ -2348,6 +2348,69 @@ function permutation_init(
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+@doc raw"""
+    diagonal_init([rng], [T], dims...;
+        return_sparse=false,
+        kwargs...)
+
+Creates a diagonal reservoir [](@cite).
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+
+
+## Examples
+
+Default kwargs:
+
+```jldoctest forcon
+
+```
+
+Changing the weights magnitudes to a different unique value:
+
+```jldoctest forcon
+
+```
+
+Changing the weights signs with different sampling techniques:
+
+```jldoctest forcon
+
+```
+
+Changing the weights to random numbers. Note that the length of the given array
+must be at least as long as the subdiagonal one wants to fill:
+
+```jldoctest forcon
+
+```
+
+Returning a sparse matrix:
+
+```jldoctest forcon
+
+```
+
+"""
+function diagonal_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = T(0.1), return_sparse::Bool = false,
+        kwargs...
+    ) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (
@@ -2357,6 +2420,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
         :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
+        :diagonal_init
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
