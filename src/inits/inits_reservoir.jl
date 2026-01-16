@@ -2227,7 +2227,7 @@ end
 @doc raw"""
     permutation_init([rng], [T], dims...;
         weight=0.1, permutation_matrix=nothing, return_sparse=false,
-        kwargs...)
+        radius=nothing, kwargs...)
 
 Creates a permutation reservoir as described in [Boedecker2009](@cite), by first
 initializing a scaled identity (self-loops) and then
@@ -2255,6 +2255,9 @@ This construction yields:
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `forward_weight` can be positive with a probability set by `positive_prob`. If set to
@@ -2339,21 +2342,23 @@ function permutation_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight = T(0.1), return_sparse::Bool = false,
         permutation_matrix::Union{Nothing, AbstractMatrix} = nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     permute_matrix!(rng, reservoir_matrix, permutation_matrix)
+    scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
 @doc raw"""
     diagonal_init([rng], [T], dims...;
-        return_sparse=false,
+        return_sparse=false, weight=randn,
         kwargs...)
 
-Creates a diagonal reservoir [](@cite).
+Creates a diagonal reservoir [Fette2005](@cite).
 
 ## Arguments
 
@@ -2364,51 +2369,126 @@ Creates a diagonal reservoir [](@cite).
 
 ## Keyword arguments
 
-
+- `weight`: Weight used for the initial self-loop initialization. Can be a single number,
+  vector, or function to generate an array. Default is `randn`.
+- `return_sparse`: flag for returning a `sparse` matrix.
+  `true` requires `SparseArrays` to be loaded.
+  Default is `false`.
+- `return_diag`: flag for returning a `Diagonal` matrix. If both `return_diag`
+  and `return_sparse` are set to `true` priority is given to `return_diag`.
+  Default is `false`.
+- `radius`: The desired spectral radius of the reservoir.
+  If `nothing` is passed, no scaling takes place.
+  Defaults to `nothing`.
+- `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+  If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+  `forward_weight` can be positive with a probability set by `positive_prob`. If set to
+  `:irrational_sample!` the `weight` is negative if the decimal number of the
+  irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+  assigned a negative sign after the chosen `strides`. `strides` can be a single
+  number or an array. Default is `:no_sample`.
+- `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+  set to `:bernoulli_sample!`. Default is 0.5.
+- `irrational`: Irrational number whose decimals decide the sign of `weight`.
+  Default is `pi`.
+- `start`: Which place after the decimal point the counting starts for the `irrational`
+  sign counting. Default is 1.
+- `strides`: number of strides for assigning negative value to a weight. It can be an
+  integer or an array. Default is 2.
 
 ## Examples
 
 Default kwargs:
 
-```jldoctest forcon
-
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5)
+5×5 Matrix{Float32}:
+ -0.359729  0.0       0.0      0.0      0.0
+  0.0       1.08721   0.0      0.0      0.0
+  0.0       0.0      -0.41959  0.0      0.0
+  0.0       0.0       0.0      0.71891  0.0
+  0.0       0.0       0.0      0.0      0.420247
 ```
 
 Changing the weights magnitudes to a different unique value:
 
-```jldoctest forcon
-
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; weight=0.1)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+ 0.0  0.0  0.0  0.0  0.1
 ```
 
 Changing the weights signs with different sampling techniques:
 
-```jldoctest forcon
+```jldoctest diaginit
 
 ```
 
 Changing the weights to random numbers. Note that the length of the given array
 must be at least as long as the subdiagonal one wants to fill:
 
-```jldoctest forcon
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+ 0.0   0.0  0.0   0.0  0.1
 
+julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+ -0.1  0.0   0.0   0.0   0.0
+  0.0  0.1   0.0   0.0   0.0
+  0.0  0.0  -0.1   0.0   0.0
+  0.0  0.0   0.0  -0.1   0.0
+  0.0  0.0   0.0   0.0  -0.1
 ```
 
 Returning a sparse matrix:
 
-```jldoctest forcon
+```jldoctest diaginit
+julia> using SparseArrays
 
+julia> rr = diagonal_init(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+ -0.359729   ⋅         ⋅        ⋅        ⋅
+   ⋅        1.08721    ⋅        ⋅        ⋅
+   ⋅         ⋅       -0.41959   ⋅        ⋅
+   ⋅         ⋅         ⋅       0.71891   ⋅
+   ⋅         ⋅         ⋅        ⋅       0.420247
+```
+
+Returning a diagonal matrix:
+
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; return_diag=true)
+5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
+ -0.359729   ⋅         ⋅        ⋅        ⋅
+   ⋅        1.08721    ⋅        ⋅        ⋅
+   ⋅         ⋅       -0.41959   ⋅        ⋅
+   ⋅         ⋅         ⋅       0.71891   ⋅
+   ⋅         ⋅         ⋅        ⋅       0.420247
 ```
 
 """
 function diagonal_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight = T(0.1), return_sparse::Bool = false,
-        kwargs...
+        weight = randn, return_sparse::Bool = false,
+        return_diag::Bool = false, kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
-    return return_init_as(Val(return_sparse), reservoir_matrix)
+    if return_diag
+        return Diagonal(diag(reservoir_matrix))
+    else
+        return return_init_as(Val(return_sparse), reservoir_matrix)
+    end
 end
 
 ### fallbacks
@@ -2420,7 +2500,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
         :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init
+        :diagonal_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)

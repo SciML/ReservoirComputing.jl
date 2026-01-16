@@ -33,6 +33,7 @@ reservoir_inits = [
     simple_cycle,
     true_doublecycle,
     permutation_init,
+    diagonal_init,
 ]
 input_inits = [
     chebyshev_mapping,
