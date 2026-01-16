@@ -59,6 +59,8 @@ where full details and examples are provided.
     cycles (forward + backward) using Rodan-style cycle rules.
 - [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
     a permutation of the identity matrix.
+- [`diagonal_init`](inits/diagonal_init.md): Constructs a diagonal matrix.
+
 
 ## Building functions
 

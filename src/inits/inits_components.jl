@@ -703,6 +703,14 @@ function self_loop!(
     return reservoir_matrix
 end
 
+function self_loop!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
+        weight; kwargs...
+    )
+    weights = weight(rng, size(reservoir_matrix, 1))
+    return self_loop!(rng, reservoir_matrix, weights; kwargs...)
+end
+
 @doc raw"""
     permute_matrix!([rng], reservoir_matrix,
         permutation_matrix=nothing)
