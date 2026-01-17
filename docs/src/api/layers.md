@@ -21,6 +21,7 @@
 ## Echo State Networks
 
 ```@docs
+    EIESNCell
     ES2NCell
     ESNCell
     EuSNCell
