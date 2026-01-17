@@ -1,7 +1,7 @@
 @doc raw"""
-    NeuromorphicCell(in_dims => out_dims, [activation]; kwargs...)
+    EIESNCell(in_dims => out_dims, [activation]; kwargs...)
 
-Neuromorphic recurrent reservoir cell with separated excitatory and inhibitory
+Excitatory-Inhibitory Echo State Network (EIESN) cell.
 dynamics, inspired by biologically motivated excitation–inhibition balance.
 
 This cell implements the state update rule corresponding to **Model 1** from
@@ -62,7 +62,7 @@ Created by `initialstates(rng, cell)`:
   - The structure allows for future extensions (e.g., additive-input variants).
 """
 
-@concrete struct NeuromorphicCell <: AbstractReservoirRecurrentCell
+@concrete struct EIESNCell <: AbstractReservoirRecurrentCell
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
@@ -76,20 +76,20 @@ Created by `initialstates(rng, cell)`:
     
 end
 
-function NeuromorphicCell(
+function EIESNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast;
         a_ex = 0.9, a_inh = 0.5, b_ex = 1.0, b_inh = 1.0,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32
     )
-    return NeuromorphicCell(
+    return EIESNCell(
         activation, in_dims, out_dims, a_ex, a_inh, b_ex,
         b_inh, init_reservoir, init_input, init_state
     )
 end
 
-function initialparameters(rng::AbstractRNG, cell::NeuromorphicCell)
+function initialparameters(rng::AbstractRNG, cell::EIESNCell)
     ps = (
         input_matrix = cell.init_input(rng, cell.out_dims, cell.in_dims),
         reservoir_matrix = cell.init_reservoir(rng, cell.out_dims, cell.out_dims),
@@ -97,17 +97,17 @@ function initialparameters(rng::AbstractRNG, cell::NeuromorphicCell)
     return ps
 end
 
-function initialstates(rng::AbstractRNG, cell::NeuromorphicCell)
+function initialstates(rng::AbstractRNG, cell::EIESNCell)
     return (rng = sample_replicate(rng),)
 end
 
-function (cell::NeuromorphicCell)(inp::AbstractArray, ps, st::NamedTuple)
+function (cell::EIESNCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
     hidden_state = init_hidden_state(rng, cell, inp)
     return cell((inp, (hidden_state,)), ps, merge(st, (; rng)))
 end
 
-function (cell::NeuromorphicCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
+function (cell::EIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
     win = ps.input_matrix
     A = ps.reservoir_matrix
@@ -122,8 +122,8 @@ function (cell::NeuromorphicCell)((inp, (hidden_state,))::InputType, ps, st::Nam
     return (h_new, (h_new,)), st
 end
 
-function Base.show(io::IO, cell::NeuromorphicCell)
-    print(io, "NeuromorphicCell($(cell.in_dims) => $(cell.out_dims)")
+function Base.show(io::IO, cell::EIESNCell)
+    print(io, "EIESNCell($(cell.in_dims) => $(cell.out_dims)")
     cell.a_ex  != 0.9  && print(io, ", a_ex=$(cell.a_ex)")
     cell.a_inh != 0.5  && print(io, ", a_inh=$(cell.a_inh)")
     cell.b_ex  != 1.0  && print(io, ", b_ex=$(cell.b_ex)")

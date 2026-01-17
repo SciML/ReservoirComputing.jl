@@ -7,20 +7,20 @@ const _W_I = (rng, m, n) -> Matrix{Float32}(I, m, n)
 const _W_Z = (rng, m, n) -> zeros(Float32, m, n)
 const _Z32 = (rng, dims...) -> zeros(Float32, dims...)
 
-@testset "NeuromorphicCell: constructor & show" begin
-    cell = NeuromorphicCell(3 => 5; a_ex = 0.8)
+@testset "EIESNCell: constructor & show" begin
+    cell = EIESNCell(3 => 5; a_ex = 0.8)
     io = IOBuffer()
     show(io, cell)
     shown = String(take!(io))
 
-    @test occursin("NeuromorphicCell(3 => 5", shown)
+    @test occursin("EIESNCell(3 => 5", shown)
     @test occursin("a_ex=0.8", shown)
 end
 
 
-@testset "NeuromorphicCell: initialparameters shapes" begin
+@testset "EIESNCell: initialparameters shapes" begin
     rng = MersenneTwister(1)
-    cell = NeuromorphicCell(
+    cell = EIESNCell(
         3 => 4;
         init_input = _W_I,
         init_reservoir = _W_I
@@ -33,16 +33,16 @@ end
     @test size(ps.reservoir_matrix) == (4, 4)
 end
 
-@testset "NeuromorphicCell: initialstates carries RNG" begin
+@testset "EIESNCell: initialstates carries RNG" begin
     rng = MersenneTwister(2)
-    cell = NeuromorphicCell(2 => 2)
+    cell = EIESNCell(2 => 2)
     st = initialstates(rng, cell)
 
     @test haskey(st, :rng)
 end
 
-@testset "NeuromorphicCell: forward single step (vector)" begin
-    cell = NeuromorphicCell(
+@testset "EIESNCell: forward single step (vector)" begin
+    cell = EIESNCell(
         3 => 3,
         identity;
         init_input = _W_I,
@@ -59,8 +59,8 @@ end
     @test size(h1) == (3,)
 end
 
-@testset "NeuromorphicCell: forward batch input" begin
-    cell = NeuromorphicCell(
+@testset "EIESNCell: forward batch input" begin
+    cell = EIESNCell(
         3 => 3,
         identity;
         init_input = _W_I,
@@ -76,9 +76,9 @@ end
     @test size(Y) == (3, 2)
 end
 
-@testset "NeuromorphicCell: outer call initializes hidden state" begin
+@testset "EIESNCell: outer call initializes hidden state" begin
     rng = MersenneTwister(123)
-    cell = NeuromorphicCell(
+    cell = EIESNCell(
         2 => 2,
         identity;
         init_input = _W_I,
