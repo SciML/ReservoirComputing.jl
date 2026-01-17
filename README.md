@@ -33,16 +33,18 @@ to take a look at not yet released features.
 ReservoirComputing.jl provides layers, models, and functions to help build and train
 reservoir computing models. More specifically the software offers:
 
-- Base layers for reservoir computing model construction. Main layers provide high level
-  reservoir computing building blocks, such as `ReservoirComputer` and `ReservoirChain`.
-  Additional, lower level layers provide the building blocks for custom reservoir computers,
-  such as `LinearReadout`, `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`, and more
+- Base layers for reservoir computing model construction
+  such as `ReservoirComputer` and `ReservoirChain`.
+- Additional, lower level building blocks for custom reservoir computers,
+  such as `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`,
+  `MemoryESNCell`, `LinearReadout`, `SVMReadout`, and more
 - Fully built models:
     + Echo state networks `ESN`
     + Deep echo state networks `DeepESN`
     + Echo state networks with delayed states `DelayESN`
     + Edge of stability echo state networks `ES2N`
     + Euler state networks `EuSN`
+    + Reservoir memory networks `RMN`
     + Hybrid echo state networks `HybridESN`
     + Next generation reservoir computing `NGRC`
 - 15+ reservoir initializers and 5+ input layer initializers
@@ -118,14 +120,14 @@ If you use this library in your work, please cite:
 
 ```bibtex
 @article{martinuzzi2022reservoircomputing,
-  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
-  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  author = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
   journal = {Journal of Machine Learning Research},
-  year    = {2022},
-  volume  = {23},
-  number  = {288},
-  pages   = {1--8},
-  url     = {http://jmlr.org/papers/v23/22-0611.html}
+  year = {2022},
+  volume = {23},
+  number = {288},
+  pages = {1--8},
+  url = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
 
@@ -136,4 +138,4 @@ the [Google summer of code](https://summerofcode.withgoogle.com/)
 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/)
 and [RSC4Earth](https://rsc4earth.de/) for supporting further progress
 on the library. Current developments are possible thanks to research funding
-for Francesco M. provided by [MPIPKS](https://www.pks.mpg.de/)
+for Francesco M. provided by [MPIPKS](https://www.pks.mpg.de/).
