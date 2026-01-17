@@ -3,9 +3,6 @@
 
 Excitatory-Inhibitory Echo State Network (EIESN) cell [Panahi2025](@cite).
 
-This cell implements the state update rule corresponding to **Model 1** from
-Issue #353, where the input is applied inside the nonlinearity:
-
 ```math
 \mathbf{x}(t) =
 b_{\mathrm{ex}} \, \phi\!\left(\mathbf{W}_{\mathrm{in}} \mathbf{u}(t) + a_{\mathrm{ex}} \mathbf{A} \mathbf{x}(t-1)\right)
@@ -107,16 +104,17 @@ function (cell::EIESNCell)(inp::AbstractArray, ps, st::NamedTuple)
 end
 
 function (cell::EIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
+    T = eltype(inp)
     win = ps.input_matrix
     A = ps.reservoir_matrix
     win_inp = dense_bias(win, inp, nothing)
-    rec_ex = cell.exc_recurrence_scale .* (A * hidden_state)
-    rec_inh = cell.inh_recurrence_scale .* (A * hidden_state)
+    rec_ex = T(cell.exc_recurrence_scale) .* (A * hidden_state)
+    rec_inh = T(cell.inh_recurrence_scale) .* (A * hidden_state)
     z_ex = win_inp .+ rec_ex
     z_inh = win_inp .+ rec_inh
     h_ex = cell.activation.(z_ex)
     h_inh = cell.activation.(z_inh)
-    h_new = cell.exc_output_scale .* h_ex .- cell.inh_output_scale .* h_inh
+    h_new = T(cell.exc_output_scale) .* h_ex .- T(cell.inh_output_scale) .* h_inh
     return (h_new, (h_new,)), st
 end
 
