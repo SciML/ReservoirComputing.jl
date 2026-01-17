@@ -27,6 +27,7 @@ include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/eusn_cell.jl")
+include("layers/neuromorphic.jl")
 include("layers/svmreadout.jl")
 #general
 include("states.jl")
@@ -49,7 +50,7 @@ include("models/ngrc.jl")
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, ES2NCell, EuSNCell
+export ESNCell, ES2NCell, EuSNCell, NeuromorphicCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
