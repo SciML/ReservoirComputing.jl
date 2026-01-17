@@ -8,13 +8,13 @@ const _W_Z = (rng, m, n) -> zeros(Float32, m, n)
 const _Z32 = (rng, dims...) -> zeros(Float32, dims...)
 
 @testset "EIESNCell: constructor & show" begin
-    cell = EIESNCell(3 => 5; a_ex = 0.8)
+    cell = EIESNCell(3 => 5; exc_recurrence_scale = 0.8)
     io = IOBuffer()
     show(io, cell)
     shown = String(take!(io))
 
     @test occursin("EIESNCell(3 => 5", shown)
-    @test occursin("a_ex=0.8", shown)
+    @test occursin("exc_recurrence_scale=0.8", shown)
 end
 
 
@@ -50,7 +50,7 @@ end
         init_state = _Z32
     )
     ps = initialparameters(MersenneTwister(0), cell)
-    x  = Float32[1, 2, 3]
+    x = Float32[1, 2, 3]
     h0 = zeros(Float32, 3)
     (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
     y, (h1,) = y_tuple
@@ -68,7 +68,7 @@ end
         init_state = _Z32
     )
     ps = initialparameters(MersenneTwister(0), cell)
-    X  = Float32[1 2; 3 4; 5 6]
+    X = Float32[1 2; 3 4; 5 6]
     H0 = zeros(Float32, 3, 2)
     (Y_tuple, _) = cell((X, (H0,)), ps, NamedTuple())
     Y, _ = Y_tuple

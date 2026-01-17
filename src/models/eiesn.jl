@@ -1,14 +1,14 @@
 @doc raw"""
     EIESN(in_dims, res_dims, out_dims, activation=tanh_fast;
-        a_ex=0.9, a_inh=0.5, b_ex=1.0, b_inh=1.0,
+        exc_recurrence_scale=0.9, inh_recurrence_scale=0.5, exc_output_scale=1.0, inh_output_scale  =1.0,
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=randn32,
         readout_activation=identity,
         state_modifiers=(),
         kwargs...)
 
-Excitatory-Inhibitory Echo State Network (EIESN).
-This is a high-level wrapper that creates a Reservoir Computer using the [`EIESNCell`](@ref) with a trainable linear readout.
+Excitatory-Inhibitory Echo State Network (EIESN) [Panahi2025](@cite).
+
 
 ## Equations
 
@@ -30,10 +30,10 @@ This is a high-level wrapper that creates a Reservoir Computer using the [`EIESN
 
 ## Keyword arguments
 
-  - `a_ex`: Excitatory recurrence scaling factor. Default: `0.9`.
-  - `a_inh`: Inhibitory recurrence scaling factor. Default: `0.5`.
-  - `b_ex`: Excitatory output scaling factor. Default: `1.0`.
-  - `b_inh`: Inhibitory output scaling factor. Default: `1.0`.
+  - `exc_recurrence_scale`: Excitatory recurrence scaling factor. Default: `0.9`.
+  - `inh_recurrence_scale`: Inhibitory recurrence scaling factor. Default: `0.5`.
+  - `exc_output_scale`: Excitatory output scaling factor. Default: `1.0`.
+  - `inh_output_scale`: Inhibitory output scaling factor. Default: `1.0`.
   - `init_reservoir`: Initializer for the reservoir matrix. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix. Default: [`scaled_rand`](@ref).
   - `init_state`: Initializer used when an external state is not provided. Default: `randn32`.
@@ -71,15 +71,17 @@ This is a high-level wrapper that creates a Reservoir Computer using the [`EIESN
     readout
 end
 
-function EIESN(in_dims::IntegerType, res_dims::IntegerType,
+function EIESN(
+        in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh_fast;
         readout_activation = identity,
         state_modifiers = (),
-        kwargs...)
-    
+        kwargs...
+    )
+
     cell = StatefulLayer(EIESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
-                 Tuple(state_modifiers) : (state_modifiers,)
+        Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return EIESN(cell, mods, ro)

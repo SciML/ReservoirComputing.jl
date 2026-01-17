@@ -1,8 +1,7 @@
 @doc raw"""
     EIESNCell(in_dims => out_dims, [activation]; kwargs...)
 
-Excitatory-Inhibitory Echo State Network (EIESN) cell.
-dynamics, inspired by biologically motivated excitation–inhibition balance.
+Excitatory-Inhibitory Echo State Network (EIESN) cell [Panahi2025](@cite).
 
 This cell implements the state update rule corresponding to **Model 1** from
 Issue #353, where the input is applied inside the nonlinearity:
@@ -34,10 +33,10 @@ layer is intended to be trained, following the standard reservoir computing para
 
 ## Keyword arguments
 
-  - `a_ex`: Excitatory recurrence scaling factor ($a_{\mathrm{ex}}$). Default: `0.9`.
-  - `a_inh`: Inhibitory recurrence scaling factor ($a_{\mathrm{inh}}$). Default: `0.5`.
-  - `b_ex`: Excitatory output scaling factor ($b_{\mathrm{ex}}$). Default: `1.0`.
-  - `b_inh`: Inhibitory output scaling factor ($b_{\mathrm{inh}}$). Default: `1.0`.
+  - `exc_recurrence_scale`: Excitatory recurrence scaling factor ($a_{\mathrm{ex}}$). Default: `0.9`.
+  - `inh_recurrence_scale`: Inhibitory recurrence scaling factor ($a_{\mathrm{inh}}$). Default: `0.5`.
+  - `exc_output_scale`: Excitatory output scaling factor ($b_{\mathrm{ex}}$). Default: `1.0`.
+  - `inh_output_scale`: Inhibitory output scaling factor ($b_{\mathrm{inh}}$). Default: `1.0`.
   - `init_reservoir`: Initializer for the reservoir matrix $\mathbf{A}$. Default: `rand_sparse`.
   - `init_input`: Initializer for the input matrix $\mathbf{W}_{\mathrm{in}}$. Default: `scaled_rand`.
   - `init_state`: Initializer for the initial hidden state $\mathbf{x}(0)$. Default: `randn32`.
@@ -66,26 +65,26 @@ Created by `initialstates(rng, cell)`:
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
-    a_ex
-    a_inh
-    b_ex
-    b_inh
+    exc_recurrence_scale
+    inh_recurrence_scale
+    exc_output_scale
+    inh_output_scale
     init_reservoir
     init_input
     init_state
-    
+
 end
 
 function EIESNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast;
-        a_ex = 0.9, a_inh = 0.5, b_ex = 1.0, b_inh = 1.0,
+        exc_recurrence_scale = 0.9, inh_recurrence_scale = 0.5, exc_output_scale = 1.0, inh_output_scale = 1.0,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32
     )
     return EIESNCell(
-        activation, in_dims, out_dims, a_ex, a_inh, b_ex,
-        b_inh, init_reservoir, init_input, init_state
+        activation, in_dims, out_dims, exc_recurrence_scale, inh_recurrence_scale, exc_output_scale,
+        inh_output_scale, init_reservoir, init_input, init_state
     )
 end
 
@@ -108,25 +107,24 @@ function (cell::EIESNCell)(inp::AbstractArray, ps, st::NamedTuple)
 end
 
 function (cell::EIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = eltype(inp)
     win = ps.input_matrix
     A = ps.reservoir_matrix
     win_inp = dense_bias(win, inp, nothing)
-    rec_ex  = cell.a_ex  .* (A * hidden_state)
-    rec_inh = cell.a_inh .* (A * hidden_state)
-    z_ex = win_inp .+ rec_ex 
+    rec_ex = cell.exc_recurrence_scale .* (A * hidden_state)
+    rec_inh = cell.inh_recurrence_scale .* (A * hidden_state)
+    z_ex = win_inp .+ rec_ex
     z_inh = win_inp .+ rec_inh
     h_ex = cell.activation.(z_ex)
     h_inh = cell.activation.(z_inh)
-    h_new = cell.b_ex .* h_ex .- cell.b_inh .* h_inh
+    h_new = cell.exc_output_scale .* h_ex .- cell.inh_output_scale .* h_inh
     return (h_new, (h_new,)), st
 end
 
 function Base.show(io::IO, cell::EIESNCell)
     print(io, "EIESNCell($(cell.in_dims) => $(cell.out_dims)")
-    cell.a_ex  != 0.9  && print(io, ", a_ex=$(cell.a_ex)")
-    cell.a_inh != 0.5  && print(io, ", a_inh=$(cell.a_inh)")
-    cell.b_ex  != 1.0  && print(io, ", b_ex=$(cell.b_ex)")
-    cell.b_inh != 1.0  && print(io, ", b_inh=$(cell.b_inh)")
+    cell.exc_recurrence_scale != 0.9  && print(io, ", exc_recurrence_scale=$(cell.exc_recurrence_scale)")
+    cell.inh_recurrence_scale != 0.5  && print(io, ", inh_recurrence_scale=$(cell.inh_recurrence_scale)")
+    cell.exc_output_scale != 1.0  && print(io, ", exc_output_scale=$(cell.exc_output_scale)")
+    cell.inh_output_scale != 1.0  && print(io, ", inh_output_scale=$(cell.inh_output_scale)")
     return print(io, ")")
 end
