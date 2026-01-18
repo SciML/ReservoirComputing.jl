@@ -3,6 +3,7 @@
 ## Echo State Networks
 
 ```@docs
+    EIESN
     ES2N
     ESN
     EuSN
