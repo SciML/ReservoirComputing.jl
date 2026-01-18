@@ -1,5 +1,5 @@
 @doc raw"""
-        EIESNAdditiveCell(in_dims => out_dims, [activation]; kwargs...)
+        AdditiveEIESNCell(in_dims => out_dims, [activation]; kwargs...)
 
 Excitatory-Inhibitory Echo State Network (EIESN) cell with Additive Input [Panahi2025](@cite).
 
@@ -56,7 +56,7 @@ Created by `initialstates(rng, cell)`:
         state is not provided.
 """
 
-@concrete struct EIESNAdditiveCell <: AbstractReservoirRecurrentCell
+@concrete struct AdditiveEIESNCell <: AbstractReservoirRecurrentCell
     activation
     in_dims <: IntegerType
     out_dims <: IntegerType
@@ -71,7 +71,7 @@ Created by `initialstates(rng, cell)`:
 
 end
 
-function EIESNAdditiveCell(
+function AdditiveEIESNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast;
         exc_recurrence_scale = 0.9, inh_recurrence_scale = 0.5,
@@ -80,7 +80,7 @@ function EIESNAdditiveCell(
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32
     )
-    return EIESNAdditiveCell(
+    return AdditiveEIESNCell(
         activation, in_dims, out_dims,
         exc_recurrence_scale, inh_recurrence_scale,
         exc_output_scale, inh_output_scale, input_scale,
@@ -88,7 +88,7 @@ function EIESNAdditiveCell(
     )
 end
 
-function initialparameters(rng::AbstractRNG, cell::EIESNAdditiveCell)
+function initialparameters(rng::AbstractRNG, cell::AdditiveEIESNCell)
     ps = (
         input_matrix = cell.init_input(rng, cell.out_dims, cell.in_dims),
         reservoir_matrix = cell.init_reservoir(rng, cell.out_dims, cell.out_dims),
@@ -96,17 +96,17 @@ function initialparameters(rng::AbstractRNG, cell::EIESNAdditiveCell)
     return ps
 end
 
-function initialstates(rng::AbstractRNG, cell::EIESNAdditiveCell)
+function initialstates(rng::AbstractRNG, cell::AdditiveEIESNCell)
     return (rng = sample_replicate(rng),)
 end
 
-function (cell::EIESNAdditiveCell)(inp::AbstractArray, ps, st::NamedTuple)
+function (cell::AdditiveEIESNCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
     hidden_state = init_hidden_state(rng, cell, inp)
     return cell((inp, (hidden_state,)), ps, merge(st, (; rng)))
 end
 
-function (cell::EIESNAdditiveCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
+function (cell::AdditiveEIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
 
     win = ps.input_matrix
@@ -122,8 +122,8 @@ function (cell::EIESNAdditiveCell)((inp, (hidden_state,))::InputType, ps, st::Na
     return (h_new, (h_new,)), st
 end
 
-function Base.show(io::IO, cell::EIESNAdditiveCell)
-    print(io, "EIESNAdditiveCell($(cell.in_dims) => $(cell.out_dims)")
+function Base.show(io::IO, cell::AdditiveEIESNCell)
+    print(io, "AdditiveEIESNCell($(cell.in_dims) => $(cell.out_dims)")
     cell.exc_recurrence_scale != 0.9  && print(io, ", exc_recurrence_scale=$(cell.exc_recurrence_scale)")
     cell.inh_recurrence_scale != 0.5  && print(io, ", inh_recurrence_scale=$(cell.inh_recurrence_scale)")
     cell.exc_output_scale != 1.0  && print(io, ", exc_output_scale=$(cell.exc_output_scale)")

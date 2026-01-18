@@ -1,5 +1,5 @@
 @doc raw"""
-        EIESNAdditive(in_dims, res_dims, out_dims, activation=tanh_fast;
+        AdditiveEIESN(in_dims, res_dims, out_dims, activation=tanh_fast;
                 exc_recurrence_scale=0.9, inh_recurrence_scale=0.5, exc_output_scale=1.0, inh_output_scale=1.0,
                 input_scale=1.0,
                 init_reservoir=rand_sparse, init_input=scaled_rand,
@@ -9,9 +9,6 @@
                 kwargs...)
 
 Excitatory-Inhibitory Echo State Network (EIESN) with Additive Input [Panahi2025](@cite).
-
-This model wraps [`EIESNAdditiveCell`](@ref) (Model 2), where the input is added linearly
-outside the non-linearity.
 
 ## Equations
 
@@ -30,7 +27,7 @@ outside the non-linearity.
     - `in_dims`: Input dimension.
     - `res_dims`: Reservoir (hidden state) dimension.
     - `out_dims`: Output dimension.
-    - `activation`: Reservoir activation (for [`EIESNAdditiveCell`](@ref)). Default: `tanh_fast`.
+    - `activation`: Reservoir activation (for [`AdditiveEIESNCell`](@ref)). Default: `tanh_fast`.
 
 ## Keyword arguments
 
@@ -56,25 +53,25 @@ outside the non-linearity.
 
 ## Parameters
 
-    - `reservoir` — parameters of the internal [`EIESNAdditiveCell`](@ref).
+    - `reservoir` — parameters of the internal [`AdditiveEIESNCell`](@ref).
     - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
     - `readout` — parameters of [`LinearReadout`](@ref).
 
 ## States
 
-    - `reservoir` — states for the internal [`EIESNAdditiveCell`](@ref) (e.g. `rng`).
+    - `reservoir` — states for the internal [`AdditiveEIESNCell`](@ref) (e.g. `rng`).
     - `states_modifiers` — a `Tuple` with states for each modifier layer.
     - `readout` — states for [`LinearReadout`](@ref).
 """
 
-@concrete struct EIESNAdditive <:
+@concrete struct AdditiveEIESN <:
     AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function EIESNAdditive(
+function AdditiveEIESN(
         in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh_fast;
         readout_activation = identity,
@@ -82,16 +79,16 @@ function EIESNAdditive(
         kwargs...
     )
 
-    cell = StatefulLayer(EIESNAdditiveCell(in_dims => res_dims, activation; kwargs...))
+    cell = StatefulLayer(AdditiveEIESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-    return EIESNAdditive(cell, mods, ro)
+    return AdditiveEIESN(cell, mods, ro)
 end
 
-function Base.show(io::IO, esn::EIESNAdditive)
-    print(io, "EIESNAdditive(\n")
+function Base.show(io::IO, esn::AdditiveEIESN)
+    print(io, "AdditiveEIESN(\n")
 
     print(io, "    reservoir = ")
     show(io, esn.reservoir)

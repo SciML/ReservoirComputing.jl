@@ -7,20 +7,20 @@ const _W_I = (rng, m, n) -> Matrix{Float32}(I, m, n)
 const _W_Z = (rng, m, n) -> zeros(Float32, m, n)
 const _Z32 = (rng, dims...) -> zeros(Float32, dims...)
 
-@testset "EIESNAdditiveCell: constructor & show" begin
-    cell = EIESNAdditiveCell(3 => 5; exc_recurrence_scale = 0.8, input_scale = 0.5)
+@testset "AdditiveEIESNCell: constructor & show" begin
+    cell = AdditiveEIESNCell(3 => 5; exc_recurrence_scale = 0.8, input_scale = 0.5)
     io = IOBuffer()
     show(io, cell)
     shown = String(take!(io))
 
-    @test occursin("EIESNAdditiveCell(3 => 5", shown)
+    @test occursin("AdditiveEIESNCell(3 => 5", shown)
     @test occursin("exc_recurrence_scale=0.8", shown)
     @test occursin("input_scale=0.5", shown)
 end
 
-@testset "EIESNAdditiveCell: initialparameters shapes" begin
+@testset "AdditiveEIESNCell: initialparameters shapes" begin
     rng = MersenneTwister(1)
-    cell = EIESNAdditiveCell(
+    cell = AdditiveEIESNCell(
         3 => 4;
         init_input = _W_I,
         init_reservoir = _W_I
@@ -33,16 +33,16 @@ end
     @test size(ps.reservoir_matrix) == (4, 4)
 end
 
-@testset "EIESNAdditiveCell: initialstates carries RNG" begin
+@testset "AdditiveEIESNCell: initialstates carries RNG" begin
     rng = MersenneTwister(2)
-    cell = EIESNAdditiveCell(2 => 2)
+    cell = AdditiveEIESNCell(2 => 2)
     st = initialstates(rng, cell)
 
     @test haskey(st, :rng)
 end
 
-@testset "EIESNAdditiveCell: forward single step (vector)" begin
-    cell = EIESNAdditiveCell(
+@testset "AdditiveEIESNCell: forward single step (vector)" begin
+    cell = AdditiveEIESNCell(
         3 => 3,
         identity;
         init_input = _W_I,
@@ -59,8 +59,8 @@ end
     @test size(h1) == (3,)
 end
 
-@testset "EIESNAdditiveCell: forward batch input" begin
-    cell = EIESNAdditiveCell(
+@testset "AdditiveEIESNCell: forward batch input" begin
+    cell = AdditiveEIESNCell(
         3 => 3,
         identity;
         init_input = _W_I,
@@ -76,9 +76,9 @@ end
     @test size(Y) == (3, 2)
 end
 
-@testset "EIESNAdditiveCell: outer call initializes hidden state" begin
+@testset "AdditiveEIESNCell: outer call initializes hidden state" begin
     rng = MersenneTwister(123)
-    cell = EIESNAdditiveCell(
+    cell = AdditiveEIESNCell(
         2 => 2,
         identity;
         init_input = _W_I,

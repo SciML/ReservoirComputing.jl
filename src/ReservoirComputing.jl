@@ -27,7 +27,7 @@ include("layers/esn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/eusn_cell.jl")
 include("layers/eiesn_cell.jl")
-include("layers/eiesn_additive_cell.jl")
+include("layers/additive_eiesn_cell.jl")
 include("layers/svmreadout.jl")
 #general
 include("states.jl")
@@ -47,12 +47,12 @@ include("models/esn_hybrid.jl")
 include("models/eusn.jl")
 include("models/ngrc.jl")
 include("models/eiesn.jl")
-include("models/eiesn_additive.jl")
+include("models/additive_eiesn.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, ES2NCell, EuSNCell, EIESNCell, EIESNAdditiveCell
+export ESNCell, ES2NCell, EuSNCell, EIESNCell, AdditiveEIESNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
@@ -68,7 +68,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
 export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!, permute_matrix!
 export train, train!, predict, resetcarry!, polynomial_monomials
-export ES2N, ESN, EuSN, DeepESN, DelayESN, HybridESN, EIESN, EIESNAdditive
+export ES2N, ESN, EuSN, DeepESN, DelayESN, HybridESN, EIESN, AdditiveEIESN
 export NGRC
 #ext
 export RECACell, RECA

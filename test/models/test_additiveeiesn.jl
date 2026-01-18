@@ -9,17 +9,17 @@ const in_size = 3
 const out_size = 3
 const train_len = 50
 
-@testset "EIESNAdditive Integration Test" begin
+@testset "AdditiveEIESN Integration Test" begin
     rng = MersenneTwister(1)
 
-    model = EIESNAdditive(in_size, res_size, out_size)
+    model = AdditiveEIESN(in_size, res_size, out_size)
     @test model isa ReservoirComputing.AbstractReservoirComputer
     @test model isa ReservoirComputing.AbstractEchoStateNetwork
 
     io = IOBuffer()
     show(io, model)
     shown = String(take!(io))
-    @test occursin("EIESNAdditive", shown)
+    @test occursin("AdditiveEIESN", shown)
 
     ps = initialparameters(rng, model)
     st = initialstates(rng, model)

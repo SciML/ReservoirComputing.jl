@@ -4,7 +4,7 @@
 
 ```@docs
     EIESN
-    EIESNAdditive
+    AdditiveEIESN
     ES2N
     ESN
     EuSN
