@@ -57,7 +57,6 @@ Created by `initialstates(rng, cell)`:
   - This implementation corresponds to Model 1 described in Issue #353.
   - The structure allows for future extensions (e.g., additive-input variants).
 """
-
 @concrete struct EIESNCell <: AbstractReservoirRecurrentCell
     activation
     in_dims <: IntegerType

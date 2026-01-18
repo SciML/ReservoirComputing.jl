@@ -62,8 +62,6 @@ Excitatory-Inhibitory Echo State Network (EIESN) [Panahi2025](@cite).
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
-
-
 @concrete struct EIESN <:
     AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
