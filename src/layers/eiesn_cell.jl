@@ -51,11 +51,6 @@ Created by `initialstates(rng, cell)`:
 
   - `rng`: Replicated RNG used to initialize the hidden state when an external
     state is not provided.
-
-## Notes
-
-  - This implementation corresponds to Model 1 described in Issue #353.
-  - The structure allows for future extensions (e.g., additive-input variants).
 """
 @concrete struct EIESNCell <: AbstractReservoirRecurrentCell
     activation
