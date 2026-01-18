@@ -44,6 +44,7 @@ reservoir computing models. More specifically the software offers:
     + Edge of stability echo state networks `ES2N`
     + Euler state networks `EuSN`
     + Hybrid echo state networks `HybridESN`
+    + Neuromorphic reservoir computing `EIESN`
     + Next generation reservoir computing `NGRC`
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms

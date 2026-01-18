@@ -84,6 +84,7 @@ or `dev` the package.
     + Edge of stability echo state networks [`ES2N`](@ref)
     + Euler state networks [`EuSN`](@ref)
     + Hybrid echo state networks [`HybridESN`](@ref)
+    + Neuromorphic reservoir computing [`EIESN`](@ref)
     + Next generation reservoir computing [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
