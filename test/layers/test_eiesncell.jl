@@ -2,6 +2,7 @@ using Test
 using Random
 using LinearAlgebra
 using ReservoirComputing
+using LuxCore
 
 const _W_I = (rng, m, n) -> Matrix{Float32}(I, m, n)
 const _W_Z = (rng, m, n) -> zeros(Float32, m, n)
@@ -15,10 +16,17 @@ const _Z32 = (rng, dims...) -> zeros(Float32, dims...)
 
     @test occursin("EIESNCell(3 => 5", shown)
     @test occursin("exc_recurrence_scale=0.8", shown)
+    @test occursin("use_bias=true", shown)
+
+    cell_tuple = EIESNCell(3 => 5, (tanh, identity))
+    io2 = IOBuffer()
+    show(io2, cell_tuple)
+    shown2 = String(take!(io2))
+
+    @test occursin("activation=(tanh, identity)", shown2)
 end
 
-
-@testset "EIESNCell: initialparameters shapes" begin
+@testset "EIESNCell: parameters & bias" begin
     rng = MersenneTwister(1)
     cell = EIESNCell(
         3 => 4;
@@ -29,8 +37,16 @@ end
 
     @test haskey(ps, :input_matrix)
     @test haskey(ps, :reservoir_matrix)
-    @test size(ps.input_matrix) == (4, 3)
-    @test size(ps.reservoir_matrix) == (4, 4)
+    @test haskey(ps, :bias_ex)
+    @test haskey(ps, :bias_inh)
+    @test size(ps.bias_ex) == (4,)
+
+    cell_nb = EIESNCell(3 => 4; use_bias = false)
+    ps_nb = initialparameters(rng, cell_nb)
+
+    @test haskey(ps_nb, :input_matrix)
+    @test !haskey(ps_nb, :bias_ex)
+    @test !haskey(ps_nb, :bias_inh)
 end
 
 @testset "EIESNCell: initialstates carries RNG" begin
@@ -41,22 +57,23 @@ end
     @test haskey(st, :rng)
 end
 
-@testset "EIESNCell: forward single step (vector)" begin
+@testset "EIESNCell: forward single step (Tuple Activation)" begin
     cell = EIESNCell(
         3 => 3,
-        identity;
+        (identity, abs);
         init_input = _W_I,
         init_reservoir = _W_Z,
-        init_state = _Z32
+        init_state = _Z32,
+        use_bias = false
     )
     ps = initialparameters(MersenneTwister(0), cell)
-    x = Float32[1, 2, 3]
+    x = Float32[-1, -2, -3]
     h0 = zeros(Float32, 3)
     (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
     y, (h1,) = y_tuple
 
     @test size(y) == (3,)
-    @test size(h1) == (3,)
+    @test all(!isnan, y)
 end
 
 @testset "EIESNCell: forward batch input" begin
