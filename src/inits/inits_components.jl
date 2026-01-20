@@ -67,6 +67,18 @@ function check_res_size(dims::Integer...)
     end
 end
 
+function check_inf_nan(weights::AbstractMatrix)
+    has_nan = any(isnan, weights)
+    has_inf = any(isinf, weights)
+    if has_nan || has_inf
+        error("Created matrix contains invalid values (NaN=$has_nan, Inf=$has_inf)")
+    end
+
+    return nothing
+end
+
+
+
 ## scale spectral radius
 """
     scale_radius!(matrix, radius)
