@@ -1,12 +1,15 @@
 @doc raw"""
     AdditiveEIESNCell(in_dims => out_dims, [activation]; kwargs...)
 
-Excitatory-Inhibitory Echo State Network (EIESN) cell with additive input [Panahi2025](@cite).
+Excitatory-Inhibitory Echo State Network (EIESN) cell with additive input
+[Panahi2025](@cite).
 
 ```math
 \mathbf{x}(t) =
-b_{\mathrm{ex}} \, \phi_{\mathrm{ex}}\!\left(a_{\mathrm{ex}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{ex}}\right)
-- b_{\mathrm{inh}} \, \phi_{\mathrm{inh}}\!\left(a_{\mathrm{inh}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{inh}}\right)
+b_{\mathrm{ex}} \, \phi_{\mathrm{ex}}\!\left(
+  a_{\mathrm{ex}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{ex}}\right)
+- b_{\mathrm{inh}} \, \phi_{\mathrm{inh}}\!\left(
+  a_{\mathrm{inh}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{inh}}\right)
 + g\!\left(\mathbf{W}_{\mathrm{in}} \mathbf{u}(t) + \mathbf{\beta}_{\mathrm{in}}\right)
 ```
 
@@ -16,11 +19,13 @@ b_{\mathrm{ex}} \, \phi_{\mathrm{ex}}\!\left(a_{\mathrm{ex}} \mathbf{A} \mathbf{
   - $\mathbf{u}(t)$: Input at time $t$.
   - $\mathbf{A}$: Reservoir (recurrent) matrix.
   - $\mathbf{W}_{\mathrm{in}}$: Input matrix.
-  - $\mathbf{\beta}_{\mathrm{ex}}, \mathbf{\beta}_{\mathrm{inh}}, \mathbf{\beta}_{\mathrm{in}}$: Bias vectors (optional).
+  - $\mathbf{\beta}_{\mathrm{ex}}, \mathbf{\beta}_{\mathrm{inh}},
+    \mathbf{\beta}_{\mathrm{in}}$: Bias vectors (optional).
   - $a_{\mathrm{ex}}, a_{\mathrm{inh}}$: Excitatory and inhibitory recurrence scales.
   - $b_{\mathrm{ex}}, b_{\mathrm{inh}}$: Excitatory and inhibitory output scales.
   - $g$: Input activation function.
-  - $\phi_{\mathrm{ex}}, \phi_{\mathrm{inh}}$: Excitatory and inhibitory activation functions.
+  - $\phi_{\mathrm{ex}}, \phi_{\mathrm{inh}}$: Excitatory and inhibitory activation
+    functions.
 
 The reservoir parameters are fixed after initialization; only the readout
 layer is intended to be trained, following the standard reservoir computing paradigm.
@@ -29,20 +34,31 @@ layer is intended to be trained, following the standard reservoir computing para
 
   - `in_dims`: Input dimension.
   - `out_dims`: Reservoir (hidden state) dimension.
-  - `activation`: Activation function. Can be a single function (applied to both terms) or a `Tuple` of two functions $(\phi_{\mathrm{ex}}, \phi_{\mathrm{inh}})$. Default: `tanh_fast`.
+  - `activation`: Activation function. Can be a single function (applied to
+    both terms) or a `Tuple` of two functions $(\phi_{\mathrm{ex}},
+    \phi_{\mathrm{inh}})$. Default: `tanh_fast`.
 
 ## Keyword arguments
 
-  - `input_activation`: The non-linear function $g$ applied to the input term. Default: `identity`.
-  - `use_bias`: Boolean to enable/disable bias vectors ($\mathbf{\beta}$). Default: `true`.
-  - `exc_recurrence_scale`: Excitatory recurrence scaling factor ($a_{\mathrm{ex}}$). Default: `0.9`.
-  - `inh_recurrence_scale`: Inhibitory recurrence scaling factor ($a_{\mathrm{inh}}$). Default: `0.5`.
-  - `exc_output_scale`: Excitatory output scaling factor ($b_{\mathrm{ex}}$). Default: `1.0`.
-  - `inh_output_scale`: Inhibitory output scaling factor ($b_{\mathrm{inh}}$). Default: `1.0`.
-  - `init_reservoir`: Initializer for the reservoir matrix $\mathbf{A}$. Default: `rand_sparse`.
-  - `init_input`: Initializer for the input matrix $\mathbf{W}_{\mathrm{in}}$. Default: `scaled_rand`.
+  - `input_activation`: The non-linear function $g$ applied to the input
+    term. Default: `identity`.
+  - `use_bias`: Boolean to enable/disable bias vectors ($\mathbf{\beta}$).
+    Default: `true`.
+  - `exc_recurrence_scale`: Excitatory recurrence scaling factor
+    ($a_{\mathrm{ex}}$). Default: `0.9`.
+  - `inh_recurrence_scale`: Inhibitory recurrence scaling factor
+    ($a_{\mathrm{inh}}$). Default: `0.5`.
+  - `exc_output_scale`: Excitatory output scaling factor ($b_{\mathrm{ex}}$).
+    Default: `1.0`.
+  - `inh_output_scale`: Inhibitory output scaling factor ($b_{\mathrm{inh}}$).
+    Default: `1.0`.
+  - `init_reservoir`: Initializer for the reservoir matrix $\mathbf{A}$.
+    Default: `rand_sparse`.
+  - `init_input`: Initializer for the input matrix $\mathbf{W}_{\mathrm{in}}$.
+    Default: `scaled_rand`.
   - `init_bias`: Initializer for the bias vectors. Default: `zeros32`.
-  - `init_state`: Initializer for the initial hidden state $\mathbf{x}(0)$. Default: `randn32`.
+  - `init_state`: Initializer for the initial hidden state $\mathbf{x}(0)$.
+    Default: `randn32`.
 
 ## Parameters
 
@@ -50,7 +66,8 @@ Created by `initialparameters(rng, cell)`:
 
   - `input_matrix :: (out_dims × in_dims)` — $\mathbf{W}_{\mathrm{in}}$.
   - `reservoir_matrix :: (out_dims × out_dims)` — $\mathbf{A}$.
-  - `bias_ex`, `bias_inh`, `bias_in` — Bias vectors (present only if `use_bias=true`).
+  - `bias_ex`, `bias_inh`, `bias_in` — Bias vectors (present only if
+    `use_bias=true`).
 
 ## States
 
@@ -116,25 +133,19 @@ end
 function (cell::AdditiveEIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
 
-    if known(cell.use_bias)
-        b_ex = ps.bias_ex
-        b_inh = ps.bias_inh
-        b_in = ps.bias_in
-    else
-        b_ex = nothing
-        b_inh = nothing
-        b_in = nothing
-    end
+    b_ex = safe_getproperty(ps, Val(:bias_ex))
+    b_inh = safe_getproperty(ps, Val(:bias_inh))
+    b_in = safe_getproperty(ps, Val(:bias_in))
     win_out = dense_bias(ps.input_matrix, inp, b_in)
     g_out = cell.input_activation.(win_out)
     Ax = ps.reservoir_matrix * hidden_state
     arg_ex = T(cell.exc_recurrence_scale) .* Ax
-    if known(cell.use_bias)
+    if b_ex !== nothing
         arg_ex = arg_ex .+ b_ex
     end
     h_ex = cell.activation[1].(arg_ex)
     arg_inh = T(cell.inh_recurrence_scale) .* Ax
-    if known(cell.use_bias)
+    if b_inh !== nothing
         arg_inh = arg_inh .+ b_inh
     end
     h_inh = cell.activation[2].(arg_inh)
