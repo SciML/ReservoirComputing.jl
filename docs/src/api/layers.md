@@ -22,6 +22,7 @@
 
 ```@docs
     EIESNCell
+    AdditiveEIESNCell
     ES2NCell
     ESNCell
     EuSNCell
