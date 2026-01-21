@@ -78,7 +78,6 @@ function check_inf_nan(weights::AbstractMatrix)
 end
 
 
-
 ## scale spectral radius
 """
     scale_radius!(matrix, radius)
