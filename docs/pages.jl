@@ -1,6 +1,6 @@
 pages = [
     "ReservoirComputing.jl" => "index.md",
-    "Getting Started with ReservoirComputing.jl" => "getting_started.md",
+    "Getting Started with ReservoirComputing.jl" => "tutorials/getting_started.md",
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",
         "Chaos forecasting with an ESN" => "tutorials/lorenz_basic.md",
@@ -9,6 +9,7 @@ pages = [
         "Deep Echo State Networks" => "tutorials/deep_esn.md",
         #"Hybrid Echo State Networks" => "tutorials/hybrid.md",
         "Reservoir Computing with Cellular Automata" => "tutorials/reca.md",
+        "Saving and loading models" => "tutorials/saveload.md",
     ],
     "Examples" => Any[
         "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
