@@ -3,17 +3,16 @@
                   num_delays=1, stride=1, leak_coefficient=1.0,
                   init_reservoir=rand_sparse, init_input=scaled_rand,
                   init_bias=zeros32, init_state=randn32, use_bias=false,
-                  input_modifiers=(), readout_activation=identity)
+                  states_modifiers=(), readout_activation=identity)
 
 Echo State Network with input delays [Fleddermann2025](@cite).
 
 `InputDelayESN` composes:
-  1) a [`DelayLayer`](@ref) applied to the input signal to build
+  1) an internal [`DelayLayer`](@ref) applied to the input signal to build
      tapped-delay features,
-  2) zero or more additional `input_modifiers` applied after the delay,
-  3) a stateful [`ESNCell`](@ref) (reservoir) receiving the augmented input,
-     and
-  4) a [`LinearReadout`](@ref) mapping the reservoir state to outputs.
+  2) a stateful [`ESNCell`](@ref) (reservoir) receiving the augmented input,
+  3) zero or more `states_modifiers` applied to the reservoir state, and
+  4) a [`LinearReadout`](@ref) mapping the modified reservoir state to outputs.
 
 At each time step, the input `u(t)` is expanded into a delay-coordinate
 vector that stacks the current and `num_delays` past inputs. This augmented
@@ -28,12 +27,12 @@ signal is then used to update the reservoir state `x(t)`.
     \vdots \\
     \mathbf{u}\!\bigl(t-Ds\bigr) \end{bmatrix},
         \qquad D=\text{num\_delays},\ \ s=\text{stride}, \\
-    \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{u}_{\mathrm{d}}(t)\right), \\
     \mathbf{x}(t) &= (1-\alpha)\, \mathbf{x}(t-1) + \alpha\, \phi\!\left(
-        \mathbf{W}_{\text{in}}\, \mathbf{z}(t) + \mathbf{W}_r\,
+        \mathbf{W}_{\text{in}}\, \mathbf{u}_{\mathrm{d}}(t) + \mathbf{W}_r\,
         \mathbf{x}(t-1) + \mathbf{b} \right), \\
+    \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right), \\
     \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{\text{out}}\,
-        \mathbf{x}(t) + \mathbf{b}_{\text{out}} \right)
+        \mathbf{z}(t) + \mathbf{b}_{\text{out}} \right)
 \end{aligned}
 ```
 
@@ -68,9 +67,10 @@ Delay expansion (on input):
 
 Composition:
 
-  - `input_modifiers`: A layer or collection of layers applied to the delayed
-    input features before entering the reservoir. Accepts a single layer,
-    an `AbstractVector`, or a `Tuple`. Default: empty `()`.
+  - `states_modifiers`: A layer or collection of layers applied to the
+    reservoir state before the readout. These run **after** the internal
+    `DelayLayer`. Accepts a single layer, an `AbstractVector`, or a `Tuple`.
+    Default: empty `()`.
   - `readout_activation`: Activation for the linear readout. Default:
     `identity`.
 
@@ -85,65 +85,76 @@ Composition:
 
 ## Parameters
 
-  - `input_modifiers` — a `Tuple` with parameters for:
-      1. the internal [`DelayLayer`](@ref), and
-      2. any user-provided modifier layers (may be empty).
+  - `input_modifiers` — parameters for the internal [`DelayLayer`](@ref).
   - `reservoir` — parameters of the internal [`ESNCell`](@ref), including:
       - `input_matrix :: (res_dims × ((num_delays + 1) * in_dims))` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
+  - `states_modifiers` — a `Tuple` with parameters for the user-provided
+    modifier layers (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
       - `weight :: (out_dims × res_dims)` — `W_out`
       - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
 
 ## States
 
-  - `input_modifiers` — a `Tuple` with states for the internal `DelayLayer`
-    (its delay buffer and clock) and each additional modifier layer.
+  - `input_modifiers` — state for the internal [`DelayLayer`](@ref) (its
+    delay buffer and clock).
   - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng`).
+  - `states_modifiers` — states for the user-provided modifier layers.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
 @concrete struct InputDelayESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{
+        (
+            :input_modifiers, :reservoir, :states_modifiers,
+            :readout,
+        ),
+    }
     input_modifiers
     reservoir
+    states_modifiers
     readout
 end
 
 function InputDelayESN(
-        in_dims::IntegerType, res_dims::Int, out_dims::IntegerType, activation = tanh;
+        in_dims::IntegerType,
+        res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
-        input_modifiers = (), kwargs...
+        states_modifiers = (), kwargs...
     )
-    delay = DelayLayer(in_dims; num_delays = num_delays, stride = stride)
-    input_mods_tuple = input_modifiers isa Tuple || input_modifiers isa AbstractVector ?
-        (delay, input_modifiers...) : (delay, input_modifiers)
-    input_mods = _wrap_layers(input_mods_tuple)
+    input_mods = _wrap_layers((DelayLayer(in_dims; num_delays = num_delays, stride = stride),))
     augmented_in_dims = in_dims * (num_delays + 1)
     cell = StatefulLayer(ESNCell(augmented_in_dims => res_dims, activation; kwargs...))
+    mods_tuple = states_modifiers isa Tuple || states_modifiers isa AbstractVector ?
+        Tuple(states_modifiers) : (states_modifiers,)
+    st_mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-
-    return InputDelayESN(input_mods, cell, ro)
+    return InputDelayESN(input_mods, cell, st_mods, ro)
 end
 
 function Base.show(io::IO, esn::InputDelayESN)
     print(io, "InputDelayESN(\n")
 
     print(io, "    input_modifiers = ")
-    if isempty(esn.input_modifiers)
+    show(io, esn.input_modifiers)
+    print(io, ",\n")
+
+    print(io, "    reservoir = ")
+    show(io, esn.reservoir)
+    print(io, ",\n")
+
+    print(io, "    states_modifiers = ")
+    if isempty(esn.states_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.input_modifiers)
+        for (i, m) in enumerate(esn.states_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end
         print(io, ")")
     end
-    print(io, ",\n")
-
-    print(io, "    reservoir = ")
-    show(io, esn.reservoir)
     print(io, ",\n")
 
     print(io, "    readout = ")

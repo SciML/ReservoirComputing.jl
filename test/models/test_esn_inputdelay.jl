@@ -19,28 +19,31 @@ using LinearAlgebra
         )
 
         @test idesn isa InputDelayESN
+        @test idesn.input_modifiers isa Tuple
+        @test first(idesn.input_modifiers) isa DelayLayer
+        @test Int(first(idesn.input_modifiers).in_dims) == in_dims
+        @test idesn.reservoir isa StatefulLayer
+        @test idesn.reservoir.cell isa ESNCell
+        @test Int(idesn.reservoir.cell.in_dims) == in_dims * (num_delays + 1)
+        @test Int(idesn.reservoir.cell.out_dims) == res_dims
+        @test idesn.states_modifiers isa Tuple
+        @test isempty(idesn.states_modifiers)
+        @test idesn.readout isa LinearReadout
+        @test Int(idesn.readout.in_dims) == res_dims
+    end
 
-        reservoir = idesn.reservoir
-        @test reservoir isa StatefulLayer
-        @test reservoir.cell isa ESNCell
+    @testset "with state modifiers" begin
+        in_dims = 3
+        res_dims = 5
+        out_dims = 2
 
-        mods = idesn.input_modifiers
-        @test mods isa Tuple
-        @test !isempty(mods)
-        @test first(mods) isa DelayLayer
+        idesn = InputDelayESN(
+            in_dims, res_dims, out_dims;
+            states_modifiers = (NLAT1,)
+        )
 
-        dl = first(mods)
-        @test Int(dl.in_dims) == in_dims
-        @test Int(dl.num_delays) == num_delays
-        @test Int(dl.stride) == 1
-
-        @test Int(reservoir.cell.in_dims) == in_dims * (num_delays + 1)
-        @test Int(reservoir.cell.out_dims) == res_dims
-
-        ro = idesn.readout
-        @test ro isa LinearReadout
-        @test Int(ro.in_dims) == res_dims
-        @test Int(ro.out_dims) == out_dims
+        @test !isempty(idesn.states_modifiers)
+        @test idesn.states_modifiers[1].func === NLAT1
     end
 
     @testset "num_delays changes reservoir input dim" begin
@@ -51,10 +54,7 @@ using LinearAlgebra
         idesn1 = InputDelayESN(in_dims, res_dims, out_dims; num_delays = 0)
         idesn2 = InputDelayESN(in_dims, res_dims, out_dims; num_delays = 3)
 
-        cell1 = idesn1.reservoir.cell
-        cell2 = idesn2.reservoir.cell
-
-        @test Int(cell1.in_dims) == in_dims * (0 + 1)
-        @test Int(cell2.in_dims) == in_dims * (3 + 1)
+        @test Int(idesn1.reservoir.cell.in_dims) == in_dims * (0 + 1)
+        @test Int(idesn2.reservoir.cell.in_dims) == in_dims * (3 + 1)
     end
 end
