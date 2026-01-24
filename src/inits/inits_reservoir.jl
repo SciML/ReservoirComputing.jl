@@ -78,6 +78,7 @@ function rand_sparse(
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
+    check_inf_nan(reservoir_matrix)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -199,6 +200,7 @@ function pseudo_svd(
         reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
         tmp = get_sparsity(reservoir_matrix, res_dim)
     end
+    check_inf_nan(reservoir_matrix)
 
     if return_diag
         return Diagonal(diag(reservoir_matrix))
@@ -344,6 +346,7 @@ function chaotic_init(
     if current_spectral_radius != 0
         reservoir_matrix .*= radius / current_spectral_radius
     end
+    check_inf_nan(reservoir_matrix)
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -447,6 +450,8 @@ function low_connectivity(
         )
     end
     scale_radius!(reservoir_matrix, radius)
+    check_inf_nan(reservoir_matrix)
+
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
