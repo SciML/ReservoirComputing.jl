@@ -85,7 +85,7 @@ Composition:
 
 ## Parameters
 
-  - `input_modifiers` — parameters for the internal [`DelayLayer`](@ref).
+  - `input_delay` — parameters for the internal [`DelayLayer`](@ref).
   - `reservoir` — parameters of the internal [`ESNCell`](@ref), including:
       - `input_matrix :: (res_dims × ((num_delays + 1) * in_dims))` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
@@ -98,7 +98,7 @@ Composition:
 
 ## States
 
-  - `input_modifiers` — state for the internal [`DelayLayer`](@ref) (its
+  - `input_delay` — state for the internal [`DelayLayer`](@ref) (its
     delay buffer and clock).
   - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng`).
   - `states_modifiers` — states for the user-provided modifier layers.
@@ -107,11 +107,11 @@ Composition:
 @concrete struct InputDelayESN <:
     AbstractEchoStateNetwork{
         (
-            :input_modifiers, :reservoir, :states_modifiers,
+            :input_delay, :reservoir, :states_modifiers,
             :readout,
         ),
     }
-    input_modifiers
+    input_delay
     reservoir
     states_modifiers
     readout
@@ -123,7 +123,7 @@ function InputDelayESN(
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
         states_modifiers = (), kwargs...
     )
-    input_mods = _wrap_layers((DelayLayer(in_dims; num_delays = num_delays, stride = stride),))
+    input_mods = DelayLayer(in_dims; num_delays = num_delays, stride = stride)
     augmented_in_dims = in_dims * (num_delays + 1)
     cell = StatefulLayer(ESNCell(augmented_in_dims => res_dims, activation; kwargs...))
     mods_tuple = states_modifiers isa Tuple || states_modifiers isa AbstractVector ?
@@ -136,8 +136,8 @@ end
 function Base.show(io::IO, esn::InputDelayESN)
     print(io, "InputDelayESN(\n")
 
-    print(io, "    input_modifiers = ")
-    show(io, esn.input_modifiers)
+    print(io, "    input_delay = ")
+    show(io, esn.input_delay)
     print(io, ",\n")
 
     print(io, "    reservoir = ")

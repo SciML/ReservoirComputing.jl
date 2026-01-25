@@ -19,9 +19,8 @@ using LinearAlgebra
         )
 
         @test idesn isa InputDelayESN
-        @test idesn.input_modifiers isa Tuple
-        @test first(idesn.input_modifiers) isa DelayLayer
-        @test Int(first(idesn.input_modifiers).in_dims) == in_dims
+        @test idesn.input_delay isa DelayLayer
+        @test Int(idesn.input_delay.in_dims) == in_dims
         @test idesn.reservoir isa StatefulLayer
         @test idesn.reservoir.cell isa ESNCell
         @test Int(idesn.reservoir.cell.in_dims) == in_dims * (num_delays + 1)
