@@ -1,30 +1,30 @@
 @doc raw"""
-    EIESN(in_dims, res_dims, out_dims, activation=tanh_fast;
-        use_bias=true,
-        exc_recurrence_scale=0.9, inh_recurrence_scale=0.5, exc_output_scale=1.0,
-        inh_output_scale=1.0, init_reservoir=rand_sparse,
-        init_input=scaled_rand, init_bias=zeros32,
-        init_state=randn32,
-        readout_activation=identity,
-        state_modifiers=(),
-        kwargs...)
+    AdditiveEIESN(in_dims, res_dims, out_dims, activation=tanh_fast;
+            input_activation=identity,
+            use_bias=true,
+            exc_recurrence_scale=0.9, inh_recurrence_scale=0.5, exc_output_scale=1.0,
+            inh_output_scale=1.0,init_reservoir=rand_sparse,
+            init_input=scaled_rand, init_bias=zeros32,
+            init_state=randn32,
+            readout_activation=identity,
+            state_modifiers=(),
+            kwargs...)
 
-Excitatory-Inhibitory Echo State Network (EIESN) [Panahi2025](@cite).
+Excitatory-Inhibitory Echo State Network (EIESN) with additive input [Panahi2025](@cite).
 
-This model wraps [`EIESNCell`](@ref).
+This model wraps [`AdditiveEIESNCell`](@ref), where the input is added linearly
+outside the non-linearity with optional bias terms.
 
 ## Equations
 
 ```math
 \begin{aligned}
     \mathbf{x}(t) &= b_{\mathrm{ex}} \, \phi_{\mathrm{ex}}\!\left(
-      \mathbf{W}_{\mathrm{in}} \mathbf{u}(t) +
-      a_{\mathrm{ex}} \mathbf{A} \mathbf{x}(t-1) +
-      \mathbf{\beta}_{\mathrm{ex}}\right)
+      a_{\mathrm{ex}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{ex}}\right)
     - b_{\mathrm{inh}} \, \phi_{\mathrm{inh}}\!\left(
-      \mathbf{W}_{\mathrm{in}} \mathbf{u}(t) +
-      a_{\mathrm{inh}} \mathbf{A} \mathbf{x}(t-1) +
-      \mathbf{\beta}_{\mathrm{inh}}\right) \\
+      a_{\mathrm{inh}} \mathbf{A} \mathbf{x}(t-1) + \mathbf{\beta}_{\mathrm{inh}}\right)
+    + g\!\left(
+      \mathbf{W}_{\mathrm{in}} \mathbf{u}(t) + \mathbf{\beta}_{\mathrm{in}}\right) \\
     \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
     \mathbf{y}(t) &= \rho\!\left(
       \mathbf{W}_{\text{out}}\, \mathbf{z}(t) + \mathbf{b}_{\text{out}} \right)
@@ -36,14 +36,15 @@ This model wraps [`EIESNCell`](@ref).
   - `in_dims`: Input dimension.
   - `res_dims`: Reservoir (hidden state) dimension.
   - `out_dims`: Output dimension.
-  - `activation`: Reservoir activation (for [`EIESNCell`](@ref)). Can be a
-    single function or a `Tuple` `(excitatory, inhibitory)`. Default:
+  - `activation`: Reservoir activation (for [`AdditiveEIESNCell`](@ref)). Can
+    be a single function or a `Tuple` `(excitatory, inhibitory)`. Default:
     `tanh_fast`.
 
 ## Keyword arguments
 
-  - `use_bias`: Enable/disable bias vectors inside the reservoir. Default:
-    `true`.
+  - `input_activation`: The non-linear function $g$ applied to the input.
+    Default: `identity`.
+  - `use_bias`: Enable/disable bias vectors. Default: `true`.
   - `exc_recurrence_scale`: Excitatory recurrence scaling factor. Default:
     `0.9`.
   - `inh_recurrence_scale`: Inhibitory recurrence scaling factor. Default:
@@ -72,24 +73,24 @@ This model wraps [`EIESNCell`](@ref).
 
 ## Parameters
 
-  - `reservoir` — parameters of the internal [`EIESNCell`](@ref).
+  - `reservoir` — parameters of the internal [`AdditiveEIESNCell`](@ref).
   - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref).
 
 ## States
 
-  - `reservoir` — states for the internal [`EIESNCell`](@ref) (e.g. `rng`).
+  - `reservoir` — states for the internal [`AdditiveEIESNCell`](@ref) (e.g. `rng`).
   - `states_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 """
-@concrete struct EIESN <:
+@concrete struct AdditiveEIESN <:
     AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
     reservoir
     states_modifiers
     readout
 end
 
-function EIESN(
+function AdditiveEIESN(
         in_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh_fast;
         readout_activation = identity,
@@ -97,19 +98,21 @@ function EIESN(
         kwargs...
     )
 
-    cell = StatefulLayer(EIESNCell(in_dims => res_dims, activation; kwargs...))
+    cell = StatefulLayer(AdditiveEIESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
-    return EIESN(cell, mods, ro)
+    return AdditiveEIESN(cell, mods, ro)
 end
 
-function Base.show(io::IO, esn::EIESN)
-    print(io, "EIESN(\n")
+function Base.show(io::IO, esn::AdditiveEIESN)
+    print(io, "AdditiveEIESN(\n")
 
     print(io, "    reservoir = ")
     show(io, esn.reservoir)
+
+
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")

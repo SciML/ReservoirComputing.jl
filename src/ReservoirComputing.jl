@@ -27,6 +27,7 @@ include("layers/esn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/eusn_cell.jl")
 include("layers/eiesn_cell.jl")
+include("layers/additive_eiesn_cell.jl")
 include("layers/svmreadout.jl")
 #general
 include("states.jl")
@@ -47,11 +48,12 @@ include("models/esn_hybrid.jl")
 include("models/eusn.jl")
 include("models/ngrc.jl")
 include("models/eiesn.jl")
+include("models/additive_eiesn.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, ES2NCell, EuSNCell, EIESNCell
+export ESNCell, ES2NCell, EuSNCell, EIESNCell, AdditiveEIESNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
 export SVMReadout
