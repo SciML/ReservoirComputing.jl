@@ -93,7 +93,8 @@ end
 
 Trains a given reservoir computing by creating the reservoir states from `train_data`,
 and then fiting the readout layer using `target_data` as target.
-The learned weights/layer are written into `ps`.
+The learned weights/layer are written into `ps`, while the reservoir states are written
+in `st`.
 
 ## Arguments
 
@@ -132,12 +133,13 @@ function train!(
         train_method = StandardRidge(0.0);
         washout::Int = 0, return_states::Bool = false, kwargs...
     )
-    states, st_after = collectstates(rc, train_data, ps, st)
+    raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
-        (states, target_data)
+        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        (raw_states, target_data)
     output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
+    st_after = merge(st_after, (; :states => states_wo))
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
