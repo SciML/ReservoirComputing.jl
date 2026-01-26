@@ -10,6 +10,7 @@
     EuSN
     DeepESN
     DelayESN
+    StateDelayESN
     InputDelayESN
     HybridESN
 ```
