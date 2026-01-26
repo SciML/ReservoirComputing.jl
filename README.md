@@ -33,19 +33,20 @@ to take a look at not yet released features.
 ReservoirComputing.jl provides layers, models, and functions to help build and train
 reservoir computing models. More specifically the software offers:
 
-- Base layers for reservoir computing model construction. Main layers provide high level
-  reservoir computing building blocks, such as `ReservoirComputer` and `ReservoirChain`.
-  Additional, lower level layers provide the building blocks for custom reservoir computers,
-  such as `LinearReadout`, `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`, and more
+- Base layers for reservoir computing model construction
+  such as `ReservoirComputer` and `ReservoirChain`.
+- Additional, lower level building blocks for custom reservoir computers,
+  such as `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`,
+  `MemoryESNCell`, `LinearReadout`, `SVMReadout`, and more
 - Fully built models:
-    + Echo state networks `ESN`
-    + Deep echo state networks `DeepESN`
-    + Echo state networks with delayed states `DelayESN`
-    + Edge of stability echo state networks `ES2N`
-    + Euler state networks `EuSN`
-    + Hybrid echo state networks `HybridESN`
-    + Neuromorphic reservoir computing `EIESN`
-    + Next generation reservoir computing `NGRC`
+    + [Echo state networks](https://doi.org/10.1126/science.1091277) `ESN`
+    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepESN`
+    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250) `DelayESN`/`InputDelayESN`
+    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) `ES2N`
+    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) `EuSN`
+    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) `HybridESN`
+    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) `EIESN`/`AdditiveEIESN`
+    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
@@ -119,14 +120,14 @@ If you use this library in your work, please cite:
 
 ```bibtex
 @article{martinuzzi2022reservoircomputing,
-  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
-  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  author = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
   journal = {Journal of Machine Learning Research},
-  year    = {2022},
-  volume  = {23},
-  number  = {288},
-  pages   = {1--8},
-  url     = {http://jmlr.org/papers/v23/22-0611.html}
+  year = {2022},
+  volume = {23},
+  number = {288},
+  pages = {1--8},
+  url = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
 
@@ -135,6 +136,6 @@ If you use this library in your work, please cite:
 This project was possible thanks to initial funding through
 the [Google summer of code](https://summerofcode.withgoogle.com/)
 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/)
-and [RSC4Earth](https://rsc4earth.de/) for supporting further progress
+and [RSC4Earth](https://rsc4earth.de/) for supporting additional progress
 on the library. Current developments are possible thanks to research funding
-for Francesco M. provided by [MPIPKS](https://www.pks.mpg.de/)
+for Francesco M. provided by [MPIPKS](https://www.pks.mpg.de/).

@@ -71,21 +71,21 @@ or `dev` the package.
 
 ## Features Overview
 
-- Base layers for reservoir computing model construction. Main layers provide high level
-  reservoir computing building blocks, such as [`ReservoirComputer`](@ref)
-  and [`ReservoirChain`](@ref). Additional, lower level layers provide the
-  building blocks for custom reservoir computers, such as [`LinearReadout`](@ref),
-  [`Collect`](@ref), [`ESNCell`](@ref), [`ES2NCell`](@ref), [`DelayLayer`](@ref),
-  [`NonlinearFeaturesLayer`](@ref), and more
+- Base layers for reservoir computing model construction
+  such as [`ReservoirChain`](@ref).
+- Additional, lower level building blocks for custom reservoir computers,
+  such as [`Collect`](@ref), [`ESNCell`](@ref), [`ES2NCell`](@ref),
+  [`DelayLayer`](@ref), [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
+  [`SVMReadout`](@ref),and more.
 - Fully built models:
-    + Echo state networks [`ESN`](@ref)
-    + Deep echo state networks [`DeepESN`](@ref)
-    + Echo state networks with delayed states [`DelayESN`](@ref)
-    + Edge of stability echo state networks [`ES2N`](@ref)
-    + Euler state networks [`EuSN`](@ref)
-    + Hybrid echo state networks [`HybridESN`](@ref)
-    + Neuromorphic reservoir computing [`EIESN`](@ref)
-    + Next generation reservoir computing [`NGRC`](@ref)
+    + [Echo state networks](https://doi.org/10.1126/science.1091277) [`ESN`](@ref)
+    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) [`DeepESN`](@ref)
+    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250) [`DelayESN`](@ref)/[`InputDelayESN`](@ref)
+    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) [`ES2N`](@ref)
+    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) [`EuSN`](@ref)
+    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) [`HybridESN`](@ref)
+    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
+    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
@@ -111,14 +111,14 @@ Here is the BibTeX entry for your convenience:
 
 ```bibtex
 @article{martinuzzi2022reservoircomputing,
-  author  = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
-  title   = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
+  author = {Francesco Martinuzzi and Chris Rackauckas and Anas Abdelrehim and Miguel D. Mahecha and Karin Mora},
+  title = {ReservoirComputing.jl: An Efficient and Modular Library for Reservoir Computing Models},
   journal = {Journal of Machine Learning Research},
-  year    = {2022},
-  volume  = {23},
-  number  = {288},
-  pages   = {1--8},
-  url     = {http://jmlr.org/papers/v23/22-0611.html}
+  year = {2022},
+  volume = {23},
+  number = {288},
+  pages = {1--8},
+  url = {http://jmlr.org/papers/v23/22-0611.html}
 }
 ```
 
