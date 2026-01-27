@@ -453,7 +453,6 @@ Composition:
     modifier layer.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
-
 @concrete struct DelayESN <:
     AbstractEchoStateNetwork{
         (
