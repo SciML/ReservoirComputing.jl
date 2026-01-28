@@ -92,6 +92,7 @@ or `dev` the package.
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
+- Multiple linear solver via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
   
 ## Contributing
 
