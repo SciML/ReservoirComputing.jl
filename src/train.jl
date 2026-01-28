@@ -41,6 +41,10 @@ end
 
 _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
+abstract type AbstractReservoirComputingSolver end
+
+struct QRSolver <: AbstractReservoirComputingSolver end
+
 @doc raw"""
     train(train_method, states, target_data; kwargs...)
 
@@ -75,11 +79,17 @@ additional changes.
   value as the forward method only.
 """
 function train(
-        sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...
+        sr::StandardRidge, states::AbstractMatrix, target_data::AbstractMatrix;
+        solver = QRSolver(), kwargs...
     )
+    return _train_ridge(solver, sr, states, target_data; kwargs...)
+end
+
+function _train_ridge(::QRSolver, sr::StandardRidge,
+        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...)
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
-    b = [target_data'; zeros(n_states, size(target_data, 1))]
+    b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]
     F = qr(A)
     Wt = F \ b
     output_layer = Matrix(Wt')
