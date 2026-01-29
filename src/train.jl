@@ -85,8 +85,10 @@ function train(
     return _train_ridge(solver, sr, states, target_data; kwargs...)
 end
 
-function _train_ridge(::QRSolver, sr::StandardRidge,
-        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...)
+function _train_ridge(
+        ::QRSolver, sr::StandardRidge,
+        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
+    )
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
     b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]

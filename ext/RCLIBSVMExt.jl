@@ -2,12 +2,12 @@ module RCLIBSVMExt
 
 using LIBSVM
 using ReservoirComputing:
-    SVMReadout, addreadout!, ReservoirChain
-import ReservoirComputing: train
+    SVMReadout, ReservoirChain, ReservoirComputer
+import ReservoirComputing: train, addreadout!
 
 function train(
         svr::LIBSVM.AbstractSVR,
-        states::AbstractArray, target::AbstractArray
+        states::AbstractMatrix, target::AbstractMatrix
     )
     @assert size(states, 2) == size(target, 2) "states and target must share columns."
     perm_states = permutedims(states)
@@ -37,7 +37,7 @@ function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
     vec_like = false
     if ndims(inp) == 1
         reshaped_inp = reshape(inp, 1, :)
-        num_imp = 1
+        num_inp = 1
         vec_like = true
     elseif ndims(inp) == 2
         if size(inp, 2) == 1
@@ -46,7 +46,7 @@ function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
             vec_like = true
         else
             reshaped_inp = permutedims(inp)
-            num_imp = size(reshaped_inp, 1)
+            num_inp = size(reshaped_inp, 1)
         end
     else
         throw(ArgumentError("SVMReadout expects 1D or 2D input; got size $(size(inp))"))
@@ -68,6 +68,29 @@ function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
     else
         return out_data, st
     end
+end
+
+_set_readout_models(ps_readout::NamedTuple, models) = merge(ps_readout, (; models = models))
+
+function addreadout!(
+        rc::ReservoirComputer,
+        models,                 # model or vector of models
+        ps::NamedTuple,
+        st::NamedTuple
+    )
+    # Only valid if the model's readout is actually SVMReadout
+    if rc.readout isa SVMReadout
+        @assert hasproperty(ps, :readout)
+        new_readout = _set_readout_models(ps.readout, models)
+        return merge(ps, (readout = new_readout,)), st
+    end
+
+    throw(
+        ArgumentError(
+            "This training method produced a non-matrix readout (e.g. LIBSVM models), " *
+                "but the model readout is $(typeof(rc.readout)). Use SVMReadout as the readout layer."
+        )
+    )
 end
 
 end # module
