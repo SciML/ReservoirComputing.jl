@@ -1,6 +1,6 @@
 # Training Reservoir Computing Models
 
-Trainig reservoir computing (RC) models usually means solving a linear
+Training reservoir computing (RC) models usually means solving a linear
 regression problem. ReservoirComputing.jl offers multiple stratedies to
 provide a readout; in this page we will show the basics, while also pointing out
 the possible extensions.
@@ -8,7 +8,7 @@ the possible extensions.
 ## Training in ReservoirComputing.jl: Ridge Regression
 
 The most simple training of RC models is through ridge regression.
-Given the widepread adoption of this training mechnism, ridge regression is the
+Given the widepread adoption of this training mechanism, ridge regression is the
 default training algorithm for RC models in the library.
 
 ```@example training
@@ -29,7 +29,7 @@ ps, st = train!(model, input_data, target_data, ps, st,
 
 In this call you can see that there are two possible knobs to be modified: the
 loss function, in this case ridge, and the solver, in this case the build in QR
-factorization. In the remainig part of this tutorial we will see how it is possible
+factorization. In the remaining part of this tutorial we will see how it is possible
 to change either.
 
 ## Changing Ridge Regression Solver
@@ -85,7 +85,7 @@ ps, st = train!(model, input_data, target_data, ps, st,
 Make sure to check the MLJLinearModels documentation pages for the available
 [models](https://juliaai.github.io/MLJLinearModels.jl/stable/models/) and
 [solvers](https://juliaai.github.io/MLJLinearModels.jl/stable/solvers/). Please note that
-not all solvers cna be used on all the models. 
+not all solvers can be used on all the models. 
 
 !!! note
     

@@ -53,7 +53,7 @@ function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
     end
 
     if models isa AbstractVector
-        out_data = Array{float(eltype(reshaped_inp))}(undef, svmro.out_dims, num_imp)
+        out_data = Array{float(eltype(reshaped_inp))}(undef, svmro.out_dims, num_inp)
         for (idx, model) in enumerate(models)
             single_out = LIBSVM.predict(models[idx], reshaped_inp)
             out_data[idx, :] = single_out

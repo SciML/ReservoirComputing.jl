@@ -1,6 +1,6 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
-version = "0.12.15"
+version = "0.12.16"
 authors = ["Francesco Martinuzzi"]
 
 [deps]
