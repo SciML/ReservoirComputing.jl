@@ -23,10 +23,10 @@ include("reservoircomputer.jl")
 #layers
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
+include("layers/esn_cell.jl")
 include("layers/additive_eiesn_cell.jl")
 include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
-include("layers/esn_cell.jl")
 include("layers/eusn_cell.jl")
 include("layers/svmreadout.jl")
 #general
