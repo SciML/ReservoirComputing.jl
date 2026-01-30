@@ -3,16 +3,16 @@
 ## Echo State Networks
 
 ```@docs
-    EIESN
     AdditiveEIESN
+    DeepESN
+    DelayESN
+    EIESN
     ES2N
     ESN
     EuSN
-    DeepESN
-    DelayESN
-    StateDelayESN
-    InputDelayESN
     HybridESN
+    InputDelayESN
+    StateDelayESN
 ```
 
 ## Next generation reservoir computing

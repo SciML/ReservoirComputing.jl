@@ -1,13 +1,13 @@
 # States Modifications
 
 ```@docs
-    Pad
     Extend
+    ExtendedSquare
     NLAT1
     NLAT2
     NLAT3
+    Pad
     PartialSquare
-    ExtendedSquare
 ```
 
 ## References
