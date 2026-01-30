@@ -78,14 +78,14 @@ or `dev` the package.
   [`DelayLayer`](@ref), [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
   [`SVMReadout`](@ref),and more.
 - Fully built models:
-    + [Echo state networks](https://doi.org/10.1126/science.1091277) [`ESN`](@ref)
-    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) [`DeepESN`](@ref)
-    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250) [`DelayESN`](@ref)/[`InputDelayESN`](@ref)
-    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) [`ES2N`](@ref)
-    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) [`EuSN`](@ref)
-    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) [`HybridESN`](@ref)
-    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
-    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) [`NGRC`](@ref)
+    + [Echo state networks](https://doi.org/10.1126/science.1091277)  [`ESN`](@ref)
+    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002)  [`DeepESN`](@ref)
+    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250)  [`DelayESN`](@ref)/[`InputDelayESN`](@ref)/[`StateDelayESN`](@ref)
+    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045)  [`ES2N`](@ref)
+    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411)  [`EuSN`](@ref)
+    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373)  [`HybridESN`](@ref)
+    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708)  [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
+    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through

@@ -35,12 +35,15 @@ where full details and examples are provided.
     fixed offsets from the diagonal.
 - [`delayline_backward`](inits/delayline_backward.md): Produces a delay-line
     reservoir with additional backward (feedback) connections.
+- [`diagonal_init`](inits/diagonal_init.md): Constructs a diagonal matrix.
 - [`double_cycle`](inits/double_cycle.md): Creates two interlaced directed
     cycles (upper & lower) with independent weights.
 - [`forward_connection`](inits/forward_connection.md): Builds a reservoir
     where each node connects forward by two steps.
 - [`low_connectivity`](inits/low_connectivity.md): Creates a low-degree
     random (or enforced cycle) connectivity reservoir.
+- [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
+    a permutation of the identity matrix.
 - [`pseudo_svd`](inits/pseudo_svd.md): Builds a reservoir by iteratively
     perturbing a diagonal matrix using pseudo-SVD rotations.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
@@ -57,9 +60,6 @@ where full details and examples are provided.
     reservoir with uniform weights.
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.
-- [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
-    a permutation of the identity matrix.
-- [`diagonal_init`](inits/diagonal_init.md): Constructs a diagonal matrix.
 
 
 ## Building functions
