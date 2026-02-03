@@ -76,7 +76,7 @@ or `dev` the package.
 - Additional, lower level building blocks for custom reservoir computers,
   such as [`Collect`](@ref), [`ESNCell`](@ref), [`ES2NCell`](@ref),
   [`DelayLayer`](@ref), [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
-  [`SVMReadout`](@ref),and more.
+  [`SVMReadout`](@ref), and more.
 - Fully built models:
     + [Echo state networks](https://doi.org/10.1126/science.1091277)  [`ESN`](@ref)
     + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002)  [`DeepESN`](@ref)
@@ -92,7 +92,7 @@ or `dev` the package.
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
-- Multiple linear solver via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
+- Multiple linear solvers via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
   
 ## Contributing
 

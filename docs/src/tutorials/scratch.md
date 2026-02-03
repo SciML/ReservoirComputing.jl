@@ -1,7 +1,7 @@
 # Building a model from scratch
 
 ReservoirComputing.jl provides utilities to build reservoir
-computing models from scratch. In this tutorial we are going to build
+computing models from scratch. In this tutorial, we are going to build
 an echo state network ([`ESN`](@ref)) and showcase how this custom
 implementation is equivalent to the provided model (minus some comfort
 utilities).
@@ -23,7 +23,7 @@ Finally, we need the trainable readout for the reservoir computing.
 The library provides [`LinearReadout`](@ref), a dense layer the weights
 of which will be trained using linear regression.
 
-Putting it all together we get the following
+Putting it all together, we get:
 
 ```@example scratch
 using ReservoirComputing
@@ -43,7 +43,7 @@ the following
 esn = ESN(3, 50, 1)
 ```
 
-and we can check it initializing the two models and comparing, for instance,
+and we can check it by initializing the two models and comparing, for instance,
 the weights of the input layer:
 
 ```@example scratch

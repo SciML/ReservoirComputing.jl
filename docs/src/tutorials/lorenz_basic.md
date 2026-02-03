@@ -1,6 +1,6 @@
 # Lorenz System Forecasting
 
-This example expands on the readme Lorenz system forecasting to showcase
+This example expands on the README Lorenz system forecasting to showcase
 how to use models and methods provided in the library for Echo State Networks.
 
 ## Generating the data
@@ -13,14 +13,14 @@ represent the time steps.
 ```@example lorenz
 using OrdinaryDiffEq
 
-#define lorenz system
+# define lorenz system
 function lorenz!(du, u, p, t)
     du[1] = 10.0 * (u[2] - u[1])
     du[2] = u[1] * (28.0 - u[3]) - u[2]
     du[3] = u[1] * u[2] - (8 / 3) * u[3]
 end
 
-#solve and take data
+# solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
 data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
