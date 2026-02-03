@@ -1,12 +1,12 @@
 # Getting Started with ReservoirComputing.jl
 
 This is an introductory tutorial for ReservoirComputing.jl. We will showcase
-a typical usecase by creating an Echo State Network (ESN) and training it
+a typical use case by creating an Echo State Network (ESN) and training it
 to reproduce the dynamics of the chaotic Lorenz system.
 
 ## Installing ReservoirComputing
 
-ReservoirComputing.jl is registered in general registry, so it can be installed
+ReservoirComputing.jl is registered in the General registry, so it can be installed
 through the Julia package manager:
 
 ```julia
@@ -70,20 +70,20 @@ the features and the columns represent the time steps.
 ```@example lorenz
 using OrdinaryDiffEq
 
-#define lorenz system
+# define lorenz system
 function lorenz!(du, u, p, t)
     du[1] = 10.0 * (u[2] - u[1])
     du[2] = u[1] * (28.0 - u[3]) - u[2]
     du[3] = u[1] * u[2] - (8 / 3) * u[3]
 end
 
-#solve and take data
+# solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
 data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
 ```
 
-Now we split the data in training and testing. To do an autoregressive
+Now we split the data into training and testing. To do an autoregressive
 forecast we want the model to be trained on the next step, so we are
 going to shift the target data by one. Additionally, we discard the
 transient period.

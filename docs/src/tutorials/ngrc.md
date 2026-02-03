@@ -10,7 +10,7 @@ the reservoir is replaced with:
 The model is finally trained through ridge regression, like a normal RC.
 
 
-In this tutorial we will :
+In this tutorial we will:
   - simulate the Lorenz system,
   - build an NGRC model with delayed inputs and polynomial features, following the
     [original paper](https://doi.org/10.1038/s41467-021-25801-2),
