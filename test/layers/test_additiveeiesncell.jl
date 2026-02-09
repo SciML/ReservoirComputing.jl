@@ -53,7 +53,7 @@ end
     @test haskey(ps, :bias_in)
     @test size(ps.bias_ex) == (4,)
 
-    cell_nobias = AdditiveEIESNCell(3 => 4; use_bias = false)
+    cell_nobias = AdditiveEIESNCell(3 => 4; use_bias = false, init_reservoir = _W_I)
     ps_nb = initialparameters(rng, cell_nobias)
 
     @test !haskey(ps_nb, :bias_ex)

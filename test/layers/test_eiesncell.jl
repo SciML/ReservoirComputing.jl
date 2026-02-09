@@ -41,7 +41,7 @@ end
     @test haskey(ps, :bias_inh)
     @test size(ps.bias_ex) == (4,)
 
-    cell_nb = EIESNCell(3 => 4; use_bias = false)
+    cell_nb = EIESNCell(3 => 4; use_bias = false, init_reservoir = _W_I)
     ps_nb = initialparameters(rng, cell_nb)
 
     @test haskey(ps_nb, :input_matrix)

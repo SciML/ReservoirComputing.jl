@@ -18,6 +18,8 @@ if GROUP == "All" || GROUP == "Core"
     @testset "Layers" begin
         @safetestset "Basic layers" include("layers/test_basic.jl")
         @safetestset "ESN Cell" include("layers/test_esncell.jl")
+        @safetestset "EIESN Cell" include("layers/test_eiesncell.jl")
+        @safetestset "AdditiveEIESN Cell" include("layers/test_additiveeiesncell.jl")
         @safetestset "SVMReadout" include("layers/test_svmreadout.jl")
     end
 
@@ -27,6 +29,8 @@ if GROUP == "All" || GROUP == "Core"
         @safetestset "DeepESN model" include("models/test_esn_deep.jl")
         @safetestset "DelayESN model" include("models/test_esn_delay.jl")
         @safetestset "HybridESN model" include("models/test_esn_hybrid.jl")
+        @safetestset "EIESN model" include("models/test_eiesn.jl")
+        @safetestset "AdditiveEIESN model" include("models/test_additiveeiesn.jl")
     end
 
     @testset "Next Generation Reservoir Computing" begin
