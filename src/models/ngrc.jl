@@ -193,3 +193,48 @@ function _polynomial_monomials_recursive!(
         end
     end
 end
+
+"""
+    chebyshev_monomials(input_vector, degrees)
+"""
+function chebyshev_monomials(
+    input_vector::AbstractVector;
+    degrees = 1:2
+)
+    element_type = eltype(input_vector)
+    output_features = element_type[]
+    num_variables = length(input_vector)
+
+    max_degree = maximum(degrees)
+    Tvals = Matrix{element_type}(undef, max_degree, num_variables)
+
+    for j in 1:num_variables
+        x = input_vector[j]
+
+        if max_degree >= 1
+            tvals[1, j] = x
+        end
+
+        if max_degree >= 2
+            tvals[2, j] = 2x^2 - one(element_type)
+        end
+
+        for d in 3:max_degree
+            tvals[d, j] = 2x*tvals[d-1, j] - tvals[d-2, j]
+        end
+    end
+
+    for degree in degrees
+        degree < 1 && continue
+
+        for inds in Iterators.combinations(1:num_variables, degree; repetition=true)
+            product_value = one(element_type)
+            @inbounds for idx in inds
+                product_value *= Tvals[degree, idx]
+            end
+            push!(output_features, product_value)
+        end
+    end
+
+    return output_features
+end
