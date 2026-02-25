@@ -194,8 +194,44 @@ function _polynomial_monomials_recursive!(
     end
 end
 
-"""
-    chebyshev_monomials(input_vector, degrees)
+@doc raw"""
+    chebyshev_monomials(input_vector;
+        degrees = 1:2)
+
+Generate all unordered Chebyshev-feature monomials of the entries in
+`input_vector` for the given set of degrees [Ratas2024](@cite).
+
+For each `d` in `degrees`, this function produces all degree-`d` feature
+products of the form
+
+- degree 1: `T₁(x₁), T₁(x₂), …`
+- degree 2: `T₂(x₁), T₂(x₁)T₂(x₂), T₂(x₂), …`
+- degree 3: `T₃(x₁), T₃(x₁)T₃(x₂), T₃(x₁)T₃(x₂)T₃(x₃), …`
+
+where `T_d(·)` denotes the Chebyshev polynomial of the first kind of
+degree `d`.
+
+Combinations are taken with repetition and in non-decreasing index order.
+This means that, for example, `T_d(x₁)T_d(x₂)` and `T_d(x₂)T_d(x₁)` are
+represented only once.
+
+## Arguments
+
+- `input_vector`
+  Input vector whose entries define the variables to which Chebyshev
+  polynomials are applied.
+
+## Keyword arguments
+
+- `degrees`: An iterable of positive integers specifying which Chebyshev
+  polynomial degrees to generate. Each degree less than `1` is skipped.
+  Default: `1:2`.
+
+## Returns
+
+- `output_features` a vector of the same element type as `input_vector`
+  containing all generated Chebyshev-feature products, concatenated across
+  the requested degrees, in a deterministic order.
 """
 function chebyshev_monomials(
     input_vector::AbstractVector;
