@@ -116,63 +116,63 @@ end
 
 
 chebT(n, x) = n == 0 ? one(x) :
-              n == 1 ? x :
-              n == 2 ? 2x^2 - 1 :
-              n == 3 ? 4x^3 - 3x :
-              error("extend reference if needed")
+    n == 1 ? x :
+    n == 2 ? 2x^2 - 1 :
+    n == 3 ? 4x^3 - 3x :
+    error("extend reference if needed")
 
 @testset "chebyshev_monomials basic functionality" begin
     x = [2.0, 3.0]
-    feats = chebyshev_monomials(x; degrees=1:1)
+    feats = chebyshev_monomials(x; degrees = 1:1)
     @test feats == [2.0, 3.0]  # T1(x) = x
-    feats2 = chebyshev_monomials(x; degrees=2:2)
+    feats2 = chebyshev_monomials(x; degrees = 2:2)
     T2_x1 = 2x[1]^2 - 1
     T2_x2 = 2x[2]^2 - 1
     @test feats2 == [
         T2_x1,
-        T2_x1*T2_x2,
-        T2_x2
+        T2_x1 * T2_x2,
+        T2_x2,
     ]
-    feats12 = chebyshev_monomials(x; degrees=1:2)
+    feats12 = chebyshev_monomials(x; degrees = 1:2)
     @test feats12 == vcat(feats, feats2)
 end
 
 
 @testset "degree skipping and ordering" begin
     x = [1.5, -0.5, 0.25]
-    feats = chebyshev_monomials(x; degrees=[0,1])
+    feats = chebyshev_monomials(x; degrees = [0, 1])
     @test length(feats) == 3
-    featsA = chebyshev_monomials(x; degrees=1:2)
-    featsB = chebyshev_monomials(x; degrees=1:2)
+    featsA = chebyshev_monomials(x; degrees = 1:2)
+    featsB = chebyshev_monomials(x; degrees = 1:2)
     @test featsA == featsB
 end
 
 
 @testset "higher-degree correctness" begin
     x = [0.3, -0.7]
-    feats = chebyshev_monomials(x; degrees=3:3)
+    feats = chebyshev_monomials(x; degrees = 3:3)
     T3_x1 = 4x[1]^3 - 3x[1]
     T3_x2 = 4x[2]^3 - 3x[2]
     @test feats == [
         T3_x1,
-        T3_x1*T3_x2,
-        T3_x2
+        T3_x1 * T3_x2,
+        T3_x2,
     ]
 end
 
 @testset "type stability" begin
     x = Float32[1, 2]
-    feats = chebyshev_monomials(x; degrees=1:2)
+    feats = chebyshev_monomials(x; degrees = 1:2)
     @test eltype(feats) == Float32
 end
 
 
 @testset "single-variable behavior" begin
     x = [2.0]
-    feats = chebyshev_monomials(x; degrees=1:3)
+    feats = chebyshev_monomials(x; degrees = 1:3)
     @test feats == [
         2.0,                    # T1
-        2*2.0^2 - 1,            # T2
-        4*2.0^3 - 3*2.0         # T3
+        2 * 2.0^2 - 1,            # T2
+        4 * 2.0^3 - 3 * 2.0,         # T3
     ]
 end

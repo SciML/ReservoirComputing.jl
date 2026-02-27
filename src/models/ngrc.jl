@@ -234,9 +234,9 @@ represented only once.
   the requested degrees, in a deterministic order.
 """
 function chebyshev_monomials(
-    input_vector::AbstractVector;
-    degrees = 1:2
-)
+        input_vector::AbstractVector;
+        degrees = 1:2
+    )
     element_type = eltype(input_vector)
     output_features = element_type[]
     num_variables = length(input_vector)
@@ -256,14 +256,14 @@ function chebyshev_monomials(
         end
 
         for d in 3:max_degree
-            tvals[d, j] = 2x*tvals[d-1, j] - tvals[d-2, j]
+            tvals[d, j] = 2x * tvals[d - 1, j] - tvals[d - 2, j]
         end
     end
 
     for degree in degrees
         degree < 1 && continue
 
-        for inds in Iterators.combinations(1:num_variables, degree; repetition=true)
+        for inds in Iterators.combinations(1:num_variables, degree; repetition = true)
             product_value = one(element_type)
             @inbounds for idx in inds
                 product_value *= Tvals[degree, idx]
