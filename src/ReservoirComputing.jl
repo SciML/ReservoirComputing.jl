@@ -66,7 +66,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
     selfloop_forwardconnection, simple_cycle, true_doublecycle
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
-export polynomial_monomials, predict, QRSolver, resetcarry!, train, train!
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, StateDelayESN
 export NGRC
 #ext
