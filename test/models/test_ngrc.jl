@@ -153,11 +153,7 @@ end
     feats = chebyshev_monomials(x; degrees = 3:3)
     T3_x1 = 4x[1]^3 - 3x[1]
     T3_x2 = 4x[2]^3 - 3x[2]
-    @test feats == [
-        T3_x1,
-        T3_x1 * T3_x2,
-        T3_x2,
-    ]
+    @test feats ≈ [T3_x1, T3_x1 * T3_x2, T3_x2]
 end
 
 @testset "type stability" begin

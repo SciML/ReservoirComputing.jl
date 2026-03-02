@@ -233,44 +233,78 @@ represented only once.
   containing all generated Chebyshev-feature products, concatenated across
   the requested degrees, in a deterministic order.
 """
-function chebyshev_monomials(
-        input_vector::AbstractVector;
-        degrees = 1:2
-    )
-    element_type = eltype(input_vector)
-    output_features = element_type[]
-    num_variables = length(input_vector)
+function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
+    T = eltype(input_vector)
+    n = length(input_vector)
 
-    max_degree = maximum(degrees)
-    Tvals = Matrix{element_type}(undef, max_degree, num_variables)
+    isempty(degrees) && return T[]
+    maxdeg = maximum(degrees)
+    maxdeg < 1 && return T[]
 
-    for j in 1:num_variables
+    tvals = Matrix{T}(undef, maxdeg, n)
+
+    @inbounds for j in 1:n
         x = input_vector[j]
-
-        if max_degree >= 1
-            tvals[1, j] = x
+        tvals[1, j] = x
+        if maxdeg >= 2
+            tvals[2, j] = 2x^2 - one(T)
         end
-
-        if max_degree >= 2
-            tvals[2, j] = 2x^2 - one(element_type)
-        end
-
-        for d in 3:max_degree
+        for d in 3:maxdeg
             tvals[d, j] = 2x * tvals[d - 1, j] - tvals[d - 2, j]
         end
     end
 
-    for degree in degrees
-        degree < 1 && continue
+    output = T[]
 
-        for inds in Iterators.combinations(1:num_variables, degree; repetition = true)
-            product_value = one(element_type)
-            @inbounds for idx in inds
-                product_value *= Tvals[degree, idx]
+    function emit_subsets_prefix!(f::Function, kmax::Int)
+        buf = Int[]
+        function rec(start::Int)
+            for i in start:n
+                push!(buf, i)
+                f(buf)
+                if length(buf) < kmax
+                    rec(i + 1)
+                end
+                pop!(buf)
             end
-            push!(output_features, product_value)
+        end
+        rec(1)
+        return nothing
+    end
+
+    for d in degrees
+        d < 1 && continue
+        kmax = min(d, n)
+
+        emit_subsets_prefix!(kmax) do inds
         end
     end
 
-    return output_features
+    empty!(output)
+    for d in degrees
+        d < 1 && continue
+        kmax = min(d, n)
+
+        emit_subsets_prefix!(inds -> begin
+            prod = one(T)
+            @inbounds for idx in inds
+                prod *= tvals[d, idx]
+            end
+            push!(output, prod)
+        end, kmax)
+    end
+
+    return output
+end
+
+function _comb_repetition!(f, current, start, n, k)
+    if k == 0
+        f(current)
+        return
+    end
+    for i in start:n
+        push!(current, i)
+        _comb_repetition!(f, current, i, n, k - 1)
+        pop!(current)
+    end
 end
