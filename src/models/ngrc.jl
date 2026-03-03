@@ -267,6 +267,7 @@ function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
                 end
                 pop!(buf)
             end
+            return
         end
         rec(1)
         return nothing
@@ -285,13 +286,15 @@ function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
         d < 1 && continue
         kmax = min(d, n)
 
-        emit_subsets_prefix!(inds -> begin
-            prod = one(T)
-            @inbounds for idx in inds
-                prod *= tvals[d, idx]
-            end
-            push!(output, prod)
-        end, kmax)
+        emit_subsets_prefix!(
+            inds -> begin
+                prod = one(T)
+                @inbounds for idx in inds
+                    prod *= tvals[d, idx]
+                end
+                push!(output, prod)
+            end, kmax
+        )
     end
 
     return output
@@ -307,4 +310,5 @@ function _comb_repetition!(f, current, start, n, k)
         _comb_repetition!(f, current, i, n, k - 1)
         pop!(current)
     end
+    return
 end
