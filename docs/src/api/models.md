@@ -23,6 +23,7 @@
 
 ```@docs
     polynomial_monomials
+    chebyshev_monomials
 ```
 
 ### Utilities

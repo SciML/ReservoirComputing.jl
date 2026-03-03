@@ -193,3 +193,122 @@ function _polynomial_monomials_recursive!(
         end
     end
 end
+
+@doc raw"""
+    chebyshev_monomials(input_vector;
+        degrees = 1:2)
+
+Generate all unordered Chebyshev-feature monomials of the entries in
+`input_vector` for the given set of degrees [Ratas2024](@cite).
+
+For each `d` in `degrees`, this function produces all degree-`d` feature
+products of the form
+
+- degree 1: `T₁(x₁), T₁(x₂), …`
+- degree 2: `T₂(x₁), T₂(x₁)T₂(x₂), T₂(x₂), …`
+- degree 3: `T₃(x₁), T₃(x₁)T₃(x₂), T₃(x₁)T₃(x₂)T₃(x₃), …`
+
+where `T_d(·)` denotes the Chebyshev polynomial of the first kind of
+degree `d`.
+
+Combinations are taken with repetition and in non-decreasing index order.
+This means that, for example, `T_d(x₁)T_d(x₂)` and `T_d(x₂)T_d(x₁)` are
+represented only once.
+
+## Arguments
+
+- `input_vector`
+  Input vector whose entries define the variables to which Chebyshev
+  polynomials are applied.
+
+## Keyword arguments
+
+- `degrees`: An iterable of positive integers specifying which Chebyshev
+  polynomial degrees to generate. Each degree less than `1` is skipped.
+  Default: `1:2`.
+
+## Returns
+
+- `output_features` a vector of the same element type as `input_vector`
+  containing all generated Chebyshev-feature products, concatenated across
+  the requested degrees, in a deterministic order.
+"""
+function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
+    T = eltype(input_vector)
+    n = length(input_vector)
+
+    isempty(degrees) && return T[]
+    maxdeg = maximum(degrees)
+    maxdeg < 1 && return T[]
+
+    tvals = Matrix{T}(undef, maxdeg, n)
+
+    @inbounds for j in 1:n
+        x = input_vector[j]
+        tvals[1, j] = x
+        if maxdeg >= 2
+            tvals[2, j] = 2x^2 - one(T)
+        end
+        for d in 3:maxdeg
+            tvals[d, j] = 2x * tvals[d - 1, j] - tvals[d - 2, j]
+        end
+    end
+
+    output = T[]
+
+    function emit_subsets_prefix!(f::Function, kmax::Int)
+        buf = Int[]
+        function rec(start::Int)
+            for i in start:n
+                push!(buf, i)
+                f(buf)
+                if length(buf) < kmax
+                    rec(i + 1)
+                end
+                pop!(buf)
+            end
+            return
+        end
+        rec(1)
+        return nothing
+    end
+
+    for d in degrees
+        d < 1 && continue
+        kmax = min(d, n)
+
+        emit_subsets_prefix!(kmax) do inds
+        end
+    end
+
+    empty!(output)
+    for d in degrees
+        d < 1 && continue
+        kmax = min(d, n)
+
+        emit_subsets_prefix!(
+            inds -> begin
+                prod = one(T)
+                @inbounds for idx in inds
+                    prod *= tvals[d, idx]
+                end
+                push!(output, prod)
+            end, kmax
+        )
+    end
+
+    return output
+end
+
+function _comb_repetition!(f, current, start, n, k)
+    if k == 0
+        f(current)
+        return
+    end
+    for i in start:n
+        push!(current, i)
+        _comb_repetition!(f, current, i, n, k - 1)
+        pop!(current)
+    end
+    return
+end
