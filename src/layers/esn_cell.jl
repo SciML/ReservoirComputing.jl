@@ -105,6 +105,10 @@ function initialstates(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
     return (rng = sample_replicate(rng),)
 end
 
+function init_states(rng::AbstractRNG, cell::AbstractEchoStateNetworkCell, inp::AbstractArray)
+    return (init_hidden_state(rng, cell, inp),)
+end
+
 function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
     hidden_state = init_hidden_state(rng, esn, inp)
