@@ -28,6 +28,12 @@
     EuSNCell
 ```
 
+## Wrappers
+
+```@docs
+    LocalInformationFlow
+```
+
 ## Reservoir computing with cellular automata
 
 ```@docs
