@@ -29,6 +29,7 @@ include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/eusn_cell.jl")
 include("layers/svmreadout.jl")
+include("layers/lif_wrapper.jl")
 #general
 include("states.jl")
 include("predict.jl")
@@ -56,6 +57,7 @@ export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell
 export Collect, collectstates, DelayLayer, LinearReadout, NonlinearFeaturesLayer,
     ReservoirChain, StatefulLayer
 export SVMReadout
+export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
 export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
