@@ -2,7 +2,7 @@ module RCLIBSVMExt
 
 using LIBSVM
 using ReservoirComputing:
-    SVMReadout, ReservoirChain, ReservoirComputer
+    SVMReadout, ReservoirChain, AbstractReservoirComputer
 import ReservoirComputing: train, addreadout!
 
 function train(
@@ -73,7 +73,7 @@ end
 _set_readout_models(ps_readout::NamedTuple, models) = merge(ps_readout, (; models = models))
 
 function addreadout!(
-        rc::ReservoirComputer,
+        rc::AbstractReservoirComputer,
         models,                 # model or vector of models
         ps::NamedTuple,
         st::NamedTuple

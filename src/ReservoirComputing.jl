@@ -48,6 +48,7 @@ include("models/esn_deep.jl")
 include("models/esn_delay.jl")
 include("models/esn_hybrid.jl")
 include("models/eusn.jl")
+include("models/svesm.jl")
 include("models/ngrc.jl")
 #extensions
 include("extensions/reca.jl")
@@ -69,7 +70,7 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
-export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, StateDelayESN
+export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, StateDelayESN, SVESM
 export NGRC
 #ext
 export RECACell, RECA
