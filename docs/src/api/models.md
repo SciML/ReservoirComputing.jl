@@ -13,6 +13,7 @@
     HybridESN
     InputDelayESN
     StateDelayESN
+    SVESM
 ```
 
 ## Next generation reservoir computing

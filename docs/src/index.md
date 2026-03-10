@@ -85,6 +85,7 @@ or `dev` the package.
     + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411)  [`EuSN`](@ref)
     + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373)  [`HybridESN`](@ref)
     + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708)  [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
+    + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113)  [`SVESM`](@ref)
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
