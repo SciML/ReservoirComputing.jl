@@ -186,8 +186,7 @@ function resetcarry!(
     )
     carry = get(st.reservoir, :carry, nothing)
     if carry === nothing
-        outd = rc.reservoir.cell.out_dims
-        sz = outd
+        sz = _cell_out_dims(rc.reservoir.cell)
     else
         state = first(carry)
         sz = size(state, 1)

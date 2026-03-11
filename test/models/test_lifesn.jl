@@ -22,8 +22,10 @@ function _with_identity_readout_lf(ps::NamedTuple; out_dims::Integer, in_dims::I
 end
 
 @testset "LIFESNCell: convenience constructor" begin
-    cell = LIFESNCell(3 => 5, identity; lookback_horizon = 3,
-        init_input = _W_I_lf, init_reservoir = _W_ZZ_lf, use_bias = false)
+    cell = LIFESNCell(
+        3 => 5, identity; lookback_horizon = 3,
+        init_input = _W_I_lf, init_reservoir = _W_ZZ_lf, use_bias = false
+    )
     @test cell isa LocalInformationFlow
     @test cell.lookback_horizon == 3
 
@@ -244,4 +246,28 @@ end
 
     pred, _ = model(train_data[:, end], ps, st)
     @test length(pred) == out_dims
+end
+
+@testset "LIFESN: resetcarry!" begin
+    rng = MersenneTwister(55)
+    in_dims, res_dims, out_dims = 3, 5, 2
+
+    model = LIFESN(
+        in_dims, res_dims, out_dims, identity;
+        lookback_horizon = 2,
+        use_bias = False(),
+        init_input = _W_I_lf,
+        init_reservoir = _W_ZZ_lf,
+        init_bias = _O32_lf,
+        init_state = init_state3_lf
+    )
+
+    ps, st = setup(rng, model)
+
+    st2 = resetcarry!(rng, model, st)
+    @test st2.reservoir.carry === nothing
+
+    st3 = resetcarry!(rng, model, st; init_carry = init_state3_lf)
+    @test st3.reservoir.carry !== nothing
+    @test length(first(st3.reservoir.carry)) == res_dims
 end

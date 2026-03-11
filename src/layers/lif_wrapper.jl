@@ -83,6 +83,8 @@ Created by `initialstates(rng, lif)`:
     init_buffer
 end
 
+_cell_out_dims(lif::LocalInformationFlow) = _cell_out_dims(lif.cell)
+
 function LocalInformationFlow(
         cell, (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         lookback_horizon::IntegerType, args...; init_buffer = zeros32, kwargs...
