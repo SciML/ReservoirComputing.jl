@@ -26,6 +26,7 @@
     ES2NCell
     ESNCell
     EuSNCell
+    LIFESNCell
 ```
 
 ## Wrappers

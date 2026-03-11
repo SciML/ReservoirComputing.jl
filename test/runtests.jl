@@ -33,6 +33,7 @@ if GROUP == "All" || GROUP == "Core"
         @safetestset "EIESN model" include("models/test_eiesn.jl")
         @safetestset "AdditiveEIESN model" include("models/test_additiveeiesn.jl")
         @safetestset "SVESM model" include("models/test_svesm.jl")
+        @safetestset "LIFESN model" include("models/test_lifesn.jl")
     end
 
     @testset "Next Generation Reservoir Computing" begin
