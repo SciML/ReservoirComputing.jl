@@ -26,13 +26,13 @@
     ES2NCell
     ESNCell
     EuSNCell
+    LIFESNCell
 ```
 
 ## Wrappers
 
 ```@docs
     LocalInformationFlow
-    LIFESNCell
 ```
 
 ## Reservoir computing with cellular automata
