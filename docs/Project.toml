@@ -1,6 +1,8 @@
 [deps]
 CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
+CUDA_Driver_jll = "4ee394cb-3365-5eb0-8335-949819d2adfc"
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterInterLinks = "d12716ef-a0f6-4df4-a9f1-a5a34e75c656"
