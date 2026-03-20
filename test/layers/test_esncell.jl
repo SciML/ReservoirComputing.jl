@@ -187,6 +187,50 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
         @test Y ≈ X
     end
 
+    @testset "$(cell_name(C)): scalar vs vector leak equivalence" begin
+        if C === ESNCell
+            rng = MersenneTwister(42)
+
+            in_dims = 4
+            out_dims = 6
+            batch = 3
+
+            α = 0.3f0
+            α_vec = fill(α, out_dims)
+
+            cell_scalar = build_cell(
+                ESNCell, in_dims, out_dims;
+                mix = α,
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_state = _Z32
+            )
+
+            cell_vector = ESNCell(
+                in_dims => out_dims, identity;
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_state = _Z32,
+                leak_coefficient = α_vec
+            )
+
+            ps = initialparameters(rng, cell_scalar)
+
+            x = rand(Float32, in_dims, batch)
+            h0 = rand(Float32, out_dims, batch)
+
+            (y_s_tuple, _) = cell_scalar((x, (h0,)), ps, NamedTuple())
+            (y_v_tuple, _) = cell_vector((x, (h0,)), ps, NamedTuple())
+
+            y_s, _ = y_s_tuple
+            y_v, _ = y_v_tuple
+
+            @test y_s ≈ y_v atol=1e-6
+        end
+    end
+
     return @testset "$(cell_name(C)): outer call computes its own initial hidden state" begin
         rng = MersenneTwister(123)
         cell = build_cell(
