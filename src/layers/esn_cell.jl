@@ -130,9 +130,9 @@ function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
 
-   lc = esn.leak_coefficient
+    lc = esn.leak_coefficient
 
-   if isa(lc, Number)
+    if isa(lc, Number)
         t_lc = fill(T(lc), size(hidden_state, 1), 1)
     else
         @assert length(lc) == size(hidden_state, 1) "leak_coefficient must match reservoir size"

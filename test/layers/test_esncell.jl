@@ -227,7 +227,7 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
             y_s, _ = y_s_tuple
             y_v, _ = y_v_tuple
 
-            @test y_s ≈ y_v atol=1e-6
+            @test y_s ≈ y_v atol = 1e-6
         end
     end
 
