@@ -34,7 +34,8 @@ Echo State Network (ESN) recurrent cell with optional leaky integration.
     Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
     state is not provided. Default is `randn32`.
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
+  - leak_coefficient: Leak rate `α ∈ (0,1]`. Can be a scalar (uniform leak)
+    or a vector of size `out_dims` (heterogeneous leak rates). Default: `1.0`.
 
 ## Inputs
 
@@ -82,8 +83,14 @@ function ESNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_state = randn32, leak_coefficient::AbstractFloat = 1.0
+        init_state = randn32,
+        leak_coefficient::Union{AbstractFloat, AbstractVector} = 1.0
     )
+
+    if isa(leak_coefficient, AbstractVector)
+        @assert length(leak_coefficient) == out_dims "leak_coefficient must match reservoir size"
+    end
+
     return ESNCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,
         init_input, init_state, leak_coefficient, static(use_bias)
@@ -118,17 +125,28 @@ end
 function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     T = eltype(inp)
     bias = safe_getproperty(ps, Val(:bias))
-    t_lc = T(esn.leak_coefficient)
+
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
-    h_new = (one(T) - t_lc) .* hidden_state .+ t_lc .* candidate_h
+
+   lc = esn.leak_coefficient
+
+   if isa(lc, Number)
+        t_lc = fill(T(lc), size(hidden_state, 1), 1)
+    else
+        @assert length(lc) == size(hidden_state, 1) "leak_coefficient must match reservoir size"
+        t_lc = reshape(convert.(T, lc), :, 1)
+    end
+
+    h_new = (one(T) .- t_lc) .* hidden_state .+ t_lc .* candidate_h
+
     return (h_new, (h_new,)), st
 end
 
 function Base.show(io::IO, esn::ESNCell)
     print(io, "ESNCell($(esn.in_dims) => $(esn.out_dims)")
-    if esn.leak_coefficient != eltype(esn.leak_coefficient)(1.0)
+    if !(esn.leak_coefficient isa Number && esn.leak_coefficient == 1.0)
         print(io, ", leak_coefficient=$(esn.leak_coefficient)")
     end
     has_bias(esn) || print(io, ", use_bias=false")
