@@ -198,22 +198,27 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
             α = 0.3f0
             α_vec = fill(α, out_dims)
 
-            cell_scalar = build_cell(
-                ESNCell, in_dims, out_dims;
-                mix = α,
-                use_bias = False(),
-                init_input = _W_I,
-                init_reservoir = _W_I,
-                init_state = _Z32
-            )
+            activation = identity
 
-            cell_vector = ESNCell(
-                in_dims => out_dims, identity;
+            kwargs = (
                 use_bias = False(),
                 init_input = _W_I,
                 init_reservoir = _W_I,
                 init_state = _Z32,
-                leak_coefficient = α_vec
+            )
+
+            cell_scalar = ESNCell(
+                in_dims => out_dims,
+                activation;
+                leak_coefficient = α,
+                kwargs...
+            )
+
+            cell_vector = ESNCell(
+                in_dims => out_dims,
+                activation;
+                leak_coefficient = α_vec,
+                kwargs...
             )
 
             ps = initialparameters(rng, cell_scalar)
@@ -227,7 +232,7 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
             y_s, _ = y_s_tuple
             y_v, _ = y_v_tuple
 
-            @test y_s ≈ y_v atol = 1e-6
+            @test y_s ≈ y_v atol = 1.0e-6
         end
     end
 
