@@ -130,18 +130,27 @@ function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
 
-    lc = esn.leak_coefficient
+    lc = _format_leak(T, esn.leak_coefficient)
 
-    if isa(lc, Number)
-        t_lc = fill(T(lc), size(hidden_state, 1), 1)
-    else
-        @assert length(lc) == size(hidden_state, 1) "leak_coefficient must match reservoir size"
-        t_lc = reshape(convert.(T, lc), :, 1)
-    end
-
-    h_new = (one(T) .- t_lc) .* hidden_state .+ t_lc .* candidate_h
+    h_new = _one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
 
     return (h_new, (h_new,)), st
+end
+
+function _format_leak(::Type{T}, leak::Number) where {T <: Number}
+    return convert(T, leak)
+end
+
+function _format_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+    return reshape(convert.(T, leak), :, 1)
+end
+
+function _one_minus_leak(::Type{T}, leak::Number) where {T <: Number}
+    return one(T) - leak
+end
+
+function _one_minus_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+    return one(T) .- leak
 end
 
 function Base.show(io::IO, esn::ESNCell)
