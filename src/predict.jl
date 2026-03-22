@@ -60,6 +60,7 @@ function predict(
     return output, st
 end
 
+## 2) Teacher-forced / point-by-point
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
     T = size(data, 2)
     @assert T ≥ 1 "data must have at least one time step (columns)."
