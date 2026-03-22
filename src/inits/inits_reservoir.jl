@@ -2496,76 +2496,6 @@ function diagonal_init(
     end
 end
 
-"""
-    scaled_rand_wigner([rng], [T], dim;
-        scaling=0.1, diag_scaling=0.05)
-
-Create and return a symmetric matrix with random values, uniformly distributed
-within a range defined by `scaling` for off diagonal elements and `diag_scaling`
-for diagonal elements.
-
-## Arguments
-
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
-  - `T`: Type of the elements in the reservoir matrix.
-    Default is `Float32`.
-  - `dim`: Dimension of the matrix. Will result in `dim x dim`.
-
-## Keyword arguments
-
-  - `scaling`: A scaling factor to define the range of the uniform distribution for
-    off diagonal elements. The factor can be passed in three different ways:
-
-      + A single number. In this case, the matrix elements will be randomly
-        chosen from the range `[-scaling, scaling]`. Default option, with
-        a the scaling value set to `0.1`.
-      + A tuple `(lower, upper)`. The values define the range of the distribution.
-        the matrix elements will be randomly created and scaled the range
-        `[lower, upper]`.
-      + A vector of length = `dim`. In this case, the columns of the
-        upper diagonal matrix and the rows of the lower diagonal matrix
-        will be scaled individually by the entries of the vector. The entries can
-        be numbers or tuples, which will mirror the behavior described above.
-        The first element will have no effect on the resulting matrix in this case.
-  - `diag_scaling`: Similar functionality as `scaling` but for diagonal elements.
-      + A single number. In this case, the diagonal elements will be randomly
-        chosen from the range `[-scaling, scaling]`. Default option, with
-        a the scaling value set to `0.05`.
-      + A tuple `(lower, upper)`. The values define the range of the distribution.
-        the diagonal elements will be randomly created and scaled the range
-        `[lower, upper]`.
-      + A vector of length = `dim`. In this case, the diagonal
-        elements will be
-        scaled individually by the entries of the vector. The entries can
-        be numbers or tuples, which will mirror the behavior described above.
-
-"""
-function scaled_rand_wigner(
-        rng::AbstractRNG, ::Type{T}, dim::Integer;
-        scaling::Union{Number, Tuple, Vector} = T(0.1), diag_scaling::Union{Number, Tuple, Vector}= T(0.05)
-    ) where {T <: Number}
-    layer_matrix = DeviceAgnostic.rand(rng, T, dim, dim)
-    apply_scale!(layer_matrix, scaling, T)
-    diag_entries = DeviceAgnostic.rand(rng, T, dim)
-    apply_scale!(diag_entries, diag_scaling, T)
-    for i in 1:dim
-      layer_matrix[i,i] = diag_entries[i]
-      for j in i+1:dim
-        layer_matrix[j,i] = layer_matrix[i,j]
-      end
-    end
-
-    return layer_matrix
-end
-function scaled_rand_wigner(
-        rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        scaling::Union{Number, Tuple, Vector} = T(0.1), diag_scaling::Union{Number, Tuple, Vector}= T(0.05)
-    ) where {T <: Number}
-    res_size, in_size = dims
-    @assert res_size == in_size
-    scaled_wigner(rng, res_size, scaling=scaling, diag_scaling=diag_scaling)
-end
 
 
 
@@ -2578,7 +2508,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
         :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :scaled_rand_wigner,
+        :diagonal_init, :scaled_wigner,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
