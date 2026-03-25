@@ -46,6 +46,8 @@ where full details and examples are provided.
     a permutation of the identity matrix.
 - [`pseudo_svd`](inits/pseudo_svd.md): Builds a reservoir by iteratively
     perturbing a diagonal matrix using pseudo-SVD rotations.
+- [`rand_hyper`](inits/rand_hyper.md): Generates a reservoir by sampling nodes 
+    in the Poincaré ball and constructing weights based on hyperbolic distances between them.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
     reservoir with controlled sparsity and spectral radius.
 - [`selfloop_cycle`](inits/selfloop_cycle.md): Builds a simple cycle
