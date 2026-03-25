@@ -2533,3 +2533,43 @@ for initializer in (
         end
     end
 end
+
+
+
+function wigner_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius::Number = T(1.0), std::Number = T(1.0)
+    ) where {T <: Number}
+    # 1. Dimension check : Reservoir has to be a square matrix
+    check_res_size(dims...)
+    res_size = dims[1]  
+
+    # 2. Initialise the empty matrix using the requested type T
+    W = zeros(T, res_size, res_size)
+
+    # 3. Populating the matrix
+    # Diagonal elements sampled from N(0, 2*std^2)
+    # Off-diagonal elements sampled from N(0, std^2)
+    for i in 1 : res_size
+        for j in 1 : res_size
+            if i==j
+                # Diagonal element
+                W[i, j] = randn(rng, T) * T(sqrt(2)) * T(std)
+            else
+                # Off-diagonal elements (upper triangular part)
+                W[i, j] = randn(rng, T) * T(std)
+            end
+        end
+    end
+
+    # Make the matrix symmetric
+    W = Symmetric(W)
+
+    # 4. Scaling the spectral radius to the user-specified value
+    W = scale_radius!(W, T(radius))
+
+    # 5. Check for NaN or Inf values
+    check_inf_nan(W)
+
+    return W
+end

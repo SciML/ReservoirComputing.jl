@@ -105,3 +105,17 @@ end
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
     end
 end
+
+@testset "Wigner_matrix_init.jl" begin
+    #rng = Random.default_rng()
+    #res_size = 10
+
+
+    W = wigner_init(rng, Float32, res_size; radius = 0.9, std = 0.5)
+
+    @test size(W) == (res_size, res_size)
+
+    @test eltype(W) == Float32
+
+    @test issymmetric(W)
+end
