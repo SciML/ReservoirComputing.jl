@@ -2511,7 +2511,8 @@ if `2 diag_radius == radius` the resulting spectral radius of the matrix wil mat
   - `rng`: Random number generator.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
-  - `dims`: Dimension of the (symmetric) reservoir matrix. Either a single integer or a pair of integers. Pair of integers must match.
+  - `dims`: Dimension of the (symmetric) reservoir matrix.
+  Either a single integer or a pair of integers. Pair of integers must match.
 
 ## Keyword arguments
 
