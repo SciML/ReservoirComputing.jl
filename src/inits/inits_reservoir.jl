@@ -2518,10 +2518,13 @@ if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the 
     Defaults to 1.0.
   - `std_diag`: The desired scaling for the standard deviation of the diagonal elements.
     Defaults to 0.5.
+  - `return_symmetric`: If `true`, returns a LinearAlgebra.Symmetric type matrix.
+    Defaults to `false`.
 """
 function wigner_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        std::Number = T(1.0), std_diag::Number = T(0.5)
+        std::Number = T(1.0), std_diag::Number = T(0.5),
+        return_symmetric::Bool=false
     ) where {T <: Number}
     check_res_size(dims)
     dim = dims[1]
@@ -2535,6 +2538,9 @@ function wigner_init(
             reservoir_matrix[i,j] = off_diag * T(randn(rng))
             reservoir_matrix[j,i] = reservoir_matrix[i,j]
         end
+    end
+    if return_symmetric
+        return Symmetric(reservoir_matrix)
     end
     return reservoir_matrix
 end
