@@ -2533,3 +2533,56 @@ for initializer in (
         end
     end
 end
+
+
+
+function wigner_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius::Number = T(1.0), diagonal_std::Number, off_diagonal_std::Number,
+        return_symmetric::Bool = true
+    ) where {T <: Number}
+    # 1. Dimension check : Reservoir has to be a square matrix
+    check_res_size(dims...)
+    res_size = dims[1]  
+
+    # 2. Initialise the zeros matrix with type T
+    reservoir_matrix = zeros(T, res_size, res_size)
+
+    # 3. Populating the matrix
+    # Diagonal elements sampled from N(0, diagonal_std^2)
+    # Off-diagonal elements sampled from N(0, off_diagonal_std^2)
+    
+    # Default symmetric case
+    if return_symmetric
+        # Efficient upper-triangle fill for symmetric matrices
+        for i in 1:res_size
+            for j in i:res_size
+                if i == j
+                    reservoir_matrix[i, j] = DeviceAgnostic.randn(rng, T) * T(diag_std)
+                else
+                    reservoir_matrix[i, j] = DeviceAgnostic.randn(rng, T) * T(off_diag_std)
+                end
+            end
+        end
+        # Mirror the matrix
+        reservoir_matrix = Symmetric(reservoir_matrix)
+        
+    # User sets return_symmetric=false
+    else
+        for i in 1:res_size
+            for j in 1:res_size
+                if i == j
+                    W[i, j] = DeviceAgnostic.randn(rng, T) * T(diag_std)
+                else
+                    W[i, j] = DeviceAgnostic.randn(rng, T) * T(off_diag_std)
+                end
+            end
+        end
+    end
+    
+    #3. Scale the spectral radius
+    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
+    
+    
+    return reservoir_matrix
+end

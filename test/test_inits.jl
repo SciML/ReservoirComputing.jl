@@ -105,3 +105,23 @@ end
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
     end
 end
+
+@testset "Wigner_matrix_init.jl" begin
+    #rng = Random.default_rng()
+    #res_size = 10
+
+    # Test for symmetric case (default)
+    symmetric_reservoir = wigner_init(rng, Float32, res_size; radius=1.2, diag_std=1.414, off_diag_std=1.0)
+    
+    @test size(symm) == (res_size, res_size)
+    @test eltype(symmetric_reservoir) == Float32
+    @test issymmetric(symmetric_reservoir)
+
+    # Test for asymmetric case
+    # We explicitly turn off symmetry
+    asymmetric_reservoir = wigner_init(rng, Float32, res_size; radius=1.2, diag_std=1.414, off_diag_std=1.0, return_symmetric=false)
+    
+    @test size(asymmetric_reservoir) == (res_size, res_size)
+    @test eltype(asymmetric_reservoir) == Float32
+    @test !issymmetric(asymmetric_reservoir) 
+end
