@@ -2496,6 +2496,54 @@ function diagonal_init(
     end
 end
 
+@doc raw"""
+    wigner_init([rng], [T], dim.;
+        radius=1.0, sparsity=0.1, std=1.0, return_sparse=false)
+
+Create and return a dense random wigner initialized reservoir matrix.
+The matrix will be of size specified by `dims`, and scaled spectral radius according to `radius` and `diag_radius`.
+We follow as outlined in [Verzelli2021](@cite) and previously [Inubushi2017](@cite)
+The off-diagonal elements will be scaled by `radius` while the diagonal elements will be scaled by `diag_radius`.
+if `2 diag_radius == radius` the resulting spectral radius of the matrix wil match `radius`.
+
+## Arguments
+
+  - `rng`: Random number generator.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimension of the (symmetric) reservoir matrix. Either a single integer or a pair of integers. Pair of integers must match.
+
+## Keyword arguments
+
+  - `radius`: The desired scaling for the standard deviation of the off_diagonal elements.
+    Defaults to 1.0.
+  - `radius_diag`: The desired scaling for the standard deviation of the diagonal elements.
+    Defaults to 0.5.
+"""
+function wigner_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius::Number = T(1.0), radius_diag::Number = T(0.5)
+    ) where {T <: Number}
+    if length(dims) == 1
+    dim = dims
+    else
+        dim, dim2 = dims
+        @assert dim == dim2 "wigner_init requires a square matrix"
+    end
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
+    sqrt_dim = T(sqrt(dim))
+    diag = radius_diag / sqrt_dim
+    off_diag = radius / sqrt_dim
+    for i in 1:dim
+        reservoir_matrix[i,i] = diag * T(randn(rng))
+        for j in i+1:dim
+            reservoir_matrix[i,j] = off_diag * T(randn(rng))
+            reservoir_matrix[j,i] = reservoir_matrix[i,j]
+        end
+    end
+    return reservoir_matrix
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (
@@ -2505,7 +2553,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
         :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init,
+        :diagonal_init, :wigner_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)

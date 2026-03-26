@@ -60,7 +60,8 @@ where full details and examples are provided.
     reservoir with uniform weights.
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.
-
+- [`wigner_init`](inits/wigner_init.md): Generates a random symmetric
+    reservoir with controlled spectral radius for diagonal and off_diagonal elements.
 
 ## Building functions
 
