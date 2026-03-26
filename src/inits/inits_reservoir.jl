@@ -2526,7 +2526,7 @@ function wigner_init(
         std::Number = T(1.0), std_diag::Number = T(0.5),
         return_symmetric::Bool=false
     ) where {T <: Number}
-    check_res_size(dims)
+    check_res_size(dims...)
     dim = dims[1]
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
     sqrt_dim = T(sqrt(dim))
