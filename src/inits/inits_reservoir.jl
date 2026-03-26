@@ -2520,6 +2520,43 @@ if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the 
     Defaults to 0.5.
   - `return_symmetric`: If `true`, returns a LinearAlgebra.Symmetric type matrix.
     Defaults to `false`.
+    ## Examples
+
+    Default kwargs:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5)
+    5×5 Matrix{Float32}:
+      0.000769674   0.126007   -0.277637   -0.126593   -0.389
+      0.126007     -0.0176753   0.541007   -0.392352    0.435318
+     -0.277637      0.541007    0.448532   -0.0991032  -0.357256
+     -0.126593     -0.392352   -0.0991032  -0.0637784  -0.373899
+     -0.389         0.435318   -0.357256   -0.373899   -0.0403503
+    ```
+
+    Returning a Symmetric matrix:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5; return_symmetric=true)
+     5×5 LinearAlgebra.Symmetric{Float32, Matrix{Float32}}:
+      -0.0874871   0.0666034   0.520725   0.454877  -0.503613
+       0.0666034  -0.2203     -0.497137   0.805205   0.0580209
+       0.520725   -0.497137    0.489767  -0.792692   0.571714
+       0.454877    0.805205   -0.792692  -0.126786  -0.414994
+      -0.503613    0.0580209   0.571714  -0.414994  -0.0372717
+    ```
+    Returning with different standard deviation on diagonal and off diagonal:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5; std_diag=5, std=1e-3)
+    5×5 Matrix{Float32}:
+      0.685752      0.000850898  -0.000109755  -0.000211195  -0.000102981
+      0.000850898  -0.327889     -0.000201935   0.000673213   7.9558f-5
+     -0.000109755  -0.000201935  -2.77398       0.00010618   -0.000488676
+     -0.000211195   0.000673213   0.00010618    1.15882       0.000629446
+     -0.000102981   7.9558f-5    -0.000488676   0.000629446  -3.25089
+    ```
+
 """
 function wigner_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
