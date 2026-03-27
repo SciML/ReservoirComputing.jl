@@ -83,6 +83,157 @@ function rand_sparse(
 end
 
 """
+    rand_hyper([rng], [T], dims...;
+        poincare_dim=2, disk_radius=0.99, top_k=0, sigma=1.0, radius=1.0, return_sparse=false)
+
+Create a hyperbolic embedding reservoir matrix using the HYPER construction
+as described in [Singh2025HypER](@cite).
+
+This initializer samples reservoir nodes in a Poincaré ball of dimension `poincare_dim`,
+computes geometry-aware kernel weights, optionally sparsifies the rows to keep
+the top `top_k` connections, and scales the spectral radius to `radius`.
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+  - `poincare_dim`: Dimension of the Poincaré ball.
+    Default is 2
+  - `disk_radius`: Maximum Euclidean radius of nodes in the Poincaré ball.
+    Default is 0.99
+  - `top_k`: Number of largest entries to keep per row (integer).
+    Default is 0
+  - `sigma`: Kernel width controlling decay of weights based on hyperbolic distance.
+    Default is 1.0
+  - `radius`: Target spectral radius after scaling.
+    Default is 1.0
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
+    Default is `false` 
+
+## Examples
+
+Default call:
+
+```jldoctest randhyper
+julia> rand_hyper(5, 5)
+5×5 Matrix{Float32}:
+ 0.0        0.286061   0.124822   0.0227793   0.714702
+ 0.286061   0.0        0.583359   0.0170896   0.192062
+ 0.124822   0.583359   0.0        0.0156618   0.0656493
+ 0.0227793  0.0170896  0.0156618  0.0         0.00776529
+ 0.714702   0.192062   0.0656493  0.00776529  0.0
+
+With row-wise sparsification (keep top 2 entries per row):
+
+julia> rand_hyper(5, 5; top_k=2)
+5×5 Matrix{Float32}:
+ 0.0        0.321022   0.0       0.0  0.802048
+ 0.321022   0.0        0.654653  0.0  0.0
+ 0.140077   0.654653   0.0       0.0  0.0
+ 0.0255632  0.0191781  0.0       0.0  0.0
+ 0.802048   0.215535   0.0       0.0  0.0
+
+ Returning a sparse matrix:
+
+ julia> using SparseArrays
+
+julia> rand_hyper(5, 5; top_k=2, return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+  ⋅         0.321022    ⋅         ⋅   0.802048
+ 0.321022    ⋅         0.654653   ⋅    ⋅ 
+ 0.140077   0.654653    ⋅         ⋅    ⋅ 
+ 0.0255632  0.0191781   ⋅         ⋅    ⋅ 
+ 0.802048   0.215535    ⋅         ⋅    ⋅ 
+```
+"""
+
+function rand_hyper(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        poincare_dim::Int = 2,
+        disk_radius::Number = T(0.99),
+        top_k::Integer = 0,
+        sigma::Number = T(1.0),
+        radius::Number = T(1.0),
+        return_sparse::Bool = false
+    ) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    N = dims[1]
+    eps = T(1.0e-12)
+
+    P = sample_poincare_points(rng, T, N, poincare_dim; disk_radius = disk_radius)
+    D = zeros(T, N, N)
+    for i in 1:N
+        pi = view(P, i, :)
+        for j in 1:N
+            i == j && continue
+            pj = view(P, j, :)
+            D[i, j] = hyperbolic_distance_poincare(pi, pj)
+        end
+    end
+    W = exp.(-D ./ max(sigma, eps))
+    @inbounds for i in 1:N
+        W[i, i] = zero(T)
+    end
+    W = topk_row_sparsify(W, top_k)
+    W = scale_radius!(W, T(radius))
+    check_inf_nan(W)
+
+    return return_init_as(Val(return_sparse), W)
+end
+
+function hyperbolic_distance_poincare(pi::AbstractVector{T}, pj::AbstractVector{T}) where {T}
+    eps = T(1.0e-12)
+
+    norm_pi2 = sum(abs2, pi)
+    norm_pj2 = sum(abs2, pj)
+    diff2 = sum(abs2, pi .- pj)
+    denom = max(eps, (1 - norm_pi2) * (1 - norm_pj2))
+    arg = max(1 + 2 * diff2 / denom, T(1 + eps))
+    return acosh(arg)
+end
+
+function sample_poincare_points(
+        rng::AbstractRNG,
+        ::Type{T},
+        N::Integer,
+        poincare_dim::Integer;
+        disk_radius::Number = T(0.99)
+    ) where {T}
+    P = zeros(T, N, poincare_dim)
+    R_max = 2 * atanh(disk_radius)
+    for i in 1:N
+        v = randn(rng, T, poincare_dim)
+        v /= norm(v)
+        rho = rand(rng) * R_max
+        r = tanh(rho / 2)
+        P[i, :] .= r .* v
+    end
+    return P
+end
+
+function topk_row_sparsify(W::AbstractMatrix{T}, top_k::Integer) where {T}
+    N = size(W, 1)
+    if !(0 < top_k < N)
+        return W
+    end
+    W_sparse = zeros(T, size(W))
+    for i in 1:N
+        row = W[i, :]
+        idx = partialsortperm(abs.(row), (N - top_k + 1):N; rev = false)
+        W_sparse[i, idx] = row[idx]
+    end
+    return W_sparse
+end
+
+"""
     pseudo_svd([rng], [T], dims...;
         max_value=1.0, sparsity=0.1, sorted=true, reverse_sort=false,
         return_sparse=false)
@@ -2505,7 +2656,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
         :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init,
+        :diagonal_init, :rand_hyper,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
