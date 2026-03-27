@@ -84,12 +84,12 @@ end
 
 """
     rand_hyper([rng], [T], dims...;
-        d=2, disk_radius=0.99, top_k=0, sigma=1.0, radius=1.0, return_sparse=false)
+        poincare_dim=2, disk_radius=0.99, top_k=0, sigma=1.0, radius=1.0, return_sparse=false)
 
 Create a hyperbolic embedding reservoir matrix using the HYPER construction
 as described in [Singh2025HypER](@cite).
 
-This initializer samples reservoir nodes in a Poincaré ball of dimension `d`,
+This initializer samples reservoir nodes in a Poincaré ball of dimension `poincare_dim`,
 computes geometry-aware kernel weights, optionally sparsifies the rows to keep
 the top `top_k` connections, and scales the spectral radius to `radius`.
 
@@ -103,7 +103,7 @@ the top `top_k` connections, and scales the spectral radius to `radius`.
 
 ## Keyword arguments
 
-  - `d`: Dimension of the hyperbolic manifold.
+  - `poincare_dim`: Dimension of the Poincaré ball.
     Default is 2
   - `disk_radius`: Maximum Euclidean radius of nodes in the Poincaré ball.
     Default is 0.99
@@ -156,7 +156,7 @@ julia> rand_hyper(5, 5; top_k=2, return_sparse=true)
 
 function rand_hyper(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        d::Int = 2,
+        poincare_dim::Int = 2,
         disk_radius::Number = T(0.99),
         top_k::Integer = 0,
         sigma::Number = T(1.0),
@@ -168,7 +168,7 @@ function rand_hyper(
     N = dims[1]
     eps = T(1.0e-12)
 
-    P = sample_poincare_points(rng, T, N, d; disk_radius = disk_radius)
+    P = sample_poincare_points(rng, T, N, poincare_dim; disk_radius = disk_radius)
     D = zeros(T, N, N)
     for i in 1:N
         pi = view(P, i, :)
@@ -204,13 +204,13 @@ function sample_poincare_points(
         rng::AbstractRNG,
         ::Type{T},
         N::Integer,
-        d::Integer;
+        poincare_dim::Integer;
         disk_radius::Number = T(0.99)
     ) where {T}
-    P = zeros(T, N, d)
+    P = zeros(T, N, poincare_dim)
     R_max = 2 * atanh(disk_radius)
     for i in 1:N
-        v = randn(rng, T, d)
+        v = randn(rng, T, poincare_dim)
         v /= norm(v)
         rho = rand(rng) * R_max
         r = tanh(rho / 2)

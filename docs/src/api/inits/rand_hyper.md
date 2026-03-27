@@ -1,7 +1,7 @@
 # rand_hyper
 
 ```@docs
-    # rand_hyper
+    rand_hyper
 ```
 
 ## References
