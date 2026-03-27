@@ -2561,7 +2561,7 @@ if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the 
 function wigner_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         std::Number = T(1.0), std_diag::Number = T(0.5),
-        return_symmetric::Bool=false
+        return_symmetric::Bool = false
     ) where {T <: Number}
     check_res_size(dims...)
     dim = dims[1]
@@ -2571,7 +2571,7 @@ function wigner_init(
     off_diag = std / sqrt_dim
     for i in 1:dim
         reservoir_matrix[i,i] = diag * T(randn(rng))
-        for j in i+1:dim
+        for j in (i + 1):dim
             reservoir_matrix[i,j] = off_diag * T(randn(rng))
             reservoir_matrix[j,i] = reservoir_matrix[i,j]
         end
