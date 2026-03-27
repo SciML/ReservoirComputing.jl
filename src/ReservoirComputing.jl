@@ -2,7 +2,7 @@ module ReservoirComputing
 
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
-using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!
+using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!, Symmetric
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
@@ -67,7 +67,7 @@ export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
 export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
     diagonal_init, double_cycle, forward_connection, low_connectivity, permutation_init,
     pseudo_svd, rand_sparse, selfloop_backward_cycle, selfloop_cycle, selfloop_delayline_backward,
-    selfloop_forwardconnection, simple_cycle, true_doublecycle
+    selfloop_forwardconnection, simple_cycle, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
