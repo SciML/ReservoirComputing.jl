@@ -2570,10 +2570,10 @@ function wigner_init(
     diag = std_diag / sqrt_dim
     off_diag = std / sqrt_dim
     for i in 1:dim
-        reservoir_matrix[i,i] = diag * T(randn(rng))
+        reservoir_matrix[i, i] = diag * T(randn(rng))
         for j in (i + 1):dim
-            reservoir_matrix[i,j] = off_diag * T(randn(rng))
-            reservoir_matrix[j,i] = reservoir_matrix[i,j]
+            reservoir_matrix[i, j] = off_diag * T(randn(rng))
+            reservoir_matrix[j, i] = reservoir_matrix[i,j]
         end
     end
     if return_symmetric
