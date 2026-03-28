@@ -1,0 +1,18 @@
+name = "ReservoirComputingBenchmarks"
+uuid = "03eff81b-b261-4f82-8cea-c13df0f346ab"
+authors = ["Francesco Martinuzzi", "Saswat Susmoy"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[targets]
+test = ["Test", "Random"]
+
+[compat]
+julia = "1.10"
