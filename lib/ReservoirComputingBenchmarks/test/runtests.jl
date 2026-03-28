@@ -20,7 +20,7 @@ using Random
             end
         end
 
-        result = memory_capacity(input, states; max_delay=20, reg=1e-6)
+        result = memory_capacity(input, states; max_delay = 20, reg = 1.0e-6)
 
         @test haskey(result, :total)
         @test haskey(result, :delays)
@@ -39,20 +39,20 @@ using Random
         input = rand(rng, T) .* 0.5  # Uniform[0, 0.5]
 
         # NARMA-2
-        y2 = generate_narma(input; order=2, normalize=false)
+        y2 = generate_narma(input; order = 2, normalize = false)
         @test length(y2) == T
         @test y2[1] == 0.0
         @test y2[2] == 0.0
         @test y2[3] != 0.0  # First non-trivial value
 
         # NARMA-10
-        y10 = generate_narma(input; order=10, normalize=false)
+        y10 = generate_narma(input; order = 10, normalize = false)
         @test length(y10) == T
         @test all(y10[1:10] .== 0.0)
         @test y10[11] != 0.0
 
         # NARMA-30
-        y30 = generate_narma(input; order=30, normalize=false)
+        y30 = generate_narma(input; order = 30, normalize = false)
         @test length(y30) == T
         @test all(y30[1:30] .== 0.0)
         @test y30[31] != 0.0
@@ -62,12 +62,12 @@ using Random
         @test all(isfinite.(y30))
 
         # Custom coefficients for non-standard order
-        @test_throws AssertionError generate_narma(input; order=5)
-        y5 = generate_narma(input; order=5, alpha=0.3, beta=0.05, gamma=1.5, delta=0.1, normalize=false)
+        @test_throws AssertionError generate_narma(input; order = 5)
+        y5 = generate_narma(input; order = 5, alpha = 0.3, beta = 0.05, gamma = 1.5, delta = 0.1, normalize = false)
         @test length(y5) == T
 
         # Order must be >= 2
-        @test_throws AssertionError generate_narma(input; order=1)
+        @test_throws AssertionError generate_narma(input; order = 1)
     end
 
     @testset "NARMA Evaluation" begin
@@ -78,7 +78,7 @@ using Random
         # Use random states (won't be great, but should run)
         states = randn(rng, n_features, T)
 
-        result = narma(input, states; order=10, metric=:nmse, reg=1.0)
+        result = narma(input, states; order = 10, metric = :nmse, reg = 1.0)
 
         @test haskey(result, :score)
         @test haskey(result, :metric)
@@ -89,16 +89,16 @@ using Random
         @test length(result.target) == T
 
         # Test other metrics
-        result_rnmse = narma(input, states; order=10, metric=:rnmse, reg=1.0)
+        result_rnmse = narma(input, states; order = 10, metric = :rnmse, reg = 1.0)
         @test result_rnmse.metric === :rnmse
         @test isfinite(result_rnmse.score)
 
-        result_mse = narma(input, states; order=10, metric=:mse, reg=1.0)
+        result_mse = narma(input, states; order = 10, metric = :mse, reg = 1.0)
         @test result_mse.metric === :mse
         @test isfinite(result_mse.score)
 
         # Invalid metric
-        @test_throws ArgumentError narma(input, states; order=10, metric=:invalid)
+        @test_throws ArgumentError narma(input, states; order = 10, metric = :invalid)
     end
 
     @testset "IPC" begin
@@ -115,7 +115,7 @@ using Random
             end
         end
 
-        result = ipc(input, states; max_delay=5, max_degree=2, reg=1e-4)
+        result = ipc(input, states; max_delay = 5, max_degree = 2, reg = 1.0e-4)
 
         @test haskey(result, :total)
         @test haskey(result, :linear)
@@ -129,7 +129,7 @@ using Random
         @test result.linear >= 0
         @test result.nonlinear >= 0
         @test result.theoretical_max == n_features
-        @test abs(result.total - result.linear - result.nonlinear) < 1e-10
+        @test abs(result.total - result.linear - result.nonlinear) < 1.0e-10
 
         # Degree-1 capacity should be present
         @test haskey(result.by_degree, 1)
@@ -138,7 +138,7 @@ using Random
         @test result.total <= n_features + 1.0
 
         # Without cross terms
-        result_no_cross = ipc(input, states; max_delay=5, max_degree=2, cross_terms=false, reg=1e-4)
+        result_no_cross = ipc(input, states; max_delay = 5, max_degree = 2, cross_terms = false, reg = 1.0e-4)
         @test length(result_no_cross.basis_capacities) < length(result.basis_capacities)
     end
 
@@ -166,13 +166,13 @@ using Random
         # Orthonormality: ∫₋₁¹ P̃_n(x) P̃_m(x) dx ≈ δ_{nm}
         nleg = ReservoirComputingBenchmarks._normalized_legendre
         N_quad = 10000
-        x_quad = range(-1, 1; length=N_quad)
+        x_quad = range(-1, 1; length = N_quad)
         dx = 2.0 / (N_quad - 1)
 
         for n in 0:3
             vals_n = nleg.(n, x_quad)
             integral = sum(vals_n .^ 2) * dx
-            @test isapprox(integral, 1.0; atol=0.01)
+            @test isapprox(integral, 1.0; atol = 0.01)
         end
     end
 
@@ -204,7 +204,7 @@ using Random
 
         # _ridge_regression: negative reg
         @test_throws AssertionError ReservoirComputingBenchmarks._ridge_regression(
-            randn(50, 5), randn(50); reg=-1.0
+            randn(50, 5), randn(50); reg = -1.0
         )
     end
 
@@ -213,32 +213,32 @@ using Random
         states = randn(rng, 10, 500)
 
         # max_delay must be >= 1
-        @test_throws AssertionError memory_capacity(input, states; max_delay=0)
+        @test_throws AssertionError memory_capacity(input, states; max_delay = 0)
 
         # max_delay must be < T
-        @test_throws AssertionError memory_capacity(input, states; max_delay=500)
+        @test_throws AssertionError memory_capacity(input, states; max_delay = 500)
 
         # Mismatched dimensions
         @test_throws AssertionError memory_capacity(rand(100), randn(10, 200))
 
         # NARMA order < 2
-        @test_throws AssertionError generate_narma(rand(100); order=1)
+        @test_throws AssertionError generate_narma(rand(100); order = 1)
 
         # Missing NARMA coefficients for non-standard order
-        @test_throws AssertionError generate_narma(rand(100); order=7)
+        @test_throws AssertionError generate_narma(rand(100); order = 7)
 
         # Input shorter than order
-        @test_throws AssertionError generate_narma(rand(5); order=10)
+        @test_throws AssertionError generate_narma(rand(5); order = 10)
 
         # Invalid NARMA metric
-        @test_throws ArgumentError narma(input, states; order=10, metric=:bad)
+        @test_throws ArgumentError narma(input, states; order = 10, metric = :bad)
 
         # Washout out of range
-        @test_throws AssertionError narma(input, states; order=10, washout=-1)
-        @test_throws AssertionError narma(input, states; order=10, washout=500)
+        @test_throws AssertionError narma(input, states; order = 10, washout = -1)
+        @test_throws AssertionError narma(input, states; order = 10, washout = 500)
 
         # IPC: max_degree/max_delay must be >= 1
-        @test_throws AssertionError ipc(input, states; max_delay=0, max_degree=2)
-        @test_throws AssertionError ipc(input, states; max_delay=5, max_degree=0)
+        @test_throws AssertionError ipc(input, states; max_delay = 0, max_degree = 2)
+        @test_throws AssertionError ipc(input, states; max_delay = 5, max_degree = 0)
     end
 end

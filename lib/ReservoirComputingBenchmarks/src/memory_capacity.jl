@@ -41,12 +41,12 @@ A `NamedTuple` with fields:
     GMD Report 152.
 """
 function memory_capacity(
-    input::AbstractVector,
-    states::AbstractMatrix;
-    max_delay::Int=30,
-    train_ratio::Real=0.8,
-    reg::Real=1.0,
-)
+        input::AbstractVector,
+        states::AbstractMatrix;
+        max_delay::Int = 30,
+        train_ratio::Real = 0.8,
+        reg::Real = 1.0,
+    )
     T = length(input)
     @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
     @assert max_delay >= 1 "max_delay must be >= 1, got $max_delay"
@@ -63,7 +63,7 @@ function memory_capacity(
     X_test = X[test_idx, :]
 
     # Pre-compute Cholesky factorization — reused across all delays
-    rf = _ridge_factor(X_train; reg=reg)
+    rf = _ridge_factor(X_train; reg = reg)
 
     delay_capacities = zeros(max_delay)
 
@@ -80,5 +80,5 @@ function memory_capacity(
         delay_capacities[k] = _squared_correlation(y_test, y_pred)
     end
 
-    return (total=sum(delay_capacities), delays=delay_capacities)
+    return (total = sum(delay_capacities), delays = delay_capacities)
 end

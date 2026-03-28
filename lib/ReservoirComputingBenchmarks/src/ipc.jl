@@ -57,15 +57,15 @@ A `NamedTuple` with fields:
     *Scientific Reports*, 2, 514.
 """
 function ipc(
-    input::AbstractVector,
-    states::AbstractMatrix;
-    max_delay::Int=10,
-    max_degree::Int=3,
-    max_total_degree::Union{Int,Nothing}=nothing,
-    cross_terms::Bool=true,
-    train_ratio::Real=0.8,
-    reg::Real=1.0,
-)
+        input::AbstractVector,
+        states::AbstractMatrix;
+        max_delay::Int = 10,
+        max_degree::Int = 3,
+        max_total_degree::Union{Int, Nothing} = nothing,
+        cross_terms::Bool = true,
+        train_ratio::Real = 0.8,
+        reg::Real = 1.0,
+    )
     T = length(input)
     n_features = size(states, 1)
     @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
@@ -76,7 +76,7 @@ function ipc(
     mtd = something(max_total_degree, max_degree)
 
     # Precompute normalized Legendre polynomial values for all (degree, delay)
-    poly_cache = Dict{Tuple{Int,Int},Vector{Float64}}()
+    poly_cache = Dict{Tuple{Int, Int}, Vector{Float64}}()
     for delay in 1:max_delay
         for degree in 1:max_degree
             delayed = @view input[(max_delay + 1 - delay):(T - delay)]
@@ -97,11 +97,11 @@ function ipc(
     X_test = X[test_idx, :]
 
     # Pre-compute Cholesky factorization — reused across all basis functions
-    rf = _ridge_factor(X_train; reg=reg)
+    rf = _ridge_factor(X_train; reg = reg)
 
-    results = Vector{NamedTuple{(:terms, :degree, :capacity),Tuple{Vector{Tuple{Int,Int}},Int,Float64}}}()
-    by_degree = Dict{Int,Float64}()
-    by_delay = Dict{Int,Float64}()
+    results = Vector{NamedTuple{(:terms, :degree, :capacity), Tuple{Vector{Tuple{Int, Int}}, Int, Float64}}}()
+    by_degree = Dict{Int, Float64}()
+    by_delay = Dict{Int, Float64}()
 
     # Pre-allocate target buffer — reused via fill!
     target = Vector{Float64}(undef, T_valid)
@@ -123,7 +123,7 @@ function ipc(
 
         cap = _squared_correlation(y_test, y_pred)
 
-        push!(results, (terms=terms, degree=total_degree, capacity=cap))
+        push!(results, (terms = terms, degree = total_degree, capacity = cap))
         by_degree[total_degree] = get(by_degree, total_degree, 0.0) + cap
 
         # Track per-delay capacity for single-variable terms
@@ -138,13 +138,13 @@ function ipc(
     nonlinear_cap = total_cap - linear_cap
 
     return (
-        total=total_cap,
-        linear=linear_cap,
-        nonlinear=nonlinear_cap,
-        by_degree=by_degree,
-        by_delay=by_delay,
-        basis_capacities=results,
-        theoretical_max=n_features,
+        total = total_cap,
+        linear = linear_cap,
+        nonlinear = nonlinear_cap,
+        by_degree = by_degree,
+        by_delay = by_delay,
+        basis_capacities = results,
+        theoretical_max = n_features,
     )
 end
 
@@ -186,9 +186,9 @@ Return a vector of basis function descriptors. Each descriptor is a
 `Vector{Tuple{Int,Int}}` of `(delay, degree)` pairs.
 """
 function _enumerate_basis_functions(
-    max_delay::Int, max_degree::Int, max_total_degree::Int, cross_terms::Bool
-)
-    basis = Vector{Vector{Tuple{Int,Int}}}()
+        max_delay::Int, max_degree::Int, max_total_degree::Int, cross_terms::Bool
+    )
+    basis = Vector{Vector{Tuple{Int, Int}}}()
 
     # Single-variable terms: P_d(u(t - τ))
     for delay in 1:max_delay

@@ -5,8 +5,8 @@ Pre-computed Cholesky factorization of the Gram matrix `X'X + λI` for
 efficient multi-RHS ridge regression. Construct once, solve many times
 with [`_ridge_solve`](@ref).
 """
-struct _RidgeFactor{T<:Real}
-    factor::LinearAlgebra.Cholesky{T,Matrix{T}}
+struct _RidgeFactor{T <: Real}
+    factor::LinearAlgebra.Cholesky{T, Matrix{T}}
     Xty_buf::Vector{T}   # scratch buffer for X'y products
 end
 
@@ -20,7 +20,7 @@ Pre-compute the Cholesky factorization of `X'X + reg * I`.
 
 Returns a `_RidgeFactor` that can be reused across many targets.
 """
-function _ridge_factor(X::AbstractMatrix; reg::Real=1.0)
+function _ridge_factor(X::AbstractMatrix; reg::Real = 1.0)
     @assert reg >= 0 "Regularization coefficient must be non-negative, got $reg"
     n = size(X, 2)
     G = Symmetric(X' * X)
@@ -53,9 +53,9 @@ Gram matrix `X'X + λI`.
 
 Returns weight vector `w` of length `n_features`.
 """
-function _ridge_regression(X::AbstractMatrix, y::AbstractVector; reg::Real=1.0)
+function _ridge_regression(X::AbstractMatrix, y::AbstractVector; reg::Real = 1.0)
     @assert reg >= 0 "Regularization coefficient must be non-negative, got $reg"
-    rf = _ridge_factor(X; reg=reg)
+    rf = _ridge_factor(X; reg = reg)
     return _ridge_solve(rf, X, y)
 end
 
@@ -69,7 +69,7 @@ function _squared_correlation(y_true::AbstractVector, y_pred::AbstractVector)
     r = cor(y_true, y_pred)
     if isnan(r)
         @warn "Squared correlation is NaN (zero-variance input). " *
-              "This may indicate a degenerate reservoir or collapsed prediction."
+            "This may indicate a degenerate reservoir or collapsed prediction."
         return 0.0
     end
     return clamp(r^2, 0.0, 1.0)
@@ -84,7 +84,7 @@ function _nmse(y_true::AbstractVector, y_pred::AbstractVector)
     v = var(y_true)
     if v < eps(eltype(y_true))
         @warn "NMSE: target variance is near-zero ($v). " *
-              "NMSE is undefined for constant targets."
+            "NMSE is undefined for constant targets."
         return NaN
     end
     return mean((y_true .- y_pred) .^ 2) / v
