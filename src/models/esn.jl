@@ -36,7 +36,8 @@ Echo State Network [Jaeger2004](@cite).
 
 Reservoir (passed to [`ESNCell`](@ref)):
 
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
+  - leak_coefficient: Leak rate `α ∈ (0,1]`. Can be a scalar (uniform leak)
+    or a vector of size `out_dims` (heterogeneous leak rates). Default: `1.0`.
   - `init_reservoir`: Initializer for `W_res`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initializer for reservoir bias (used if `use_bias=true`).
