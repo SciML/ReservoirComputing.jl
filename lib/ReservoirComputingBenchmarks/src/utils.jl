@@ -22,11 +22,29 @@ Returns a `_RidgeFactor` that can be reused across many targets.
 """
 function _ridge_factor(X::AbstractMatrix; reg::Real = 1.0)
     @assert reg >= 0 "Regularization coefficient must be non-negative, got $reg"
+    T = promote_type(eltype(X), typeof(reg))
     n = size(X, 2)
-    G = Symmetric(X' * X)
-    G_reg = Matrix(G) + reg * Matrix{eltype(X)}(I, n, n)
-    F = cholesky(Symmetric(G_reg))
-    buf = Vector{eltype(X)}(undef, n)
+    X_T = Matrix{T}(X)
+    G_reg = Matrix{T}(Symmetric(X_T' * X_T))
+    reg_T = convert(T, reg)
+    @inbounds for i in 1:n
+        G_reg[i, i] += reg_T
+    end
+    F = try
+        cholesky(Symmetric(G_reg))
+    catch e
+        if e isa LinearAlgebra.PosDefException
+            throw(
+                ArgumentError(
+                    "Cholesky factorization failed: X'X + reg*I is not positive definite. " *
+                        "This can happen when reg is zero or too small for rank-deficient data. " *
+                        "Increase reg or provide full-rank features.",
+                ),
+            )
+        end
+        rethrow(e)
+    end
+    buf = Vector{T}(undef, n)
     return _RidgeFactor(F, buf)
 end
 
@@ -82,7 +100,7 @@ Normalized Mean Squared Error: `mean((y_true - y_pred).²) / var(y_true)`.
 """
 function _nmse(y_true::AbstractVector, y_pred::AbstractVector)
     v = var(y_true)
-    if v < eps(eltype(y_true))
+    if v < eps(typeof(v))
         @warn "NMSE: target variance is near-zero ($v). " *
             "NMSE is undefined for constant targets."
         return NaN

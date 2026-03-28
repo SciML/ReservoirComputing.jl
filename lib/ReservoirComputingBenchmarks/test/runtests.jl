@@ -25,7 +25,7 @@ using Random
         @test haskey(result, :total)
         @test haskey(result, :delays)
         @test length(result.delays) == 20
-        @test all(0 .<= result.delays .<= 1.001)
+        @test all(d -> 0 <= d <= 1.001, result.delays)
         @test result.total >= 0
         # A shift-register reservoir should have near-perfect MC for
         # delays up to n_features
@@ -182,7 +182,7 @@ using Random
         xn = ReservoirComputingBenchmarks._normalize(x, 0.0, 0.5)
         @test xn[1] ≈ 0.0
         @test xn[end] ≈ 0.5
-        @test all(0 .<= xn .<= 0.5)
+        @test all(v -> 0 <= v <= 0.5, xn)
 
         # Constant input
         xc = ReservoirComputingBenchmarks._normalize([3.0, 3.0, 3.0], 0.0, 0.5)
