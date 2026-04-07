@@ -117,7 +117,7 @@ Normalized Mean Squared Error: ``\\text{mean}((y_\\text{true} - y_\\text{pred})^
 Returns `NaN` with a warning if `y_true` has zero variance.
 """
 @inline function nmse(y_true::AbstractVector, y_pred::AbstractVector)
-    _nmse(y_true, y_pred)
+    return _nmse(y_true, y_pred)
 end
 
 @doc raw"""
@@ -130,7 +130,7 @@ Returns `0.0` if NMSE is negative (due to numerical issues).
 @inline function rnmse(y_true::AbstractVector, y_pred::AbstractVector)
     nmse_val = nmse(y_true, y_pred)
     isnan(nmse_val) && return NaN
-    nmse_val < 0 ? 0.0 : sqrt(nmse_val)
+    return nmse_val < 0 ? 0.0 : sqrt(nmse_val)
 end
 
 @doc raw"""
