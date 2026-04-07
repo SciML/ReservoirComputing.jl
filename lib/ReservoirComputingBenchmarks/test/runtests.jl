@@ -1,6 +1,7 @@
 using ReservoirComputingBenchmarks
 using Test
 using Random
+using Statistics
 
 @testset "ReservoirComputingBenchmarks" begin
     rng = Random.MersenneTwister(42)
@@ -78,27 +79,25 @@ using Random
         # Use random states (won't be great, but should run)
         states = randn(rng, n_features, T)
 
-        result = narma(input, states; order = 10, metric = :nmse, reg = 1.0)
+        result = narma(input, states; order = 10, metric = nmse, reg = 1.0)
 
         @test haskey(result, :score)
-        @test haskey(result, :metric)
         @test haskey(result, :target)
-        @test result.metric === :nmse
         @test isfinite(result.score)
         @test result.score >= 0
         @test length(result.target) == T
 
         # Test other metrics
-        result_rnmse = narma(input, states; order = 10, metric = :rnmse, reg = 1.0)
-        @test result_rnmse.metric === :rnmse
+        result_rnmse = narma(input, states; order = 10, metric = rnmse, reg = 1.0)
         @test isfinite(result_rnmse.score)
 
-        result_mse = narma(input, states; order = 10, metric = :mse, reg = 1.0)
-        @test result_mse.metric === :mse
+        result_mse = narma(input, states; order = 10, metric = mse, reg = 1.0)
         @test isfinite(result_mse.score)
 
-        # Invalid metric
-        @test_throws ArgumentError narma(input, states; order = 10, metric = :invalid)
+        # Custom metric
+        custom_metric(y_true, y_pred) = mean(abs.(y_true .- y_pred))
+        result_custom = narma(input, states; order = 10, metric = custom_metric, reg = 1.0)
+        @test isfinite(result_custom.score)
     end
 
     @testset "IPC" begin
@@ -229,9 +228,6 @@ using Random
 
         # Input shorter than order
         @test_throws AssertionError generate_narma(rand(5); order = 10)
-
-        # Invalid NARMA metric
-        @test_throws ArgumentError narma(input, states; order = 10, metric = :bad)
 
         # Washout out of range
         @test_throws AssertionError narma(input, states; order = 10, washout = -1)

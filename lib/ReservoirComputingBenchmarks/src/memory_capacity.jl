@@ -55,26 +55,25 @@ function memory_capacity(
     # Discard first max_delay steps to avoid edge effects from delays
     valid = (max_delay + 1):T
     T_valid = length(valid)
-    X = collect(states[:, valid]')  # (T_valid, n_features)
+    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    copyto!(X, view(states, :, valid)')
 
     train_idx, test_idx = _train_test_split(T_valid, train_ratio)
 
-    X_train = X[train_idx, :]
-    X_test = X[test_idx, :]
+    X_train = view(X, train_idx, :)
+    X_test = view(X, test_idx, :)
 
-    # Pre-compute Cholesky factorization — reused across all delays
     rf = _ridge_factor(X_train; reg = reg)
 
     delay_capacities = zeros(max_delay)
 
-    for k in 1:max_delay
-        # Target: input shifted back by k steps
-        target = input[valid .- k]
+    @inbounds for k in 1:max_delay
+        target = view(input, valid .- k)
 
-        y_train = target[train_idx]
-        y_test = target[test_idx]
+        y_train = view(target, train_idx)
+        y_test = view(target, test_idx)
 
-        w = _ridge_solve(rf, X_train, y_train)
+        w = _ridge_solve!(rf, X_train, y_train)
         y_pred = X_test * w
 
         delay_capacities[k] = _squared_correlation(y_test, y_pred)

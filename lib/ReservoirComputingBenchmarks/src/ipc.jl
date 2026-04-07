@@ -13,7 +13,7 @@ z_l(t) = \prod_i \tilde{P}_{d_i}\!\bigl(u(t - \tau_i)\bigr)
 
 where ``\tilde{P}_n(x) = P_n(x)\sqrt{(2n+1)/2}`` is the normalized Legendre
 polynomial of degree ``n``.  For each basis function, a ridge regression readout
-is trained, and the capacity is the squared correlation between the target and
+is trained, and the capacity is the squared correlation between target and
 prediction.
 
 The total capacity satisfies ``C_{\text{total}} \leq N`` where ``N`` is the
@@ -76,11 +76,11 @@ function ipc(
     mtd = something(max_total_degree, max_degree)
 
     # Precompute normalized Legendre polynomial values for all (degree, delay)
-    poly_cache = Dict{Tuple{Int, Int}, Vector{Float64}}()
+    poly_cache = Matrix{Vector{Float64}}(undef, max_delay, max_degree)
     for delay in 1:max_delay
         for degree in 1:max_degree
             delayed = @view input[(max_delay + 1 - delay):(T - delay)]
-            poly_cache[(delay, degree)] = _normalized_legendre.(degree, delayed)
+            poly_cache[delay, degree] = map(x -> _normalized_legendre(degree, x), delayed)
         end
     end
 
@@ -90,43 +90,43 @@ function ipc(
     # Valid time range (after max_delay to avoid edge effects)
     valid = (max_delay + 1):T
     T_valid = length(valid)
-    X = collect(states[:, valid]')  # (T_valid, n_features)
+    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    copyto!(X, view(states, :, valid)')
 
     train_idx, test_idx = _train_test_split(T_valid, train_ratio)
-    X_train = X[train_idx, :]
-    X_test = X[test_idx, :]
+    X_train = view(X, train_idx, :)
+    X_test = view(X, test_idx, :)
+    n_test = length(test_idx)
 
-    # Pre-compute Cholesky factorization — reused across all basis functions
     rf = _ridge_factor(X_train; reg = reg)
 
     results = Vector{NamedTuple{(:terms, :degree, :capacity), Tuple{Vector{Tuple{Int, Int}}, Int, Float64}}}()
+    sizehint!(results, length(basis_functions))
     by_degree = Dict{Int, Float64}()
     by_delay = Dict{Int, Float64}()
 
-    # Pre-allocate target buffer — reused via fill!
     target = Vector{Float64}(undef, T_valid)
+    y_pred = Vector{Float64}(undef, n_test)
 
-    for terms in basis_functions
+    @inbounds for terms in basis_functions
         total_degree = sum(d for (_, d) in terms)
 
-        # Compute target: product of normalized Legendre polynomials
         fill!(target, 1.0)
         for (delay, degree) in terms
-            target .*= poly_cache[(delay, degree)]
+            target .*= poly_cache[delay, degree]
         end
 
-        y_train = target[train_idx]
-        y_test = target[test_idx]
+        y_train = view(target, train_idx)
+        y_test = view(target, test_idx)
 
-        w = _ridge_solve(rf, X_train, y_train)
-        y_pred = X_test * w
+        w = _ridge_solve!(rf, X_train, y_train)
+        mul!(y_pred, X_test, w)
 
         cap = _squared_correlation(y_test, y_pred)
 
         push!(results, (terms = terms, degree = total_degree, capacity = cap))
         by_degree[total_degree] = get(by_degree, total_degree, 0.0) + cap
 
-        # Track per-delay capacity for single-variable terms
         if length(terms) == 1
             delay = terms[1][1]
             by_delay[delay] = get(by_delay, delay, 0.0) + cap
@@ -153,14 +153,14 @@ end
 """
     _legendre(n, x)
 
-Evaluate the Legendre polynomial ``P_n(x)`` using the three-term recurrence.
+Evaluate Legendre polynomial ``P_n(x)`` using three-term recurrence.
 """
-function _legendre(n::Int, x::Real)
+@inline function _legendre(n::Int, x::Real)
     @assert n >= 0 "Legendre polynomial degree must be non-negative, got $n"
     n == 0 && return one(float(x))
     n == 1 && return float(x)
     p_prev, p_curr = one(float(x)), float(x)
-    for k in 1:(n - 1)
+    @inbounds for k in 1:(n - 1)
         p_next = ((2k + 1) * x * p_curr - k * p_prev) / (k + 1)
         p_prev, p_curr = p_curr, p_next
     end
@@ -173,7 +173,7 @@ end
 Evaluate the orthonormalized Legendre polynomial
 ``\\tilde{P}_n(x) = P_n(x) \\sqrt{(2n+1)/2}`` on ``[-1,1]``.
 """
-function _normalized_legendre(n::Int, x::Real)
+@inline function _normalized_legendre(n::Int, x::Real)
     return _legendre(n, x) * sqrt((2n + 1) / 2)
 end
 
@@ -191,18 +191,18 @@ function _enumerate_basis_functions(
     basis = Vector{Vector{Tuple{Int, Int}}}()
 
     # Single-variable terms: P_d(u(t - τ))
-    for delay in 1:max_delay
-        for degree in 1:max_degree
+    @inbounds for delay in 1:max_delay
+        @inbounds for degree in 1:max_degree
             push!(basis, [(delay, degree)])
         end
     end
 
     # Two-variable cross-terms: P_{d1}(u(t-τ1)) * P_{d2}(u(t-τ2))
     if cross_terms
-        for d1 in 1:max_delay
-            for d2 in (d1 + 1):max_delay
-                for deg1 in 1:max_degree
-                    for deg2 in 1:max_degree
+        @inbounds for d1 in 1:max_delay
+            @inbounds for d2 in (d1 + 1):max_delay
+                @inbounds for deg1 in 1:max_degree
+                    @inbounds for deg2 in 1:max_degree
                         deg1 + deg2 <= max_total_degree || continue
                         push!(basis, [(d1, deg1), (d2, deg2)])
                     end
