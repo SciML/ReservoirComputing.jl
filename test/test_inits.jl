@@ -25,6 +25,7 @@ reservoir_inits = [
     forward_connection,
     low_connectivity,
     pseudo_svd,
+    rand_hyper,
     rand_sparse,
     selfloop_cycle,
     selfloop_delayline_backward,
