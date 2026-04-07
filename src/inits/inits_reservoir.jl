@@ -153,7 +153,6 @@ julia> rand_hyper(5, 5; top_k=2, return_sparse=true)
  0.802048   0.215535    ⋅         ⋅    ⋅ 
 ```
 """
-
 function rand_hyper(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         poincare_dim::Int = 2,
