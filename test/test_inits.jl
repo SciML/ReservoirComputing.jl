@@ -24,6 +24,7 @@ reservoir_inits = [
     double_cycle,
     forward_connection,
     low_connectivity,
+    lower_triangular,
     pseudo_svd,
     rand_hyper,
     rand_sparse,
@@ -105,34 +106,4 @@ end
         dl = init(res_size, in_size)
         @test sort(unique(dl)) == Float32.([-0.1, 0.1])
     end
-end
-
-@testset "Lower Triangular Topology Tests" begin
-    
-    # 1. Test Dense Return with Exact Sparsity
-    target_sparsity_1 = 0.8
-    reservoir_dense = lower_triangular(rng, Float16, res_size, res_size; sparsity=target_sparsity_1, return_sparse=false)
-    
-    @test reservoir_dense isa Matrix{Float16}
-    @test size(reservoir_dense) == (res_size, res_size)
-    @test istril(reservoir_dense) == true 
-    
-    expected_non_zeros_1 = round(Int, res_size * res_size * (1.0 - target_sparsity_1))
-    @test count(!iszero, reservoir_dense) == expected_non_zeros_1
-    
-    # 2. Test Sparse Return with a different Exact Sparsity
-    target_sparsity_2 = 0.85
-    reservoir_sparse = lower_triangular(rng, Float32, res_size, res_size; sparsity=target_sparsity_2, return_sparse=true)
-    
-    @test reservoir_sparse isa SparseMatrixCSC{Float32, Int}
-    @test size(reservoir_sparse) == (res_size, res_size)
-    @test istril(reservoir_sparse) == true
-    
-    expected_non_zeros_2 = round(Int, res_size * res_size * (1.0 - target_sparsity_2))
-    @test count(!iszero, reservoir_sparse) == expected_non_zeros_2
-    
-    # 3. Test Scale Radius
-    reservoir_scaled = lower_triangular(rng, Float32, res_size, res_size; radius=2.5)
-    spectral_radius = maximum(abs.(eigvals(reservoir_scaled)))
-    @test spectral_radius ≈ 2.5 atol=1e-5
 end

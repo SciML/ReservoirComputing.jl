@@ -65,7 +65,7 @@ export StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
     modified_lm, scaled_rand, weighted_init, weighted_minimal
 export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
-    diagonal_init, double_cycle, forward_connection, low_connectivity, permutation_init,
+    diagonal_init, double_cycle, forward_connection, low_connectivity, lower_triangular, permutation_init,
     pseudo_svd, rand_hyper, rand_sparse, selfloop_backward_cycle, selfloop_cycle, selfloop_delayline_backward,
     selfloop_forwardconnection, simple_cycle, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,

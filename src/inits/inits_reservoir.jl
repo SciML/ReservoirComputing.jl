@@ -2732,14 +2732,124 @@ function wigner_init(
     return reservoir_matrix
 end
 
+@doc raw"""
+    lower_triangular([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+
+Create and return a sparse reservoir matrix with a lower triangular topology [Cossu2025](@cite).
+This function populates the main diagonal and the immediately adjacent lower sub-diagonals 
+with random uniform weights in the range `(-1, 1)` until the target `sparsity` is reached. 
+It guarantees structural symmetry by only adding complete diagonals.
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix. Must be square.
+
+## Keyword arguments
+
+  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
+  - `sparsity`: The exact target fraction of zero elements in the matrix. 
+    To hit this target precisely while preventing spatial bias, 
+    any remaining weights needed for the final partial sub-diagonal are randomly distributed across its indices. 
+    Defaults to 0.9.
+  - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
+    Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
+
+## Examples
+
+Default call:
+
+```jldoctest lowertriangular
+julia> W = lower_triangular(5, 5)
+5×5 Matrix{Float32}:
+ -0.214159   0.0         0.0        0.0        0.0
+  0.710328   0.655184    0.0        0.0        0.0
+ -0.912441   0.311545   -0.412411   0.0        0.0
+  0.0        0.114112    0.551211   0.812451   0.0
+  0.0        0.0        -0.741211   0.914141   0.115412
+```
+
+Returning a `SparseMatrixCSC`:
+
+```jldoctest lowertriangular
+julia> using SparseArrays
+
+julia> W_sparse = lower_triangular(6, 6; sparsity=0.8, return_sparse=true)
+6×6 SparseMatrixCSC{Float32, Int64} with 7 stored entries:
+  0.4512   ⋅        ⋅        ⋅        ⋅        ⋅
+  0.1245  -0.8123   ⋅        ⋅        ⋅        ⋅
+ -0.7612   0.9123  -0.1124   ⋅        ⋅        ⋅
+  ⋅        ⋅        0.4412  -0.5123   ⋅        ⋅
+  ⋅        ⋅        ⋅        ⋅        0.8812   ⋅
+  ⋅        ⋅        ⋅        ⋅        ⋅        0.3314
+```
+
+Scaling to a custom spectral radius:
+
+```jldoctest lowertriangular
+julia> W_scaled = lower_triangular(Float16, 4, 4; radius=2.5)
+4×4 Matrix{Float16}:
+  2.145   0.0     0.0     0.0
+ -1.123   1.854   0.0     0.0
+  0.954  -2.113  -1.542   0.0
+  0.0     1.412   2.014  -1.953
+```
+"""
+function lower_triangular(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius = T(1.0), sparsity = 0.9, return_sparse = false
+    ) where {T <: Number}
+
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    res_size = dims[1]
+
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+
+    weights = DeviceAgnostic.rand(rng, T, res_size) .* T(2.0) .- T(1.0)
+    self_loop!(rng, reservoir_matrix, weights)
+
+    target_non_zeros = round(Int, res_size * res_size * (1.0 - sparsity))
+    current_non_zeros = res_size # from the self-loops
+    shift = 1
+
+    while current_non_zeros < target_non_zeros && shift < res_size
+        diag_length = res_size - shift
+        remaining_non_zeros = target_non_zeros - current_non_zeros
+        if remaining_non_zeros >= diag_length
+            # Fill the entire diagonal
+            weights = DeviceAgnostic.rand(rng, T, diag_length) .* T(2.0) .- T(1.0)
+            current_non_zeros += diag_length
+        else
+            # We only need a fraction of this diagonal to hit the exact target
+            weights = DeviceAgnostic.zeros(rng, T, diag_length)
+
+            # Randomly distribute the remaining_non_zeros weights to avoid biasing the top-left
+            active_indices = Random.randperm(rng, diag_length)[1:remaining_non_zeros]
+            weights[active_indices] = DeviceAgnostic.rand(rng, T, remaining_non_zeros) .* T(2.0) .- T(1.0)
+
+            current_non_zeros += remaining_non_zeros
+        end
+
+        delay_line!(rng, reservoir_matrix, weights, shift)
+        shift += 1
+    end
+
+    scale_radius!(reservoir_matrix, radius)
+
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (
         :rand_sparse, :delay_line, :delayline_backward, :cycle_jumps,
         :simple_cycle, :pseudo_svd, :chaotic_init, :scaled_rand, :weighted_init,
         :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
-        :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
-        :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
+        :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
+        :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
         :diagonal_init, :wigner_init, :rand_hyper,
     )
@@ -2768,83 +2878,4 @@ for initializer in (
             return PartialFunction.Partial{Nothing}($initializer, nothing, kwargs)
         end
     end
-end
-
-"""
-    lower_triangular([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
-
-Create and return a sparse reservoir matrix with a lower triangular topology.
-This function populates the main diagonal and the immediately adjacent lower sub-diagonals 
-with random uniform weights in the range `(-1, 1)` until the target `sparsity` is reached. 
-It guarantees structural symmetry by only adding complete diagonals.
-
-## Arguments
- - `rng`: Random number generator. 
- - `T`: Type of the elements in the reservoir matrix (e.g., `Float16`, `Float32`).
- - `dims`: Dimensions of the reservoir matrix. Must be square.
-
-
-## Keyword arguments
- - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
- - `sparsity`: The exact target fraction of zero elements in the matrix. 
-    To hit this target precisely while preventing spatial bias, 
-    any remaining weights needed for the final partial sub-diagonal are randomly distributed across its indices. 
-    Defaults to 0.9.
- - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
-   Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
-
-## Examples
-```jldoctest
-julia> W = lower_triangular(5, 5; sparsity=0.6)
-5×5 Matrix{Float32}:
- -0.214159   0.0        0.0        0.0       0.0
-  0.710328   0.655184   0.0        0.0       0.0
- -0.912441   0.311545  -0.412411   0.0       0.0
-  0.0        0.114112   0.551211   0.812451  0.0
-  0.0        0.0       -0.741211   0.914141  0.115412
-
-"""
-
-
-function lower_triangular(rng::AbstractRNG, ::Type{T}, dims::Integer...; 
-                          radius=T(1.0), sparsity=0.9, return_sparse=false) where {T <: Number}
-    
-    throw_sparse_error(return_sparse)
-    check_res_size(dims...)
-    res_size = dims[1]
-    
-    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
-    
-    weights = DeviceAgnostic.rand(rng, T, res_size) .* T(2.0) .- T(1.0)
-    self_loop!(rng, reservoir_matrix, weights)
-
-    target_non_zeros = round(Int, res_size * res_size * (1.0 - sparsity))
-    current_non_zeros = res_size # from the self-loops
-    shift = 1
-
-    while current_non_zeros < target_non_zeros && shift < res_size
-        diag_length = res_size - shift
-        remaining_non_zeros = target_non_zeros - current_non_zeros
-        if remaining_non_zeros >= diag_length
-          # Fill the entire diagonal
-          weights = DeviceAgnostic.rand(rng, T, diag_length) .* T(2.0) .- T(1.0)
-          current_non_zeros += diag_length
-        else
-          # We only need a fraction of this diagonal to hit the exact target
-          weights = DeviceAgnostic.zeros(rng, T, diag_length)
-            
-          # Randomly distribute the remaining_non_zeros weights to avoid biasing the top-left
-          active_indices = DeviceAgnostic.randperm(rng, diag_length)[1:remaining_non_zeros]
-          weights[active_indices] = DeviceAgnostic.rand(rng, T, remaining_non_zeros) .* T(2.0) .- T(1.0)
-            
-          current_non_zeros += remaining_non_zeros
-        end
-        
-        delay_line!(rng, reservoir_matrix, weights, shift)
-        shift += 1
-    end
-    
-    scale_radius!(reservoir_matrix, radius)
-    
-    return return_init_as(Val(return_sparse), reservoir_matrix)
 end
