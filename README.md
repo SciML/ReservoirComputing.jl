@@ -47,6 +47,7 @@ reservoir computing models. More specifically the software offers:
     + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) `EIESN`/`AdditiveEIESN`
     + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113) `SVESM`
     + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6) `LIFESN`
+    + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms

@@ -87,6 +87,7 @@ or `dev` the package.
     + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708)  [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
     + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113)  [`SVESM`](@ref)
     + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6)  [`LIFESN`](@ref)
+    + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966)  [`ResESN`](@ref)
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
 - 15+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms

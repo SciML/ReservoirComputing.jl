@@ -15,6 +15,7 @@
     StateDelayESN
     SVESM
     LIFESN
+    ResESN
 ```
 
 ## Next generation reservoir computing
