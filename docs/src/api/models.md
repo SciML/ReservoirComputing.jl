@@ -16,6 +16,7 @@
     SVESM
     LIFESN
     ResESN
+    ResRMN
 ```
 
 ## Next generation reservoir computing
