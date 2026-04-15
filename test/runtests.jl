@@ -18,6 +18,8 @@ if GROUP == "All" || GROUP == "Core"
     @testset "Layers" begin
         @safetestset "Basic layers" include("layers/test_basic.jl")
         @safetestset "ESN Cell" include("layers/test_esncell.jl")
+        @safetestset "MemoryCell" include("layers/test_memory_cell.jl")
+        @safetestset "ResRMN Cell" include("layers/test_resrmncell.jl")
         @safetestset "EIESN Cell" include("layers/test_eiesncell.jl")
         @safetestset "AdditiveEIESN Cell" include("layers/test_additiveeiesncell.jl")
         @safetestset "SVMReadout" include("layers/test_svmreadout.jl")
@@ -27,6 +29,7 @@ if GROUP == "All" || GROUP == "Core"
     @testset "Echo State Networks" begin
         @safetestset "ESN Initializers" include("test_inits.jl")
         @safetestset "ESN model" include("models/test_esn.jl")
+        @safetestset "ResRMN model" include("models/test_resrmn.jl")
         @safetestset "DeepESN model" include("models/test_esn_deep.jl")
         @safetestset "DelayESN model" include("models/test_esn_delay.jl")
         @safetestset "HybridESN model" include("models/test_esn_hybrid.jl")

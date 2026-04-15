@@ -29,6 +29,8 @@ include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/resesn_cell.jl")
 include("layers/eusn_cell.jl")
+include("layers/memory_cell.jl")
+include("layers/resrmn_cell.jl")
 include("layers/svmreadout.jl")
 include("layers/lif_wrapper.jl")
 #general
@@ -46,6 +48,7 @@ include("models/additive_eiesn.jl")
 include("models/eiesn.jl")
 include("models/es2n.jl")
 include("models/resesn.jl")
+include("models/resrmn.jl")
 include("models/esn_deep.jl")
 include("models/esn_delay.jl")
 include("models/esn_hybrid.jl")
@@ -57,7 +60,8 @@ include("models/ngrc.jl")
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell, ResESNCell
+export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell, MemoryCell,
+    ResESNCell, ResRMNCell
 export Collect, collectstates, DelayLayer, LinearReadout, NonlinearFeaturesLayer,
     ReservoirChain, StatefulLayer
 export SVMReadout
@@ -73,7 +77,8 @@ export block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
-export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
+export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN,
+    LIFESN, ResESN, ResRMN, StateDelayESN, SVESM
 export NGRC
 #ext
 export RECACell, RECA
