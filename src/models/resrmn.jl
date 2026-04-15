@@ -1,7 +1,7 @@
 @doc raw"""
     ResRMN(in_dims, mem_dims, res_dims, out_dims, activation=tanh;
         alpha=1.0, beta=1.0,
-        init_memory_reservoir=_default_memory_reservoir,
+        init_memory_reservoir=(rng, dims...) -> simple_cycle(rng, dims...; cycle_weight=1),
         init_memory_input=scaled_rand, init_memory_bias=zeros32,
         init_memory_state=randn32, use_memory_bias=False(),
         init_reservoir=rand_sparse, init_input=scaled_rand,

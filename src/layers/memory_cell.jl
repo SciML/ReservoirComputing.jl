@@ -1,8 +1,8 @@
 @doc raw"""
     MemoryCell(in_dims => out_dims, [activation];
         use_bias=False(), init_bias=zeros32,
-        init_reservoir=simple_cycle, init_input=scaled_rand,
-        init_state=randn32)
+        init_reservoir=(rng, dims...) -> simple_cycle(rng, dims...; cycle_weight=1),
+        init_input=scaled_rand, init_state=randn32)
 
 Linear memory reservoir cell used in Reservoir Memory Networks
 [Gallicchio2024b](@cite) and Residual Reservoir Memory Networks
