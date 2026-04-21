@@ -42,6 +42,8 @@ where full details and examples are provided.
     where each node connects forward by two steps.
 - [`low_connectivity`](inits/low_connectivity.md): Creates a low-degree
     random (or enforced cycle) connectivity reservoir.
+- [`lower_triangular`](inits/lower_triangular.md): Creates a reservoir with 
+    weights filled in diagonal and "lower" diagonals until a given sparsity is reached.  
 - [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
     a permutation of the identity matrix.
 - [`pseudo_svd`](inits/pseudo_svd.md): Builds a reservoir by iteratively

@@ -24,6 +24,7 @@ reservoir_inits = [
     double_cycle,
     forward_connection,
     low_connectivity,
+    lower_triangular,
     pseudo_svd,
     rand_hyper,
     rand_sparse,
