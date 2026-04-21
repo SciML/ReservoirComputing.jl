@@ -2651,7 +2651,7 @@ end
         std=1.0, std_diag=0.5, return_symmetric)
 
 Create and return a dense random wigner initialized reservoir matrix.
-We follow as outlined in [Verzelli2021](@cite) and previously [Inubushi2017](@cite)
+We follow as outlined in [Verzelli2022](@cite) and previously [Inubushi2017](@cite)
 The off-diagonal elements will be scaled by `std` while the diagonal elements will be scaled by `std_diag`.
 if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the matrix.
 
