@@ -18,7 +18,6 @@ if GROUP == "All" || GROUP == "Core"
     @testset "Layers" begin
         @safetestset "Basic layers" include("layers/test_basic.jl")
         @safetestset "ESN Cell" include("layers/test_esncell.jl")
-        @safetestset "MemoryCell" include("layers/test_memory_cell.jl")
         @safetestset "ResRMN Cell" include("layers/test_resrmncell.jl")
         @safetestset "EIESN Cell" include("layers/test_eiesncell.jl")
         @safetestset "AdditiveEIESN Cell" include("layers/test_additiveeiesncell.jl")

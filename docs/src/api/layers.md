@@ -26,7 +26,6 @@
     ES2NCell
     ESNCell
     EuSNCell
-    MemoryCell
     ResESNCell
     ResRMNCell
     LIFESNCell

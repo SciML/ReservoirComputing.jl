@@ -8,7 +8,8 @@
 
 Nonlinear residual reservoir cell used in Residual Reservoir Memory Networks
 [Ceni2025b](@cite). Extends [`ResESNCell`](@ref) with a second linear map from
-the memory reservoir output `m(t)` produced by [`MemoryCell`](@ref).
+a memory reservoir output `m(t)` (the linear memory reservoir is an
+[`ESNCell`](@ref) with `identity` activation in the [`ResRMN`](@ref) model).
 
 ## Equations
 

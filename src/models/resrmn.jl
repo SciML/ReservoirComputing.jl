@@ -1,7 +1,7 @@
 @doc raw"""
     ResRMN(in_dims, mem_dims, res_dims, out_dims, activation=tanh;
         alpha=1.0, beta=1.0,
-        init_memory_reservoir=(rng, dims...) -> simple_cycle(rng, dims...; cycle_weight=1),
+        init_memory_reservoir=simple_cycle(; cycle_weight=1),
         init_memory_input=scaled_rand, init_memory_bias=zeros32,
         init_memory_state=randn32, use_memory_bias=False(),
         init_reservoir=rand_sparse, init_input=scaled_rand,
@@ -12,10 +12,11 @@
 Residual Reservoir Memory Network (ResRMN) [Ceni2025b](@cite).
 
 `ResRMN` is a modular and hierarchical reservoir computing model that combines
-a linear memory reservoir ([`MemoryCell`](@ref)) and a nonlinear residual
-reservoir ([`ResRMNCell`](@ref), an extension of [`ResESNCell`](@ref) accepting
-a memory input). Both reservoirs are fed the external input `u(t)`; the memory
-reservoir output `m(t)` is additionally fed to the nonlinear reservoir.
+a linear memory reservoir (an [`ESNCell`](@ref) with `identity` activation) and
+a nonlinear residual reservoir ([`ResRMNCell`](@ref), an extension of
+[`ResESNCell`](@ref) accepting a memory input). Both reservoirs are fed the
+external input `u(t)`; the memory reservoir output `m(t)` is additionally fed
+to the nonlinear reservoir.
 
 ## Equations
 
@@ -57,7 +58,8 @@ Residual reservoir options (forwarded to [`ResRMNCell`](@ref)):
     Default: `randn32`.
   - `use_bias`: Whether the nonlinear reservoir uses a bias term. Default: `false`.
 
-Memory reservoir options (forwarded to [`MemoryCell`](@ref)):
+Memory reservoir options (forwarded to an internal [`ESNCell`](@ref) with
+`identity` activation, acting as the linear memory reservoir):
 
   - `init_memory_reservoir`: Initializer for `C`. Default: [`simple_cycle`](@ref)
     with unit weight.
@@ -85,14 +87,14 @@ Composition:
 
 ## Parameters
 
-  - `memory` — parameters of the internal [`MemoryCell`](@ref).
+  - `memory` — parameters of the internal linear-memory [`ESNCell`](@ref).
   - `reservoir` — parameters of the internal [`ResRMNCell`](@ref).
   - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref).
 
 ## States
 
-  - `memory` — states for the internal [`MemoryCell`](@ref).
+  - `memory` — states for the internal linear-memory [`ESNCell`](@ref).
   - `reservoir` — states for the internal [`ResRMNCell`](@ref).
   - `states_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
@@ -109,7 +111,7 @@ function ResRMN(
         in_dims::IntegerType, mem_dims::IntegerType, res_dims::IntegerType,
         out_dims::IntegerType, activation = tanh;
         # memory reservoir kwargs
-        init_memory_reservoir = _default_memory_reservoir,
+        init_memory_reservoir = simple_cycle(; cycle_weight = 1),
         init_memory_input = scaled_rand,
         init_memory_bias = zeros32,
         init_memory_state = randn32,
@@ -124,7 +126,7 @@ function ResRMN(
         state_modifiers = (),
         readout_activation = identity
     )
-    memory_cell = MemoryCell(
+    memory_cell = ESNCell(
         in_dims => mem_dims, identity;
         use_bias = use_memory_bias,
         init_bias = init_memory_bias,
