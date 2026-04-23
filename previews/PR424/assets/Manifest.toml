@@ -592,9 +592,9 @@ version = "0.4.5"
 
 [[deps.FFMPEG_jll]]
 deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libva_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "66381d7059b5f3f6162f28831854008040a4e905"
+git-tree-sha1 = "cac41ca6b2d399adfc95e51240566f8a60a80806"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "8.0.1+1"
+version = "8.1.0+0"
 
 [[deps.FastBroadcast]]
 deps = ["ArrayInterface", "LinearAlgebra"]
@@ -2001,9 +2001,9 @@ version = "1.3.1"
 
 [[deps.ReservoirComputing]]
 deps = ["ArrayInterface", "ConcreteStructs", "LinearAlgebra", "LuxCore", "NNlib", "PrecompileTools", "Random", "Reexport", "Static", "WeightInitializers"]
-path = "/home/chrisrackauckas/github-runners/arctic1-3/_work/ReservoirComputing.jl/ReservoirComputing.jl"
+path = "/home/chrisrackauckas/github-runners/demeter3-2/_work/ReservoirComputing.jl/ReservoirComputing.jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
-version = "0.12.19"
+version = "0.12.20"
 weakdeps = ["CellularAutomata", "LIBSVM", "LinearSolve", "MLJLinearModels", "SparseArrays"]
 
     [deps.ReservoirComputing.extensions]
