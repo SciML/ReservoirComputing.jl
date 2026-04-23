@@ -27,6 +27,7 @@
     ESNCell
     EuSNCell
     ResESNCell
+    ResRMNCell
     LIFESNCell
 ```
 

@@ -21,6 +21,7 @@ makedocs(;
     modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
     clean = true, doctest = false, linkcheck = true,
+    linkcheck_ignore = [r"https?://dl\.acm\.org/"],
     plugins = [links, bib],
     format = Documenter.HTML(;
         mathengine,
