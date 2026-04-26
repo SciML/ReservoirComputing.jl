@@ -15,17 +15,18 @@ end
 function initialstates(rng::AbstractRNG, rmn::RMNCell)
     nlr_st = initialstates(rng, rmn.nonlinear_reservoir)
     lr_st = initialstates(rng, rmn.linear_reservoir)
-    return (nonlinear_reservoir = nlr_st, linear_reservoir = lr_st)
+    return (nonlinear_reservoir = nlr_st, linear_reservoir = lr_st, rng = rng)
 end
 
 function (rmn::RMNCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
-    hidden_state = init_hidden_state(rng, rmn, inp)
-    memory_state = init_hidden_state(rng, rmn, inp)
+    hidden_state = init_hidden_state(rng, rmn.nonlinear_reservoir, inp)
+    memory_state = init_hidden_state(rng, rmn.linear_reservoir, inp)
     return rmn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
 end
 
-function (rmn::RMNCell)((inp, (hidden_state, memory_state))::InputType, ps, st::NamedTuple)
+function (rmn::RMNCell)((inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
+        ps, st::NamedTuple)
     (mstate_new, _), st_lin = rmn.linear_reservoir((inp, (memory_state,)), ps.linear_reservoir, st.linear_reservoir)
     (hstate_new, _), st_nonlin = rmn.nonlinear_reservoir((inp, (hidden_state, mstate_new)), ps.nonlinear_reservoir, st.nonlinear_reservoir)
     return (hstate_new, (hstate_new, mstate_new)), st

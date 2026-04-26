@@ -67,6 +67,7 @@ Created by `initialstates(rng, esn)`:
 @concrete struct MemoryESNCell <: AbstractEchoStateNetworkCell
     activation
     in_dims <: IntegerType
+    mem_dims <: IntegerType
     out_dims <: IntegerType
     init_bias
     init_reservoir
@@ -78,14 +79,14 @@ Created by `initialstates(rng, esn)`:
 end
 
 function MemoryESNCell(
-        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
+        ((in_dims, mem_dims), out_dims)::Pair{<:Tuple{<:IntegerType, <:IntegerType}, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_memory = rand_sparse, init_state = randn32,
         leak_coefficient::AbstractFloat = 1.0
     )
     return MemoryESNCell(
-        activation, in_dims, out_dims, init_bias, init_reservoir,
+        activation, in_dims, mem_dims, out_dims, init_bias, init_reservoir,
         init_memory, init_input, init_state, leak_coefficient, static(use_bias)
     )
 end
@@ -94,7 +95,7 @@ function initialparameters(rng::AbstractRNG, esn::MemoryESNCell)
     ps = (
         input_matrix = esn.init_input(rng, esn.out_dims, esn.in_dims),
         reservoir_matrix = esn.init_reservoir(rng, esn.out_dims, esn.out_dims),
-        memory_matrix = esn.init_memory(rng, esn.out_dims, esn.out_dims),
+        memory_matrix = esn.init_memory(rng, esn.out_dims, esn.mem_dims),
     )
     if has_bias(esn)
         ps = merge(ps, (bias = esn.init_bias(rng, esn.out_dims),))
@@ -106,19 +107,20 @@ function (esn::MemoryESNCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
     hidden_state = init_hidden_state(rng, esn, inp)
     memory_state = init_hidden_state(rng, esn, inp)
-    return esn((inp, (hidden_state,)), ps, merge(st, (; rng)))
+    return esn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
 end
 
-function (esn::MemoryESNCell)((inp, (hidden_state, memory_state))::InputType, ps, st::NamedTuple)
+function (esn::MemoryESNCell)((inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
+      ps, st::NamedTuple)
     T = eltype(inp)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
-    w_memory = dense_bias(ps.memory_matrix, memory_state, bias)
-    candidate_h = esn.activation.(win_inp .+ w_state)
+    w_memory = dense_bias(ps.memory_matrix, memory_state, nothing)
+    candidate_h = esn.activation.(win_inp .+ w_state .+ w_memory)
     h_new = (one(T) - t_lc) .* hidden_state .+ t_lc .* candidate_h
-    return (h_new, (h_new, h_new)), st
+    return (h_new, (h_new, w_memory)), st
 end
 
 function Base.show(io::IO, esn::MemoryESNCell)

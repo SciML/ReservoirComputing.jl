@@ -47,6 +47,7 @@ include("models/esn_delay.jl")
 include("models/esn_hybrid.jl")
 include("models/eusn.jl")
 include("models/ngrc.jl")
+include("models/rmnesn.jl")
 #extensions
 include("extensions/reca.jl")
 
@@ -68,6 +69,7 @@ export add_jumps!, backward_connection!, delay_line!, reverse_simple_cycle!,
 export train, train!, predict, resetcarry!, polynomial_monomials
 export ES2N, ESN, EuSN, DeepESN, DelayESN, HybridESN
 export NGRC
+export RMNESN
 #ext
 export RECACell, RECA
 export RandomMapping, RandomMaps
