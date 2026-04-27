@@ -9,6 +9,7 @@
     DeepESN
     DelayESN
     HybridESN
+    RMNESN
 ```
 
 ## Next generation reservoir computing

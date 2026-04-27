@@ -1,5 +1,35 @@
 """
     RMNCell(nonlinear_reservoir, linear_reservoir)
+
+Reservoir Memory Network recurrent cell [Gallicchio2024b](@cite)
+composed of a nonlinear reservoir and a linear memory reservoir.
+
+`RMNCell` maintains two recurrent states:
+
+  - a nonlinear hidden state, updated by `nonlinear_reservoir`
+  - a linear memory state, updated by `linear_reservoir`
+
+At each recurrent step, the linear reservoir first updates the memory state from
+the current input. The resulting memory state is then supplied to the nonlinear
+reservoir, which updates the hidden state.
+
+The cell returns the nonlinear hidden state as its output and stores both the
+hidden and memory states for the next recurrent step.
+
+# Arguments
+
+  - `nonlinear_reservoir`: reservoir cell that updates the nonlinear hidden state.
+    It must accept inputs of the form `(inp, (hidden_state, memory_state))`.
+  - `linear_reservoir`: reservoir cell that updates the linear memory state.
+    It must accept inputs of the form `(inp, (memory_state,))`.
+
+# Returns
+
+An `RMNCell` suitable for use inside [`StatefulLayer`](@ref).
+
+# See also
+
+[`MemoryESNCell`](@ref), [`RMNESN`](@ref)
 """
 @concrete struct RMNCell <: AbstractReservoirRecurrentCell
     nonlinear_reservoir
@@ -33,5 +63,10 @@ function (rmn::RMNCell)((inp, (hidden_state, memory_state))::Tuple{AbstractArray
 end
 
 function Base.show(io::IO, rmn::RMNCell)
-    ### TODO
+    print(io, "RMNCell(")
+    print(io, "\n  nonlinear_reservoir = ")
+    show(io, rmn.nonlinear_reservoir)
+    print(io, ",\n  linear_reservoir = ")
+    show(io, rmn.linear_reservoir)
+    return print(io, "\n)")
 end

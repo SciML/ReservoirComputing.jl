@@ -4,7 +4,7 @@
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_memory=rand_sparse, init_state=randn32, leak_coefficient=1.0)
 
-Echo State Network (ESN) recurrent cell with memory matrix.
+Echo State Network (ESN) recurrent cell with memory matrix [Gallicchio2024b](@cite).
 
 ## Equations
 
