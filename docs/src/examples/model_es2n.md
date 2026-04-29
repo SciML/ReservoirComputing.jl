@@ -114,7 +114,7 @@ Now we can use the model like any other in ReservoirComputing.jl.
 Following the example in the getting started page:
 
 ```@example es2n_scratch
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 
 Random.seed!(42)

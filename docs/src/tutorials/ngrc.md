@@ -22,7 +22,7 @@ In this tutorial we will:
 First we need to load the necessary packages. We are going to use the following:
 
 ```@example ngrc
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Random
 using ReservoirComputing
 using Plots

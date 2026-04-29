@@ -12,7 +12,7 @@ We are going to reuse the Lorenz data used in the
 [Lorenz System Forecasting](@ref) example.
 
 ```@example deep_lorenz
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 
 #define lorenz system
 function lorenz!(du, u, p, t)
