@@ -11,7 +11,7 @@ Let's assume you have trained an [ESN](@ref), and you want to save it. Following
 [getting started](getting_started.md) example we are going to train the ESN on the Lorenz system:
 
 ```@example saveload
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
