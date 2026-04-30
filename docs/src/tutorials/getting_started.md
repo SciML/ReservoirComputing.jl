@@ -63,12 +63,12 @@ Congrats, you trained your first ESN! Now let's go into more detail.
 ## Generating the data
 
 Starting off the workflow, the first step is to obtain the data.
-We use `OrdinaryDiffEq` to derive the Lorenz system data.
+We use `OrdinaryDiffEqAdamsBashforthMoulton` to derive the Lorenz system data.
 The data is passed to the model as a matrix, where the rows are
 the features and the columns represent the time steps.
 
 ```@example lorenz
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 
 # define lorenz system
 function lorenz!(du, u, p, t)
