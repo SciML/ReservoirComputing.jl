@@ -21,7 +21,7 @@ block provides an end-to-end simplified runnable example. The rest of this
 page will delve into more details, expanding on various aspects of the example.
 
 ```@example first-esn
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
