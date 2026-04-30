@@ -6,12 +6,12 @@ how to use models and methods provided in the library for Echo State Networks.
 ## Generating the data
 
 Starting off the workflow, the first step is to obtain the data.
-We use `OrdinaryDiffEq` to derive the Lorenz system data.
+We use `OrdinaryDiffEqAdamsBashforthMoulton` to derive the Lorenz system data.
 The data is passed to the model as a matrix, where the columns
 represent the time steps.
 
 ```@example lorenz
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 
 # define lorenz system
 function lorenz!(du, u, p, t)

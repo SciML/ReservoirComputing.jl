@@ -21,7 +21,7 @@ block provides an end-to-end simplified runnable example. The rest of this
 page will delve into more details, expanding on various aspects of the example.
 
 ```@example first-esn
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
@@ -63,12 +63,12 @@ Congrats, you trained your first ESN! Now let's go into more detail.
 ## Generating the data
 
 Starting off the workflow, the first step is to obtain the data.
-We use `OrdinaryDiffEq` to derive the Lorenz system data.
+We use `OrdinaryDiffEqAdamsBashforthMoulton` to derive the Lorenz system data.
 The data is passed to the model as a matrix, where the rows are
 the features and the columns represent the time steps.
 
 ```@example lorenz
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 
 # define lorenz system
 function lorenz!(du, u, p, t)
