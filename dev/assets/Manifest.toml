@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "9211e246d54e2926ad22e91e9b4cbef994acd1ea"
+project_hash = "35441cd46645d546def7e43448d8694d60375192"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -514,9 +514,9 @@ uuid = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
 version = "1.0.7"
 
 [[deps.EnzymeCore]]
-git-tree-sha1 = "24bbb6fc8fb87eb71c1f8d00184a60fc22c63903"
+git-tree-sha1 = "c6ee69ee502060982d12dbaaf3d8fcb4e835a0d1"
 uuid = "f151be2c-9106-41f4-ab19-57ee4f262869"
-version = "0.8.19"
+version = "0.8.20"
 weakdeps = ["Adapt", "ChainRulesCore"]
 
     [deps.EnzymeCore.extensions]
@@ -602,9 +602,9 @@ version = "1.3.1"
 
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
-git-tree-sha1 = "6522cfb3b8fe97bec632252263057996cbd3de20"
+git-tree-sha1 = "8e9c059d6857607253e837730dbf780b6b151acd"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.18.0"
+version = "1.19.0"
 weakdeps = ["HTTP"]
 
     [deps.FileIO.extensions]
@@ -634,9 +634,9 @@ version = "1.16.0"
 
 [[deps.FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Setfield"]
-git-tree-sha1 = "73e879af0e767bd6dfade7c5b09d7b05657a8284"
+git-tree-sha1 = "f7017a4f337f8df189fcce98e32b67a1298a2115"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.30.0"
+version = "2.31.0"
 
     [deps.FiniteDiff.extensions]
     FiniteDiffBandedMatricesExt = "BandedMatrices"
@@ -880,9 +880,9 @@ version = "1.7.1"
 
 [[deps.JSON]]
 deps = ["Dates", "Logging", "Parsers", "PrecompileTools", "StructUtils", "UUIDs", "Unicode"]
-git-tree-sha1 = "3e846e18560a65dcef26febd2ede0160c6831c1c"
+git-tree-sha1 = "fe23330af47b8ab4e135b2ff65f7398c3a2bfc65"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "1.5.1"
+version = "1.5.2"
 
     [deps.JSON.extensions]
     JSONArrowExt = ["ArrowTypes"]
@@ -1682,7 +1682,7 @@ version = "1.3.1"
 
 [[deps.ReservoirComputing]]
 deps = ["ArrayInterface", "ConcreteStructs", "LinearAlgebra", "LuxCore", "NNlib", "PrecompileTools", "Random", "Reexport", "Static", "WeightInitializers"]
-path = "/home/chrisrackauckas/github-runners/demeter3-4/_work/ReservoirComputing.jl/ReservoirComputing.jl"
+path = "/home/chrisrackauckas/github-runners/demeter3-3/_work/ReservoirComputing.jl/ReservoirComputing.jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 version = "0.12.21"
 weakdeps = ["CellularAutomata", "LIBSVM", "LinearSolve", "MLJLinearModels", "SparseArrays"]
@@ -1921,9 +1921,9 @@ version = "0.3.7"
 
 [[deps.StructUtils]]
 deps = ["Dates", "UUIDs"]
-git-tree-sha1 = "86f5831495301b2a1387476cb30f86af7ab99194"
+git-tree-sha1 = "dd974aefe288ef2898733aecf40858dc86742d74"
 uuid = "ec057cc2-7a8d-4b58-b3b3-92acb9f63b42"
-version = "2.8.0"
+version = "2.8.1"
 
     [deps.StructUtils.extensions]
     StructUtilsMeasurementsExt = ["Measurements"]
