@@ -19,18 +19,22 @@ cell_name(::Type{C}) where {C} = string(nameof(C))
 mix_kw(::Type{ESNCell}) = :leak_coefficient
 mix_kw(::Type{ES2NCell}) = :proximity
 mix_kw(::Type{EuSNCell}) = :leak_coefficient
+mix_kw(::Type{ResESNCell}) = :beta
 
 mix_label(::Type{ESNCell}) = "leak_coefficient"
 mix_label(::Type{ES2NCell}) = "proximity"
 mix_label(::Type{EuSNCell}) = "leak_coefficient"
+mix_label(::Type{ResESNCell}) = "beta"
 
 default_extra_ctor_kwargs(::Type{ESNCell}) = NamedTuple()
 default_extra_ctor_kwargs(::Type{ES2NCell}) = (init_orthogonal = _W_I,)
 default_extra_ctor_kwargs(::Type{EuSNCell}) = NamedTuple()  # diffusion exists but we leave default unless overridden
+default_extra_ctor_kwargs(::Type{ResESNCell}) = (init_orthogonal = _W_I, alpha = 1.0)
 
 extra_param_keys(::Type{ESNCell}) = ()
 extra_param_keys(::Type{ES2NCell}) = (:orthogonal_matrix,)
 extra_param_keys(::Type{EuSNCell}) = ()
+extra_param_keys(::Type{ResESNCell}) = (:orthogonal_matrix,)
 
 function build_cell(
         ::Type{C}, in_dims::Integer, out_dims::Integer;
@@ -187,6 +191,55 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
         @test Y ≈ X
     end
 
+    @testset "$(cell_name(C)): scalar vs vector leak equivalence" begin
+        if C === ESNCell
+            rng = MersenneTwister(42)
+
+            in_dims = 4
+            out_dims = 6
+            batch = 3
+
+            α = 0.3f0
+            α_vec = fill(α, out_dims)
+
+            activation = identity
+
+            kwargs = (
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_state = _Z32,
+            )
+
+            cell_scalar = ESNCell(
+                in_dims => out_dims,
+                activation;
+                leak_coefficient = α,
+                kwargs...
+            )
+
+            cell_vector = ESNCell(
+                in_dims => out_dims,
+                activation;
+                leak_coefficient = α_vec,
+                kwargs...
+            )
+
+            ps = initialparameters(rng, cell_scalar)
+
+            x = rand(Float32, in_dims, batch)
+            h0 = rand(Float32, out_dims, batch)
+
+            (y_s_tuple, _) = cell_scalar((x, (h0,)), ps, NamedTuple())
+            (y_v_tuple, _) = cell_vector((x, (h0,)), ps, NamedTuple())
+
+            y_s, _ = y_s_tuple
+            y_v, _ = y_v_tuple
+
+            @test y_s ≈ y_v atol = 1.0e-6
+        end
+    end
+
     return @testset "$(cell_name(C)): outer call computes its own initial hidden state" begin
         rng = MersenneTwister(123)
         cell = build_cell(
@@ -212,7 +265,40 @@ function test_echo_state_cell_contract(::Type{C}) where {C}
 end
 
 @testset "AbstractEchoStateNetworkCell contract" begin
-    for C in (ESNCell, ES2NCell, EuSNCell)
+    for C in (ESNCell, ES2NCell, EuSNCell, ResESNCell)
         test_echo_state_cell_contract(C)
+    end
+end
+
+@testset "ResESNCell: decoupled alpha/beta" begin
+    cell = ResESNCell(
+        3 => 3, identity;
+        use_bias = False(),
+        init_input = _W_I,
+        init_reservoir = _W_ZZ,
+        init_orthogonal = _W_I,
+        init_state = _Z32,
+        alpha = 0.4,
+        beta = 0.7
+    )
+
+    ps = initialparameters(MersenneTwister(0), cell)
+    # Non-collinear vectors so the system alpha=1-p, beta=p is fully determined.
+    # Any ES2N proximity p forces (1-p)+p=1; since 0.4+0.7=1.1≠1, no p exists.
+    x = Float32[1, 0, 2]
+    h0 = Float32[0, 3, 1]
+
+    (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
+    y, _ = y_tuple
+
+    # h = alpha * I * h0 + beta * identity(I*x + 0*h0)
+    #   = 0.4 * h0 + 0.7 * x
+    @test y ≈ 0.4f0 .* h0 .+ 0.7f0 .* x
+
+    # No single ES2N proximity p can reproduce this result:
+    # matching requires alpha=1-p AND beta=p simultaneously → alpha+beta=1.
+    @testset "unreachable by ES2N proximity p=$p" for p in 0.0f0:0.05f0:1.0f0
+        es2n_result = (1.0f0 - p) .* h0 .+ p .* x
+        @test !(y ≈ es2n_result)
     end
 end

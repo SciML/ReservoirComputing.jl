@@ -1,10 +1,10 @@
 # Building a model to add to ReservoirComputing.jl
 
-This examples showcases how to build custom models such that they could
-be also included in ReservoirComputing.jl. In this example we will be building a
-edge of stability echo state network [`ES2N`](@ref). Since the model is
+This example showcases how to build custom models that could also be
+included in ReservoirComputing.jl. In this example we will build an edge-of-stability
+echo state network (ES2N). [`ES2N`](@ref). Since the model is
 already available in the library, we will change the names of cells and
-models, to not cause problems.
+models to avoid conflicts.
 
 ## Building an ES2NCell
 
@@ -114,7 +114,7 @@ Now we can use the model like any other in ReservoirComputing.jl.
 Following the example in the getting started page:
 
 ```@example es2n_scratch
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 
 Random.seed!(42)

@@ -7,13 +7,13 @@ we show how to solve the 5 bit memory task.
 
 ## 5 bit memory task
 
-We read the data can be read as follows:
+The data can be read as follows:
 
 ```@example reca
 using DelimitedFiles
 
-input = readdlm("./5bitinput.txt", ',', Float64)
-output = readdlm("./5bitoutput.txt", ',', Float64)
+input = readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64)
+output = readdlm(joinpath(@__DIR__, "5bitoutput.txt"), ',', Float64)
 ```
 
 To use a ReCA model, it is necessary to define the rule one intends to use.

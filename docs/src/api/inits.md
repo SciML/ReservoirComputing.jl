@@ -35,14 +35,21 @@ where full details and examples are provided.
     fixed offsets from the diagonal.
 - [`delayline_backward`](inits/delayline_backward.md): Produces a delay-line
     reservoir with additional backward (feedback) connections.
+- [`diagonal_init`](inits/diagonal_init.md): Constructs a diagonal matrix.
 - [`double_cycle`](inits/double_cycle.md): Creates two interlaced directed
     cycles (upper & lower) with independent weights.
 - [`forward_connection`](inits/forward_connection.md): Builds a reservoir
     where each node connects forward by two steps.
 - [`low_connectivity`](inits/low_connectivity.md): Creates a low-degree
     random (or enforced cycle) connectivity reservoir.
+- [`lower_triangular`](inits/lower_triangular.md): Creates a reservoir with 
+    weights filled in diagonal and "lower" diagonals until a given sparsity is reached.  
+- [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
+    a permutation of the identity matrix.
 - [`pseudo_svd`](inits/pseudo_svd.md): Builds a reservoir by iteratively
     perturbing a diagonal matrix using pseudo-SVD rotations.
+- [`rand_hyper`](inits/rand_hyper.md): Generates a reservoir by sampling nodes 
+    in the Poincaré ball and constructing weights based on hyperbolic distances between them.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
     reservoir with controlled sparsity and spectral radius.
 - [`selfloop_cycle`](inits/selfloop_cycle.md): Builds a simple cycle
@@ -57,8 +64,8 @@ where full details and examples are provided.
     reservoir with uniform weights.
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.
-- [`permutation_init`](inits/permutation_init.md): Constructs a reservoir matrix that is
-    a permutation of the identity matrix.
+- [`wigner_init`](inits/wigner_init.md): Generates a random symmetric
+    reservoir with controlled spectral radius for diagonal and off_diagonal elements.
 
 ## Building functions
 

@@ -67,6 +67,17 @@ function check_res_size(dims::Integer...)
     end
 end
 
+function check_inf_nan(weights::AbstractMatrix)
+    has_nan = any(isnan, weights)
+    has_inf = any(isinf, weights)
+    if has_nan || has_inf
+        error("Created matrix contains invalid values (NaN=$has_nan, Inf=$has_inf)")
+    end
+
+    return nothing
+end
+
+
 ## scale spectral radius
 """
     scale_radius!(matrix, radius)
@@ -701,6 +712,14 @@ function self_loop!(
         reservoir_matrix[idx, idx] = weight[idx]
     end
     return reservoir_matrix
+end
+
+function self_loop!(
+        rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
+        weight; kwargs...
+    )
+    weights = weight(rng, size(reservoir_matrix, 1))
+    return self_loop!(rng, reservoir_matrix, weights; kwargs...)
 end
 
 @doc raw"""

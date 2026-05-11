@@ -7,7 +7,7 @@ using PrecompileTools: @compile_workload, @setup_workload
     @compile_workload begin
         rng = Random.MersenneTwister(0)
         input_size = 3
-        reservoir_size = 5
+        reservoir_size = 50
         output_size = 2
         seq_length = 10
 

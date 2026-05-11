@@ -78,7 +78,158 @@ function rand_sparse(
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
     reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
+    check_inf_nan(reservoir_matrix)
     return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+"""
+    rand_hyper([rng], [T], dims...;
+        poincare_dim=2, disk_radius=0.99, top_k=0, sigma=1.0, radius=1.0, return_sparse=false)
+
+Create a hyperbolic embedding reservoir matrix using the HYPER construction
+as described in [Singh2025HypER](@cite).
+
+This initializer samples reservoir nodes in a Poincaré ball of dimension `poincare_dim`,
+computes geometry-aware kernel weights, optionally sparsifies the rows to keep
+the top `top_k` connections, and scales the spectral radius to `radius`.
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+  - `poincare_dim`: Dimension of the Poincaré ball.
+    Default is 2
+  - `disk_radius`: Maximum Euclidean radius of nodes in the Poincaré ball.
+    Default is 0.99
+  - `top_k`: Number of largest entries to keep per row (integer).
+    Default is 0
+  - `sigma`: Kernel width controlling decay of weights based on hyperbolic distance.
+    Default is 1.0
+  - `radius`: Target spectral radius after scaling.
+    Default is 1.0
+  - `return_sparse`: flag for returning a `sparse` matrix.
+    `true` requires `SparseArrays` to be loaded.
+    Default is `false` 
+
+## Examples
+
+Default call:
+
+```jldoctest randhyper
+julia> rand_hyper(5, 5)
+5×5 Matrix{Float32}:
+ 0.0        0.286061   0.124822   0.0227793   0.714702
+ 0.286061   0.0        0.583359   0.0170896   0.192062
+ 0.124822   0.583359   0.0        0.0156618   0.0656493
+ 0.0227793  0.0170896  0.0156618  0.0         0.00776529
+ 0.714702   0.192062   0.0656493  0.00776529  0.0
+
+With row-wise sparsification (keep top 2 entries per row):
+
+julia> rand_hyper(5, 5; top_k=2)
+5×5 Matrix{Float32}:
+ 0.0        0.321022   0.0       0.0  0.802048
+ 0.321022   0.0        0.654653  0.0  0.0
+ 0.140077   0.654653   0.0       0.0  0.0
+ 0.0255632  0.0191781  0.0       0.0  0.0
+ 0.802048   0.215535   0.0       0.0  0.0
+
+ Returning a sparse matrix:
+
+ julia> using SparseArrays
+
+julia> rand_hyper(5, 5; top_k=2, return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
+  ⋅         0.321022    ⋅         ⋅   0.802048
+ 0.321022    ⋅         0.654653   ⋅    ⋅ 
+ 0.140077   0.654653    ⋅         ⋅    ⋅ 
+ 0.0255632  0.0191781   ⋅         ⋅    ⋅ 
+ 0.802048   0.215535    ⋅         ⋅    ⋅ 
+```
+"""
+function rand_hyper(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        poincare_dim::Int = 2,
+        disk_radius::Number = T(0.99),
+        top_k::Integer = 0,
+        sigma::Number = T(1.0),
+        radius::Number = T(1.0),
+        return_sparse::Bool = false
+    ) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    N = dims[1]
+    eps = T(1.0e-12)
+
+    P = sample_poincare_points(rng, T, N, poincare_dim; disk_radius = disk_radius)
+    D = zeros(T, N, N)
+    for i in 1:N
+        pi = view(P, i, :)
+        for j in 1:N
+            i == j && continue
+            pj = view(P, j, :)
+            D[i, j] = hyperbolic_distance_poincare(pi, pj)
+        end
+    end
+    W = exp.(-D ./ max(sigma, eps))
+    @inbounds for i in 1:N
+        W[i, i] = zero(T)
+    end
+    W = topk_row_sparsify(W, top_k)
+    W = scale_radius!(W, T(radius))
+    check_inf_nan(W)
+
+    return return_init_as(Val(return_sparse), W)
+end
+
+function hyperbolic_distance_poincare(pi::AbstractVector{T}, pj::AbstractVector{T}) where {T}
+    eps = T(1.0e-12)
+
+    norm_pi2 = sum(abs2, pi)
+    norm_pj2 = sum(abs2, pj)
+    diff2 = sum(abs2, pi .- pj)
+    denom = max(eps, (1 - norm_pi2) * (1 - norm_pj2))
+    arg = max(1 + 2 * diff2 / denom, T(1 + eps))
+    return acosh(arg)
+end
+
+function sample_poincare_points(
+        rng::AbstractRNG,
+        ::Type{T},
+        N::Integer,
+        poincare_dim::Integer;
+        disk_radius::Number = T(0.99)
+    ) where {T}
+    P = zeros(T, N, poincare_dim)
+    R_max = 2 * atanh(disk_radius)
+    for i in 1:N
+        v = randn(rng, T, poincare_dim)
+        v /= norm(v)
+        rho = rand(rng) * R_max
+        r = tanh(rho / 2)
+        P[i, :] .= r .* v
+    end
+    return P
+end
+
+function topk_row_sparsify(W::AbstractMatrix{T}, top_k::Integer) where {T}
+    N = size(W, 1)
+    if !(0 < top_k < N)
+        return W
+    end
+    W_sparse = zeros(T, size(W))
+    for i in 1:N
+        row = W[i, :]
+        idx = partialsortperm(abs.(row), (N - top_k + 1):N; rev = false)
+        W_sparse[i, idx] = row[idx]
+    end
+    return W_sparse
 end
 
 """
@@ -199,6 +350,7 @@ function pseudo_svd(
         reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
         tmp = get_sparsity(reservoir_matrix, res_dim)
     end
+    check_inf_nan(reservoir_matrix)
 
     if return_diag
         return Diagonal(diag(reservoir_matrix))
@@ -344,6 +496,7 @@ function chaotic_init(
     if current_spectral_radius != 0
         reservoir_matrix .*= radius / current_spectral_radius
     end
+    check_inf_nan(reservoir_matrix)
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -447,6 +600,8 @@ function low_connectivity(
         )
     end
     scale_radius!(reservoir_matrix, radius)
+    check_inf_nan(reservoir_matrix)
+
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -2227,7 +2382,7 @@ end
 @doc raw"""
     permutation_init([rng], [T], dims...;
         weight=0.1, permutation_matrix=nothing, return_sparse=false,
-        kwargs...)
+        radius=nothing, kwargs...)
 
 Creates a permutation reservoir as described in [Boedecker2009](@cite), by first
 initializing a scaled identity (self-loops) and then
@@ -2255,6 +2410,9 @@ This construction yields:
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
+  - `radius`: The desired spectral radius of the reservoir.
+    If `nothing` is passed, no scaling takes place.
+    Defaults to `nothing`.
   - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
     If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
     `forward_weight` can be positive with a probability set by `positive_prob`. If set to
@@ -2339,12 +2497,348 @@ function permutation_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight = T(0.1), return_sparse::Bool = false,
         permutation_matrix::Union{Nothing, AbstractMatrix} = nothing,
+        radius::Union{AbstractFloat, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     permute_matrix!(rng, reservoir_matrix, permutation_matrix)
+    scale_radius!(reservoir_matrix, radius)
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+@doc raw"""
+    diagonal_init([rng], [T], dims...;
+        return_sparse=false, weight=randn,
+        kwargs...)
+
+Creates a diagonal reservoir [Fette2005](@cite).
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()`from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+- `weight`: Weight used for the initial self-loop initialization. Can be a single number,
+  vector, or function to generate an array. Default is `randn`.
+- `return_sparse`: flag for returning a `sparse` matrix.
+  `true` requires `SparseArrays` to be loaded.
+  Default is `false`.
+- `return_diag`: flag for returning a `Diagonal` matrix. If both `return_diag`
+  and `return_sparse` are set to `true` priority is given to `return_diag`.
+  Default is `false`.
+- `radius`: The desired spectral radius of the reservoir.
+  If `nothing` is passed, no scaling takes place.
+  Defaults to `nothing`.
+- `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
+  If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
+  `forward_weight` can be positive with a probability set by `positive_prob`. If set to
+  `:irrational_sample!` the `weight` is negative if the decimal number of the
+  irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
+  assigned a negative sign after the chosen `strides`. `strides` can be a single
+  number or an array. Default is `:no_sample`.
+- `positive_prob`: probability of the `weight` being positive when `sampling_type` is
+  set to `:bernoulli_sample!`. Default is 0.5.
+- `irrational`: Irrational number whose decimals decide the sign of `weight`.
+  Default is `pi`.
+- `start`: Which place after the decimal point the counting starts for the `irrational`
+  sign counting. Default is 1.
+- `strides`: number of strides for assigning negative value to a weight. It can be an
+  integer or an array. Default is 2.
+
+## Examples
+
+Default kwargs:
+
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5)
+5×5 Matrix{Float32}:
+ -0.359729  0.0       0.0      0.0      0.0
+  0.0       1.08721   0.0      0.0      0.0
+  0.0       0.0      -0.41959  0.0      0.0
+  0.0       0.0       0.0      0.71891  0.0
+  0.0       0.0       0.0      0.0      0.420247
+```
+
+Changing the weights magnitudes to a different unique value:
+
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; weight=0.1)
+5×5 Matrix{Float32}:
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
+ 0.0  0.0  0.0  0.0  0.1
+```
+
+Changing the weights signs with different sampling techniques:
+
+```jldoctest diaginit
+
+```
+
+Changing the weights to random numbers. Note that the length of the given array
+must be at least as long as the subdiagonal one wants to fill:
+
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:bernoulli_sample!)
+5×5 Matrix{Float32}:
+ 0.1   0.0  0.0   0.0  0.0
+ 0.0  -0.1  0.0   0.0  0.0
+ 0.0   0.0  0.1   0.0  0.0
+ 0.0   0.0  0.0  -0.1  0.0
+ 0.0   0.0  0.0   0.0  0.1
+
+julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:irrational_sample!)
+5×5 Matrix{Float32}:
+ -0.1  0.0   0.0   0.0   0.0
+  0.0  0.1   0.0   0.0   0.0
+  0.0  0.0  -0.1   0.0   0.0
+  0.0  0.0   0.0  -0.1   0.0
+  0.0  0.0   0.0   0.0  -0.1
+```
+
+Returning a sparse matrix:
+
+```jldoctest diaginit
+julia> using SparseArrays
+
+julia> rr = diagonal_init(5, 5; return_sparse=true)
+5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
+ -0.359729   ⋅         ⋅        ⋅        ⋅
+   ⋅        1.08721    ⋅        ⋅        ⋅
+   ⋅         ⋅       -0.41959   ⋅        ⋅
+   ⋅         ⋅         ⋅       0.71891   ⋅
+   ⋅         ⋅         ⋅        ⋅       0.420247
+```
+
+Returning a diagonal matrix:
+
+```jldoctest diaginit
+julia> rr = diagonal_init(5, 5; return_diag=true)
+5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
+ -0.359729   ⋅         ⋅        ⋅        ⋅
+   ⋅        1.08721    ⋅        ⋅        ⋅
+   ⋅         ⋅       -0.41959   ⋅        ⋅
+   ⋅         ⋅         ⋅       0.71891   ⋅
+   ⋅         ⋅         ⋅        ⋅       0.420247
+```
+
+"""
+function diagonal_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        weight = randn, return_sparse::Bool = false,
+        return_diag::Bool = false, kwargs...
+    ) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    if return_diag
+        return Diagonal(diag(reservoir_matrix))
+    else
+        return return_init_as(Val(return_sparse), reservoir_matrix)
+    end
+end
+
+@doc raw"""
+    wigner_init([rng], [T], dim.;
+        std=1.0, std_diag=0.5, return_symmetric)
+
+Create and return a dense random wigner initialized reservoir matrix.
+We follow as outlined in [Verzelli2022](@cite) and previously [Inubushi2017](@cite)
+The off-diagonal elements will be scaled by `std` while the diagonal elements will be scaled by `std_diag`.
+if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the matrix.
+
+## Arguments
+
+  - `rng`: Random number generator.
+  - `T`: Type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimension of the (symmetric) reservoir matrix. Either a single integer or a pair of integers. Pair of integers must match.
+
+## Keyword arguments
+
+  - `std`: The desired scaling for the standard deviation of the off_diagonal elements.
+    Defaults to 1.0.
+  - `std_diag`: The desired scaling for the standard deviation of the diagonal elements.
+    Defaults to 0.5.
+  - `return_symmetric`: If `true`, returns a LinearAlgebra.Symmetric type matrix.
+    Defaults to `false`.
+    ## Examples
+
+    Default kwargs:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5)
+    5×5 Matrix{Float32}:
+      0.000769674   0.126007   -0.277637   -0.126593   -0.389
+      0.126007     -0.0176753   0.541007   -0.392352    0.435318
+     -0.277637      0.541007    0.448532   -0.0991032  -0.357256
+     -0.126593     -0.392352   -0.0991032  -0.0637784  -0.373899
+     -0.389         0.435318   -0.357256   -0.373899   -0.0403503
+    ```
+
+    Returning a Symmetric matrix:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5; return_symmetric=true)
+     5×5 LinearAlgebra.Symmetric{Float32, Matrix{Float32}}:
+      -0.0874871   0.0666034   0.520725   0.454877  -0.503613
+       0.0666034  -0.2203     -0.497137   0.805205   0.0580209
+       0.520725   -0.497137    0.489767  -0.792692   0.571714
+       0.454877    0.805205   -0.792692  -0.126786  -0.414994
+      -0.503613    0.0580209   0.571714  -0.414994  -0.0372717
+    ```
+    Returning with different standard deviation on diagonal and off diagonal:
+
+    ```jldoctest diaginit
+    julia> rr = wigner_init(5, 5; std_diag=5, std=1e-3)
+    5×5 Matrix{Float32}:
+      0.685752      0.000850898  -0.000109755  -0.000211195  -0.000102981
+      0.000850898  -0.327889     -0.000201935   0.000673213   7.9558f-5
+     -0.000109755  -0.000201935  -2.77398       0.00010618   -0.000488676
+     -0.000211195   0.000673213   0.00010618    1.15882       0.000629446
+     -0.000102981   7.9558f-5    -0.000488676   0.000629446  -3.25089
+    ```
+
+"""
+function wigner_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        std::Number = T(1.0), std_diag::Number = T(0.5),
+        return_symmetric::Bool = false
+    ) where {T <: Number}
+    check_res_size(dims...)
+    dim = dims[1]
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, dim, dim)
+    sqrt_dim = T(sqrt(dim))
+    diag = std_diag / sqrt_dim
+    off_diag = std / sqrt_dim
+    for i in 1:dim
+        reservoir_matrix[i, i] = diag * T(randn(rng))
+        for j in (i + 1):dim
+            reservoir_matrix[i, j] = off_diag * T(randn(rng))
+            reservoir_matrix[j, i] = reservoir_matrix[i, j]
+        end
+    end
+    if return_symmetric
+        return Symmetric(reservoir_matrix)
+    end
+    return reservoir_matrix
+end
+
+@doc raw"""
+    lower_triangular([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+
+Create and return a sparse reservoir matrix with a lower triangular topology [Cossu2025](@cite).
+This function populates the main diagonal and the immediately adjacent lower sub-diagonals 
+with random uniform weights in the range `(-1, 1)` until the target `sparsity` is reached. 
+It guarantees structural symmetry by only adding complete diagonals.
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix. Must be square.
+
+## Keyword arguments
+
+  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
+  - `sparsity`: The exact target fraction of zero elements in the matrix. 
+    To hit this target precisely while preventing spatial bias, 
+    any remaining weights needed for the final partial sub-diagonal are randomly distributed across its indices. 
+    Defaults to 0.9.
+  - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
+    Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
+
+## Examples
+
+Default call:
+
+```jldoctest lowertriangular
+julia> W = lower_triangular(5, 5)
+5×5 Matrix{Float32}:
+ -0.214159   0.0         0.0        0.0        0.0
+  0.710328   0.655184    0.0        0.0        0.0
+ -0.912441   0.311545   -0.412411   0.0        0.0
+  0.0        0.114112    0.551211   0.812451   0.0
+  0.0        0.0        -0.741211   0.914141   0.115412
+```
+
+Returning a `SparseMatrixCSC`:
+
+```jldoctest lowertriangular
+julia> using SparseArrays
+
+julia> W_sparse = lower_triangular(6, 6; sparsity=0.8, return_sparse=true)
+6×6 SparseMatrixCSC{Float32, Int64} with 7 stored entries:
+  0.4512   ⋅        ⋅        ⋅        ⋅        ⋅
+  0.1245  -0.8123   ⋅        ⋅        ⋅        ⋅
+ -0.7612   0.9123  -0.1124   ⋅        ⋅        ⋅
+  ⋅        ⋅        0.4412  -0.5123   ⋅        ⋅
+  ⋅        ⋅        ⋅        ⋅        0.8812   ⋅
+  ⋅        ⋅        ⋅        ⋅        ⋅        0.3314
+```
+
+Scaling to a custom spectral radius:
+
+```jldoctest lowertriangular
+julia> W_scaled = lower_triangular(Float16, 4, 4; radius=2.5)
+4×4 Matrix{Float16}:
+  2.145   0.0     0.0     0.0
+ -1.123   1.854   0.0     0.0
+  0.954  -2.113  -1.542   0.0
+  0.0     1.412   2.014  -1.953
+```
+"""
+function lower_triangular(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius = T(1.0), sparsity = 0.9, return_sparse = false
+    ) where {T <: Number}
+
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    res_size = dims[1]
+
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+
+    weights = DeviceAgnostic.rand(rng, T, res_size) .* T(2.0) .- T(1.0)
+    self_loop!(rng, reservoir_matrix, weights)
+
+    target_non_zeros = round(Int, res_size * res_size * (1.0 - sparsity))
+    current_non_zeros = res_size # from the self-loops
+    shift = 1
+
+    while current_non_zeros < target_non_zeros && shift < res_size
+        diag_length = res_size - shift
+        remaining_non_zeros = target_non_zeros - current_non_zeros
+        if remaining_non_zeros >= diag_length
+            # Fill the entire diagonal
+            weights = DeviceAgnostic.rand(rng, T, diag_length) .* T(2.0) .- T(1.0)
+            current_non_zeros += diag_length
+        else
+            # We only need a fraction of this diagonal to hit the exact target
+            weights = DeviceAgnostic.zeros(rng, T, diag_length)
+
+            # Randomly distribute the remaining_non_zeros weights to avoid biasing the top-left
+            active_indices = Random.randperm(rng, diag_length)[1:remaining_non_zeros]
+            weights[active_indices] = DeviceAgnostic.rand(rng, T, remaining_non_zeros) .* T(2.0) .- T(1.0)
+
+            current_non_zeros += remaining_non_zeros
+        end
+
+        delay_line!(rng, reservoir_matrix, weights, shift)
+        shift += 1
+    end
+
+    scale_radius!(reservoir_matrix, radius)
+
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
@@ -2354,9 +2848,10 @@ for initializer in (
         :rand_sparse, :delay_line, :delayline_backward, :cycle_jumps,
         :simple_cycle, :pseudo_svd, :chaotic_init, :scaled_rand, :weighted_init,
         :weighted_minimal, :informed_init, :minimal_init, :chebyshev_mapping,
-        :logistic_mapping, :modified_lm, :low_connectivity, :double_cycle, :selfloop_cycle,
-        :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
+        :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
+        :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
+        :diagonal_init, :wigner_init, :rand_hyper,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)

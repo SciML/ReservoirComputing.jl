@@ -41,6 +41,10 @@ end
 
 _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
+abstract type AbstractReservoirComputingSolver end
+
+struct QRSolver <: AbstractReservoirComputingSolver end
+
 @doc raw"""
     train(train_method, states, target_data; kwargs...)
 
@@ -75,11 +79,19 @@ additional changes.
   value as the forward method only.
 """
 function train(
-        sr::StandardRidge, states::AbstractArray, target_data::AbstractArray; kwargs...
+        sr::StandardRidge, states::AbstractMatrix, target_data::AbstractMatrix;
+        solver = QRSolver(), kwargs...
+    )
+    return _train_ridge(solver, sr, states, target_data; kwargs...)
+end
+
+function _train_ridge(
+        ::QRSolver, sr::StandardRidge,
+        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
     )
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
-    b = [target_data'; zeros(n_states, size(target_data, 1))]
+    b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]
     F = qr(A)
     Wt = F \ b
     output_layer = Matrix(Wt')
@@ -93,7 +105,8 @@ end
 
 Trains a given reservoir computing by creating the reservoir states from `train_data`,
 and then fiting the readout layer using `target_data` as target.
-The learned weights/layer are written into `ps`.
+The learned weights/layer are written into `ps`, while the reservoir states are written
+in `st`.
 
 ## Arguments
 
@@ -132,12 +145,13 @@ function train!(
         train_method = StandardRidge(0.0);
         washout::Int = 0, return_states::Bool = false, kwargs...
     )
-    states, st_after = collectstates(rc, train_data, ps, st)
+    raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        traindata_wo = washout > 0 ? _apply_washout(states, target_data, washout) :
-        (states, target_data)
+        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        (raw_states, target_data)
     output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
+    st_after = merge(st_after, (; :states => states_wo))
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 

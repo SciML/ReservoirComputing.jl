@@ -1,26 +1,26 @@
 # Lorenz System Forecasting
 
-This example expands on the readme Lorenz system forecasting to showcase
+This example expands on the README Lorenz system forecasting to showcase
 how to use models and methods provided in the library for Echo State Networks.
 
 ## Generating the data
 
 Starting off the workflow, the first step is to obtain the data.
-We use `OrdinaryDiffEq` to derive the Lorenz system data.
+We use `OrdinaryDiffEqAdamsBashforthMoulton` to derive the Lorenz system data.
 The data is passed to the model as a matrix, where the columns
 represent the time steps.
 
 ```@example lorenz
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 
-#define lorenz system
+# define lorenz system
 function lorenz!(du, u, p, t)
     du[1] = 10.0 * (u[2] - u[1])
     du[2] = u[1] * (28.0 - u[3]) - u[2]
     du[3] = u[1] * u[2] - (8 / 3) * u[3]
 end
 
-#solve and take data
+# solve and take data
 prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 200.0))
 data = solve(prob, ABM54(); dt=0.02)
 data = reduce(hcat, data.u)
@@ -44,7 +44,7 @@ test_data = data[:, (shift + train_len + 1):(shift + train_len + predict_len)]
 ```
 
 It is *important* to notice that the data needs to be formatted in a
-matrix with the features as rows and time steps as columns as in this example
+matrix with the features as rows and time steps as columns as in this example.
 This is needed even if the time series consists of single values.
 
 ## Building the Echo State Network
@@ -87,13 +87,13 @@ The value of `input_scaling` determines the upper and lower bounds of the
 uniform distribution of the weights in the [`weighted_init`](@ref).
 The value of 0.1 represents the default. The default input layer is
 the [`scaled_rand`](@ref), a dense matrix. The details of the weighted version
-can be found in [Lu2017](@cite), for this example, this version returns
+can be found in [Lu2017](@cite). For this example, this version returns
 the best results.
 
 ## Training and Prediction
 
-Training for ESNs usually means solving a linear regression. The libbrary supports
-solvers from ['MLILinearModels.jl'](https://github.com/JuliaAI/MLJLinearModels.jl),
+Training for ESNs usually means solving a linear regression. The library supports
+solvers from [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl),
 in addition to a custom implementation of ridge regression. In this example we will
 use the latter.
 

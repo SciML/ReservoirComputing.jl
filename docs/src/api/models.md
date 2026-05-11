@@ -3,13 +3,20 @@
 ## Echo State Networks
 
 ```@docs
+    AdditiveEIESN
+    DeepESN
+    DelayESN
+    EIESN
     ES2N
     ESN
     EuSN
-    DeepESN
-    DelayESN
     HybridESN
     RMNESN
+    InputDelayESN
+    StateDelayESN
+    SVESM
+    LIFESN
+    ResESN
 ```
 
 ## Next generation reservoir computing
@@ -20,6 +27,7 @@
 
 ```@docs
     polynomial_monomials
+    chebyshev_monomials
 ```
 
 ### Utilities

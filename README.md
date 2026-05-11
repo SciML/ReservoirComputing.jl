@@ -9,12 +9,11 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2204.05117-00b300.svg)](https://arxiv.org/abs/2204.05117)
 [![codecov](https://codecov.io/gh/SciML/ReservoirComputing.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SciML/ReservoirComputing.jl)
 [![Build Status](https://github.com/SciML/ReservoirComputing.jl/workflows/CI/badge.svg)](https://github.com/SciML/ReservoirComputing.jl/actions?query=workflow%3ACI)
-[![Build status](https://badge.buildkite.com/db8f91b89a10ad79bbd1d9fdb1340e6f6602a1c0ed9496d4d0.svg)](https://buildkite.com/julialang/reservoircomputing-dot-jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor%27s%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![Julia](https://img.shields.io/badge/julia-v1.10+-blue.svg)](https://julialang.org/)
-[![JET](https://img.shields.io/badge/%E2%9C%88%EF%B8%8F%20tested%20with%20-%20JET.jl%20-%20red)](jet-urlhttps://github.com/aviatesk/JET.jl)
+[![JET](https://img.shields.io/badge/%E2%9C%88%EF%B8%8F%20tested%20with%20-%20JET.jl%20-%20red)](https://github.com/aviatesk/JET.jl)
 
 </div>
 
@@ -39,27 +38,31 @@ reservoir computing models. More specifically the software offers:
   such as `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`,
   `MemoryESNCell`, `LinearReadout`, `SVMReadout`, and more
 - Fully built models:
-    + Echo state networks `ESN`
-    + Deep echo state networks `DeepESN`
-    + Echo state networks with delayed states `DelayESN`
-    + Edge of stability echo state networks `ES2N`
-    + Euler state networks `EuSN`
-    + Reservoir memory networks `RMN`
-    + Hybrid echo state networks `HybridESN`
-    + Next generation reservoir computing `NGRC`
-- 15+ reservoir initializers and 5+ input layer initializers
+    + [Echo state networks](https://doi.org/10.1126/science.1091277) `ESN`
+    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepESN`
+    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250) `DelayESN`/`InputDelayESN`/`StateDelayESN`
+    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) `ES2N`
+    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) `EuSN`
+    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) `HybridESN`
+    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) `EIESN`/`AdditiveEIESN`
+    + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113) `SVESM`
+    + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6) `LIFESN`
+    + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
+    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
+- 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
+- Multiple linear solvers via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
 
 ## Installation
 
 ReservoirComputing.jl can be installed using either of
 
 ```julia_repl
-julia> ] #actually press the closing square brackets
+julia> ] # press the closing square bracket to enter Pkg mode
 pkg> add ReservoirComputing
 ```
 or
@@ -77,7 +80,7 @@ Lorenz system. You can find the same example fully explained in
 the [getting started page](https://docs.sciml.ai/ReservoirComputing/stable/getting_started/).
 
 ```julia
-using OrdinaryDiffEq
+using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
@@ -136,6 +139,6 @@ If you use this library in your work, please cite:
 This project was possible thanks to initial funding through
 the [Google summer of code](https://summerofcode.withgoogle.com/)
 2020 program. Francesco M. further acknowledges [ScaDS.AI](https://scads.ai/)
-and [RSC4Earth](https://rsc4earth.de/) for supporting further progress
+and [RSC4Earth](https://rsc4earth.de/) for supporting additional progress
 on the library. Current developments are possible thanks to research funding
 for Francesco M. provided by [MPIPKS](https://www.pks.mpg.de/).

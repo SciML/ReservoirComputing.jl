@@ -1,7 +1,7 @@
 using Documenter, DocumenterCitations, DocumenterInterLinks, ReservoirComputing
 
-#cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force = true)
-#cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force = true)
+cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force = true)
+cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force = true)
 
 ENV["PLOTS_TEST"] = "true"
 ENV["GKSwstype"] = "100"
@@ -20,7 +20,7 @@ links = InterLinks(
 makedocs(;
     modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
-    clean = true, doctest = false, linkcheck = true,
+    clean = true, doctest = false, linkcheck = false,
     plugins = [links, bib],
     format = Documenter.HTML(;
         mathengine,

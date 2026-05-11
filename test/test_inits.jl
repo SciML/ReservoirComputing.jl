@@ -24,7 +24,9 @@ reservoir_inits = [
     double_cycle,
     forward_connection,
     low_connectivity,
+    lower_triangular,
     pseudo_svd,
+    rand_hyper,
     rand_sparse,
     selfloop_cycle,
     selfloop_delayline_backward,
@@ -33,6 +35,7 @@ reservoir_inits = [
     simple_cycle,
     true_doublecycle,
     permutation_init,
+    diagonal_init,
 ]
 input_inits = [
     chebyshev_mapping,

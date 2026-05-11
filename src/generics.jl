@@ -20,6 +20,8 @@ end
     return v in names ? :(x.$v) : :(nothing)
 end
 
+_cell_out_dims(cell) = cell.out_dims
+
 function dense_bias(
         generic_mat::AbstractMatrix,
         generic_vec::AbstractVecOrMat,

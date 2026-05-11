@@ -32,8 +32,21 @@ jobs:
           - "ubuntu-latest"
           - "macos-latest"
           - "windows-latest"
+        group:
+          - Core
+          - nopre
+        exclude:
+          - version: "pre"
+            group: nopre
+        include:
+          - coverage: false
+          - version: "1"
+            os: "ubuntu-latest"
+            coverage: true
     uses: "SciML/.github/.github/workflows/tests.yml@v1"
     with:
+      group: ${{ matrix.group }}
       julia-version: "${{ matrix.version }}"
       os: "${{ matrix.os }}"
+      coverage: ${{ matrix.coverage }}
     secrets: "inherit"

@@ -21,6 +21,8 @@
 ## Echo State Networks
 
 ```@docs
+    AdditiveEIESNCell
+    EIESNCell
     ES2NCell
     ESNCell
     EuSNCell
@@ -29,6 +31,14 @@
 
 ```@docs
     RMNCell
+    ResESNCell
+    LIFESNCell
+```
+
+## Wrappers
+
+```@docs
+    LocalInformationFlow
 ```
 
 ## Reservoir computing with cellular automata

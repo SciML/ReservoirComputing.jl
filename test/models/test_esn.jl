@@ -26,14 +26,17 @@ model_name(::Type{M}) where {M} = string(nameof(M))
 mix_kw(::Type{ESN}) = :leak_coefficient
 mix_kw(::Type{ES2N}) = :proximity
 mix_kw(::Type{EuSN}) = :leak_coefficient
+mix_kw(::Type{ResESN}) = :beta
 
 reservoir_param_keys(::Type{ESN}) = (:input_matrix, :reservoir_matrix)
 reservoir_param_keys(::Type{ES2N}) = (:input_matrix, :reservoir_matrix, :orthogonal_matrix)
 reservoir_param_keys(::Type{EuSN}) = (:input_matrix, :reservoir_matrix)
+reservoir_param_keys(::Type{ResESN}) = (:input_matrix, :reservoir_matrix, :orthogonal_matrix)
 
 default_reservoir_kwargs(::Type{ESN}) = NamedTuple()
 default_reservoir_kwargs(::Type{ES2N}) = (init_orthogonal = _W_I,)
 default_reservoir_kwargs(::Type{EuSN}) = NamedTuple()
+default_reservoir_kwargs(::Type{ResESN}) = (init_orthogonal = _W_I, alpha = 1.0)
 
 function build_model(
         ::Type{M}, in_dims::Int, res_dims::Int, out_dims::Int, activation;
@@ -253,7 +256,7 @@ function test_esn_family_contract(::Type{M}) where {M}
 end
 
 @testset "ESN-family model contract" begin
-    for M in (ESN, ES2N, EuSN)
+    for M in (ESN, ES2N, EuSN, ResESN)
         test_esn_family_contract(M)
     end
 end

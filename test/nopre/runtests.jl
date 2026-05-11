@@ -1,4 +1,9 @@
+using Pkg
+Pkg.develop(PackageSpec(path = dirname(dirname(@__DIR__))))
+Pkg.instantiate()
+
 using ReservoirComputing, Aqua, ExplicitImports, JET
+using Test
 
 @testset "Aqua" begin
     Aqua.find_persistent_tasks_deps(ReservoirComputing)
