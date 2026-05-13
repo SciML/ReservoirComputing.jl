@@ -105,8 +105,8 @@ end
 
 Trains a given reservoir computing by creating the reservoir states from `train_data`,
 and then fiting the readout layer using `target_data` as target.
-The learned weights/layer are written into `ps`, while the reservoir states are written
-in `st`.
+The learned weights/layer are written into `ps`. Use `return_states=true` to also
+obtain the feature matrix used for the fit, or call [`collectstates`](@ref) directly.
 
 ## Arguments
 
@@ -151,7 +151,6 @@ function train!(
         (raw_states, target_data)
     output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
-    st_after = merge(st_after, (; :states => states_wo))
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
