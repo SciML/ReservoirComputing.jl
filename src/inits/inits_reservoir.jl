@@ -2842,6 +2842,125 @@ function lower_triangular(
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+@doc raw"""
+    band_topology([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+
+Create and return a sparse reservoir matrix with a band topology [Cossu2025](@cite).
+This function populates the main diagonal (self-loops) and iteratively expands outward to the 
+immediately adjacent lower (delay lines) and upper (backward connections) sub-diagonals 
+with random uniform weights in the range `(-1, 1)` until the target `sparsity` is reached. 
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix. Must be square.
+
+## Keyword arguments
+
+  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
+  - `sparsity`: The exact target fraction of zero elements in the matrix. 
+    To hit this target precisely without introducing spatial bias or breaking physical symmetry, 
+    if the required number of connections does not completely fill the outermost active diagonals, 
+    the remaining weights are randomly distributed across those diagonals' indices 
+    (creating a gapped/perforated band). Defaults to 0.9.
+  - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
+    Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
+
+## Examples
+
+Default call (creating a dense matrix with a banded structure):
+
+```jldoctest bandtopology
+julia> W = band_topology(5, 5)
+5×5 Matrix{Float32}:
+ -0.214159   0.812451   0.0        0.0        0.0
+  0.710328   0.655184  -0.412411   0.0        0.0
+  0.0        0.311545   0.551211   0.115412   0.0
+  0.0        0.0       -0.741211   0.914141  -0.512301
+  0.0        0.0        0.0        0.114112   0.311545
+```
+
+Returning a SparseMatrixCSC 
+(showing the exact sparsity random-allocation on the outer bands):
+```jldoctest bandtopology
+julia> using SparseArrays
+julia> W_sparse = band_topology(6, 6; sparsity=0.6, return_sparse=true)
+6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
+  0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
+ -0.7612    0.9123    ⋅         ⋅         ⋅         ⋅
+  ⋅         0.4412   -0.1124   0.8812     ⋅         ⋅
+  ⋅         ⋅        -0.5123   0.3314     ⋅         ⋅
+  ⋅         ⋅         ⋅        0.1245    -0.2214   0.6123
+  ⋅         ⋅         ⋅         ⋅        -0.1124   0.7712
+```
+
+Scaling to a custom spectral radius with explicit typecasting:
+```jldoctest bandtopology
+julia> W_scaled = band_topology(Float16, 4, 4; radius=2.5)
+4×4 Matrix{Float16}:
+  2.145   -1.542    0.0     0.0
+ -1.123    1.854    2.014   0.0
+  0.0     -2.113   -1.953  -1.123
+  0.0      0.0      1.412   0.954
+```
+"""
+function band_topology(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius = T(1.0), sparsity = 0.9, return_sparse = false
+    ) where {T <: Number}
+
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    res_size = dims[1]
+
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+
+    weights = DeviceAgnostic.rand(rng, T, res_size) .* T(2.0) .- T(1.0)
+    self_loop!(rng, reservoir_matrix, weights)
+
+    target_non_zeros = round(Int, res_size * res_size * (1.0 - sparsity))
+    current_non_zeros = res_size # from the self-loops
+    shift = 1
+
+    while current_non_zeros < target_non_zeros && shift < res_size
+        diag_length = res_size - shift
+        remaining_non_zeros = target_non_zeros - current_non_zeros
+
+        # Delay Line for Lower Diagonals
+        fill_length_lower = min(diag_length, remaining_non_zeros)
+        weights_lower = DeviceAgnostic.zeros(rng, T, diag_length)
+
+        # Choose a random index and fill it with a value sampled from Uniform(-1, +1)
+        lower_index = shuffle(rng, 1:diag_length)[1:fill_length_lower]
+        weights_lower[lower_index] = DeviceAgnostic.rand(rng, T, fill_length_lower) .* T(2.0) .- T(1.0)
+        delay_line!(rng, reservoir_matrix, weights_lower, shift)
+        current_non_zeros += fill_length_lower
+
+        # Backward Connection for Upper Diagonals
+        if current_non_zeros < target_non_zeros
+
+            remaining_non_zeros -= fill_length_lower
+            fill_length_upper = min(diag_length, remaining_non_zeros)
+            weights_upper = DeviceAgnostic.zeros(rng, T, diag_length)
+
+            # Choose a random index and fill it with a value sampled from Uniform(-1, +1)
+            upper_index = shuffle(rng, 1:diag_length)[1:fill_length_upper]
+            weights_upper[upper_index] = DeviceAgnostic.rand(rng, T, fill_length_upper) .* T(2.0) .- T(1.0)
+            backward_connection!(rng, reservoir_matrix, weights_upper, shift)
+
+            current_non_zeros += fill_length_upper
+        end
+
+        shift += 1
+    end
+
+    scale_radius!(reservoir_matrix, radius)
+
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (
@@ -2851,7 +2970,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :wigner_init, :rand_hyper,
+        :diagonal_init, :wigner_init, :rand_hyper, :band_topology,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)

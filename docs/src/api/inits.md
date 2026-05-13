@@ -25,6 +25,8 @@ where full details and examples are provided.
 
 ## Reservoirs
 
+- [`band_topology`](inits/band_topology.md): Constructs a banded reservoir with
+    weights filled in main, upper and lower diagonals sampled from Uniform(-1, 1).
 - [`block_diagonal`](inits/block_diagonal.md): Constructs a block-diagonal
     reservoir with constant-valued square blocks.
 - [`chaotic_init`](inits/chaotic_init.md): Generates a reservoir from a digital
