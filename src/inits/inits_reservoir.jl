@@ -2933,7 +2933,7 @@ function band_topology(
         weights_lower = DeviceAgnostic.zeros(rng, T, diag_length)
 
         # Choose a random index and fill it with a value sampled from Uniform(-1, +1)
-        lower_index = Random.randperm(rng, 1:diag_length)[1:fill_length_lower]
+        lower_index = Random.randperm(rng, diag_length)[1:fill_length_lower]
         weights_lower[lower_index] = DeviceAgnostic.rand(rng, T, fill_length_lower) .* T(2.0) .- T(1.0)
         delay_line!(rng, reservoir_matrix, weights_lower, shift)
         current_non_zeros += fill_length_lower
@@ -2946,7 +2946,7 @@ function band_topology(
             weights_upper = DeviceAgnostic.zeros(rng, T, diag_length)
 
             # Choose a random index and fill it with a value sampled from Uniform(-1, +1)
-            upper_index = Random.randperm(rng, 1:diag_length)[1:fill_length_upper]
+            upper_index = Random.randperm(rng, diag_length)[1:fill_length_upper]
             weights_upper[upper_index] = DeviceAgnostic.rand(rng, T, fill_length_upper) .* T(2.0) .- T(1.0)
             backward_connection!(rng, reservoir_matrix, weights_upper, shift)
 
