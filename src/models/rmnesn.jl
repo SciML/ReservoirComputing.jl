@@ -125,7 +125,7 @@ function RMNESN(
         init_input = init_memory_input,
         init_state = init_memory_state
     )
-    nonlinear_reservoir = MemoryESNCell((in_dims, mem_dims) => res_dims;
+    nonlinear_reservoir = MemoryESNCell((in_dims, mem_dims) => res_dims, activation;
         use_bias = use_bias,
         init_bias = init_bias,
         init_reservoir = init_reservoir,
