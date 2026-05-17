@@ -26,6 +26,11 @@
     ES2NCell
     ESNCell
     EuSNCell
+    MemoryESNCell
+```
+
+```@docs
+    RMNCell
     ResESNCell
     LIFESNCell
 ```

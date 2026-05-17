@@ -29,6 +29,8 @@ include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/resesn_cell.jl")
 include("layers/eusn_cell.jl")
+include("layers/memoryesn_cell.jl")
+include("layers/rmn_cell.jl")
 include("layers/svmreadout.jl")
 include("layers/lif_wrapper.jl")
 #general
@@ -53,10 +55,14 @@ include("models/eusn.jl")
 include("models/svesm.jl")
 include("models/lifesn.jl")
 include("models/ngrc.jl")
+include("models/rmnesn.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
+export ESNCell, ES2NCell, EuSNCell, MemoryESNCell, RMNCell
+export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
+    DelayLayer, NonlinearFeaturesLayer
 export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell, ResESNCell
 export Collect, collectstates, DelayLayer, LinearReadout, NonlinearFeaturesLayer,
     ReservoirChain, StatefulLayer
@@ -75,6 +81,7 @@ export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_s
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
+export RMNESN
 #ext
 export RECACell, RECA
 export RandomMapping, RandomMaps
