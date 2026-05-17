@@ -22,6 +22,7 @@ if GROUP == "All" || GROUP == "Core"
         @safetestset "AdditiveEIESN Cell" include("layers/test_additiveeiesncell.jl")
         @safetestset "SVMReadout" include("layers/test_svmreadout.jl")
         @safetestset "LocalInformationFlow" include("layers/test_lif.jl")
+        @safetestset "RMN Cell" include("layers/test_rmncell.jl")
     end
 
     @testset "Echo State Networks" begin

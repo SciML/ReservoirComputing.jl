@@ -110,8 +110,10 @@ function (esn::MemoryESNCell)(inp::AbstractArray, ps, st::NamedTuple)
     return esn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
 end
 
-function (esn::MemoryESNCell)((inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
-      ps, st::NamedTuple)
+function (esn::MemoryESNCell)(
+        (inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
+        ps, st::NamedTuple
+    )
     T = eltype(inp)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)

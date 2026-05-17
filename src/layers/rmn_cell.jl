@@ -55,11 +55,22 @@ function (rmn::RMNCell)(inp::AbstractArray, ps, st::NamedTuple)
     return rmn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
 end
 
-function (rmn::RMNCell)((inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
-        ps, st::NamedTuple)
+function (rmn::RMNCell)(
+        (inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
+        ps, st::NamedTuple
+    )
     (mstate_new, _), st_lin = rmn.linear_reservoir((inp, (memory_state,)), ps.linear_reservoir, st.linear_reservoir)
     (hstate_new, _), st_nonlin = rmn.nonlinear_reservoir((inp, (hidden_state, mstate_new)), ps.nonlinear_reservoir, st.nonlinear_reservoir)
-    return (hstate_new, (hstate_new, mstate_new)), st
+    newst = merge(
+        st, (
+            linear_reservoir = st_lin,
+            nonlinear_reservoir = st_nonlin,
+        )
+    )
+    return (
+            hstate_new,
+            (hstate_new, mstate_new),
+        ), newst
 end
 
 function Base.show(io::IO, rmn::RMNCell)
