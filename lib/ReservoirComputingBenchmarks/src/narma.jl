@@ -51,7 +51,8 @@ y(t{+}1) = \alpha\, y(t) + \beta\, y(t) \sum_{i=0}^{N-1} y(t{-}i)
 
 ## Returns
 
-  - `Vector{Float64}`: NARMA target signal of length `T`.
+  - `Vector{<:Real}`: NARMA target signal of length `T`. The element type is
+    `float(promote_type(eltype(input), typeof.((alpha, beta, gamma, delta))...))`.
 
 ## References
 
@@ -92,8 +93,18 @@ function generate_narma(
         ArgumentError("Input length ($T) must be greater than order ($order)"),
     )
 
-    u = normalize ? _normalize(input, 0.0, 0.5) : convert(Vector{Float64}, input)
-    y = zeros(Float64, T)
+    Telt = float(
+        promote_type(
+            eltype(input), typeof(alpha), typeof(beta), typeof(gamma), typeof(delta),
+        ),
+    )
+
+    u = if normalize
+        _normalize(input, zero(Telt), convert(Telt, 1 // 2))
+    else
+        convert(Vector{Telt}, input)
+    end
+    y = zeros(Telt, T)
 
     if order == 2
         # NARMA-2: y[t] = α y[t-1] + β y[t-1] y[t-2] + γ u[t-1]³ + δ
@@ -152,8 +163,9 @@ from `states` to the target, and computes the error metric on held-out data.
 
 A `NamedTuple` with fields:
 
-  - `score::Float64`: the computed error metric.
-  - `target::Vector{Float64}`: the full NARMA target signal.
+  - `score::Real`: the computed error metric.
+  - `target::Vector{<:Real}`: the full NARMA target signal (see
+    [`generate_narma`](@ref) for its element type).
 
 ## Examples
 
@@ -196,7 +208,9 @@ function narma(
     valid = (wo + 1):T
     T_valid = length(valid)
 
-    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    Telt = promote_type(eltype(target), eltype(states), typeof(reg))
+
+    X = Matrix{Telt}(undef, T_valid, size(states, 1))
     copyto!(X, view(states, :, valid)')
     y = view(target, valid)
 

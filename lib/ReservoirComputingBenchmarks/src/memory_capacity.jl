@@ -31,9 +31,10 @@ number of reservoir nodes ``N`` (Jaeger, 2002).
 
 A `NamedTuple` with fields:
 
-  - `total::Float64`: total memory capacity ``MC``.
-  - `delays::Vector{Float64}`: per-delay capacities ``MC_k`` for
-    ``k = 1, \ldots, K``.
+  - `total::Real`: total memory capacity ``MC``.
+  - `delays::Vector{<:Real}`: per-delay capacities ``MC_k`` for
+    ``k = 1, \ldots, K``. The element type is derived from
+    `promote_type(eltype(input), eltype(states), typeof(reg))`.
 
 ## References
 
@@ -58,10 +59,12 @@ function memory_capacity(
         ArgumentError("max_delay ($max_delay) must be less than signal length ($T)"),
     )
 
+    Telt = promote_type(eltype(input), eltype(states), typeof(reg))
+
     # Discard first max_delay steps to avoid edge effects from delays
     valid = (max_delay + 1):T
     T_valid = length(valid)
-    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    X = Matrix{Telt}(undef, T_valid, size(states, 1))
     copyto!(X, view(states, :, valid)')
 
     train_idx, test_idx = _train_test_split(T_valid, train_ratio)
@@ -71,7 +74,7 @@ function memory_capacity(
 
     rf = _ridge_factor(X_train; reg = reg)
 
-    delay_capacities = zeros(max_delay)
+    delay_capacities = zeros(Telt, max_delay)
 
     @inbounds for k in 1:max_delay
         target = view(input, valid .- k)

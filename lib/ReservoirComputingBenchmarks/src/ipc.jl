@@ -39,16 +39,19 @@ number of reservoir nodes.
 
 A `NamedTuple` with fields:
 
-  - `total::Float64`: total information processing capacity.
-  - `linear::Float64`: capacity from degree-1 (linear memory) terms.
-  - `nonlinear::Float64`: capacity from degree ``\geq 2`` terms.
-  - `by_degree::Dict{Int,Float64}`: capacity aggregated by total polynomial
+  - `total::Real`: total information processing capacity.
+  - `linear::Real`: capacity from degree-1 (linear memory) terms.
+  - `nonlinear::Real`: capacity from degree ``\geq 2`` terms.
+  - `by_degree::Dict{Int,<:Real}`: capacity aggregated by total polynomial
     degree.
-  - `by_delay::Dict{Int,Float64}`: capacity aggregated by delay (single-variable
+  - `by_delay::Dict{Int,<:Real}`: capacity aggregated by delay (single-variable
     terms only).
   - `basis_capacities::Vector{NamedTuple}`: per-basis-function results with
     fields `terms`, `degree`, `capacity`.
   - `theoretical_max::Int`: upper bound ``N`` (number of reservoir features).
+
+Capacity element types are derived from
+`promote_type(eltype(input), eltype(states), typeof(reg))`.
 
 ## References
 
@@ -82,12 +85,16 @@ function ipc(
 
     mtd = something(max_total_degree, max_degree)
 
+    Telt = promote_type(eltype(input), eltype(states), typeof(reg))
+
     # Precompute normalized Legendre polynomial values for all (degree, delay)
-    poly_cache = Matrix{Vector{Float64}}(undef, max_delay, max_degree)
+    poly_cache = Matrix{Vector{Telt}}(undef, max_delay, max_degree)
     for delay in 1:max_delay
         for degree in 1:max_degree
             delayed = @view input[(max_delay + 1 - delay):(T - delay)]
-            poly_cache[delay, degree] = map(x -> _normalized_legendre(degree, x), delayed)
+            poly_cache[delay, degree] = Telt[
+                _normalized_legendre(degree, x) for x in delayed
+            ]
         end
     end
 
@@ -97,7 +104,7 @@ function ipc(
     # Valid time range (after max_delay to avoid edge effects)
     valid = (max_delay + 1):T
     T_valid = length(valid)
-    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    X = Matrix{Telt}(undef, T_valid, size(states, 1))
     copyto!(X, view(states, :, valid)')
 
     train_idx, test_idx = _train_test_split(T_valid, train_ratio)
@@ -107,18 +114,23 @@ function ipc(
 
     rf = _ridge_factor(X_train; reg = reg)
 
-    results = Vector{NamedTuple{(:terms, :degree, :capacity), Tuple{Vector{Tuple{Int, Int}}, Int, Float64}}}()
+    results = Vector{
+        NamedTuple{
+            (:terms, :degree, :capacity),
+            Tuple{Vector{Tuple{Int, Int}}, Int, Telt},
+        },
+    }()
     sizehint!(results, length(basis_functions))
-    by_degree = Dict{Int, Float64}()
-    by_delay = Dict{Int, Float64}()
+    by_degree = Dict{Int, Telt}()
+    by_delay = Dict{Int, Telt}()
 
-    target = Vector{Float64}(undef, T_valid)
-    y_pred = Vector{Float64}(undef, n_test)
+    target = Vector{Telt}(undef, T_valid)
+    y_pred = Vector{Telt}(undef, n_test)
 
     @inbounds for terms in basis_functions
         total_degree = sum(d for (_, d) in terms)
 
-        fill!(target, 1.0)
+        fill!(target, one(Telt))
         for (delay, degree) in terms
             target .*= poly_cache[delay, degree]
         end
@@ -132,16 +144,16 @@ function ipc(
         cap = _squared_correlation(y_test, y_pred)
 
         push!(results, (terms = terms, degree = total_degree, capacity = cap))
-        by_degree[total_degree] = get(by_degree, total_degree, 0.0) + cap
+        by_degree[total_degree] = get(by_degree, total_degree, zero(Telt)) + cap
 
         if length(terms) == 1
             delay = terms[1][1]
-            by_delay[delay] = get(by_delay, delay, 0.0) + cap
+            by_delay[delay] = get(by_delay, delay, zero(Telt)) + cap
         end
     end
 
-    total_cap = isempty(results) ? 0.0 : sum(r.capacity for r in results)
-    linear_cap = get(by_degree, 1, 0.0)
+    total_cap = isempty(results) ? zero(Telt) : sum(r.capacity for r in results)
+    linear_cap = get(by_degree, 1, zero(Telt))
     nonlinear_cap = total_cap - linear_cap
 
     return (

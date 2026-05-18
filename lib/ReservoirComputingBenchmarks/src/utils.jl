@@ -77,9 +77,9 @@ end
     if isnan(r)
         @warn "Squared correlation is NaN (zero-variance input). " *
             "This may indicate a degenerate reservoir or collapsed prediction."
-        return 0.0
+        return zero(r)
     end
-    return clamp(r^2, 0.0, 1.0)
+    return clamp(r^2, zero(r), one(r))
 end
 
 @inline function _nmse(y_true::AbstractVector, y_pred::AbstractVector)
@@ -87,7 +87,7 @@ end
     if v < eps(typeof(v))
         @warn "NMSE: target variance is near-zero ($v). " *
             "NMSE is undefined for constant targets."
-        return NaN
+        return oftype(v, NaN)
     end
     return mean((y_true .- y_pred) .^ 2) / v
 end
@@ -116,9 +116,17 @@ function _train_test_split(n::Int, train_ratio::Real)
 end
 
 @inline function _normalize(x::AbstractVector, lo::Real, hi::Real)
+    Telt = float(promote_type(eltype(x), typeof(lo), typeof(hi)))
     xmin, xmax = extrema(x)
-    xmin == xmax && return fill(convert(eltype(x), lo), length(x))
-    return @. (x - xmin) / (xmax - xmin) * (hi - lo) + lo
+    if xmin == xmax
+        return fill(convert(Telt, lo), length(x))
+    end
+    lo_c = convert(Telt, lo)
+    hi_c = convert(Telt, hi)
+    xmin_c = convert(Telt, xmin)
+    xmax_c = convert(Telt, xmax)
+    scale = (hi_c - lo_c) / (xmax_c - xmin_c)
+    return @. (x - xmin_c) * scale + lo_c
 end
 
 @doc raw"""
@@ -141,8 +149,8 @@ Returns `0.0` if NMSE is negative (due to numerical issues).
 """
 @inline function rnmse(y_true::AbstractVector, y_pred::AbstractVector)
     nmse_val = nmse(y_true, y_pred)
-    isnan(nmse_val) && return NaN
-    return nmse_val < 0 ? 0.0 : sqrt(nmse_val)
+    isnan(nmse_val) && return nmse_val
+    return nmse_val < 0 ? zero(nmse_val) : sqrt(nmse_val)
 end
 
 @doc raw"""

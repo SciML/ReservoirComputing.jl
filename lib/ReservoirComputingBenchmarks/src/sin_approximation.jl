@@ -22,8 +22,9 @@ This is a memoryless nonlinear task. It is a thin wrapper around
 
 A `NamedTuple` with fields:
 
-  - `score::Float64`: error metric on the test split.
-  - `target::Vector{Float64}`: full target signal `sin(freq * input)`.
+  - `score::Real`: error metric on the test split.
+  - `target::Vector{<:Real}`: full target signal `sin(freq * input)`. See
+    [`nonlinear_transformation`](@ref) for the element-type rule.
 """
 function sin_approximation(
         input::AbstractVector,

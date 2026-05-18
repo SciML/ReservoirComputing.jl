@@ -27,8 +27,9 @@ and the metric is reported on a held-out tail of the trajectory.
 
 A `NamedTuple` with fields:
 
-  - `score::Float64`: error metric on the test split.
-  - `target::Vector{Float64}`: full target signal `f.(input)`.
+  - `score::Real`: error metric on the test split.
+  - `target::Vector{<:Real}`: full target signal `f.(input)`. The element type
+    is derived from `promote_type(eltype(input), eltype(states), typeof(reg))`.
 
 ## References
 
@@ -58,12 +59,14 @@ function nonlinear_transformation(
     T_valid >= 2 ||
         throw(ArgumentError("Not enough samples after washout: $T_valid"))
 
-    X = Matrix{Float64}(undef, T_valid, size(states, 1))
+    Telt = promote_type(eltype(input), eltype(states), typeof(reg))
+
+    X = Matrix{Telt}(undef, T_valid, size(states, 1))
     copyto!(X, view(states, :, valid)')
 
-    target = Vector{Float64}(undef, T)
+    target = Vector{Telt}(undef, T)
     @inbounds for t in 1:T
-        target[t] = float(f(input[t]))
+        target[t] = f(input[t])
     end
 
     train_idx, test_idx = _train_test_split(T_valid, train_ratio)
