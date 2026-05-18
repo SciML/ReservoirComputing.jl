@@ -4,8 +4,6 @@ import LinearAlgebra
 using LinearAlgebra: I, cholesky, cholesky!, Symmetric, mul!, ldiv!, copytri!
 using Statistics: mean, var, cor
 
-const MetricFunction = Function
-
 include("utils.jl")
 include("memory_capacity.jl")
 include("nonlinear_memory.jl")

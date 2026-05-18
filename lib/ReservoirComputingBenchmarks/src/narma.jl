@@ -150,9 +150,8 @@ from `states` to the target, and computes the error metric on held-out data.
 ## Keyword Arguments
 
   - `order::Int=10`: NARMA system order.
-  - `metric=nmse`: error metric function with signature `(y_true, y_pred) -> score`.
-    Built-in options: [`nmse`](@ref), [`rnmse`](@ref), [`mse`](@ref). Can be any
-    `MetricFunction` (callable) with the same signature.
+  - `metric=nmse`: any callable with the signature `(y_true, y_pred) -> score`.
+    Built-in options: [`nmse`](@ref), [`rnmse`](@ref), [`mse`](@ref).
   - `train_ratio::Real=0.8`: fraction of data used for training.
   - `reg::Real=1.0`: ridge regression regularization coefficient.
   - `washout::Union{Int,Nothing}=nothing`: number of initial time steps to
@@ -187,7 +186,7 @@ function narma(
         input::AbstractVector,
         states::AbstractMatrix;
         order::Int = 10,
-        metric::MetricFunction = nmse,
+        metric = nmse,
         train_ratio::Real = 0.8,
         reg::Real = 1.0,
         washout::Union{Int, Nothing} = nothing,
