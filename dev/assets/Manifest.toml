@@ -1086,9 +1086,9 @@ weakdeps = ["ChainRulesCore", "SparseArrays", "Statistics"]
 
 [[deps.LinearSolve]]
 deps = ["ArrayInterface", "ConcreteStructs", "DocStringExtensions", "EnumX", "GPUArraysCore", "InteractiveUtils", "Krylov", "Libdl", "LinearAlgebra", "MKL_jll", "Markdown", "OpenBLAS_jll", "PrecompileTools", "Preferences", "RecursiveArrayTools", "Reexport", "SciMLBase", "SciMLLogging", "SciMLOperators", "Setfield", "StaticArraysCore"]
-git-tree-sha1 = "97a6bf19ef32518268ba15f166fc030df43b619a"
+git-tree-sha1 = "91dfa6cbc23852a5b6802e9b98788361b31f2076"
 uuid = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-version = "3.79.0"
+version = "3.80.0"
 
     [deps.LinearSolve.extensions]
     LinearSolveAMDGPUExt = "AMDGPU"
@@ -1096,7 +1096,7 @@ version = "3.79.0"
     LinearSolveBLISExt = ["blis_jll", "LAPACK_jll"]
     LinearSolveBandedMatricesExt = "BandedMatrices"
     LinearSolveBlockDiagonalsExt = "BlockDiagonals"
-    LinearSolveCUDAExt = "CUDA"
+    LinearSolveCUDAExt = ["cuSOLVER"]
     LinearSolveCUDSSExt = "CUDSS"
     LinearSolveCUSOLVERRFExt = ["CUSOLVERRF", "SparseArrays"]
     LinearSolveChainRulesCoreExt = "ChainRulesCore"
@@ -1127,7 +1127,6 @@ version = "3.79.0"
     AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
     BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
     BlockDiagonals = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
-    CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
     CUDSS = "45b445bb-4962-46a0-9369-b4df9d0f772e"
     CUSOLVERRF = "a8cc9031-bad2-4722-94f5-40deabb4245c"
     ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -1155,6 +1154,7 @@ version = "3.79.0"
     SparseMatricesCSR = "a0a7dd2c-ebf4-11e9-1f05-cf50bc540ca1"
     Sparspak = "e56a9233-b9d6-4f03-8d0f-1825330902ac"
     blis_jll = "6136c539-28a5-5bf0-87cc-b183200dce32"
+    cuSOLVER = "887afef0-6a32-4de5-add4-7827692ba8fc"
 
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
@@ -1687,7 +1687,7 @@ version = "1.3.1"
 
 [[deps.ReservoirComputing]]
 deps = ["ArrayInterface", "ConcreteStructs", "LinearAlgebra", "LuxCore", "NNlib", "PrecompileTools", "Random", "Reexport", "Static", "WeightInitializers"]
-path = "/home/chrisrackauckas/github-runners/arctic1-3/_work/ReservoirComputing.jl/ReservoirComputing.jl"
+path = "/home/chrisrackauckas/github-runners/arctic1-1/_work/ReservoirComputing.jl/ReservoirComputing.jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 version = "0.12.21"
 weakdeps = ["CellularAutomata", "LIBSVM", "LinearSolve", "MLJLinearModels", "SparseArrays"]
