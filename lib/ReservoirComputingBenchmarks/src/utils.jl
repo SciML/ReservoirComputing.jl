@@ -12,7 +12,8 @@ struct _RidgeFactor{T <: Real}
 end
 
 function _ridge_factor(X::AbstractMatrix; reg::Real = 1.0)
-    @assert reg >= 0 "Regularization coefficient must be non-negative, got $reg"
+    reg >= 0 ||
+        throw(ArgumentError("Regularization coefficient must be non-negative, got $reg"))
     T = promote_type(eltype(X), typeof(reg))
     n = size(X, 2)
     reg_T = convert(T, reg)
@@ -65,7 +66,8 @@ Gram matrix `X'X + λI`.
 Returns weight vector `w` of length `n_features`.
 """
 function _ridge_regression(X::AbstractMatrix, y::AbstractVector; reg::Real = 1.0)
-    @assert reg >= 0 "Regularization coefficient must be non-negative, got $reg"
+    reg >= 0 ||
+        throw(ArgumentError("Regularization coefficient must be non-negative, got $reg"))
     rf = _ridge_factor(X; reg = reg)
     return _ridge_solve(rf, X, y)
 end
@@ -96,10 +98,20 @@ end
 Return `(train_range, test_range)` index ranges for a temporal split.
 """
 function _train_test_split(n::Int, train_ratio::Real)
-    @assert 0 < train_ratio < 1 "train_ratio must be in (0, 1), got $train_ratio"
+    0 < train_ratio < 1 ||
+        throw(ArgumentError("train_ratio must be in (0, 1), got $train_ratio"))
     split = floor(Int, n * train_ratio)
-    @assert split >= 1 "Training set is empty (n=$n, train_ratio=$train_ratio). Provide more data."
-    @assert split < n "Test set is empty (n=$n, train_ratio=$train_ratio). Reduce train_ratio or provide more data."
+    split >= 1 || throw(
+        ArgumentError(
+            "Training set is empty (n=$n, train_ratio=$train_ratio). Provide more data.",
+        ),
+    )
+    split < n || throw(
+        ArgumentError(
+            "Test set is empty (n=$n, train_ratio=$train_ratio). " *
+                "Reduce train_ratio or provide more data.",
+        ),
+    )
     return 1:split, (split + 1):n
 end
 

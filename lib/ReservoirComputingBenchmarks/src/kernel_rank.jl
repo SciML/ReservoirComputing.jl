@@ -8,7 +8,7 @@ The threshold is relative to the largest singular value, making the rank
 estimate scale-invariant. Returns `0` for empty or all-zero matrices.
 """
 function _effective_rank(M::AbstractMatrix; threshold::Real = 0.01)
-    @assert threshold > 0 "threshold must be positive, got $threshold"
+    threshold > 0 || throw(ArgumentError("threshold must be positive, got $threshold"))
     isempty(M) && return 0
     s = LinearAlgebra.svdvals(M)
     s_max = isempty(s) ? zero(eltype(s)) : maximum(s)

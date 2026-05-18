@@ -45,12 +45,18 @@ function nonlinear_transformation(
         washout::Integer = 0,
     )
     T = length(input)
-    @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
-    @assert 0 <= washout < T "washout must be in [0, $T), got $washout"
+    size(states, 2) == T || throw(
+        DimensionMismatch(
+            "states must have $T columns (time steps), got $(size(states, 2))",
+        ),
+    )
+    0 <= washout < T ||
+        throw(ArgumentError("washout must be in [0, $T), got $washout"))
 
     valid = (washout + 1):T
     T_valid = length(valid)
-    @assert T_valid >= 2 "Not enough samples after washout: $T_valid"
+    T_valid >= 2 ||
+        throw(ArgumentError("Not enough samples after washout: $T_valid"))
 
     X = Matrix{Float64}(undef, T_valid, size(states, 1))
     copyto!(X, view(states, :, valid)')

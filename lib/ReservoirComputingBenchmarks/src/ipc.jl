@@ -68,10 +68,17 @@ function ipc(
     )
     T = length(input)
     n_features = size(states, 1)
-    @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
-    @assert max_delay >= 1 "max_delay must be >= 1, got $max_delay"
-    @assert max_degree >= 1 "max_degree must be >= 1, got $max_degree"
-    @assert max_delay < T "max_delay ($max_delay) must be less than signal length ($T)"
+    size(states, 2) == T || throw(
+        DimensionMismatch(
+            "states must have $T columns (time steps), got $(size(states, 2))",
+        ),
+    )
+    max_delay >= 1 || throw(ArgumentError("max_delay must be >= 1, got $max_delay"))
+    max_degree >= 1 ||
+        throw(ArgumentError("max_degree must be >= 1, got $max_degree"))
+    max_delay < T || throw(
+        ArgumentError("max_delay ($max_delay) must be less than signal length ($T)"),
+    )
 
     mtd = something(max_total_degree, max_degree)
 
@@ -156,7 +163,8 @@ end
 Evaluate Legendre polynomial ``P_n(x)`` using three-term recurrence.
 """
 @inline function _legendre(n::Int, x::Real)
-    @assert n >= 0 "Legendre polynomial degree must be non-negative, got $n"
+    n >= 0 ||
+        throw(ArgumentError("Legendre polynomial degree must be non-negative, got $n"))
     n == 0 && return one(float(x))
     n == 1 && return float(x)
     p_prev, p_curr = one(float(x)), float(x)

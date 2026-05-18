@@ -64,12 +64,12 @@ using ReservoirComputing
         @test all(isfinite.(y30))
 
         # Custom coefficients for non-standard order
-        @test_throws AssertionError generate_narma(input; order = 5)
+        @test_throws ArgumentError generate_narma(input; order = 5)
         y5 = generate_narma(input; order = 5, alpha = 0.3, beta = 0.05, gamma = 1.5, delta = 0.1, normalize = false)
         @test length(y5) == T
 
         # Order must be >= 2
-        @test_throws AssertionError generate_narma(input; order = 1)
+        @test_throws ArgumentError generate_narma(input; order = 1)
     end
 
     @testset "NARMA Evaluation" begin
@@ -176,9 +176,9 @@ using ReservoirComputing
         @test isfinite(r3.score)
 
         # Validation
-        @test_throws AssertionError nonlinear_transformation(input, randn(rng, n_features, T - 1))
-        @test_throws AssertionError nonlinear_transformation(input, states; washout = T)
-        @test_throws AssertionError nonlinear_transformation(input, states; washout = -1)
+        @test_throws DimensionMismatch nonlinear_transformation(input, randn(rng, n_features, T - 1))
+        @test_throws ArgumentError nonlinear_transformation(input, states; washout = T)
+        @test_throws ArgumentError nonlinear_transformation(input, states; washout = -1)
     end
 
     @testset "Nonlinear Memory" begin
@@ -207,9 +207,9 @@ using ReservoirComputing
         @test r_sq.total >= 0
 
         # Validation
-        @test_throws AssertionError nonlinear_memory(input, states; max_delay = 0)
-        @test_throws AssertionError nonlinear_memory(input, states; max_delay = T)
-        @test_throws AssertionError nonlinear_memory(rand(50), randn(rng, 10, 100))
+        @test_throws ArgumentError nonlinear_memory(input, states; max_delay = 0)
+        @test_throws ArgumentError nonlinear_memory(input, states; max_delay = T)
+        @test_throws DimensionMismatch nonlinear_memory(rand(50), randn(rng, 10, 100))
     end
 
     @testset "Sin Approximation" begin
@@ -256,8 +256,8 @@ using ReservoirComputing
         @test kernel_rank(M_mixed; threshold = 1.0e-12) >= kernel_rank(M_mixed; threshold = 0.5)
 
         # Validation
-        @test_throws AssertionError kernel_rank(M_full; threshold = 0.0)
-        @test_throws AssertionError kernel_rank(M_full; threshold = -0.1)
+        @test_throws ArgumentError kernel_rank(M_full; threshold = 0.0)
+        @test_throws ArgumentError kernel_rank(M_full; threshold = -0.1)
     end
 
     @testset "Legendre Polynomials" begin
@@ -279,7 +279,7 @@ using ReservoirComputing
         @test leg(3, 0.5) ≈ (5 * 0.125 - 1.5) / 2
 
         # Negative degree should error
-        @test_throws AssertionError leg(-1, 0.5)
+        @test_throws ArgumentError leg(-1, 0.5)
 
         # Orthonormality: ∫₋₁¹ P̃_n(x) P̃_m(x) dx ≈ δ_{nm}
         nleg = ReservoirComputingBenchmarks._normalized_legendre
@@ -315,13 +315,13 @@ using ReservoirComputing
         @test ReservoirComputingBenchmarks._nmse(a, a) ≈ 0.0
 
         # _train_test_split: invalid ratios
-        @test_throws AssertionError ReservoirComputingBenchmarks._train_test_split(100, 0.0)
-        @test_throws AssertionError ReservoirComputingBenchmarks._train_test_split(100, 1.0)
-        @test_throws AssertionError ReservoirComputingBenchmarks._train_test_split(100, -0.5)
-        @test_throws AssertionError ReservoirComputingBenchmarks._train_test_split(100, 1.5)
+        @test_throws ArgumentError ReservoirComputingBenchmarks._train_test_split(100, 0.0)
+        @test_throws ArgumentError ReservoirComputingBenchmarks._train_test_split(100, 1.0)
+        @test_throws ArgumentError ReservoirComputingBenchmarks._train_test_split(100, -0.5)
+        @test_throws ArgumentError ReservoirComputingBenchmarks._train_test_split(100, 1.5)
 
         # _ridge_regression: negative reg
-        @test_throws AssertionError ReservoirComputingBenchmarks._ridge_regression(
+        @test_throws ArgumentError ReservoirComputingBenchmarks._ridge_regression(
             randn(50, 5), randn(50); reg = -1.0
         )
     end
@@ -331,30 +331,30 @@ using ReservoirComputing
         states = randn(rng, 10, 500)
 
         # max_delay must be >= 1
-        @test_throws AssertionError memory_capacity(input, states; max_delay = 0)
+        @test_throws ArgumentError memory_capacity(input, states; max_delay = 0)
 
         # max_delay must be < T
-        @test_throws AssertionError memory_capacity(input, states; max_delay = 500)
+        @test_throws ArgumentError memory_capacity(input, states; max_delay = 500)
 
         # Mismatched dimensions
-        @test_throws AssertionError memory_capacity(rand(100), randn(10, 200))
+        @test_throws DimensionMismatch memory_capacity(rand(100), randn(10, 200))
 
         # NARMA order < 2
-        @test_throws AssertionError generate_narma(rand(100); order = 1)
+        @test_throws ArgumentError generate_narma(rand(100); order = 1)
 
         # Missing NARMA coefficients for non-standard order
-        @test_throws AssertionError generate_narma(rand(100); order = 7)
+        @test_throws ArgumentError generate_narma(rand(100); order = 7)
 
         # Input shorter than order
-        @test_throws AssertionError generate_narma(rand(5); order = 10)
+        @test_throws ArgumentError generate_narma(rand(5); order = 10)
 
         # Washout out of range
-        @test_throws AssertionError narma(input, states; order = 10, washout = -1)
-        @test_throws AssertionError narma(input, states; order = 10, washout = 500)
+        @test_throws ArgumentError narma(input, states; order = 10, washout = -1)
+        @test_throws ArgumentError narma(input, states; order = 10, washout = 500)
 
         # IPC: max_degree/max_delay must be >= 1
-        @test_throws AssertionError ipc(input, states; max_delay = 0, max_degree = 2)
-        @test_throws AssertionError ipc(input, states; max_delay = 5, max_degree = 0)
+        @test_throws ArgumentError ipc(input, states; max_delay = 0, max_degree = 2)
+        @test_throws ArgumentError ipc(input, states; max_delay = 5, max_degree = 0)
     end
 
     @testset "ReservoirComputing model dispatch" begin
@@ -504,15 +504,15 @@ using ReservoirComputing
         end
 
         @testset "input length validation" begin
-            @test_throws AssertionError memory_capacity(
+            @test_throws ArgumentError memory_capacity(
                 model, ps, st; T = 1, max_delay = 1,
             )
             short = [0.1, 0.2]
-            @test_throws AssertionError memory_capacity(
+            @test_throws ArgumentError memory_capacity(
                 model, ps, st; input = [0.1], max_delay = 1,
             )
             # input keyword length controls dispatch length, not T
-            @test_throws AssertionError narma(model, ps, st; input = [0.1])
+            @test_throws ArgumentError narma(model, ps, st; input = [0.1])
         end
 
         @testset "scalar input (in_dims == 1) check" begin

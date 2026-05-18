@@ -48,9 +48,15 @@ function memory_capacity(
         reg::Real = 1.0,
     )
     T = length(input)
-    @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
-    @assert max_delay >= 1 "max_delay must be >= 1, got $max_delay"
-    @assert max_delay < T "max_delay ($max_delay) must be less than signal length ($T)"
+    size(states, 2) == T || throw(
+        DimensionMismatch(
+            "states must have $T columns (time steps), got $(size(states, 2))",
+        ),
+    )
+    max_delay >= 1 || throw(ArgumentError("max_delay must be >= 1, got $max_delay"))
+    max_delay < T || throw(
+        ArgumentError("max_delay ($max_delay) must be less than signal length ($T)"),
+    )
 
     # Discard first max_delay steps to avoid edge effects from delays
     valid = (max_delay + 1):T

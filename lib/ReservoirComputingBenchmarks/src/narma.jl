@@ -69,7 +69,7 @@ function generate_narma(
         delta::Union{Real, Nothing} = nothing,
         normalize::Bool = true,
     )
-    @assert order >= 2 "NARMA order must be >= 2, got $order"
+    order >= 2 || throw(ArgumentError("NARMA order must be >= 2, got $order"))
 
     # Resolve coefficients
     c = _narma_coeffs(order)
@@ -78,15 +78,19 @@ function generate_narma(
         beta = something(beta, c.beta)
         gamma = something(gamma, c.gamma)
         delta = something(delta, c.delta)
-    else
-        @assert !isnothing(alpha) && !isnothing(beta) && !isnothing(gamma) && !isnothing(delta) (
-            "No default coefficients for NARMA-$order. " *
-                "Provide alpha, beta, gamma, delta explicitly."
+    elseif isnothing(alpha) || isnothing(beta) || isnothing(gamma) || isnothing(delta)
+        throw(
+            ArgumentError(
+                "No default coefficients for NARMA-$order. " *
+                    "Provide alpha, beta, gamma, delta explicitly.",
+            ),
         )
     end
 
     T = length(input)
-    @assert T > order "Input length ($T) must be greater than order ($order)"
+    T > order || throw(
+        ArgumentError("Input length ($T) must be greater than order ($order)"),
+    )
 
     u = normalize ? _normalize(input, 0.0, 0.5) : convert(Vector{Float64}, input)
     y = zeros(Float64, T)
@@ -178,13 +182,17 @@ function narma(
         kwargs...,
     )
     T = length(input)
-    @assert size(states, 2) == T "states must have $T columns (time steps), got $(size(states, 2))"
+    size(states, 2) == T || throw(
+        DimensionMismatch(
+            "states must have $T columns (time steps), got $(size(states, 2))",
+        ),
+    )
 
     target = generate_narma(input; order = order, kwargs...)
 
     # Skip initial transient where y ≈ 0
     wo = something(washout, order)
-    @assert 0 <= wo < T "washout must be in [0, $T), got $wo"
+    0 <= wo < T || throw(ArgumentError("washout must be in [0, $T), got $wo"))
     valid = (wo + 1):T
     T_valid = length(valid)
 

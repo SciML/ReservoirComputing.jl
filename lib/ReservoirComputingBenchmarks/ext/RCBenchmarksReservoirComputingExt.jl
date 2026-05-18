@@ -11,8 +11,8 @@ using ReservoirComputingBenchmarks: ReservoirComputingBenchmarks,
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 @inline function _uniform_input(rng::AbstractRNG, T::Integer, lo::Real, hi::Real)
-    @assert T >= 2 "Signal length T must be >= 2, got $T"
-    @assert hi > lo "Require hi > lo, got lo=$lo, hi=$hi"
+    T >= 2 || throw(ArgumentError("Signal length T must be >= 2, got $T"))
+    hi > lo || throw(ArgumentError("Require hi > lo, got lo=$lo, hi=$hi"))
     return rand(rng, T) .* (hi - lo) .+ lo
 end
 
@@ -20,7 +20,8 @@ end
         rng::AbstractRNG, T::Integer, input::Union{Nothing, AbstractVector}
     )
     u = input === nothing ? _uniform_input(rng, T, -1.0, 1.0) : input
-    @assert length(u) >= 2 "input must have at least 2 samples, got $(length(u))"
+    length(u) >= 2 ||
+        throw(ArgumentError("input must have at least 2 samples, got $(length(u))"))
     return u
 end
 
@@ -234,7 +235,8 @@ function _collect_final_states(
         rc::AbstractReservoirComputer, ps, st,
         streams::Function, n_streams::Integer
     )
-    @assert n_streams >= 1 "n_streams must be >= 1, got $n_streams"
+    n_streams >= 1 ||
+        throw(ArgumentError("n_streams must be >= 1, got $n_streams"))
     _check_scalar_input(rc)
     final_states = nothing
     n_features = -1
@@ -245,7 +247,11 @@ function _collect_final_states(
             n_features = length(x)
             final_states = Matrix{eltype(x)}(undef, n_features, n_streams)
         end
-        @assert length(x) == n_features "Final state size changed across runs ($(length(x)) vs $n_features)"
+        length(x) == n_features || throw(
+            DimensionMismatch(
+                "Final state size changed across runs ($(length(x)) vs $n_features)",
+            ),
+        )
         final_states[:, i] .= x
     end
     return final_states
@@ -275,7 +281,8 @@ function ReservoirComputingBenchmarks.kernel_rank(
         rng::AbstractRNG = default_rng(),
         threshold::Real = 0.01,
     )
-    @assert stream_length >= 2 "stream_length must be >= 2, got $stream_length"
+    stream_length >= 2 ||
+        throw(ArgumentError("stream_length must be >= 2, got $stream_length"))
     streams = _ -> _uniform_input(rng, stream_length, -1.0, 1.0)
     M = _collect_final_states(rc, ps, st, streams, n_streams)
     return kernel_rank(M; threshold = threshold)
@@ -311,12 +318,16 @@ function ReservoirComputingBenchmarks.generalization_rank(
         rng::AbstractRNG = default_rng(),
         threshold::Real = 0.01,
     )
-    @assert stream_length >= 2 "stream_length must be >= 2, got $stream_length"
-    @assert perturbation >= 0 "perturbation must be >= 0, got $perturbation"
+    stream_length >= 2 ||
+        throw(ArgumentError("stream_length must be >= 2, got $stream_length"))
+    perturbation >= 0 ||
+        throw(ArgumentError("perturbation must be >= 0, got $perturbation"))
     base = base_input === nothing ?
         _uniform_input(rng, stream_length, -1.0, 1.0) : base_input
-    @assert length(base) == stream_length (
-        "base_input length ($(length(base))) must equal stream_length ($stream_length)"
+    length(base) == stream_length || throw(
+        DimensionMismatch(
+            "base_input length ($(length(base))) must equal stream_length ($stream_length)",
+        ),
     )
     streams = _ -> base .+ perturbation .* randn(rng, stream_length)
     M = _collect_final_states(rc, ps, st, streams, n_streams)
