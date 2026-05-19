@@ -16,7 +16,7 @@ end
 
 ft = [Float16, Float32, Float64]
 reservoir_inits = [
-    band_topology,
+    band_init,
     block_diagonal,
     chaotic_init,
     cycle_jumps,

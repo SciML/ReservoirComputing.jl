@@ -2843,7 +2843,7 @@ function lower_triangular(
 end
 
 @doc raw"""
-    band_topology([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+    band_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
 
 Create and return a sparse reservoir matrix with a band topology [Cossu2025](@cite).
 This function populates the main diagonal (self-loops) and iteratively expands outward to the 
@@ -2860,11 +2860,13 @@ with random uniform weights in the range `(-1, 1)` until the target `sparsity` i
 ## Keyword arguments
 
   - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
-  - `sparsity`: The exact target fraction of zero elements in the matrix. 
-    To hit this target precisely without introducing spatial bias or breaking physical symmetry, 
-    if the required number of connections does not completely fill the outermost active diagonals, 
-    the remaining weights are randomly distributed across those diagonals' indices 
-    (creating a gapped/perforated band). Defaults to 0.9.
+  - `sparsity`: The approximate target fraction of zero elements in the matrix. 
+    To closely approximate this target, if the required number of connections does not 
+    completely fill the outermost active diagonals, the remaining weights are randomly 
+    distributed across the available indices. Note: because lower sub-diagonals (delay lines) 
+    are populated before their corresponding upper sub-diagonals (backward connections), 
+    there is an inherent structural bias where the final partial band may favor lower connections. 
+    Defaults to 0.9.
   - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
     Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
 
@@ -2872,8 +2874,8 @@ with random uniform weights in the range `(-1, 1)` until the target `sparsity` i
 
 Default call (creating a dense matrix with a banded structure):
 
-```jldoctest bandtopology
-julia> W = band_topology(5, 5)
+```jldoctest bandinit
+julia> W = band_init(5, 5)
 5×5 Matrix{Float32}:
  -0.214159   0.812451   0.0        0.0        0.0
   0.710328   0.655184  -0.412411   0.0        0.0
@@ -2884,9 +2886,9 @@ julia> W = band_topology(5, 5)
 
 Returning a SparseMatrixCSC 
 (showing the exact sparsity random-allocation on the outer bands):
-```jldoctest bandtopology
+```jldoctest bandinit
 julia> using SparseArrays
-julia> W_sparse = band_topology(6, 6; sparsity=0.6, return_sparse=true)
+julia> W_sparse = band_init(6, 6; sparsity=0.6, return_sparse=true)
 6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
   0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
  -0.7612    0.9123    ⋅         ⋅         ⋅         ⋅
@@ -2897,8 +2899,8 @@ julia> W_sparse = band_topology(6, 6; sparsity=0.6, return_sparse=true)
 ```
 
 Scaling to a custom spectral radius with explicit typecasting:
-```jldoctest bandtopology
-julia> W_scaled = band_topology(Float16, 4, 4; radius=2.5)
+```jldoctest bandinit
+julia> W_scaled = band_init(Float16, 4, 4; radius=2.5)
 4×4 Matrix{Float16}:
   2.145   -1.542    0.0     0.0
  -1.123    1.854    2.014   0.0
@@ -2906,13 +2908,19 @@ julia> W_scaled = band_topology(Float16, 4, 4; radius=2.5)
   0.0      0.0      1.412   0.954
 ```
 """
-function band_topology(
+function band_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius = T(1.0), sparsity = 0.9, return_sparse = false
     ) where {T <: Number}
 
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
+
+    # Sparsity value check
+    if !(0 <= sparsity <= 1)
+        throw(ArgumentError("sparsity must be in the range [0, 1], got $sparsity"))
+    end
+
     res_size = dims[1]
 
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
@@ -2970,7 +2978,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :wigner_init, :rand_hyper, :band_topology,
+        :diagonal_init, :wigner_init, :rand_hyper, :band_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
