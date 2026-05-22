@@ -23,6 +23,7 @@ if GROUP == "All" || GROUP == "Core"
         @safetestset "SVMReadout" include("layers/test_svmreadout.jl")
         @safetestset "LocalInformationFlow" include("layers/test_lif.jl")
         @safetestset "RMN Cell" include("layers/test_rmncell.jl")
+        @safetestset "MemoryResESN Cell" include("layers/test_memoryresesncell.jl")
     end
 
     @testset "Echo State Networks" begin

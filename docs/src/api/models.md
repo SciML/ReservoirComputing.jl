@@ -12,6 +12,7 @@
     EuSN
     HybridESN
     RMNESN
+    RMNResESN
     InputDelayESN
     StateDelayESN
     SVESM

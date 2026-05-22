@@ -27,6 +27,7 @@
     ESNCell
     EuSNCell
     MemoryESNCell
+    MemoryResESNCell
 ```
 
 ```@docs
