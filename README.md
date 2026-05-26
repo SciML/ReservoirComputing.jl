@@ -49,7 +49,7 @@ reservoir computing models. More specifically the software offers:
     + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6) `LIFESN`
     + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
-    + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) `RMN`
+    + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) `RMNCell`/`RMNESN` / `RMNResESN`
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
