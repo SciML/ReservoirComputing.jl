@@ -89,6 +89,7 @@ or `dev` the package.
     + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6)  [`LIFESN`](@ref)
     + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966)  [`ResESN`](@ref)
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
+    + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) [`RMNCell`](@ref)/[`RMNESN`](@ref)/[`RMNResESN`](@ref)
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
