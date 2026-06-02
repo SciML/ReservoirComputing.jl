@@ -19,6 +19,7 @@ using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, U
 
 #reservoir computers
 include("generics.jl")
+include("layers/sciml_reservoir.jl")
 include("reservoircomputer.jl")
 #layers
 include("layers/basic.jl")
@@ -62,6 +63,8 @@ include("models/rmnresesn.jl")
 include("extensions/reca.jl")
 
 export ReservoirComputer
+export AbstractSciMLProblemReservoir, SciMLProblemReservoir
+export AbstractSampler, TerminalStateSampling
 export ESNCell, ES2NCell, EuSNCell, MemoryESNCell, MemoryResESNCell, RMNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
