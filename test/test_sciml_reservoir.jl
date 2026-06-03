@@ -22,9 +22,9 @@ end
     @test isempty(res.args)
     @test isempty(res.kwargs)
 
-    res_with_args = SciMLProblemReservoir(prob, sampler, tspan, :solver_arg; reltol = 1e-3)
+    res_with_args = SciMLProblemReservoir(prob, sampler, tspan, :solver_arg; reltol = 1.0e-3)
     @test res_with_args.args == (:solver_arg,)
-    @test res_with_args.kwargs[:reltol] == 1e-3
+    @test res_with_args.kwargs[:reltol] == 1.0e-3
 end
 
 @testset "SciMLProblemReservoir as Lux layer" begin
