@@ -103,7 +103,7 @@ num_delays = 1
 ```
 
 With `in_dims=3` and `num_delays=1` the delayed input length is 6.
-Adding the polinomial of degrees 1 and 2 will put give us 21 more. Finally, the constant
+Adding the polynomial of degrees 1 and 2 will put give us 21 more. Finally, the constant
 term adds 1 more feature. In total we have 28 features. 
 
 We can pass the number of features to `ro_dims` to initialize the [`LinearReadout`](@ref)
