@@ -13,6 +13,8 @@ end
 if GROUP == "All" || GROUP == "Core"
     @testset "Common Utilities" begin
         @safetestset "States" include("test_states.jl")
+        @safetestset "collectstates dispatch regression" include("test_collectstates_regression.jl")
+        @safetestset "SciMLProblemReservoir types" include("test_sciml_reservoir.jl")
     end
 
     @testset "Layers" begin
