@@ -34,6 +34,7 @@ reservoir_inits = [
     selfloop_backward_cycle,
     selfloop_forwardconnection,
     simple_cycle,
+    toepliz_init,
     true_doublecycle,
     permutation_init,
     diagonal_init,
