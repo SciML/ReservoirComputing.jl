@@ -46,3 +46,28 @@ end
     data = randn(Float32, 1, 5)
     @test_throws ErrorException collectstates(rc, data, ps, st)
 end
+
+@testset "SciMLProblemReservoir rejects protected solve kwargs" begin
+    prob = (placeholder = true,)
+    sampler = TerminalStateSampling()
+    tspan = (0.0, 1.0)
+    for badkw in (:saveat, :save_everystep, :dense)
+        @test_throws ArgumentError SciMLProblemReservoir(
+            prob, sampler, tspan; (badkw => true,)...
+        )
+    end
+    # User kwargs that do not collide should still go through.
+    res_ok = SciMLProblemReservoir(prob, sampler, tspan; reltol = 1.0e-6)
+    @test res_ok.kwargs[:reltol] == 1.0e-6
+end
+
+@testset "Continuous _predict errors without extension" begin
+    prob = (placeholder = true,)
+    res = SciMLProblemReservoir(prob, TerminalStateSampling(), (0.0, 1.0))
+    rc = ReservoirComputer(res, LinearReadout(1 => 1))
+    rng = MersenneTwister(0)
+    ps, st = setup(rng, rc)
+    data = randn(Float32, 1, 5)
+    @test_throws ErrorException predict(rc, data, ps, st)
+    @test_throws ErrorException predict(rc, 3, ps, st; initialdata = randn(Float32, 1))
+end

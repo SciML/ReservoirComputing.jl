@@ -46,7 +46,7 @@ sequence.
 ### Returns
 
 - `output`: Outputs for each input column, shape `(out_dims, T)`.
-- `st`: Updated minal model states.
+- `st`: Updated final model states.
 """
 function predict(
         rc::AbstractLuxLayer,
@@ -61,6 +61,72 @@ function predict(
 end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
+    T = size(data, 2)
+    @assert T ≥ 1 "data must have at least one time step (columns)."
+
+    y1, st = apply(rc, data[:, 1], ps, st)
+    Y = similar(y1, size(y1, 1), T)
+    Y[:, 1] .= y1
+
+    for t in 2:T
+        yt, st = apply(rc, data[:, t], ps, st)
+        Y[:, t] .= yt
+    end
+    return Y, st
+end
+
+# Two-level dispatch on the reservoir field, mirroring `collectstates` / `_collectstates`.
+# Continuous reservoirs (`AbstractSciMLProblemReservoir`) plug in their own `_predict`
+# methods from `RCODEReservoirExt`; everything else hits the fallbacks below, which
+# replicate the discrete `predict(::AbstractLuxLayer, …)` bodies above.
+
+function predict(
+        rc::AbstractReservoirComputer, steps::Integer, ps, st;
+        initialdata::AbstractVector
+    )
+    return _predict(rc.reservoir, rc, steps, ps, st; initialdata = initialdata)
+end
+
+function predict(rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
+    return _predict(rc.reservoir, rc, data, ps, st)
+end
+
+function _predict(
+        ::AbstractSciMLProblemReservoir,
+        ::AbstractReservoirComputer, ::Integer, ::Any, ::Any;
+        initialdata::AbstractVector
+    )
+    return error(
+        "Autoregressive `predict(rc, steps, ps, st; initialdata)` for a " *
+            "`SciMLProblemReservoir` requires the `RCODEReservoirExt` extension. " *
+            "Load `OrdinaryDiffEq`, `SciMLBase`, and `DataInterpolations` to enable it."
+    )
+end
+
+function _predict(
+        ::AbstractSciMLProblemReservoir,
+        ::AbstractReservoirComputer, ::AbstractMatrix, ::Any, ::Any
+    )
+    return error(
+        "Teacher-forced `predict(rc, data, ps, st)` for a " *
+            "`SciMLProblemReservoir` requires the `RCODEReservoirExt` extension. " *
+            "Load `OrdinaryDiffEq`, `SciMLBase`, and `DataInterpolations` to enable it."
+    )
+end
+
+function _predict(
+        ::Any, rc::AbstractReservoirComputer, steps::Integer, ps, st;
+        initialdata::AbstractVector
+    )
+    output = zeros(eltype(initialdata), length(initialdata), steps)
+    for step in 1:steps
+        initialdata, st = apply(rc, initialdata, ps, st)
+        output[:, step] = initialdata
+    end
+    return output, st
+end
+
+function _predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
     T = size(data, 2)
     @assert T ≥ 1 "data must have at least one time step (columns)."
 

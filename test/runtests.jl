@@ -43,6 +43,10 @@ if GROUP == "All" || GROUP == "Core"
     @testset "Next Generation Reservoir Computing" begin
         @safetestset "NGRC model" include("models/test_ngrc.jl")
     end
+
+    @testset "ODE Reservoir Extension" begin
+        @safetestset "RCODEReservoirExt" include("test_ode_reservoir_ext.jl")
+    end
 end
 
 if GROUP == "nopre"
