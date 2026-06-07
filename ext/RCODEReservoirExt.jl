@@ -89,44 +89,49 @@ end
 # ---------------------------------------------------------------------------
 
 """
-    LinearInputInterp(data, ts)
+    ZeroOrderHoldInterp(data, ts)
 
-Lightweight linear interpolator for column-stacked time series. Holds a
-`data::AbstractMatrix` of shape `(channels, T)` (one column per time stamp)
-alongside the matching time vector `ts`. `interp(t)` returns a vector of
-length `channels`. Out-of-range times clamp to the nearest endpoint
-(no extrapolation).
+Piecewise-constant input signal for the continuous reservoir. Holds a
+`data::AbstractMatrix` of shape `(channels, T)` alongside the matching
+time-stamp vector `ts`. For `t` in window `k` (i.e. `ts[k] ≤ t < ts[k+1]`)
+the call returns `view(data, :, k)`; out-of-range times clamp to the
+nearest endpoint.
 
-Why not `DataInterpolations.LinearInterpolation`: observed on
-DataInterpolations v8 / SciMLBase v2 (2026-06), matrix-valued `u` has no
-`_integral` method, so `cache_parameters=true` fails at construction; the
-default `cache_parameters=false` leaves unused cache fields typed as
-`Vector{Union{}}`, and SciMLBase's dual-eltype probing crashes on that
-bottom type while preparing `solve`. A bespoke struct with concrete fields
-avoids both paths. Revisit if/when DataInterpolations gains matrix-`u`
-integral support.
+We pick zero-order hold (ZOH) over linear interpolation deliberately:
+under linear interpolation the reservoir state at sample time `sample_ts[k]`
+depends on both `data[:, k]` and `data[:, k+1]` for any non-Euler solver,
+which is a one-step lookahead that contradicts the documented "state
+after processing input k" semantics. With ZOH, `data[:, k]` is the only
+input column that influences `states[:, k]`, regardless of solver — and
+the autoregressive `predict` path already uses ZOH for its per-window
+input function, so the two paths now use the same scheme.
+
+Why not `DataInterpolations.ConstantInterpolation`: matrix-valued `u`
+has no `_integral` method, so `cache_parameters=true` fails at
+construction; the default `cache_parameters=false` leaves unused cache
+fields typed as `Vector{Union{}}`, which SciMLBase's dual-eltype probing
+crashes on while preparing `solve` (observed on DataInterpolations v8 /
+SciMLBase v2, 2026-06). A bespoke struct with concrete fields and a
+view-returning call sidesteps both paths and is allocation-free in the
+ODE hot path. Revisit if/when DataInterpolations supports matrix-`u`
+non-cached construction without the bottom-type fallout.
 """
-struct LinearInputInterp{D <: AbstractMatrix, T <: AbstractVector}
+struct ZeroOrderHoldInterp{D <: AbstractMatrix, T <: AbstractVector}
     data::D
     ts::T
 end
 
-function (interp::LinearInputInterp)(t)
+function (interp::ZeroOrderHoldInterp)(t)
     ts = interp.ts
     n = length(ts)
-    if t ≤ ts[1]
-        return interp.data[:, 1]
-    elseif t ≥ ts[end]
-        return interp.data[:, n]
-    end
+    t < ts[1] && return view(interp.data, :, 1)
+    t ≥ ts[end] && return view(interp.data, :, n)
     k = searchsortedlast(ts, t)
-    k = clamp(k, 1, n - 1)
-    α = (t - ts[k]) / (ts[k + 1] - ts[k])
-    return (1 - α) .* interp.data[:, k] .+ α .* interp.data[:, k + 1]
+    return view(interp.data, :, clamp(k, 1, n))
 end
 
 function _make_input_fn(data::AbstractMatrix, ts::AbstractVector)
-    return LinearInputInterp(data, ts)
+    return ZeroOrderHoldInterp(data, ts)
 end
 
 function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
@@ -320,15 +325,23 @@ function _predict(
     )
     ts = collect(range(t0, t1; length = steps + 1))
 
-    x_current = collect(res.prob.u0)
-    current_input = collect(initialdata)
-
-    out_dim = length(initialdata)
-    output = Matrix{eltype(initialdata)}(undef, out_dim, steps)
+    # Preserve `u0`'s original type — `collect` would degrade `SVector` /
+    # `ComponentArray` / scalar states into a plain `Vector` and either
+    # error (no `collect(::Number)` method) or silently flatten the
+    # user's chosen representation. We only ever read `x_current`, never
+    # mutate it in place, so a direct reference is safe.
+    x_current = res.prob.u0
+    current_input = initialdata
 
     st_mods = st.states_modifiers
     st_ro = st.readout
 
+    # `output` is allocated *after* the first readout call so its element
+    # type and row count come from `apply(rc.readout, …)` rather than
+    # `initialdata`. Otherwise a readout returning a different eltype
+    # (e.g. Float64 vs the Float32 input) would force a silent
+    # conversion at the column assignment.
+    local output
     for k in 1:steps
         input_fn = _make_const_input_fn(current_input, ts[k], ts[k + 1])
         solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_fn)
@@ -356,8 +369,11 @@ function _predict(
         end
 
         y, st_ro = apply(rc.readout, x_after_mods, ps.readout, st_ro)
+        if k == 1
+            output = similar(y, length(y), steps)
+        end
         output[:, k] .= y
-        current_input = collect(y)
+        current_input = y
     end
 
     newst = (

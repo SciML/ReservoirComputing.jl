@@ -354,12 +354,13 @@ end
     data = randn(rng, in_dim, T_steps)
 
     # `prob.p` is read inside the RHS, so to truly exercise all three we use
-    # an RHS that does not touch `p` apart from `p.input(t)`.
-    function rhs_noparams!(dx, x, p, t)
-        u = p.input(t)
-        return dx .= .-x .+ Win_noparams * u
+    # an RHS that does not touch `p` apart from `p.input(t)`. A `let` block
+    # captures `Win` as a local binding inside the closure — avoids the
+    # type-instability hazard of a `global` and keeps the symbol out of the
+    # surrounding module scope.
+    rhs_noparams! = let Win = 0.5 .* randn(rng, res_dim, in_dim)
+        (dx, x, p, t) -> (dx .= .-x .+ Win * p.input(t))
     end
-    global Win_noparams = 0.5 .* randn(rng, res_dim, in_dim)
 
     for p_value in ((;), nothing, SciMLBase.NullParameters())
         prob = ODEProblem(rhs_noparams!, zeros(res_dim), tspan, p_value)

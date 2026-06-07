@@ -128,7 +128,9 @@ end
 
 function _predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
     T = size(data, 2)
-    @assert T ≥ 1 "data must have at least one time step (columns)."
+    T ≥ 1 || throw(
+        ArgumentError("predict input data must have at least one column, got $T.")
+    )
 
     y1, st = apply(rc, data[:, 1], ps, st)
     Y = similar(y1, size(y1, 1), T)
