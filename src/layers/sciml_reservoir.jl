@@ -74,18 +74,15 @@ message instructing the user to load `OrdinaryDiffEq`, `SciMLBase`, and
     kwargs
 end
 
-"""
-Keyword arguments owned by the continuous `_collectstates` helper:
-
-  - `saveat` is derived from `tspan` and the input width, so a user value
-    would silently desync the sample grid from the input grid.
-  - `save_everystep` and `dense` are hardcoded to `false` because the
-    sampler only ever reads `sol.u` at the `saveat` points; allocating the
-    full trajectory would waste memory without changing the result.
-
-All three are rejected at construction so the user finds out immediately
-rather than getting a wrong-shape state matrix at solve time.
-"""
+# Keyword arguments owned by the continuous `_collectstates` helper:
+#   - `saveat` is derived from `tspan` and the input width, so a user value
+#     would silently desync the sample grid from the input grid.
+#   - `save_everystep` and `dense` are hardcoded to `false` because the
+#     sampler only ever reads `sol.u` at the `saveat` points; allocating
+#     the full trajectory would waste memory without changing the result.
+# All three are rejected at construction so the user finds out immediately
+# rather than getting a wrong-shape state matrix at solve time. Internal —
+# not a docstring so Documenter's `:missing_docs` check leaves it alone.
 const _PROTECTED_SOLVE_KWARGS = (:saveat, :save_everystep, :dense)
 
 function _check_protected_kwargs(kwargs)

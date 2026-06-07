@@ -79,16 +79,26 @@ end
 # Continuous reservoirs (`AbstractSciMLProblemReservoir`) plug in their own `_predict`
 # methods from `RCODEReservoirExt`; everything else hits the fallbacks below, which
 # replicate the discrete `predict(::AbstractLuxLayer, …)` bodies above.
+#
+# Not every `AbstractReservoirComputer` subtype carries a `:reservoir` field —
+# `DeepESN`, for instance, owns a tuple of cells under `:cells`. For those
+# subtypes we cannot extract a "reservoir layer" to dispatch on, so we pass
+# `nothing` and let the `::Any` fallback take the discrete loop. (Concrete
+# types like `DeepESN` already provide their own specialised `collectstates`,
+# and `predict` itself only depends on `apply(rc, …)`, which works through
+# their own `(rc::DeepESN)(…)` call.)
 
 function predict(
         rc::AbstractReservoirComputer, steps::Integer, ps, st;
         initialdata::AbstractVector
     )
-    return _predict(rc.reservoir, rc, steps, ps, st; initialdata = initialdata)
+    res = hasfield(typeof(rc), :reservoir) ? rc.reservoir : nothing
+    return _predict(res, rc, steps, ps, st; initialdata = initialdata)
 end
 
 function predict(rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
-    return _predict(rc.reservoir, rc, data, ps, st)
+    res = hasfield(typeof(rc), :reservoir) ? rc.reservoir : nothing
+    return _predict(res, rc, data, ps, st)
 end
 
 function _predict(
