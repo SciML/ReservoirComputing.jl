@@ -1,7 +1,3 @@
-using Pkg
-Pkg.develop(PackageSpec(path = dirname(dirname(@__DIR__))))
-Pkg.instantiate()
-
 using ReservoirComputing, Aqua, ExplicitImports, JET
 using Test
 
