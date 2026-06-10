@@ -20,33 +20,5 @@ concurrency:
 
 jobs:
   tests:
-    name: "Tests"
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - "1"
-          - "lts"
-          - "pre"
-        os:
-          - "ubuntu-latest"
-          - "macos-latest"
-          - "windows-latest"
-        group:
-          - Core
-          - nopre
-        exclude:
-          - version: "pre"
-            group: nopre
-        include:
-          - coverage: false
-          - version: "1"
-            os: "ubuntu-latest"
-            coverage: true
-    uses: "SciML/.github/.github/workflows/tests.yml@v1"
-    with:
-      group: ${{ matrix.group }}
-      julia-version: "${{ matrix.version }}"
-      os: "${{ matrix.os }}"
-      coverage: ${{ matrix.coverage }}
+    uses: "SciML/.github/.github/workflows/grouped-tests.yml@v1"
     secrets: "inherit"

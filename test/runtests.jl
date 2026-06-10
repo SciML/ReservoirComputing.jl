@@ -4,12 +4,6 @@ using Test
 
 const GROUP = get(ENV, "GROUP", "All")
 
-function activate_nopre_env()
-    Pkg.activate("nopre")
-    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
-    return Pkg.instantiate()
-end
-
 if GROUP == "All" || GROUP == "Core"
     @testset "Common Utilities" begin
         @safetestset "States" include("test_states.jl")
@@ -45,7 +39,9 @@ if GROUP == "All" || GROUP == "Core"
     end
 end
 
-if GROUP == "nopre"
-    activate_nopre_env()
-    @safetestset "Quality Assurance" include("nopre/runtests.jl")
+if GROUP == "QA"
+    Pkg.activate(joinpath(@__DIR__, "qa"))
+    Pkg.develop(PackageSpec(path = dirname(@__DIR__)))
+    Pkg.instantiate()
+    @safetestset "Quality Assurance" include("qa/qa.jl")
 end
