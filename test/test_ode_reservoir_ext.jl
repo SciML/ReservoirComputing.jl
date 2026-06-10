@@ -18,10 +18,11 @@ end
 function build_esn_problem(rng, in_dim, res_dim, tspan)
     Wr = 0.2 .* randn(rng, res_dim, res_dim)
     Win = 0.5 .* randn(rng, res_dim, in_dim)
-    b = 0.1 .* randn(rng, res_dim)
-    x0 = zeros(res_dim)
-    p = (Wr = Wr, Win = Win, b = b)
-    return ODEProblem(esn_rhs!, x0, tspan, p), Wr, Win, b, x0
+    bias = 0.1 .* randn(rng, res_dim)
+    initial_state = zeros(res_dim)
+    params = (Wr = Wr, Win = Win, b = bias)
+    return ODEProblem(esn_rhs!, initial_state, tspan, params),
+        Wr, Win, bias, initial_state
 end
 
 # ---------------------------------------------------------------------------
@@ -45,9 +46,9 @@ end
     sample_ts = collect(range(tspan[1] + Δt, tspan[2]; length = T_steps))
     u_const = 1.0
     data = fill(u_const, 1, T_steps)
-    x0 = [0.0]
+    initial_state = [0.0]
 
-    prob = ODEProblem(lin_rhs!, x0, tspan, (;))
+    prob = ODEProblem(lin_rhs!, initial_state, tspan, (;))
     res = SciMLProblemReservoir(
         prob, TerminalStateSampling(), tspan, Tsit5();
         reltol = 1.0e-10, abstol = 1.0e-12
@@ -76,7 +77,7 @@ end
     rng = MersenneTwister(7)
     in_dim, res_dim, T_steps = 2, 6, 12
 
-    prob, Wr, Win, b, x0 = build_esn_problem(
+    prob, Wr, Win, bias, initial_state = build_esn_problem(
         rng, in_dim, res_dim,
         (0.0, Float64(T_steps))
     )
@@ -93,10 +94,10 @@ end
     cont_states, _ = collectstates(rc, data, ps, st)
 
     disc_states = zeros(res_dim, T_steps)
-    x = copy(x0)
-    for k in 1:T_steps
-        x = tanh.(Wr * x + Win * data[:, k] + b)
-        disc_states[:, k] = x
+    state = copy(initial_state)
+    for (step_idx, input_col) in enumerate(eachcol(data))
+        state = tanh.(Wr * state + Win * input_col + bias)
+        disc_states[:, step_idx] = state
     end
 
     @test size(cont_states) == (res_dim, T_steps)
@@ -150,11 +151,11 @@ end
     rc = ReservoirComputer(res, LinearReadout(res_dim => out_dim))
     ps, st = setup(MersenneTwister(0), rc)
 
-    Y1, _ = predict(rc, data, ps, st)
-    Y2, _ = predict(rc, data, ps, st)
-    @test size(Y1) == (out_dim, T_steps)
-    @test all(isfinite, Y1)
-    @test Y1 ≈ Y2
+    preds1, _ = predict(rc, data, ps, st)
+    preds2, _ = predict(rc, data, ps, st)
+    @test size(preds1) == (out_dim, T_steps)
+    @test all(isfinite, preds1)
+    @test preds1 ≈ preds2
 end
 
 # ---------------------------------------------------------------------------
@@ -178,11 +179,11 @@ end
     ps, st = setup(MersenneTwister(0), rc)
 
     initialdata = randn(dim)
-    Y1, _ = predict(rc, steps, ps, st; initialdata = initialdata)
-    Y2, _ = predict(rc, steps, ps, st; initialdata = initialdata)
-    @test size(Y1) == (dim, steps)
-    @test all(isfinite, Y1)
-    @test Y1 ≈ Y2
+    preds1, _ = predict(rc, steps, ps, st; initialdata = initialdata)
+    preds2, _ = predict(rc, steps, ps, st; initialdata = initialdata)
+    @test size(preds1) == (dim, steps)
+    @test all(isfinite, preds1)
+    @test preds1 ≈ preds2
 end
 
 # ---------------------------------------------------------------------------
@@ -255,8 +256,8 @@ end
     @test_throws ArgumentError collectstates(rc, data0, ps, st)
 
     # autoregressive predict: steps = 1 works
-    Y1, _ = predict(rc, 1, ps, st; initialdata = randn(in_dim))
-    @test size(Y1) == (in_dim, 1)
+    preds1, _ = predict(rc, 1, ps, st; initialdata = randn(in_dim))
+    @test size(preds1) == (in_dim, 1)
 
     # autoregressive predict: steps < 1 errors
     @test_throws ArgumentError predict(rc, 0, ps, st; initialdata = randn(in_dim))

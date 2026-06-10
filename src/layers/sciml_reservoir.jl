@@ -86,7 +86,7 @@ end
 const _PROTECTED_SOLVE_KWARGS = (:saveat, :save_everystep, :dense)
 
 function _check_protected_kwargs(kwargs)
-    collisions = filter(k -> k in _PROTECTED_SOLVE_KWARGS, keys(kwargs))
+    collisions = filter(key -> key in _PROTECTED_SOLVE_KWARGS, keys(kwargs))
     isempty(collisions) && return nothing
     return throw(
         ArgumentError(

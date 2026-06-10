@@ -137,18 +137,21 @@ function _predict(
 end
 
 function _predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
-    T = size(data, 2)
-    T ≥ 1 || throw(
-        ArgumentError("predict input data must have at least one column, got $T.")
+    n_samples = size(data, 2)
+    n_samples ≥ 1 || throw(
+        ArgumentError(
+            "predict input data must have at least one column, got $n_samples."
+        )
     )
 
-    y1, st = apply(rc, data[:, 1], ps, st)
-    Y = similar(y1, size(y1, 1), T)
-    Y[:, 1] .= y1
+    input_cols = eachcol(data)
+    first_output, st = apply(rc, first(input_cols), ps, st)
+    outputs = similar(first_output, size(first_output, 1), n_samples)
+    outputs[:, 1] .= first_output
 
-    for t in 2:T
-        yt, st = apply(rc, data[:, t], ps, st)
-        Y[:, t] .= yt
+    for (idx, input_col) in Iterators.drop(enumerate(input_cols), 1)
+        current_output, st = apply(rc, input_col, ps, st)
+        outputs[:, idx] .= current_output
     end
-    return Y, st
+    return outputs, st
 end

@@ -32,14 +32,14 @@ import ReservoirComputing: _collectstates, _predict
 # silently would hide bugs in user-defined ODEs.
 # ---------------------------------------------------------------------------
 
-_to_namedtuple(p::NamedTuple) = p
+_to_namedtuple(prob_p::NamedTuple) = prob_p
 _to_namedtuple(::NullParameters) = NamedTuple()
 _to_namedtuple(::Nothing) = NamedTuple()
-function _to_namedtuple(p)
+function _to_namedtuple(prob_p)
     return throw(
         ArgumentError(
             "SciMLProblemReservoir requires `prob.p` to be a NamedTuple, " *
-                "`nothing`, or `SciMLBase.NullParameters()`, got $(typeof(p)). " *
+                "`nothing`, or `SciMLBase.NullParameters()`, got $(typeof(prob_p)). " *
                 "Wrap your parameters in a NamedTuple — the extension injects " *
                 "`input` on top before calling `solve`."
         )
@@ -123,11 +123,11 @@ end
 
 function (interp::ZeroOrderHoldInterp)(t)
     ts = interp.ts
-    n = length(ts)
+    n_samples = length(ts)
     t < ts[1] && return view(interp.data, :, 1)
-    t ≥ ts[end] && return view(interp.data, :, n)
-    k = searchsortedlast(ts, t)
-    return view(interp.data, :, clamp(k, 1, n))
+    t ≥ ts[end] && return view(interp.data, :, n_samples)
+    window_idx = searchsortedlast(ts, t)
+    return view(interp.data, :, clamp(window_idx, 1, n_samples))
 end
 
 function _make_input_fn(data::AbstractMatrix, ts::AbstractVector)
@@ -167,30 +167,32 @@ function _apply_modifiers_continuous(
         modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
     )
     isempty(modifiers) && return states_matrix, st_mods
-    T = size(states_matrix, 2)
-    col1, new_st = ReservoirComputing._apply_seq(
-        modifiers, view(states_matrix, :, 1), ps_mods, st_mods
+    n_samples = size(states_matrix, 2)
+    src_cols = eachcol(states_matrix)
+
+    first_col, new_st = ReservoirComputing._apply_seq(
+        modifiers, first(src_cols), ps_mods, st_mods
     )
-    # `similar(col1, ...)` — not `similar(states_matrix, ...)` — so the
+    # `similar(first_col, ...)` — not `similar(states_matrix, ...)` — so the
     # output matrix takes the modifier output's eltype. If a modifier
     # promotes/demotes (e.g. Float32 → Float64), we want that to surface,
     # not be silently truncated back to the reservoir state's eltype.
-    out = similar(col1, length(col1), T)
-    out[:, 1] .= col1
-    for t in 2:T
-        col, new_st = ReservoirComputing._apply_seq(
-            modifiers, view(states_matrix, :, t), ps_mods, new_st
+    output = similar(first_col, length(first_col), n_samples)
+    output[:, 1] .= first_col
+    for (idx, src_col) in Iterators.drop(enumerate(src_cols), 1)
+        modified_col, new_st = ReservoirComputing._apply_seq(
+            modifiers, src_col, ps_mods, new_st
         )
-        out[:, t] .= col
+        output[:, idx] .= modified_col
     end
-    return out, new_st
+    return output, new_st
 end
 
 # ---------------------------------------------------------------------------
 # Continuous `_collectstates`
 #
 # Pipeline:
-#   1. Split `res.tspan` into `T_steps` equal-width windows.
+#   1. Split `res.tspan` into `n_samples` equal-width windows.
 #   2. Place input column `k` at the *start* of window `k` (time
 #      `t0 + (k-1)Δt`) and request a sample at the *end* of window `k`
 #      (time `t0 + kΔt`). This alignment matches the discrete reservoir
@@ -205,7 +207,7 @@ end
 #      cannot collide in practice.
 #   5. Push the trajectory through the sampler → raw state matrix.
 #   6. Apply state modifiers → final state matrix matching the discrete
-#      `(state_dims, T)` shape expected by the readout.
+#      `(state_dims, n_samples)` shape expected by the readout.
 # ---------------------------------------------------------------------------
 
 function _collectstates(
@@ -215,11 +217,11 @@ function _collectstates(
         ps::NamedTuple,
         st::NamedTuple
     )
-    T_steps = size(data, 2)
-    T_steps ≥ 2 || throw(
+    n_samples = size(data, 2)
+    n_samples ≥ 2 || throw(
         ArgumentError(
             "SciMLProblemReservoir collectstates needs at least 2 input " *
-                "columns to define a time grid; got $T_steps."
+                "columns to define a time grid; got $n_samples."
         )
     )
 
@@ -232,9 +234,9 @@ function _collectstates(
         )
     )
 
-    Δt = (t1 - t0) / T_steps
-    input_ts = collect(range(t0, t1 - Δt; length = T_steps))
-    sample_ts = collect(range(t0 + Δt, t1; length = T_steps))
+    Δt = (t1 - t0) / n_samples
+    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
+    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
     input_interp = _make_input_fn(data, input_ts)
     solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_interp)
@@ -278,16 +280,17 @@ function _predict(
         st::NamedTuple
     )
     states, new_st = collectstates(rc, data, ps, st)
-    T = size(states, 2)
+    n_samples = size(states, 2)
     st_ro = new_st.readout
-    y1, st_ro = apply(rc.readout, view(states, :, 1), ps.readout, st_ro)
-    Y = similar(y1, size(y1, 1), T)
-    Y[:, 1] .= y1
-    for t in 2:T
-        yt, st_ro = apply(rc.readout, view(states, :, t), ps.readout, st_ro)
-        Y[:, t] .= yt
+    state_cols = eachcol(states)
+    first_output, st_ro = apply(rc.readout, first(state_cols), ps.readout, st_ro)
+    outputs = similar(first_output, size(first_output, 1), n_samples)
+    outputs[:, 1] .= first_output
+    for (idx, state_col) in Iterators.drop(enumerate(state_cols), 1)
+        current_output, st_ro = apply(rc.readout, state_col, ps.readout, st_ro)
+        outputs[:, idx] .= current_output
     end
-    return Y, merge(new_st, (readout = st_ro,))
+    return outputs, merge(new_st, (readout = st_ro,))
 end
 
 # ---------------------------------------------------------------------------
@@ -324,56 +327,58 @@ function _predict(
         )
     )
     ts = collect(range(t0, t1; length = steps + 1))
+    window_starts = @view ts[1:(end - 1)]
+    window_ends = @view ts[2:end]
 
     # Preserve `u0`'s original type — `collect` would degrade `SVector` /
     # `ComponentArray` / scalar states into a plain `Vector` and either
     # error (no `collect(::Number)` method) or silently flatten the
-    # user's chosen representation. We only ever read `x_current`, never
-    # mutate it in place, so a direct reference is safe.
-    x_current = res.prob.u0
+    # user's chosen representation. We only ever read `current_state`,
+    # never mutate it in place, so a direct reference is safe.
+    current_state = res.prob.u0
     current_input = initialdata
 
     st_mods = st.states_modifiers
     st_ro = st.readout
 
-    # `output` is allocated *after* the first readout call so its element
+    # `outputs` is allocated *after* the first readout call so its element
     # type and row count come from `apply(rc.readout, …)` rather than
     # `initialdata`. Otherwise a readout returning a different eltype
     # (e.g. Float64 vs the Float32 input) would force a silent
     # conversion at the column assignment.
-    local output
-    for k in 1:steps
-        input_fn = _make_const_input_fn(current_input, ts[k], ts[k + 1])
+    local outputs
+    for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
+        input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
         solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_fn)
         sub_prob = remake(
             res.prob;
-            tspan = (ts[k], ts[k + 1]),
+            tspan = (t_lo, t_hi),
             p = solve_p,
-            u0 = x_current
+            u0 = current_state
         )
         sol = solve(
             sub_prob, res.args...;
-            saveat = [ts[k + 1]],
+            saveat = [t_hi],
             save_everystep = false,
             dense = false,
             res.kwargs...
         )
-        x_current = sol.u[end]
+        current_state = sol.u[end]
 
         if !isempty(rc.states_modifiers)
-            x_after_mods, st_mods = ReservoirComputing._apply_seq(
-                rc.states_modifiers, x_current, ps.states_modifiers, st_mods
+            state_after_mods, st_mods = ReservoirComputing._apply_seq(
+                rc.states_modifiers, current_state, ps.states_modifiers, st_mods
             )
         else
-            x_after_mods = x_current
+            state_after_mods = current_state
         end
 
-        y, st_ro = apply(rc.readout, x_after_mods, ps.readout, st_ro)
-        if k == 1
-            output = similar(y, length(y), steps)
+        current_output, st_ro = apply(rc.readout, state_after_mods, ps.readout, st_ro)
+        if step_idx == 1
+            outputs = similar(current_output, length(current_output), steps)
         end
-        output[:, k] .= y
-        current_input = y
+        outputs[:, step_idx] .= current_output
+        current_input = current_output
     end
 
     newst = (
@@ -381,7 +386,7 @@ function _predict(
         states_modifiers = st_mods,
         readout = st_ro,
     )
-    return output, newst
+    return outputs, newst
 end
 
 end # module
