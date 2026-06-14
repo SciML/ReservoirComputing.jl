@@ -42,12 +42,6 @@
     LocalInformationFlow
 ```
 
-## Reservoir computing with cellular automata
-
-```@docs
-    RECACell
-```
-
 ## Continuous-Time Reservoirs
 
 ```@docs
@@ -55,4 +49,10 @@
     SciMLProblemReservoir
     AbstractSampler
     TerminalStateSampling
+```
+
+## Reservoir computing with cellular automata
+
+```@docs
+    RECACell
 ```
