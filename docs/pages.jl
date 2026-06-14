@@ -4,6 +4,7 @@ pages = [
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",
         "Chaos forecasting with an ESN" => "tutorials/lorenz_basic.md",
+        "Continuous-time reservoirs from a SciMLProblem" => "tutorials/sciml_reservoir.md",
         "Fitting a Next Generation Reservoir Computer" => "tutorials/ngrc.md",
         "Deep Echo State Networks" => "tutorials/deep_esn.md",
         "Training Reservoir Computing Models" => "tutorials/train.md",
