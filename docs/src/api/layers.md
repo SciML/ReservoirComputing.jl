@@ -36,6 +36,15 @@
     LIFESNCell
 ```
 
+## Continuous-time reservoirs
+
+```@docs
+    AbstractSciMLProblemReservoir
+    SciMLProblemReservoir
+    AbstractSampler
+    TerminalStateSampling
+```
+
 ## Wrappers
 
 ```@docs
