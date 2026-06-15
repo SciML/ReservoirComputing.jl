@@ -5,8 +5,10 @@ ReservoirComputing.jl exposes a continuous-time reservoir layer,
 `AbstractSciMLProblem` (`ODEProblem`, `SDEProblem`, `DDEProblem`) and
 plugs it into the standard `collectstates` / `predict` pipeline. The
 implementation lives in the `RCODEReservoirExt` package extension, so
-the extension is loaded automatically once `OrdinaryDiffEq`,
-`SciMLBase`, and `DataInterpolations` are in scope.
+the extension is loaded automatically once `SciMLBase` and
+`DataInterpolations` are in scope. The user picks a concrete solver
+package (e.g. `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`) separately —
+its solver types are what the reservoir's `args[1]` consumes.
 
 This page walks through the core type, how time is laid out internally,
 and a worked example that checks the continuous reservoir against a
@@ -16,15 +18,15 @@ closed-form analytic solution.
 
 ```julia
 using ReservoirComputing
-using OrdinaryDiffEq
 using SciMLBase
 using DataInterpolations
+using OrdinaryDiffEqTsit5    # or `OrdinaryDiffEq`, or whichever solver pkg you need
 ```
 
-All three are required: `OrdinaryDiffEq` brings the concrete solver
-types (e.g. `Tsit5()`), `SciMLBase` provides `solve` / `remake`, and
-`DataInterpolations` is used for the per-window input signal in the
-autoregressive `predict` path.
+`SciMLBase` provides `solve` / `remake`, `DataInterpolations` is used
+for the per-window input signal in the autoregressive `predict` path,
+and the chosen OrdinaryDiffEq solver package brings the concrete
+solver type (`Tsit5()`, `Euler()`, …).
 
 ## Constructing a reservoir from an ODE problem
 
@@ -80,9 +82,9 @@ that curve to within ~1e-6:
 
 ```julia
 using ReservoirComputing
-using OrdinaryDiffEq
 using SciMLBase
 using DataInterpolations
+using OrdinaryDiffEqTsit5
 using Random
 
 function linear_rhs!(dx, x, p, t)
@@ -150,9 +152,9 @@ collected continuous states.
 
 ```@example ctesn-lorenz
 using ReservoirComputing
-using OrdinaryDiffEq
 using SciMLBase
 using DataInterpolations
+using OrdinaryDiffEqTsit5
 using Plots
 using Random
 
@@ -165,7 +167,7 @@ function lorenz!(du, u, p, t)
     du[2] = u[1] * (p[2] - u[3]) - u[2]
     du[3] = u[1] * u[2] - p[3] * u[3]
 end
-data_prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 30.0), [10.0, 28.0, 8 / 3])
+data_prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 40.0), [10.0, 28.0, 8 / 3])
 data = Array(solve(data_prob, Tsit5(); saveat = 0.02))
 
 shift, train_len, predict_len = 300, 1000, 250

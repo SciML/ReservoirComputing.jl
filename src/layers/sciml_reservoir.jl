@@ -31,8 +31,10 @@ Concrete subtypes provide `_collectstates` methods that run the solver and
 hand back a state matrix to the readout.
 
 The continuous-time `_collectstates` implementation lives in the
-`RCODEReservoirExt` package extension and requires `OrdinaryDiffEq`,
-`SciMLBase`, and `DataInterpolations` to be loaded.
+`RCODEReservoirExt` package extension and requires `SciMLBase` and
+`DataInterpolations` to be loaded. Pick any concrete solver package
+separately (e.g. `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`) — its solver
+types are what `SciMLProblemReservoir`'s `args[1]` consumes.
 """
 abstract type AbstractSciMLProblemReservoir <: AbstractLuxLayer end
 
@@ -63,8 +65,9 @@ construction time and forwarded to `solve` when `collectstates` runs.
 The real `_collectstates` implementation lives in the `RCODEReservoirExt`
 package extension. Without it loaded, calling `collectstates` on a
 reservoir computer holding a `SciMLProblemReservoir` will error with a
-message instructing the user to load `OrdinaryDiffEq`, `SciMLBase`, and
-`DataInterpolations`.
+message instructing the user to load `SciMLBase` and `DataInterpolations`
+(plus a concrete solver package — `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`,
+…).
 """
 @concrete struct SciMLProblemReservoir <: AbstractSciMLProblemReservoir
     prob

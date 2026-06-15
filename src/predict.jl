@@ -109,7 +109,8 @@ function _predict(
     return error(
         "Autoregressive `predict(rc, steps, ps, st; initialdata)` for a " *
             "`SciMLProblemReservoir` requires the `RCODEReservoirExt` extension. " *
-            "Load `OrdinaryDiffEq`, `SciMLBase`, and `DataInterpolations` to enable it."
+            "Load `SciMLBase` and `DataInterpolations` (plus an OrdinaryDiffEq " *
+                "solver package — `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …) to enable it."
     )
 end
 
@@ -120,7 +121,8 @@ function _predict(
     return error(
         "Teacher-forced `predict(rc, data, ps, st)` for a " *
             "`SciMLProblemReservoir` requires the `RCODEReservoirExt` extension. " *
-            "Load `OrdinaryDiffEq`, `SciMLBase`, and `DataInterpolations` to enable it."
+            "Load `SciMLBase` and `DataInterpolations` (plus an OrdinaryDiffEq " *
+                "solver package — `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …) to enable it."
     )
 end
 

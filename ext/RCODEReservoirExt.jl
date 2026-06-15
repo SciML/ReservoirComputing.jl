@@ -2,12 +2,12 @@ module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
 using LuxCore: apply
-# `OrdinaryDiffEq` is loaded as a weakdep trigger so concrete solver types
-# (e.g. `Tsit5`) the user puts in `res.args[1]` are usable at solve time.
-# We don't reference any of its names directly — `solve` and `remake` come
-# from `SciMLBase`, and the solver algorithm dispatch is selected by the
-# concrete object the user passed in.
-using OrdinaryDiffEq: OrdinaryDiffEq
+# `solve` and `remake` come from `SciMLBase`. The user picks the concrete
+# solver type (e.g. `Tsit5()`) and loads its package separately
+# (`OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …); dispatch at solve time
+# selects the right method via the type they passed in `res.args[1]`. We
+# deliberately don't list a solver package as a weakdep trigger so users
+# aren't forced to pull the full `OrdinaryDiffEq` meta-package in.
 using SciMLBase: remake, solve, NullParameters
 
 using ReservoirComputing: ReservoirComputing,
