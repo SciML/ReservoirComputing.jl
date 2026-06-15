@@ -11,8 +11,8 @@ using DataInterpolations
 # ---------------------------------------------------------------------------
 
 function esn_rhs!(dx, x, p, t)
-    u = p.input(t)
-    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * u .+ p.b)
+    input_t = p.input(t)
+    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
 end
 
 function build_esn_problem(rng, in_dim, res_dim, tspan)
@@ -36,8 +36,8 @@ end
 
 @testset "Linear ODE analytic match" begin
     function lin_rhs!(dx, x, p, t)
-        u_val = p.input(t)
-        return dx .= .-x .+ u_val
+        input_t = p.input(t)
+        return dx .= .-x .+ input_t
     end
 
     T_steps = 10

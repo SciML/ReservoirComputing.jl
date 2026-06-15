@@ -86,8 +86,8 @@ using DataInterpolations
 using Random
 
 function linear_rhs!(dx, x, p, t)
-    u_val = p.input(t)
-    dx .= .-x .+ u_val
+    input_t = p.input(t)
+    dx .= .-x .+ input_t
 end
 
 n_samples = 10
@@ -132,6 +132,99 @@ predict(rc, steps, ps, st; initialdata)    # autoregressive rollout
 In both cases the reservoir's initial state is `prob.u0`. To continue
 from a previously computed trajectory, `remake(prob; u0 = …)` before
 constructing the reservoir.
+
+## Eye test: Lorenz chaos forecasting with a continuous ESN
+
+The README example trains a discrete ESN on the Lorenz attractor and
+rolls it forward autoregressively. The same pipeline runs verbatim with
+`SciMLProblemReservoir` once you wrap the leaky-integrator continuous
+ESN equations
+
+```math
+\frac{dx}{dt} = -x + \tanh\!\left(W_r\, x + W_{in}\, u(t) + b\right)
+```
+
+as an `ODEProblem`. The reservoir matrices are random, the readout is
+linear, and the only training step fits the linear readout on the
+collected continuous states.
+
+```@example ctesn-lorenz
+using ReservoirComputing
+using OrdinaryDiffEq
+using SciMLBase
+using DataInterpolations
+using Plots
+using Random
+
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+# 1. Lorenz data
+function lorenz!(du, u, p, t)
+    du[1] = p[1] * (u[2] - u[1])
+    du[2] = u[1] * (p[2] - u[3]) - u[2]
+    du[3] = u[1] * u[2] - p[3] * u[3]
+end
+data_prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 30.0), [10.0, 28.0, 8 / 3])
+data = Array(solve(data_prob, Tsit5(); saveat = 0.02))
+
+shift, train_len, predict_len = 300, 1000, 250
+input_data = data[:, shift:(shift + train_len - 1)]
+target_data = data[:, (shift + 1):(shift + train_len)]
+test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
+
+# 2. Continuous ESN reservoir parameters
+N_res = 100
+Wr = 0.3 .* randn(rng, N_res, N_res) ./ sqrt(N_res)
+Win = 0.5 .* randn(rng, N_res, 3)
+bias = 0.05 .* randn(rng, N_res)
+initial_state = zeros(N_res)
+
+# 3. Raw ODE equations — leaky-integrator continuous ESN
+function ctesn_rhs!(dx, x, p, t)
+    input_t = p.input(t)
+    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
+end
+
+# 4. Wrap as SciMLProblemReservoir with Δt = 1 per input window
+function build_rc(tspan_len)
+    prob = ODEProblem(
+        ctesn_rhs!, initial_state,
+        (0.0, Float64(tspan_len)), (Wr = Wr, Win = Win, b = bias)
+    )
+    res = SciMLProblemReservoir(
+        prob, TerminalStateSampling(),
+        (0.0, Float64(tspan_len)), Tsit5();
+        reltol = 1.0e-6, abstol = 1.0e-8
+    )
+    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 3))
+end
+
+rc_train = build_rc(train_len)
+rc_predict = build_rc(predict_len)
+ps, st = setup(rng, rc_train)
+
+# 5. Fit the linear readout on the collected continuous states
+ps, st = train!(rc_train, input_data, target_data, ps, st)
+
+# 6. Autoregressive rollout under the same continuous dynamics
+ps_pred, st_pred = setup(rng, rc_predict)
+ps_pred = merge(ps_pred, (readout = ps.readout,))
+st_pred = merge(st_pred, (readout = st.readout,))
+output, _ = predict(rc_predict, predict_len, ps_pred, st_pred; initialdata = test[:, 1])
+
+plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
+    label = "predicted")
+plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
+    label = "actual")
+```
+
+The two trajectories should agree on the early portion of the rollout
+before chaotic divergence — exactly the behaviour the discrete-ESN
+example produces. The point of the eye test is that nothing in the
+training loop changes: `train!` and `predict` still drive the
+`SciMLProblemReservoir` through the same pipeline they use for any
+discrete reservoir.
 
 ## Adding your own sampler
 
