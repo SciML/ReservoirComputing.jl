@@ -228,6 +228,109 @@ training loop changes: `train!` and `predict` still drive the
 `SciMLProblemReservoir` through the same pipeline they use for any
 discrete reservoir.
 
+## A delay-equation target: Mackey-Glass
+
+`SciMLProblemReservoir` wraps **any** `AbstractSciMLProblem`, so the
+training data — and, if you want, the reservoir itself — can come
+from a delay-differential equation, a stochastic equation, or any
+other SciML problem type. The smallest non-trivial demonstration:
+forecast the Mackey-Glass time series, a 1-D delay equation that has
+been a reservoir-computing benchmark for two decades.
+
+```@example ctesn-mg
+using ReservoirComputing
+using SciMLBase
+using DataInterpolations
+using OrdinaryDiffEqTsit5
+using DelayDiffEq
+using LinearAlgebra
+using Plots
+using Random
+using Statistics
+
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+# Mackey-Glass: dx/dt = β x(t-τ) / (1 + x(t-τ)^n) - γ x(t).
+# With τ = 17 the trajectory is chaotic.
+const β_mg, γ_mg, n_mg, τ_mg = 0.2, 0.1, 10, 17.0
+function mackey_glass!(dx, x, h, p, t)
+    x_delay = h(p, t - τ_mg)[1]
+    return dx[1] = β_mg * x_delay / (1 + x_delay^n_mg) - γ_mg * x[1]
+end
+mg_history(p, t) = [1.2]
+
+mg_data_prob = DDEProblem(mackey_glass!, [1.2], mg_history, (0.0, 1500.0);
+    constant_lags = [τ_mg])
+mg_data = reduce(hcat,
+    solve(mg_data_prob, MethodOfSteps(Tsit5()); saveat = 1.0).u)
+
+shift, train_len, predict_len = 200, 1000, 200
+input_data = mg_data[:, shift:(shift + train_len - 1)]
+target_data = mg_data[:, (shift + 1):(shift + train_len)]
+test_data = mg_data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
+
+# Same continuous ESN reservoir machinery as the Lorenz example, retuned
+# for the much smaller Mackey-Glass amplitude (~1, vs Lorenz ~20).
+N_res = 150
+sparsity = 6 / N_res
+Wr_raw = randn(rng, N_res, N_res) .* (rand(rng, N_res, N_res) .< sparsity)
+Wr = (0.9 / maximum(abs.(eigvals(Wr_raw)))) .* Wr_raw
+Win = 0.05 .* randn(rng, N_res, 1)
+bias = 0.0 .* randn(rng, N_res)
+initial_state = zeros(N_res)
+
+function mg_reservoir_rhs!(dx, x, p, t)
+    input_t = p.input(t)
+    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
+end
+
+function build_mg_rc(n_steps)
+    tspan = (0.0, n_steps * 1.0)
+    prob = ODEProblem(mg_reservoir_rhs!, initial_state, tspan,
+        (Wr = Wr, Win = Win, b = bias))
+    res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5();
+        reltol = 1.0e-6, abstol = 1.0e-8)
+    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 1))
+end
+
+rc_mg_train = build_mg_rc(train_len)
+rc_mg_predict = build_mg_rc(predict_len)
+ps_mg, st_mg = setup(rng, rc_mg_train)
+ps_mg, st_mg = train!(rc_mg_train, input_data, target_data, ps_mg, st_mg,
+    StandardRidge(1.0e-6); washout = 0)
+
+ps_pred, st_pred = setup(rng, rc_mg_predict)
+ps_pred = merge(ps_pred, (readout = ps_mg.readout,))
+st_pred = merge(st_pred, (readout = st_mg.readout,))
+mg_output, _ = predict(rc_mg_predict, predict_len, ps_pred, st_pred;
+    initialdata = test_data[:, 1])
+
+plot([test_data[1, :], mg_output[1, :]];
+    label = ["actual" "predicted"], linewidth = 2,
+    xlabel = "step", ylabel = "x(t)",
+    title = "Mackey-Glass (τ=17) — continuous ESN rollout")
+```
+
+Two things to notice:
+
+* The **data path** uses a `DDEProblem` solved with
+  `MethodOfSteps(Tsit5())` — no special handling on
+  `SciMLProblemReservoir`'s side; the wrapper only cares about the
+  shape of the resulting matrix.
+* The **reservoir** is kept as an `ODEProblem` for simplicity. Because
+  `SciMLProblemReservoir`'s `prob` field is untyped, it would equally
+  accept a `DDEProblem` of the form
+  `dx/dt = -x(t) + tanh(W_r x(t-τ_r) + W_{in} u(t) + b)` — useful when
+  the target has long-range temporal correlations. Delay-coupled
+  reservoirs of that form are explored in the CTESN/delay-reservoir
+  literature; a tuned implementation will land in PR3.
+
+As with the Lorenz example, this is a demonstration of the new
+plumbing rather than an optimised benchmark: hyperparameters were
+tuned by hand to land a watchable forecast, not chosen via
+cross-validation.
+
 ## Adding your own sampler
 
 The reservoir state sequence the readout sees is produced by an
