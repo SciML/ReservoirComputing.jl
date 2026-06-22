@@ -110,9 +110,8 @@ function SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)
     return SciMLProblemReservoir(prob, sampler, tspan, args, kwargs)
 end
 
-# Empty parameters/state by default. Concrete CTESN/LSM subtypes that land
-# later (PR3, PR5) override these to expose `ps.reservoir.ode_params` and
-# `st.reservoir` caches.
+# Empty parameters/state by default. Concrete subtypes (e.g. `ContinuousESN`)
+# override these to expose reservoir matrices and any solver caches.
 function initialparameters(::AbstractRNG, ::AbstractSciMLProblemReservoir)
     return NamedTuple()
 end
