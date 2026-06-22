@@ -2969,6 +2969,130 @@ function band_init(
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
 
+@doc raw"""
+    toepliz_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+
+Create and return a sparse reservoir matrix with a Toeplitz-like topology [Cossu2025](@cite).
+This function builds outward from the main diagonal, generating a single random uniform weight 
+in the range `(-1, 1)` for each diagonal and applying that identical weight to every active 
+element along that specific diagonal. This structure is highly beneficial for 
+minimal-complexity Echo State Networks (ESNs).
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Utils.default_rng()` from
+    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix. Must be square.
+
+## Keyword arguments
+
+  - `radius`: The desired spectral radius of the reservoir. Defaults to 1.0.
+  - `sparsity`: The approximate target fraction of zero elements in the matrix. 
+    To closely approximate this target, if the required number of connections does not 
+    completely fill the outermost active diagonals, the remaining weights are randomly 
+    distributed across the available indices. Note: because lower sub-diagonals (delay lines) 
+    are populated before their corresponding upper sub-diagonals (backward connections), 
+    there is an inherent structural bias where the final partial band may favor lower connections. 
+    Defaults to 0.9.
+  - `return_sparse`: Flag for returning a `SparseMatrixCSC` instead of a dense matrix. 
+    Setting to `true` requires `SparseArrays` to be loaded. Defaults to `false`.
+
+## Examples
+
+Default call (creating a dense matrix with shared weights along each diagonal):
+
+```jldoctest toepliz
+julia> W = toepliz_init(5, 5; sparsity=0.5)
+5×5 Matrix{Float32}:
+  0.512311  -0.812451   0.0        0.0        0.0
+ -0.214159   0.512311  -0.812451   0.0        0.0
+  0.115412  -0.214159   0.512311  -0.812451   0.0
+  0.0        0.115412  -0.214159   0.512311  -0.812451
+  0.0        0.0        0.115412  -0.214159   0.512311
+```
+
+Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer -0.7612 and -0.8123 bands):
+
+```jldoctest toepliz
+julia> using SparseArrays
+
+julia> W_sparse = toepliz_init(6, 6; sparsity=0.6, return_sparse=true)
+6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
+  0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
+ -0.7612    0.4512    ⋅         ⋅         ⋅         ⋅
+  ⋅        -0.7612    0.4512   -0.8123    ⋅         ⋅
+  ⋅         ⋅        -0.7612    0.4512   -0.8123    ⋅
+  ⋅         ⋅         ⋅        -0.7612    0.4512   -0.8123
+  ⋅         ⋅         ⋅         ⋅        -0.7612    0.4512
+```
+"""
+function toepliz_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        radius = T(1.0), sparsity = 0.9, return_sparse = false
+    ) where {T <: Number}
+
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+
+    # Sparsity value check
+    if !(0 <= sparsity <= 1)
+        throw(ArgumentError("sparsity must be in the range [0, 1], got $sparsity"))
+    end
+
+    res_size = dims[1]
+
+    reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
+
+    # 1. MAIN DIAGONAL: Generate one scalar, copy it across the whole diagonal
+    main_val = DeviceAgnostic.rand(rng, T) .* T(2.0) .- T(1.0)
+    weights = DeviceAgnostic.ones(rng, T, res_size) .* main_val
+    self_loop!(rng, reservoir_matrix, weights)
+
+    target_non_zeros = round(Int, res_size * res_size * (1.0 - sparsity))
+    current_non_zeros = res_size # from the self-loops
+    shift = 1
+
+    while current_non_zeros < target_non_zeros && shift < res_size
+        diag_length = res_size - shift
+        remaining_non_zeros = target_non_zeros - current_non_zeros
+
+        # Delay Line for Lower Diagonals
+        fill_length_lower = min(diag_length, remaining_non_zeros)
+        weights_lower = DeviceAgnostic.zeros(rng, T, diag_length)
+
+        # Generate ONE scalar value for the entire lower sub-diagonal
+        lower_val = DeviceAgnostic.rand(rng, T) .* T(2.0) .- T(1.0)
+
+        lower_index = Random.randperm(rng, diag_length)[1:fill_length_lower]
+        weights_lower[lower_index] = DeviceAgnostic.ones(rng, T, fill_length_lower) .* lower_val
+        delay_line!(rng, reservoir_matrix, weights_lower, shift)
+        current_non_zeros += fill_length_lower
+
+        # Backward Connection for Upper Diagonals
+        if current_non_zeros < target_non_zeros
+            remaining_non_zeros -= fill_length_lower
+            fill_length_upper = min(diag_length, remaining_non_zeros)
+            weights_upper = DeviceAgnostic.zeros(rng, T, diag_length)
+
+            # Generate ONE scalar value for the entire upper sub-diagonal
+            upper_val = DeviceAgnostic.rand(rng, T) .* T(2.0) .- T(1.0)
+
+            upper_index = Random.randperm(rng, diag_length)[1:fill_length_upper]
+            weights_upper[upper_index] = DeviceAgnostic.ones(rng, T, fill_length_upper) .* upper_val
+            backward_connection!(rng, reservoir_matrix, weights_upper, shift)
+
+            current_non_zeros += fill_length_upper
+        end
+
+        shift += 1
+    end
+
+    scale_radius!(reservoir_matrix, radius)
+
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
 ### fallbacks
 #fallbacks for initializers #eventually to remove once migrated to WeightInitializers.jl
 for initializer in (
@@ -2978,7 +3102,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :wigner_init, :rand_hyper, :band_init,
+        :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toepliz_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
