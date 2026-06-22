@@ -5,10 +5,10 @@
         Function,
     }
     cols = axes(states, 2)
-    states_1 = states_mod(states[:, first(cols)])
+    states_1 = states_mod(@view states[:, first(cols)])
     new_states = similar(states_1, length(states_1), length(cols))
     new_states[:, 1] .= states_1
-    for (k, j) in enumerate(cols)
+    for (k, j) in Iterators.drop(enumerate(cols), 1)
         new_states[:, k] .= states_mod(@view states[:, j])
     end
     return new_states
@@ -158,7 +158,7 @@ esn = ReservoirChain(
 )
 ```
 
-In this esample the input to `Extend` is the initial value fed to
+In this example the input to `Extend` is the initial value fed to
 [`ReservoirChain`](@ref). After `Extend`, the value in the chain will
 be the state returned by the [`StatefulLayer`](@ref), `vcat`ed with
 the input.
@@ -375,21 +375,21 @@ julia> mat_old = [1  2  3;
 
 julia> mat_new = nlat2(mat_old)
 7×3 Matrix{Int64}:
-  1   2    3
-  4   5    6
-  4  10   18
- 10  11   12
- 70  88  108
- 16  17   18
- 19  20   21
+   1    2    3
+   4    5    6
+   4   10   18
+  10   11   12
+  70   88  108
+  16   17   18
+ 208  238  270
 
 ```
 """
 function NLAT2(x_old::AbstractVector)
     x_new = copy(x_old)
     for idx in eachindex(x_old)
-        if firstindex(x_old) < idx < lastindex(x_old) && isodd(idx)
-            x_new[idx, :] .= x_old[idx - 1, :] .* x_old[idx - 2, :]
+        if firstindex(x_old) < idx && isodd(idx)
+            x_new[idx] = x_old[idx - 1] * x_old[idx - 2]
         end
     end
     return x_new
@@ -435,7 +435,7 @@ None
 ## Example
 
 ```jldoctest nlat3
-julia> nlat2 = NLAT3()
+julia> nlat3 = NLAT3()
 NLAT3 (generic function with 3 methods)
 
 julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -451,7 +451,7 @@ julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  8
  9
 
-julia> n_new = nlat2(x_old)
+julia> n_new = nlat3(x_old)
 10-element Vector{Int64}:
   0
   1
@@ -483,7 +483,7 @@ julia> mat_old = [1  2  3;
  16  17  18
  19  20  21
 
-julia> mat_new = nlat2(mat_old)
+julia> mat_new = nlat3(mat_old)
 7×3 Matrix{Int64}:
    1    2    3
    4    5    6

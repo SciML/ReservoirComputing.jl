@@ -50,8 +50,12 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `init_state`: Initializer(s) used when an external state is not provided.
     Scalar or length-`L`. Default: `randn32`.
   - `use_bias`: Whether each reservoir uses a bias term. Boolean scalar or length-`L`. Default: `false`.
-  - `depth`: Depth of the DeepESN. If the reservoir size is given as a number instead of a vector, this
-    parameter controls the depth of the model. Default is 2.
+
+Depth:
+
+  - `depth`: Number of reservoir layers. Only used when `res_dims` is given as a
+    single integer (the depth is then `depth` layers of that width); it is ignored
+    when `res_dims` is a vector, whose length already sets the depth `L`. Default: `2`.
 
 Composition:
 
