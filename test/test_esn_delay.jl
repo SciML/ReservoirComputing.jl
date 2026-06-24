@@ -188,3 +188,149 @@ end
         @test Int(fesn2.readout.in_dims) == res_dims * (2 + 1)
     end
 end
+
+@testset "InputDelayESN forward pass & training" begin
+    rng = MersenneTwister(123)
+    in_dims, res_dims, out_dims, num_delays = 3, 40, 3, 2
+    n_steps = 60
+    data = rand(rng, Float32, in_dims, n_steps)
+    target = rand(rng, Float32, out_dims, n_steps)
+
+    idesn = InputDelayESN(in_dims, res_dims, out_dims; num_delays = num_delays)
+    ps, st = setup(rng, idesn)
+
+    @testset "params/state expose input_delay" begin
+        @test haskey(ps, :input_delay)
+        @test haskey(st, :input_delay)
+        @test size(ps.reservoir.input_matrix, 2) == in_dims * (num_delays + 1)
+    end
+
+    @testset "collectstates" begin
+        states, newst = collectstates(idesn, data, ps, st)
+        @test size(states) == (res_dims, n_steps)
+        @test all(isfinite, states)
+        @test newst.input_delay.clock == n_steps
+    end
+
+    @testset "train! + predict" begin
+        (ps_t, st_t), states = train!(
+            idesn, data, target, ps, st, StandardRidge(1.0e-6); return_states = true
+        )
+        @test size(states) == (res_dims, n_steps)
+
+        out_tf, _ = predict(idesn, data, ps_t, st_t)
+        @test size(out_tf) == (out_dims, n_steps)
+        @test all(isfinite, out_tf)
+
+        steps = 8
+        out_ar, _ = predict(idesn, steps, ps_t, st_t; initialdata = data[:, end])
+        @test size(out_ar) == (out_dims, steps)
+        @test all(isfinite, out_ar)
+    end
+
+    @testset "deterministic for a fixed seed" begin
+        ps1, st1 = setup(MersenneTwister(99), idesn)
+        ps2, st2 = setup(MersenneTwister(99), idesn)
+        s1, _ = collectstates(idesn, data, ps1, st1)
+        s2, _ = collectstates(idesn, data, ps2, st2)
+        @test s1 == s2
+    end
+
+    @testset "stride > 1 smoke" begin
+        strided = InputDelayESN(
+            in_dims, res_dims, out_dims; num_delays = num_delays, stride = 2
+        )
+        ps_s, st_s = setup(MersenneTwister(321), strided)
+
+        states_s, st_states = collectstates(strided, data, ps_s, st_s)
+        @test size(states_s) == (res_dims, n_steps)
+        @test all(isfinite, states_s)
+        @test st_states.input_delay.clock == n_steps
+
+        ps_t, st_t = train!(strided, data, target, ps_s, st_s, StandardRidge(1.0e-6))
+        out_tf, st_pred = predict(strided, data, ps_t, st_t)
+        @test size(out_tf) == (out_dims, n_steps)
+        @test all(isfinite, out_tf)
+        @test st_pred.input_delay.clock == st_t.input_delay.clock + n_steps
+    end
+end
+
+@testset "DelayESN forward pass & training" begin
+    rng = MersenneTwister(123)
+    in_dims, res_dims, out_dims = 3, 40, 2
+    num_input_delays, num_state_delays = 2, 1
+    n_steps = 60
+    data = rand(rng, Float32, in_dims, n_steps)
+    target = rand(rng, Float32, out_dims, n_steps)
+
+    fesn = DelayESN(
+        in_dims, res_dims, out_dims;
+        num_input_delays = num_input_delays, num_state_delays = num_state_delays
+    )
+    ps, st = setup(rng, fesn)
+
+    @testset "params/state expose input_delay" begin
+        @test haskey(ps, :input_delay)
+        @test haskey(st, :input_delay)
+        @test size(ps.reservoir.input_matrix, 2) == in_dims * (num_input_delays + 1)
+    end
+
+    @testset "collectstates" begin
+        states, newst = collectstates(fesn, data, ps, st)
+        @test size(states) == (res_dims * (num_state_delays + 1), n_steps)
+        @test all(isfinite, states)
+        @test newst.input_delay.clock == n_steps
+    end
+
+    @testset "train! + predict" begin
+        ps_t, st_t = train!(fesn, data, target, ps, st, StandardRidge(1.0e-6))
+
+        out_tf, _ = predict(fesn, data, ps_t, st_t)
+        @test size(out_tf) == (out_dims, n_steps)
+        @test all(isfinite, out_tf)
+    end
+
+    @testset "stride > 1 smoke" begin
+        strided = DelayESN(
+            in_dims, res_dims, out_dims;
+            num_input_delays = num_input_delays,
+            input_stride = 2,
+            num_state_delays = num_state_delays,
+            state_stride = 2
+        )
+        ps_s, st_s = setup(MersenneTwister(321), strided)
+
+        states_s, st_states = collectstates(strided, data, ps_s, st_s)
+        @test size(states_s) == (res_dims * (num_state_delays + 1), n_steps)
+        @test all(isfinite, states_s)
+        @test st_states.input_delay.clock == n_steps
+        @test st_states.states_modifiers[1].clock == n_steps
+
+        ps_t, st_t = train!(strided, data, target, ps_s, st_s, StandardRidge(1.0e-6))
+        out_tf, st_pred = predict(strided, data, ps_t, st_t)
+        @test size(out_tf) == (out_dims, n_steps)
+        @test all(isfinite, out_tf)
+        @test st_pred.input_delay.clock == st_t.input_delay.clock + n_steps
+        @test st_pred.states_modifiers[1].clock ==
+            st_t.states_modifiers[1].clock + n_steps
+    end
+end
+
+@testset "StateDelayESN forward pass & training" begin
+    rng = MersenneTwister(123)
+    in_dims, res_dims, out_dims, num_delays = 3, 40, 2, 2
+    n_steps = 60
+    data = rand(rng, Float32, in_dims, n_steps)
+    target = rand(rng, Float32, out_dims, n_steps)
+
+    sdesn = StateDelayESN(in_dims, res_dims, out_dims; num_delays = num_delays)
+    ps, st = setup(rng, sdesn)
+
+    states, _ = collectstates(sdesn, data, ps, st)
+    @test size(states) == (res_dims * (num_delays + 1), n_steps)
+
+    ps_t, st_t = train!(sdesn, data, target, ps, st, StandardRidge(1.0e-6))
+    out_tf, _ = predict(sdesn, data, ps_t, st_t)
+    @test size(out_tf) == (out_dims, n_steps)
+    @test all(isfinite, out_tf)
+end

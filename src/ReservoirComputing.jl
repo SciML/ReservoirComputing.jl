@@ -65,12 +65,10 @@ include("extensions/reca.jl")
 export ReservoirComputer
 export AbstractSciMLProblemReservoir, SciMLProblemReservoir
 export AbstractSampler, TerminalStateSampling
-export ESNCell, ES2NCell, EuSNCell, MemoryESNCell, MemoryResESNCell, RMNCell
+export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell,
+    MemoryESNCell, MemoryResESNCell, ResESNCell, RMNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
-export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell, ResESNCell
-export Collect, collectstates, DelayLayer, LinearReadout, NonlinearFeaturesLayer,
-    ReservoirChain, StatefulLayer
 export SVMReadout
 export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
