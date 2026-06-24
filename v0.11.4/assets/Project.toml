@@ -1,0 +1,23 @@
+[deps]
+CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PredefinedDynamicalSystems = "31e2f376-db9e-427a-b76e-a14f56347a14"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[compat]
+CellularAutomata = "0.0.6"
+DifferentialEquations = "7.16.1"
+Documenter = "1"
+DocumenterCitations = "1"
+OrdinaryDiffEq = "6"
+Plots = "1"
+PredefinedDynamicalSystems = "1"
+ReservoirComputing = "0.11.4"
+StatsBase = "0.34.4"
