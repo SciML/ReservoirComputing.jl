@@ -47,7 +47,6 @@
 ```@docs
     AbstractSciMLProblemReservoir
     SciMLProblemReservoir
-    ContinuousESN
     AbstractSampler
     TerminalStateSampling
 ```

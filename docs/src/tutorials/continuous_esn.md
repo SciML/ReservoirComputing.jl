@@ -24,20 +24,10 @@ that powers `SciMLProblemReservoir` also runs `ContinuousESN`.
 
 This tutorial walks through training a `ContinuousESN` on Lorenz-63
 data and rolling it forward autoregressively to reproduce the
-attractor.
-
-## Loading the extension
-
-```julia
-using ReservoirComputing
-using SciMLBase
-using DataInterpolations
-using OrdinaryDiffEqTsit5
-```
-
-`SciMLBase` provides `solve` / `remake`, `DataInterpolations` is used
-internally for the per-window input signal in autoregressive mode, and
-`OrdinaryDiffEqTsit5` supplies the concrete `Tsit5()` solver type.
+attractor. `SciMLBase` provides `solve` / `remake`, `DataInterpolations`
+backs the per-window input signal in autoregressive mode, and an
+OrdinaryDiffEq solver package (e.g. `OrdinaryDiffEqTsit5`) supplies the
+concrete solver type.
 
 ## Building a Lorenz dataset
 
