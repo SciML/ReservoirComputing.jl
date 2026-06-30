@@ -1,33 +1,36 @@
 # Continuous ESN: forecasting Lorenz
 
-[`ContinuousESN`](@ref) is a thin wrapper around
-[`SciMLProblemReservoir`](@ref) that pre-bakes the leaky-integrator
+[`ContinuousESN`](@ref) is a thin convenience wrapper around a
+[`ContinuousESNCell`](@ref) that pre-bakes the leaky-integrator
 continuous Echo State Network ODE of [Lukosevicius2012](@cite) §3.2.6
 eq (5):
 
 ```math
-\dot{\mathbf{x}}(t) = \alpha \left(
-    -\mathbf{x}(t) + \tanh\!\left(
-        \mathbf{W}_{\text{in}}\,\mathbf{u}(t) + \mathbf{W}_r\,\mathbf{x}(t)
-        + \mathbf{b}
-    \right)
-\right)
+\dot{\mathbf{x}}(t) = -\mathbf{x}(t) + \tanh\!\left(
+    \mathbf{W}_{\text{in}}\,\mathbf{u}(t) + \mathbf{W}_r\,\mathbf{x}(t)
+    + \mathbf{b}\right)
 ```
 
-with leaking rate `α`. Forward-Euler discretisation at step `Δt = 1`
-recovers the discrete leaky ESN `x(n+1) = (1-α) x(n) + α tanh(...)`
-exactly. The reservoir matrices `W_r`, `W_in`, and optional bias `b`
-live in `ps.reservoir` and are constructed by `setup(rng, rc)`; the
-ODE solver and any solve-time keyword arguments are captured at
-construction. Under the hood the same `RCODEReservoirExt` extension
-that powers `SciMLProblemReservoir` also runs `ContinuousESN`.
+No leaking-rate term `α` appears in the ODE — `α` emerges only when the
+ODE is forward-Euler discretised with step `Δt = α`, recovering the
+discrete leaky ESN update `x(n+1) = (1-α)·x(n) + α·tanh(…)` exactly. To
+target an effective leak rate `α`, choose `tspan = (0, n_samples · α)`
+so the per-window width matches the desired step.
+
+`ContinuousESN` shares its struct shape with [`ESN`](@ref): three
+fields `(reservoir, states_modifiers, readout)`. The reservoir
+matrices `W_in`, `W_r`, and optional bias `b` live in
+`ps.reservoir` as `input_matrix`, `reservoir_matrix`, and `bias`, and
+are constructed by `setup(rng, esn)`. The ODE solver and any
+solve-time keyword arguments are captured at construction. Under the
+hood the `RCODEReservoirExt` package extension runs the integration.
 
 This tutorial walks through training a `ContinuousESN` on Lorenz-63
 data and rolling it forward autoregressively to reproduce the
-attractor. `SciMLBase` provides `solve` / `remake`, `DataInterpolations`
-backs the per-window input signal in autoregressive mode, and an
-OrdinaryDiffEq solver package (e.g. `OrdinaryDiffEqTsit5`) supplies the
-concrete solver type.
+attractor. `SciMLBase` provides `solve` / `remake`,
+`DataInterpolations` backs the per-window input signal in
+autoregressive mode, and an OrdinaryDiffEq solver package
+(e.g. `OrdinaryDiffEqTsit5`) supplies the concrete solver type.
 
 ## Building a Lorenz dataset
 
@@ -60,27 +63,41 @@ test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 
 ## Constructing the `ContinuousESN`
 
-The constructor mirrors `SciMLProblemReservoir`: the integration
-`tspan` and the solver positional argument are captured at
-construction time, exactly as in DiffEqFlux's `NeuralODE`.
+The constructor signature mirrors `ESN`: `(in_dims, res_dims, out_dims,
+[activation,] tspan, args...; kwargs...)`. The integration `tspan` and
+the solver positional argument are captured at construction, exactly
+as in DiffEqFlux's `NeuralODE`.
 
 ```@example continuous-esn-lorenz
 N_res = 100
-ce_train = ContinuousESN(
-    3, N_res, (0.0, Float64(train_len)), Tsit5();
-    leak_coefficient = 1.0, use_bias = true, T = Float64,
+
+# Float64 initialisers so the reservoir, the solve, and the input all
+# share a numeric type. Without these the cell would default to
+# Float32 via `scaled_rand` / `rand_sparse` / `zeros32`.
+init_input_f64(rng, d...)     = scaled_rand(rng, Float64, d...)
+init_reservoir_f64(rng, d...) = rand_sparse(rng, Float64, d...)
+init_bias_f64(rng, d...)      = zeros(Float64, d...)
+
+esn_train = ContinuousESN(
+    3, N_res, 3, (0.0, Float64(train_len)), Tsit5();
+    use_bias = true,
+    init_input = init_input_f64,
+    init_reservoir = init_reservoir_f64,
+    init_bias = init_bias_f64,
+    state_modifiers = (NLAT2(),),
     reltol = 1.0e-6, abstol = 1.0e-8
 )
-ce_pred = ContinuousESN(
-    3, N_res, (0.0, Float64(predict_len)), Tsit5();
-    leak_coefficient = 1.0, use_bias = true, T = Float64,
+esn_pred = ContinuousESN(
+    3, N_res, 3, (0.0, Float64(predict_len)), Tsit5();
+    use_bias = true,
+    init_input = init_input_f64,
+    init_reservoir = init_reservoir_f64,
+    init_bias = init_bias_f64,
+    state_modifiers = (NLAT2(),),
     reltol = 1.0e-6, abstol = 1.0e-8
 )
 
-rc_train = ReservoirComputer(ce_train, (NLAT2(),), LinearReadout(N_res => 3))
-rc_pred = ReservoirComputer(ce_pred, (NLAT2(),), LinearReadout(N_res => 3))
-
-ps, st = setup(rng, rc_train)
+ps, st = setup(rng, esn_train)
 ```
 
 ## Training
@@ -90,25 +107,25 @@ ps, st = setup(rng, rc_train)
 on the collected states.
 
 ```@example continuous-esn-lorenz
-ps, st = train!(rc_train, input_data, target_data, ps, st)
+ps, st = train!(esn_train, input_data, target_data, ps, st)
 ```
 
 ## Autoregressive rollout
 
-`predict(rc, steps, ps, st; initialdata)` splits the predict-time
+`predict(esn, steps, ps, st; initialdata)` splits the predict-time
 `tspan` into `steps` equal sub-intervals; on each sub-interval the
 previous readout output is held constant as the input. The default
-initial reservoir state is `prob.u0` (zeros) — if you want to continue
-from the trained reservoir's terminal state, `remake` the prob before
-constructing the predict reservoir.
+initial reservoir state is zeros sized to `res_dims` — if you want to
+continue from the trained reservoir's terminal state, pass a custom
+`equations` closure that captures it.
 
 ```@example continuous-esn-lorenz
-ps_pred, st_pred = setup(rng, rc_pred)
+ps_pred, st_pred = setup(rng, esn_pred)
 ps_pred = merge(ps_pred, (readout = ps.readout,))
 st_pred = merge(st_pred, (readout = st.readout,))
 
 output, _ = predict(
-    rc_pred, predict_len, ps_pred, st_pred; initialdata = test[:, 1]
+    esn_pred, predict_len, ps_pred, st_pred; initialdata = test[:, 1]
 )
 
 plot(

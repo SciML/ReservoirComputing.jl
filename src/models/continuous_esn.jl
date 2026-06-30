@@ -1,96 +1,113 @@
 @doc raw"""
-    ContinuousESN(in_dims, res_dims, tspan, args...; kwargs...)
+    ContinuousESN(in_dims, res_dims, out_dims, activation = tanh,
+                  tspan, args...;
+                  use_bias = false,
+                  init_reservoir = rand_sparse, init_input = scaled_rand,
+                  init_bias = zeros32, init_state = randn32,
+                  state_modifiers = (), readout_activation = identity,
+                  equations = _continuous_esn_rhs!,
+                  kwargs...)
 
 Continuous-time leaky-integrator Echo State Network ([Lukosevicius2012](@cite)
-§3.2.6, eq 5). `ContinuousESN <: AbstractSciMLProblemReservoir`, so it reuses
-the continuous-time `_collectstates` / `_predict` machinery in the
-`RCODEReservoirExt` package extension and pre-bakes the leaky-integrator
-reservoir ODE
+§3.2.6, eq 5). Thin convenience wrapper that composes:
+
+  1) a [`ContinuousESNCell`](@ref) carrying the reservoir matrices and the
+     ODE right-hand side,
+  2) zero or more `state_modifiers` applied to the sampled reservoir
+     states, and
+  3) a [`LinearReadout`](@ref) mapping the modified states to outputs.
+
+Structurally identical to [`ESN`](@ref) — three fields
+`(reservoir, states_modifiers, readout)` — so it slots into the same
+training and prediction pipeline. The reservoir field is the
+`ContinuousESNCell` rather than a `StatefulLayer(ESNCell)`, which routes
+`collectstates` / `predict` through the continuous-time
+`RCODEReservoirExt` extension.
+
+## Equations
 
 ```math
-\dot{\mathbf{x}}(t) = \alpha \left(
-    -\mathbf{x}(t) + \tanh\!\left(
-        \mathbf{W}_{\text{in}}\,\mathbf{u}(t) + \mathbf{W}_r\,\mathbf{x}(t) + \mathbf{b}
-    \right)
-\right)
+\begin{aligned}
+    \dot{\mathbf{x}}(t) &= -\mathbf{x}(t) + \tanh\!\left(
+        \mathbf{W}_{\text{in}}\,\mathbf{u}(t) + \mathbf{W}_r\,\mathbf{x}(t)
+        + \mathbf{b}\right) \\
+    \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
+    \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{\text{out}}\,\mathbf{z}(t)
+        + \mathbf{b}_{\text{out}}\right)
+\end{aligned}
 ```
 
-with reservoir matrix `W_r`, input matrix `W_in`, optional bias `b`, and
-scalar leaking rate `α` exposed as `leak_coefficient`. Forward-Euler
-discretisation at step `Δt = 1` collapses the ODE to the discrete leaky
-update `x(n+1) = (1-α)·x(n) + α·tanh(W_in·u(n) + W_r·x(n) + b)`.
-
-This is *not* a port of the parametric-surrogate CTESN of
-[Anantharaman2021](@cite); that model uses `ṙ = tanh(A·r + W_hyb·u)` without
-a decay term and is trained via RBF interpolation of `W_out(p)` over a
-parameter space. A separate type would land for it in a future PR.
+No leaking-rate term `α` appears in the ODE. `α` emerges only when the
+ODE is forward-Euler discretised with step `Δt = α`, recovering the
+discrete leaky update of [`ESN`](@ref). To change the effective leak,
+adjust `tspan` so the per-input-window width matches the desired `Δt`.
 
 ## Arguments
 
   - `in_dims`: Input dimension.
   - `res_dims`: Reservoir (hidden state) dimension.
-  - `tspan`: Integration interval for `collectstates`. Must be a length-2,
-    strictly-increasing, finite tuple/pair. Mirrors the DiffEqFlux
-    `NeuralODE` convention.
-  - `args...`: Positional arguments forwarded to `solve`. The solver
-    algorithm (e.g. `Tsit5()`, `Euler()`) is the first element by
-    convention.
+  - `out_dims`: Output dimension.
+  - `activation`: Reservoir activation passed to the cell. Default: `tanh`.
+  - `tspan`: Integration interval `(t0, t1)`. Length-2, strictly
+    increasing, finite.
+  - `args...`: Forwarded to `solve` positionally. The solver algorithm
+    (`Tsit5()`, `Euler()`, …) is the first element by convention.
 
 ## Keyword arguments
 
-  - `leak_coefficient`: Leaking rate `α`. Default: `1.0`. Pairing `Δt = 1`
-    with `leak_coefficient = α` recovers the discrete leaky ESN under
-    forward Euler.
-  - `use_bias`: Whether to include a bias term `b`. Default: `false`.
-  - `init_reservoir`: Initializer for `W_r`. Default:
-    [`rand_sparse`](@ref). Receives `(rng, T, res_dims, res_dims)`.
-  - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
-    Receives `(rng, T, res_dims, in_dims)`.
-  - `init_bias`: Initializer for `b`. Used only when `use_bias = true`.
-    Default: a type-aware zeros initialiser. Receives `(rng, T, res_dims)`.
-  - `T`: Element type for the reservoir matrices and initial state.
-    Default: `Float32`.
+Reservoir (passed to [`ContinuousESNCell`](@ref)):
+
+  - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
+  - `init_reservoir`: Initialiser for `W_r`. Default: [`rand_sparse`](@ref).
+  - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: Initialiser for `b`. Default: `zeros32`.
+  - `init_state`: Initialiser for the initial hidden state.
+    Default: `randn32`.
+  - `equations`: ODE right-hand side. Default:
+    [`_continuous_esn_rhs!`](@ref).
+
+Composition:
+
+  - `state_modifiers`: A layer or collection of layers applied to the
+    sampled reservoir states before the readout. Accepts a single layer,
+    an `AbstractVector`, or a `Tuple`. Default: empty `()`.
+  - `readout_activation`: Activation for the linear readout. Default:
+    `identity`.
+
+Solve metadata:
+
   - `kwargs...`: Forwarded to `solve`. The three keys `saveat`,
-    `save_everystep`, and `dense` are owned by the extension helper and
-    rejected at construction.
+    `save_everystep`, and `dense` are rejected at construction.
 
-## Continuous-time stability note
+## Parameters
 
-`scale_radius!` and the default reservoir initialisers control the
-discrete-time spectral radius `ρ(W_r)`. For the α-factored ODE used here,
-a log-norm contraction argument gives the sufficient condition
-`‖W_r‖_2 < 1` (operator 2-norm bound), independent of `α`: the leaking
-rate scales the rate of decay but not the asymptotic bound. The condition
-is strictly stronger than `ρ(W_r) < 1` because `‖·‖_2 ≥ ρ(·)`. Published
-continuous ESN work treats `ρ` as an empirical hyperparameter — adjust
-accordingly.
+  - `reservoir` — parameters of the internal [`ContinuousESNCell`](@ref):
+      - `input_matrix :: (res_dims × in_dims)` — `W_in`
+      - `reservoir_matrix :: (res_dims × res_dims)` — `W_r`
+      - `bias :: (res_dims,)` — present only if `use_bias = true`
+  - `states_modifiers` — a `Tuple` with parameters for each modifier
+    layer (may be empty).
+  - `readout` — parameters of [`LinearReadout`](@ref), typically:
+      - `weight :: (out_dims × res_dims)` — `W_out`
+      - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
 
 !!! note
     This constructor errors unless `RCODEReservoirExt` is loaded. Load
-    `SciMLBase`, `DataInterpolations`, and a concrete OrdinaryDiffEq
+    `SciMLBase`, `DataInterpolations`, and a concrete `OrdinaryDiffEq`
     solver package (e.g. `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`) to
     enable it.
 """
-@concrete struct ContinuousESN <: AbstractSciMLProblemReservoir
-    prob
-    sampler
-    tspan
-    args
-    kwargs
-    in_dims
-    res_dims
-    leak_coefficient
-    use_bias
-    init_reservoir
-    init_input
-    init_bias
-    matrix_type
+@concrete struct ContinuousESN <:
+    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    reservoir
+    states_modifiers
+    readout
 end
 
 # Public factory — the real implementation lives in `RCODEReservoirExt`.
 # Loading `SciMLBase` + `DataInterpolations` adds the typed method that
-# actually builds the `ODEProblem`; without the extension, this fallback
-# fires and produces a clear error.
+# actually builds the cell; without the extension, this fallback fires
+# and produces a clear error.
 function ContinuousESN(::Any, ::Any, ::Any, ::Any...; kwargs...)
     return error(
         "ContinuousESN requires the RCODEReservoirExt extension and an " *
@@ -99,36 +116,29 @@ function ContinuousESN(::Any, ::Any, ::Any, ::Any...; kwargs...)
     )
 end
 
-function Base.show(io::IO, ce::ContinuousESN)
-    print(io, "ContinuousESN(")
-    print(io, "in_dims = ", ce.in_dims)
-    print(io, ", res_dims = ", ce.res_dims)
-    print(io, ", leak_coefficient = ", ce.leak_coefficient)
-    print(io, ", use_bias = ", ce.use_bias)
-    print(io, ", tspan = ")
-    show(io, ce.tspan)
-    print(io, ")")
-    return
-end
+function Base.show(io::IO, esn::ContinuousESN)
+    print(io, "ContinuousESN(\n")
 
-function initialparameters(rng::AbstractRNG, ce::ContinuousESN)
-    T = ce.matrix_type
-    W_r = ce.init_reservoir(rng, T, ce.res_dims, ce.res_dims)
-    W_in = ce.init_input(rng, T, ce.res_dims, ce.in_dims)
-    leak_coefficient = T(ce.leak_coefficient)
-    isfinite(leak_coefficient) || throw(
-        ArgumentError(
-            "leak_coefficient converted to $T overflowed to $leak_coefficient; " *
-                "pick a smaller value or widen `T`."
-        )
-    )
-    ps = (W_r = W_r, W_in = W_in, leak_coefficient = leak_coefficient)
-    if ce.use_bias
-        ps = merge(ps, (b = ce.init_bias(rng, T, ce.res_dims),))
+    print(io, "    reservoir = ")
+    show(io, esn.reservoir)
+    print(io, ",\n")
+
+    print(io, "    state_modifiers = ")
+    if isempty(esn.states_modifiers)
+        print(io, "()")
+    else
+        print(io, "(")
+        for (idx, mod) in enumerate(esn.states_modifiers)
+            idx > 1 && print(io, ", ")
+            show(io, mod)
+        end
+        print(io, ")")
     end
-    return ps
-end
+    print(io, ",\n")
 
-function initialstates(::AbstractRNG, ::ContinuousESN)
-    return NamedTuple()
+    print(io, "    readout = ")
+    show(io, esn.readout)
+    print(io, "\n)")
+
+    return
 end

@@ -17,7 +17,10 @@ using ReservoirComputing: ReservoirComputing,
     AbstractSampler,
     AbstractSciMLProblemReservoir,
     ContinuousESN,
+    ContinuousESNCell,
+    LinearReadout,
     TerminalStateSampling,
+    _wrap_layers,
     collectstates,
     rand_sparse,
     scaled_rand
@@ -395,101 +398,214 @@ function _predict(
 end
 
 # ---------------------------------------------------------------------------
-# ContinuousESN
+# ContinuousESN — convenience constructor
 #
-# Concrete subtype of `AbstractSciMLProblemReservoir` that pre-bakes the
-# leaky-integrator continuous ESN ODE of Lukoševičius 2012 §3.2.6 eq (5):
-#
-#   ẋ(t) = α · (-x(t) + tanh(W_in·u(t) + W_r·x(t) + b))
-#
-# `W_r`, `W_in`, `b`, and the scalar `leak_coefficient = α` live in
-# `ps.reservoir` and are injected into the solve `p` by
-# `_build_solve_params`. The RHS is in-place (`mul!` for both matvecs,
-# fused tanh broadcast) so it stays allocation-free on the solver hot
-# path.
+# Builds the 3-field `(reservoir, states_modifiers, readout)` model whose
+# `reservoir` is a `ContinuousESNCell`. The cell carries Lukoševičius 2012
+# §3.2.6 eq (5) as its `equations` field. Each of `collectstates`,
+# `predict(rc, data, ...)`, and `predict(rc, steps, ...; initialdata)`
+# dispatches on `rc.reservoir::ContinuousESNCell` below, building the
+# `ODEProblem` lazily so the reservoir weights stay in `ps.reservoir` and
+# can be re-initialised by `setup(rng, rc)` like every other ESN-family
+# model.
 # ---------------------------------------------------------------------------
 
-function _continuous_esn_rhs!(dx, x, p, t)
-    # dx ← W_r · x
-    mul!(dx, p.W_r, x)
-    # dx ← dx + W_in · u(t)
-    u_t = p.input(t)
-    mul!(dx, p.W_in, u_t, true, true)
-    # dx ← α · (-x + tanh(dx + b?))
-    #
-    # `haskey` on a NamedTuple resolves at compile time (the keys are
-    # part of the type), so the two branches don't add runtime cost.
-    if haskey(p, :b)
-        @. dx = p.leak_coefficient * (-x + tanh(dx + p.b))
-    else
-        @. dx = p.leak_coefficient * (-x + tanh(dx))
-    end
-    return nothing
-end
-
-# Type-aware default bias initialiser — `(rng, T, dims...) -> zeros(T, dims...)`.
-# `WeightInitializers.zeros32` is Float32-only and ignores `T`, so we ship a
-# small `T`-respecting default and document the expected signature in the
-# constructor docstring.
-_typed_zeros_init(::AbstractRNG, ::Type{T}, dims::Integer...) where {T} =
-    zeros(T, dims...)
-
 function ReservoirComputing.ContinuousESN(
-        in_dims::Integer, res_dims::Integer, tspan, args...;
-        leak_coefficient::Real = 1.0,
+        in_dims::Integer, res_dims::Integer, out_dims::Integer,
+        activation, tspan, args...;
         use_bias::Bool = false,
+        init_bias = ReservoirComputing.zeros32,
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
-        init_bias = _typed_zeros_init,
-        T::Type{<:AbstractFloat} = Float32,
+        init_state = ReservoirComputing.randn32,
+        equations = ReservoirComputing._continuous_esn_rhs!,
+        state_modifiers = (),
+        readout_activation = identity,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     res_dims > 0 || throw(ArgumentError("res_dims must be positive, got $res_dims"))
-    leak_coefficient > 0 || throw(
-        ArgumentError("leak_coefficient must be positive, got $leak_coefficient")
-    )
+    out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
     length(tspan) == 2 || throw(
         ArgumentError(
             "tspan must be a length-2 tuple/pair (t0, t1), got length $(length(tspan))"
         )
     )
     (isfinite(tspan[1]) && isfinite(tspan[2])) || throw(
-        ArgumentError(
-            "tspan endpoints must be finite, got $tspan"
-        )
+        ArgumentError("tspan endpoints must be finite, got $tspan")
     )
     tspan[2] > tspan[1] || throw(
         ArgumentError(
-            "SciMLProblemReservoir requires `tspan[2] > tspan[1]`, got tspan = $tspan"
+            "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = $tspan"
         )
     )
     ReservoirComputing._check_protected_kwargs(kwargs)
 
-    # Zero initial reservoir state — Lukoševičius 2012 starts from x(0) = 0
-    # by convention. Users continuing from a previously trained terminal
-    # state should `remake(rc.reservoir.prob; u0 = ...)` themselves.
-    u0 = zeros(T, res_dims)
-
-    # `prob.p = nothing` — all reservoir parameters live in `ps.reservoir`
-    # and get merged into the solve `p` by `_build_solve_params`.
-    prob = ODEProblem(_continuous_esn_rhs!, u0, tspan)
-
-    return ContinuousESN(
-        prob,
-        TerminalStateSampling(),
-        tspan,
-        args,
-        kwargs,
-        in_dims,
-        res_dims,
-        leak_coefficient,
-        use_bias,
-        init_reservoir,
-        init_input,
-        init_bias,
-        T
+    cell = ContinuousESNCell(
+        activation, in_dims, res_dims,
+        init_bias, init_reservoir, init_input, init_state,
+        ReservoirComputing.static(use_bias),
+        equations, tspan, args, kwargs
     )
+
+    mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+        Tuple(state_modifiers) : (state_modifiers,)
+    mods = _wrap_layers(mods_tuple)
+
+    readout = LinearReadout(res_dims => out_dims, readout_activation)
+    return ContinuousESN(cell, mods, readout)
+end
+
+# Allow omitting `activation` (defaults to `tanh`) by routing
+# `ContinuousESN(in, res, out, tspan, args...)` through the five-arg form.
+function ReservoirComputing.ContinuousESN(
+        in_dims::Integer, res_dims::Integer, out_dims::Integer,
+        tspan::Union{Tuple, Pair}, args...; kwargs...
+    )
+    return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
+end
+
+# ---------------------------------------------------------------------------
+# Continuous `_collectstates` for `ContinuousESNCell`
+#
+# Builds the `ODEProblem` on the fly from `cell.equations` and an initial
+# state of zeros sized to `cell.out_dims`. The weight matrices come from
+# `ps.reservoir` (`input_matrix`, `reservoir_matrix`, optional `bias`) and
+# are merged into the solve `p` by `_build_solve_params`. Sampler is fixed
+# to `TerminalStateSampling` since eq (5) only exposes a single
+# point-state per window.
+# ---------------------------------------------------------------------------
+
+function _collectstates(
+        cell::ContinuousESNCell,
+        rc::AbstractReservoirComputer,
+        data::AbstractMatrix,
+        ps::NamedTuple,
+        st::NamedTuple
+    )
+    n_samples = size(data, 2)
+    n_samples ≥ 2 || throw(
+        ArgumentError(
+            "ContinuousESN collectstates needs at least 2 input columns " *
+                "to define a time grid; got $n_samples."
+        )
+    )
+
+    t0, t1 = cell.tspan
+    t1 > t0 || throw(
+        ArgumentError(
+            "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = ($t0, $t1)."
+        )
+    )
+
+    Δt = (t1 - t0) / n_samples
+    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
+    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+
+    input_interp = _make_input_fn(data, input_ts)
+    solve_p = _build_solve_params(nothing, ps.reservoir, input_interp)
+
+    # `u0` element type follows `ps.reservoir.input_matrix` so the solver
+    # state, the parameter pack, and the input signal share a numeric
+    # type. The user controls eltype through the `init_*` initialisers.
+    u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    prob = ODEProblem(cell.equations, u0, cell.tspan, solve_p)
+
+    sol = solve(
+        prob, cell.args...;
+        saveat = sample_ts,
+        save_everystep = false,
+        dense = false,
+        cell.kwargs...
+    )
+
+    raw_states = _sample(TerminalStateSampling(), sol)
+    modified_states, st_mods = _apply_modifiers_continuous(
+        rc.states_modifiers, raw_states, ps.states_modifiers, st.states_modifiers
+    )
+
+    newst = (
+        reservoir = st.reservoir,
+        states_modifiers = st_mods,
+        readout = st.readout,
+    )
+    return modified_states, newst
+end
+
+# ---------------------------------------------------------------------------
+# Autoregressive `_predict` for `ContinuousESNCell`
+#
+# Same control flow as the generic `AbstractSciMLProblemReservoir` path,
+# but the `ODEProblem` is built on demand from `cell.equations` rather
+# than pulled from a pre-built `res.prob`. Initial reservoir state is
+# zeros sized to `cell.out_dims`; users who want to continue from a
+# previously trained terminal state should pass it in via a custom
+# `equations` closure or re-run `collectstates` first.
+# ---------------------------------------------------------------------------
+
+function _predict(
+        cell::ContinuousESNCell,
+        rc::AbstractReservoirComputer,
+        steps::Integer,
+        ps::NamedTuple,
+        st::NamedTuple;
+        initialdata::AbstractVector
+    )
+    steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
+
+    t0, t1 = cell.tspan
+    t1 > t0 || throw(
+        ArgumentError(
+            "Autoregressive predict requires `tspan[2] > tspan[1]`, got " *
+                "tspan = ($t0, $t1)."
+        )
+    )
+    ts = collect(range(t0, t1; length = steps + 1))
+    window_starts = @view ts[1:(end - 1)]
+    window_ends = @view ts[2:end]
+
+    current_state = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    current_input = initialdata
+
+    st_mods = st.states_modifiers
+    st_ro = st.readout
+
+    local outputs
+    for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
+        input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
+        solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
+        sub_prob = ODEProblem(cell.equations, current_state, (t_lo, t_hi), solve_p)
+        sol = solve(
+            sub_prob, cell.args...;
+            saveat = [t_hi],
+            save_everystep = false,
+            dense = false,
+            cell.kwargs...
+        )
+        current_state = sol.u[end]
+
+        if !isempty(rc.states_modifiers)
+            state_after_mods, st_mods = ReservoirComputing._apply_seq(
+                rc.states_modifiers, current_state, ps.states_modifiers, st_mods
+            )
+        else
+            state_after_mods = current_state
+        end
+
+        current_output, st_ro = apply(rc.readout, state_after_mods, ps.readout, st_ro)
+        if step_idx == 1
+            outputs = similar(current_output, length(current_output), steps)
+        end
+        outputs[:, step_idx] .= current_output
+        current_input = current_output
+    end
+
+    newst = (
+        reservoir = st.reservoir,
+        states_modifiers = st_mods,
+        readout = st_ro,
+    )
+    return outputs, newst
 end
 
 end # module
