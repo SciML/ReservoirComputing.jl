@@ -59,11 +59,12 @@ include("models/lifesn.jl")
 include("models/ngrc.jl")
 include("models/rmnesn.jl")
 include("models/rmnresesn.jl")
+include("models/continuous_esn.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export AbstractSciMLProblemReservoir, SciMLProblemReservoir
+export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN
 export AbstractSampler, TerminalStateSampling
 export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell,
     MemoryESNCell, MemoryResESNCell, ResESNCell, RMNCell

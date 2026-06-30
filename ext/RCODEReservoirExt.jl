@@ -1,21 +1,26 @@
 module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
+using LinearAlgebra: mul!
 using LuxCore: apply
+using Random: AbstractRNG
 # `solve` and `remake` come from `SciMLBase`. The user picks the concrete
 # solver type (e.g. `Tsit5()`) and loads its package separately
 # (`OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …); dispatch at solve time
 # selects the right method via the type they passed in `res.args[1]`. We
 # deliberately don't list a solver package as a weakdep trigger so users
 # aren't forced to pull the full `OrdinaryDiffEq` meta-package in.
-using SciMLBase: remake, solve, NullParameters
+using SciMLBase: ODEProblem, remake, solve, NullParameters
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
     AbstractSampler,
     AbstractSciMLProblemReservoir,
+    ContinuousESN,
     TerminalStateSampling,
-    collectstates
+    collectstates,
+    rand_sparse,
+    scaled_rand
 import ReservoirComputing: _collectstates, _predict
 
 # ---------------------------------------------------------------------------
@@ -387,6 +392,104 @@ function _predict(
         readout = st_ro,
     )
     return outputs, newst
+end
+
+# ---------------------------------------------------------------------------
+# ContinuousESN
+#
+# Concrete subtype of `AbstractSciMLProblemReservoir` that pre-bakes the
+# leaky-integrator continuous ESN ODE of Lukoševičius 2012 §3.2.6 eq (5):
+#
+#   ẋ(t) = α · (-x(t) + tanh(W_in·u(t) + W_r·x(t) + b))
+#
+# `W_r`, `W_in`, `b`, and the scalar `leak_coefficient = α` live in
+# `ps.reservoir` and are injected into the solve `p` by
+# `_build_solve_params`. The RHS is in-place (`mul!` for both matvecs,
+# fused tanh broadcast) so it stays allocation-free on the solver hot
+# path.
+# ---------------------------------------------------------------------------
+
+function _continuous_esn_rhs!(dx, x, p, t)
+    # dx ← W_r · x
+    mul!(dx, p.W_r, x)
+    # dx ← dx + W_in · u(t)
+    u_t = p.input(t)
+    mul!(dx, p.W_in, u_t, true, true)
+    # dx ← α · (-x + tanh(dx + b?))
+    #
+    # `haskey` on a NamedTuple resolves at compile time (the keys are
+    # part of the type), so the two branches don't add runtime cost.
+    if haskey(p, :b)
+        @. dx = p.leak_coefficient * (-x + tanh(dx + p.b))
+    else
+        @. dx = p.leak_coefficient * (-x + tanh(dx))
+    end
+    return nothing
+end
+
+# Type-aware default bias initialiser — `(rng, T, dims...) -> zeros(T, dims...)`.
+# `WeightInitializers.zeros32` is Float32-only and ignores `T`, so we ship a
+# small `T`-respecting default and document the expected signature in the
+# constructor docstring.
+_typed_zeros_init(::AbstractRNG, ::Type{T}, dims::Integer...) where {T} =
+    zeros(T, dims...)
+
+function ReservoirComputing.ContinuousESN(
+        in_dims::Integer, res_dims::Integer, tspan, args...;
+        leak_coefficient::Real = 1.0,
+        use_bias::Bool = false,
+        init_reservoir = rand_sparse,
+        init_input = scaled_rand,
+        init_bias = _typed_zeros_init,
+        T::Type{<:AbstractFloat} = Float32,
+        kwargs...
+    )
+    in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
+    res_dims > 0 || throw(ArgumentError("res_dims must be positive, got $res_dims"))
+    leak_coefficient > 0 || throw(
+        ArgumentError("leak_coefficient must be positive, got $leak_coefficient")
+    )
+    length(tspan) == 2 || throw(
+        ArgumentError(
+            "tspan must be a length-2 tuple/pair (t0, t1), got length $(length(tspan))"
+        )
+    )
+    (isfinite(tspan[1]) && isfinite(tspan[2])) || throw(
+        ArgumentError(
+            "tspan endpoints must be finite, got $tspan"
+        )
+    )
+    tspan[2] > tspan[1] || throw(
+        ArgumentError(
+            "SciMLProblemReservoir requires `tspan[2] > tspan[1]`, got tspan = $tspan"
+        )
+    )
+    ReservoirComputing._check_protected_kwargs(kwargs)
+
+    # Zero initial reservoir state — Lukoševičius 2012 starts from x(0) = 0
+    # by convention. Users continuing from a previously trained terminal
+    # state should `remake(rc.reservoir.prob; u0 = ...)` themselves.
+    u0 = zeros(T, res_dims)
+
+    # `prob.p = nothing` — all reservoir parameters live in `ps.reservoir`
+    # and get merged into the solve `p` by `_build_solve_params`.
+    prob = ODEProblem(_continuous_esn_rhs!, u0, tspan)
+
+    return ContinuousESN(
+        prob,
+        TerminalStateSampling(),
+        tspan,
+        args,
+        kwargs,
+        in_dims,
+        res_dims,
+        leak_coefficient,
+        use_bias,
+        init_reservoir,
+        init_input,
+        init_bias,
+        T
+    )
 end
 
 end # module

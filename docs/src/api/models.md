@@ -20,6 +20,12 @@
     ResESN
 ```
 
+## Continuous-time Echo State Networks
+
+```@docs
+    ContinuousESN
+```
+
 ## Next generation reservoir computing
 
 ```@docs
