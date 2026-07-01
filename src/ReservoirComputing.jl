@@ -3,7 +3,7 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, eigen, I, qr, Diagonal, diag, mul!, Symmetric, norm,
-    svd, svdvals, nullspace, pinv, tr
+    svd, svdvals, nullspace, pinv, tr, checksquare, issymmetric
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
