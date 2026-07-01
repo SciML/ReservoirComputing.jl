@@ -1,9 +1,7 @@
 # Continuous ESN: forecasting Lorenz
 
-[`ContinuousESN`](@ref) is a thin convenience wrapper around a
-[`ContinuousESNCell`](@ref) that pre-bakes the leaky-integrator
-continuous Echo State Network ODE of [Lukosevicius2012](@cite) §3.2.6
-eq (5):
+[`ContinuousESN`](@ref) is a continuous-time Echo State Network that
+implements the ODE of [Lukosevicius2012](@cite):
 
 ```math
 \dot{\mathbf{x}}(t) = -\mathbf{x}(t) + \tanh\!\left(
@@ -11,26 +9,9 @@ eq (5):
     + \mathbf{b}\right)
 ```
 
-No leaking-rate term `α` appears in the ODE — `α` emerges only when the
-ODE is forward-Euler discretised with step `Δt = α`, recovering the
-discrete leaky ESN update `x(n+1) = (1-α)·x(n) + α·tanh(…)` exactly. To
-target an effective leak rate `α`, choose `tspan = (0, n_samples · α)`
-so the per-window width matches the desired step.
-
-`ContinuousESN` shares its struct shape with [`ESN`](@ref): three
-fields `(reservoir, states_modifiers, readout)`. The reservoir
-matrices `W_in`, `W_r`, and optional bias `b` live in
-`ps.reservoir` as `input_matrix`, `reservoir_matrix`, and `bias`, and
-are constructed by `setup(rng, esn)`. The ODE solver and any
-solve-time keyword arguments are captured at construction. Under the
-hood the `RCODEReservoirExt` package extension runs the integration.
-
-This tutorial walks through training a `ContinuousESN` on Lorenz-63
-data and rolling it forward autoregressively to reproduce the
-attractor. `SciMLBase` provides `solve` / `remake`,
-`DataInterpolations` backs the per-window input signal in
-autoregressive mode, and an OrdinaryDiffEq solver package
-(e.g. `OrdinaryDiffEqTsit5`) supplies the concrete solver type.
+This tutorial trains a `ContinuousESN` on Lorenz-63 data and rolls it
+forward autoregressively to reproduce the attractor. The training and
+prediction pipeline is the same as for [`ESN`](@ref).
 
 ## Building a Lorenz dataset
 
@@ -62,11 +43,6 @@ test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 ```
 
 ## Constructing the `ContinuousESN`
-
-The constructor signature mirrors `ESN`: `(in_dims, res_dims, out_dims,
-[activation,] tspan, args...; kwargs...)`. The integration `tspan` and
-the solver positional argument are captured at construction, exactly
-as in DiffEqFlux's `NeuralODE`.
 
 ```@example continuous-esn-lorenz
 N_res = 100
@@ -102,22 +78,11 @@ ps, st = setup(rng, esn_train)
 
 ## Training
 
-`train!` is sampler-agnostic: it routes through the continuous
-`_collectstates` provided by the extension and fits a linear readout
-on the collected states.
-
 ```@example continuous-esn-lorenz
 ps, st = train!(esn_train, input_data, target_data, ps, st)
 ```
 
 ## Autoregressive rollout
-
-`predict(esn, steps, ps, st; initialdata)` splits the predict-time
-`tspan` into `steps` equal sub-intervals; on each sub-interval the
-previous readout output is held constant as the input. The default
-initial reservoir state is zeros sized to `res_dims` — if you want to
-continue from the trained reservoir's terminal state, pass a custom
-`equations` closure that captures it.
 
 ```@example continuous-esn-lorenz
 ps_pred, st_pred = setup(rng, esn_pred)
@@ -147,12 +112,8 @@ with hand-rolled equations, and `ContinuousESN`: the same `train!` /
 
 ## When to reach for `ContinuousESN` vs `SciMLProblemReservoir`
 
-* `ContinuousESN` pre-bakes eq (5); reach for it when the standard
-  leaky-integrator continuous ESN is what you want and you'd otherwise
-  be hand-rolling the same RHS.
-* [`SciMLProblemReservoir`](@ref) is the generic building block; reach
-  for it when the reservoir ODE is *not* eq (5) — bespoke RHS, SDE,
+* `ContinuousESN` pre-bakes the continuous ESN ODE; use it when the
+  standard continuous ESN is what you want.
+* [`SciMLProblemReservoir`](@ref) is the generic building block; use it
+  when the reservoir ODE is not the standard eq (5) — bespoke RHS, SDE,
   DDE, or non-standard parameter layout.
-
-Both go through the same `_collectstates` / `_predict` dispatch and
-the same protected-`saveat` discipline.

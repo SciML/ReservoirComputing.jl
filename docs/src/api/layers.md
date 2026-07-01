@@ -22,7 +22,6 @@
 
 ```@docs
     AdditiveEIESNCell
-    ContinuousESNCell
     EIESNCell
     ES2NCell
     ESNCell
@@ -35,6 +34,12 @@
     RMNCell
     ResESNCell
     LIFESNCell
+```
+
+## Continuous-time Layers
+
+```@docs
+    ContinuousESNCell
 ```
 
 ## Wrappers

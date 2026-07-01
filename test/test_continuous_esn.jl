@@ -8,15 +8,6 @@ using OrdinaryDiffEqLowOrderRK: Euler
 using SciMLBase
 using DataInterpolations
 
-# ---------------------------------------------------------------------------
-# 1. Construction: shape + parameter wiring
-#
-# `ContinuousESN(in_dims, res_dims, out_dims, tspan, solver)` builds a
-# 3-field `(reservoir, states_modifiers, readout)` model. The reservoir
-# is a `ContinuousESNCell`; `ps.reservoir` exposes the canonical ESN-cell
-# parameter trio (`input_matrix`, `reservoir_matrix`, optional `bias`).
-# ---------------------------------------------------------------------------
-
 @testset "ContinuousESN: construction + parameter shapes" begin
     rng = MersenneTwister(0)
     in_dim, res_dim, out_dim = 3, 50, 2
@@ -37,25 +28,15 @@ using DataInterpolations
     @test size(ps.readout.weight) == (out_dim, res_dim)
 end
 
-# ---------------------------------------------------------------------------
-# 2. Construction validation: argument errors
-#
-# Positive `in_dims`, `res_dims`, `out_dims`, and a finite, strictly
-# increasing length-2 `tspan` are required. Protected `solve` kwargs are
-# rejected at construction.
-# ---------------------------------------------------------------------------
-
 @testset "ContinuousESN: construction validation" begin
     @test_throws ArgumentError ContinuousESN(0, 5, 2, (0.0, 1.0), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 0, 2, (0.0, 1.0), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 0, (0.0, 1.0), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (0.0, 0.0), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (1.0, 0.0), Tsit5())
-    # Non-finite endpoints
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (0.0, Inf), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (-Inf, 1.0), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (0.0, NaN), Tsit5())
-    # Wrong-length tspan
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (1.0,), Tsit5())
     @test_throws ArgumentError ContinuousESN(3, 5, 2, (0.0, 1.0, 2.0), Tsit5())
     for badkw in (:saveat, :save_everystep, :dense)
@@ -64,12 +45,6 @@ end
         )
     end
 end
-
-# ---------------------------------------------------------------------------
-# 3. Bias toggle
-#
-# `use_bias = true` adds a `bias` parameter of length `res_dims`.
-# ---------------------------------------------------------------------------
 
 @testset "ContinuousESN: bias toggle" begin
     rng = MersenneTwister(1)
@@ -80,17 +55,8 @@ end
     ps, st = setup(rng, esn_b)
     @test haskey(ps.reservoir, :bias)
     @test length(ps.reservoir.bias) == res_dim
-    # Default init is `zeros32`.
     @test all(==(0), ps.reservoir.bias)
 end
-
-# ---------------------------------------------------------------------------
-# 4. Bias actually exercised under an adaptive solver
-#
-# Pair `use_bias = true` with a nonzero bias initialiser and Tsit5 to
-# confirm: (a) the bias does perturb states relative to the no-bias
-# baseline, and (b) the result stays finite.
-# ---------------------------------------------------------------------------
 
 @testset "ContinuousESN: bias path under Tsit5" begin
     rng = MersenneTwister(101)
@@ -115,10 +81,6 @@ end
     @test s_b != s_n
 end
 
-# ---------------------------------------------------------------------------
-# 5. Forward pass: shape + finiteness + determinism
-# ---------------------------------------------------------------------------
-
 @testset "ContinuousESN: forward (collectstates)" begin
     rng = MersenneTwister(7)
     in_dim, res_dim, out_dim, T_steps = 2, 16, 1, 25
@@ -136,23 +98,7 @@ end
     @test s1 ≈ s2
 end
 
-# ---------------------------------------------------------------------------
-# 6. Euler equivalence with discrete leaky ESN
-#
-# Eq (5) is `ẋ = -x + tanh(W_r·x + W_in·u(t) + b)`. Forward-Euler with
-# step `Δt = α` gives `x_{k+1} = x_k + α·(-x_k + tanh(...)) =
-# (1-α)·x_k + α·tanh(...)`, i.e. the discrete leaky ESN update at leak
-# rate α. To match `T_steps` discrete steps we set `tspan = (0, T_steps·α)`
-# so the per-window width `Δt = α` matches the Euler step `dt = α`.
-# ---------------------------------------------------------------------------
-
 @testset "ContinuousESN: Euler equivalence with discrete leaky ESN" begin
-    # `α` values that are exactly representable in Float64 so that
-    # `tspan = (0, T_steps · α)` and the integrator step `dt = α` align
-    # bit-for-bit with the requested `saveat` grid. Non-FP-exact `α`
-    # (e.g. 0.3) introduces a sub-step offset between saveat and the
-    # integrator's step boundaries, which the linear interpolant inside
-    # Euler smooths over — equivalence then holds only approximately.
     dense_init_f64(rng, d...) = rand_sparse(rng, Float64, d...; sparsity = 0.5)
     init_input_f64(rng, d...) = scaled_rand(rng, Float64, d...)
     init_bias_f64(rng, d...) = zeros(Float64, d...)
@@ -185,10 +131,6 @@ end
         @test cont_states ≈ disc_states atol = 1.0e-10
     end
 end
-
-# ---------------------------------------------------------------------------
-# 7. Teacher-forced predict + autoregressive predict shape/determinism
-# ---------------------------------------------------------------------------
 
 @testset "ContinuousESN: teacher-forced predict" begin
     rng = MersenneTwister(21)
@@ -225,10 +167,6 @@ end
     @test ar1 ≈ ar2
 end
 
-# ---------------------------------------------------------------------------
-# 8. Compatibility with state modifiers
-# ---------------------------------------------------------------------------
-
 @testset "ContinuousESN: state modifiers compose" begin
     rng = MersenneTwister(31)
     in_dim, res_dim, out_dim, T_steps = 2, 10, 1, 8
@@ -252,13 +190,6 @@ end
     @test all(isfinite, sm)
     @test sm != sp
 end
-
-# ---------------------------------------------------------------------------
-# 9. Custom init eltype propagates
-#
-# Without a `T` kwarg, the eltype is whatever the `init_*` initialisers
-# produce. Passing Float64 initialisers gives Float64 matrices.
-# ---------------------------------------------------------------------------
 
 @testset "ContinuousESN: custom init eltype propagates" begin
     rng = MersenneTwister(43)

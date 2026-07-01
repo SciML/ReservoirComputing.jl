@@ -4,12 +4,6 @@ using DataInterpolations: ConstantInterpolation
 using LinearAlgebra: mul!
 using LuxCore: apply
 using Random: AbstractRNG
-# `solve` and `remake` come from `SciMLBase`. The user picks the concrete
-# solver type (e.g. `Tsit5()`) and loads its package separately
-# (`OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …); dispatch at solve time
-# selects the right method via the type they passed in `res.args[1]`. We
-# deliberately don't list a solver package as a weakdep trigger so users
-# aren't forced to pull the full `OrdinaryDiffEq` meta-package in.
 using SciMLBase: ODEProblem, remake, solve, NullParameters
 
 using ReservoirComputing: ReservoirComputing,
@@ -25,20 +19,6 @@ using ReservoirComputing: ReservoirComputing,
     rand_sparse,
     scaled_rand
 import ReservoirComputing: _collectstates, _predict
-
-# ---------------------------------------------------------------------------
-# Parameter assembly
-#
-# At solve time the extension must hand the ODE three things:
-#   (1) the interpolated input signal `u(t)` exposed as `p.input`,
-#   (2) the user's static parameters (if any) from `prob.p`,
-#   (3) any Lux-managed reservoir parameters from `ps.reservoir`.
-#
-# `_to_namedtuple` normalises `prob.p` so that nothing / `NullParameters` / a
-# user `NamedTuple` all collapse into a single `NamedTuple` we can merge into.
-# Anything else is rejected with a clear error — wrapping unknown payloads
-# silently would hide bugs in user-defined ODEs.
-# ---------------------------------------------------------------------------
 
 _to_namedtuple(prob_p::NamedTuple) = prob_p
 _to_namedtuple(::NullParameters) = NamedTuple()
@@ -82,19 +62,6 @@ function _build_solve_params(prob_p, ps_reservoir, input_interp)
     merged = isempty(ps_reservoir) ? base : merge(base, ps_reservoir)
     return merge(merged, (input = input_interp,))
 end
-
-# ---------------------------------------------------------------------------
-# Input signal construction
-#
-# `collectstates` sees a discrete `data::AbstractMatrix` and reconstructs the
-# continuous-time input via linear interpolation between input columns. The
-# grid mirrors the `saveat` grid so an input column and its corresponding
-# state sample share the same time stamp.
-#
-# `_make_const_input_fn` is the closed-loop counterpart used inside the
-# autoregressive `predict`: between two reservoir-output events the input is
-# the previous output, held constant.
-# ---------------------------------------------------------------------------
 
 """
     ZeroOrderHoldInterp(data, ts)
@@ -143,33 +110,12 @@ function _make_input_fn(data::AbstractMatrix, ts::AbstractVector)
 end
 
 function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
-    # `cache_parameters=true` is fine for vector u (autoregressive predict
-    # always holds the previous readout output constant over one sub-interval).
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
-
-# ---------------------------------------------------------------------------
-# Samplers
-#
-# A sampler maps a continuous trajectory into the discrete state matrix the
-# readout sees. `TerminalStateSampling` reads the solution exactly at the
-# user-visible time grid (the same one we pass through `saveat`), so the
-# result is just the columnar view of `sol.u`.
-# ---------------------------------------------------------------------------
 
 function _sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
 end
-
-# ---------------------------------------------------------------------------
-# State-modifier composition
-#
-# The discrete fallback threads `states_modifiers` per reservoir step (see
-# `_partial_apply` in `reservoircomputer.jl`). For the continuous path we
-# evolve the trajectory first and then apply modifiers column-by-column to
-# the sampled matrix. This keeps the per-sample semantics identical to the
-# discrete code without contaminating the ODE right-hand side.
-# ---------------------------------------------------------------------------
 
 function _apply_modifiers_continuous(
         modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
@@ -195,28 +141,6 @@ function _apply_modifiers_continuous(
     end
     return output, new_st
 end
-
-# ---------------------------------------------------------------------------
-# Continuous `_collectstates`
-#
-# Pipeline:
-#   1. Split `res.tspan` into `n_samples` equal-width windows.
-#   2. Place input column `k` at the *start* of window `k` (time
-#      `t0 + (k-1)Δt`) and request a sample at the *end* of window `k`
-#      (time `t0 + kΔt`). This alignment matches the discrete reservoir
-#      semantics — `states[:, k]` is the state after processing input `k`
-#      — and is what makes the Euler-equivalence test land without an
-#      off-by-one shift.
-#   3. `remake` the user's problem with the locked `tspan` and the merged
-#      parameter pack (interpolated input injected as `p.input`).
-#   4. `solve(...; saveat = sample_ts, save_everystep=false, dense=false)`.
-#      `res.kwargs` come last so user kwargs win on collision — the
-#      constructor already rejects the three protected keys, so they
-#      cannot collide in practice.
-#   5. Push the trajectory through the sampler → raw state matrix.
-#   6. Apply state modifiers → final state matrix matching the discrete
-#      `(state_dims, n_samples)` shape expected by the readout.
-# ---------------------------------------------------------------------------
 
 function _collectstates(
         res::AbstractSciMLProblemReservoir,
@@ -272,14 +196,6 @@ function _collectstates(
     return modified_states, newst
 end
 
-# ---------------------------------------------------------------------------
-# Teacher-forced `predict`
-#
-# Solve once over the whole tspan, then apply the readout column-by-column.
-# Cheaper than the autoregressive path because the ODE never has to be
-# restarted between samples.
-# ---------------------------------------------------------------------------
-
 function _predict(
         ::AbstractSciMLProblemReservoir,
         rc::AbstractReservoirComputer,
@@ -300,22 +216,6 @@ function _predict(
     end
     return outputs, merge(new_st, (readout = st_ro,))
 end
-
-# ---------------------------------------------------------------------------
-# Autoregressive `predict`
-#
-# Split `tspan` into `steps` equal sub-intervals. For each sub-interval the
-# input is the previous readout output, held constant via a
-# `ConstantInterpolation`. After each sub-solve we:
-#   - sample the terminal state,
-#   - apply state modifiers (per-sample, consistent with the discrete loop),
-#   - apply the readout,
-#   - feed the output back as the next input.
-#
-# The initial reservoir state is `res.prob.u0`; users who want to continue
-# from a previously computed trajectory should `remake(prob; u0 = …)` before
-# constructing the reservoir.
-# ---------------------------------------------------------------------------
 
 function _predict(
         res::AbstractSciMLProblemReservoir,
@@ -397,19 +297,6 @@ function _predict(
     return outputs, newst
 end
 
-# ---------------------------------------------------------------------------
-# ContinuousESN — convenience constructor
-#
-# Builds the 3-field `(reservoir, states_modifiers, readout)` model whose
-# `reservoir` is a `ContinuousESNCell`. The cell carries Lukoševičius 2012
-# §3.2.6 eq (5) as its `equations` field. Each of `collectstates`,
-# `predict(rc, data, ...)`, and `predict(rc, steps, ...; initialdata)`
-# dispatches on `rc.reservoir::ContinuousESNCell` below, building the
-# `ODEProblem` lazily so the reservoir weights stay in `ps.reservoir` and
-# can be re-initialised by `setup(rng, rc)` like every other ESN-family
-# model.
-# ---------------------------------------------------------------------------
-
 function ReservoirComputing.ContinuousESN(
         in_dims::Integer, res_dims::Integer, out_dims::Integer,
         activation, tspan, args...;
@@ -456,25 +343,12 @@ function ReservoirComputing.ContinuousESN(
     return ContinuousESN(cell, mods, readout)
 end
 
-# Allow omitting `activation` (defaults to `tanh`) by routing
-# `ContinuousESN(in, res, out, tspan, args...)` through the five-arg form.
 function ReservoirComputing.ContinuousESN(
         in_dims::Integer, res_dims::Integer, out_dims::Integer,
         tspan::Union{Tuple, Pair}, args...; kwargs...
     )
     return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
 end
-
-# ---------------------------------------------------------------------------
-# Continuous `_collectstates` for `ContinuousESNCell`
-#
-# Builds the `ODEProblem` on the fly from `cell.equations` and an initial
-# state of zeros sized to `cell.out_dims`. The weight matrices come from
-# `ps.reservoir` (`input_matrix`, `reservoir_matrix`, optional `bias`) and
-# are merged into the solve `p` by `_build_solve_params`. Sampler is fixed
-# to `TerminalStateSampling` since eq (5) only exposes a single
-# point-state per window.
-# ---------------------------------------------------------------------------
 
 function _collectstates(
         cell::ContinuousESNCell,
@@ -531,17 +405,6 @@ function _collectstates(
     )
     return modified_states, newst
 end
-
-# ---------------------------------------------------------------------------
-# Autoregressive `_predict` for `ContinuousESNCell`
-#
-# Same control flow as the generic `AbstractSciMLProblemReservoir` path,
-# but the `ODEProblem` is built on demand from `cell.equations` rather
-# than pulled from a pre-built `res.prob`. Initial reservoir state is
-# zeros sized to `cell.out_dims`; users who want to continue from a
-# previously trained terminal state should pass it in via a custom
-# `equations` closure or re-run `collectstates` first.
-# ---------------------------------------------------------------------------
 
 function _predict(
         cell::ContinuousESNCell,

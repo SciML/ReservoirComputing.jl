@@ -1,17 +1,12 @@
 @doc raw"""
-    ContinuousESNCell(activation, in_dims, out_dims,
-                      init_bias, init_reservoir, init_input, init_state,
-                      use_bias, equations, tspan, args, kwargs)
+    ContinuousESNCell(in_dims => out_dims;
+        tspan, args = (), activation = tanh, use_bias = false,
+        init_bias = zeros32, init_reservoir = rand_sparse,
+        init_input = scaled_rand, init_state = zeros32,
+        equations = _continuous_esn_rhs!, kwargs...)
 
-Continuous-time leaky-integrator ESN cell ([Lukosevicius2012](@cite) §3.2.6,
-eq 5). `ContinuousESNCell <: AbstractSciMLProblemReservoir` so it dispatches
-into the continuous `collectstates` / `predict` pipeline provided by the
-`RCODEReservoirExt` package extension. Field layout mirrors [`ESNCell`](@ref)
-plus the ODE right-hand side (`equations`) and the solve metadata
-(`tspan`, `args`, `kwargs`) needed by the extension's solver.
-
-The default `equations` value [`_continuous_esn_rhs!`](@ref) integrates
-Lukoševičius 2012 §3.2.6 eq (5):
+Continuous-time Echo State Network cell
+([Lukosevicius2012](@cite)). Integrates the ODE
 
 ```math
 \dot{\mathbf{x}}(t) = -\mathbf{x}(t) + \tanh\!\left(
@@ -19,36 +14,35 @@ Lukoševičius 2012 §3.2.6 eq (5):
     + \mathbf{W}_r\,\mathbf{x}(t) + \mathbf{b}\right)
 ```
 
-No leaking-rate term `α` appears in the ODE — `α` emerges only when the
-ODE is forward-Euler discretised with step `Δt = α`, recovering the
-discrete leaky update `x(n+1) = (1-α)·x(n) + α·tanh(...)`.
+## Arguments
 
-This type is normally constructed by the [`ContinuousESN`](@ref)
-convenience constructor in the `RCODEReservoirExt` extension rather than
-directly. Driving the inner constructor by hand requires placing every
-field in the order above and pre-static-ing `use_bias`.
+  - `in_dims`: Input dimension.
+  - `out_dims`: Reservoir (hidden state) dimension.
 
-## Fields
+## Keyword arguments
 
-  - `activation`: Reservoir nonlinearity. Documented as `tanh` by the
-    `ContinuousESN` constructor; only enters the cell via a custom
-    `equations` closure.
-  - `in_dims`, `out_dims`: Input and reservoir dimensions.
-  - `init_input`, `init_reservoir`, `init_bias`, `init_state`:
-    Initialisers (same convention as [`ESNCell`](@ref)).
-  - `use_bias::StaticBool`: Static-bool flag controlling the optional
-    `bias` parameter.
-  - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`. The
-    extension injects `p.input(t)` (interpolated input signal) and merges
-    `ps.reservoir` into `p`.
-  - `tspan`: Integration interval `(t0, t1)` for `collectstates`.
-  - `args`, `kwargs`: Forwarded to `solve` positionally / by keyword.
+  - `tspan`: Integration interval `(t0, t1)`. Length-2, strictly
+    increasing, finite.
+  - `args`: Tuple of positional arguments forwarded to `solve`. The solver
+    algorithm (`Tsit5()`, `Euler()`, …) is the first element by convention.
+    Default: `()`.
+  - `activation`: Reservoir activation. Default: `tanh`.
+  - `use_bias`: Whether to include a bias term. Default: `false`.
+  - `init_reservoir`: Initialiser for `W_r`. Default: [`rand_sparse`](@ref).
+  - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: Initialiser for the bias. Only used if `use_bias=true`.
+    Default: `zeros32`.
+  - `init_state`: Initialiser for the initial hidden state.
+    Default: `zeros32`.
+  - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`.
+    Default: [`_continuous_esn_rhs!`](@ref).
+  - `kwargs...`: Forwarded to `solve` as keyword arguments.
 
 ## Parameters
 
   - `input_matrix :: (out_dims × in_dims)` — `W_in`
   - `reservoir_matrix :: (out_dims × out_dims)` — `W_r`
-  - `bias :: (out_dims,)` — present only if `use_bias = True()`
+  - `bias :: (out_dims,)` — present only if `use_bias = true`
 """
 @concrete struct ContinuousESNCell <: AbstractSciMLProblemReservoir
     activation
@@ -63,6 +57,21 @@ field in the order above and pre-static-ing `use_bias`.
     tspan
     args
     kwargs
+end
+
+function ContinuousESNCell(
+        (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType};
+        tspan, args = (), activation = tanh, use_bias::BoolType = False(),
+        init_bias = zeros32, init_reservoir = rand_sparse,
+        init_input = scaled_rand, init_state = zeros32,
+        equations = _continuous_esn_rhs!, kwargs...
+    )
+    return ContinuousESNCell(
+        activation, in_dims, out_dims,
+        init_bias, init_reservoir, init_input, init_state,
+        static(use_bias),
+        equations, tspan, args, kwargs
+    )
 end
 
 function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
@@ -84,7 +93,7 @@ end
     _continuous_esn_rhs!(dx, x, p, t)
 
 Default right-hand side for [`ContinuousESNCell`](@ref). Implements
-Lukoševičius 2012 §3.2.6 eq (5) in place:
+[Lukosevicius2012](@cite) §3.2.6 eq (5):
 
 ```math
 \dot{\mathbf{x}} = -\mathbf{x} + \tanh\!\left(
@@ -92,17 +101,8 @@ Lukoševičius 2012 §3.2.6 eq (5) in place:
     + \mathbf{W}_r\,\mathbf{x} + \mathbf{b}\right)
 ```
 
-`p` is the merged parameter pack assembled by the `RCODEReservoirExt`
-helper. It carries:
-  * `p.input` — interpolated input signal injected by the extension.
-  * `p.input_matrix` (`W_in`), `p.reservoir_matrix` (`W_r`) — reservoir
-    matrices pulled from `ps.reservoir`.
-  * `p.bias` (optional) — bias vector, present iff `use_bias=True()`.
-
-The RHS uses `mul!` for both matrix products and a fused tanh broadcast
-to stay allocation-free on the solver hot path. The bias branch is
-selected at compile time via `haskey`, since the keys of a `NamedTuple`
-are part of its type.
+`p.input(t)` provides the interpolated input signal. The bias term is
+included only when `p.bias` is present.
 """
 function _continuous_esn_rhs!(dx, x, p, t)
     input_t = p.input(t)
