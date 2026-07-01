@@ -14,10 +14,12 @@ pages = [
     ],
     "Examples" => Any[
         "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
+        "Morphing patterns with conceptors" => "examples/conceptors_morphing.md",
     ],
     "API Documentation" => Any[
         "Layers" => "api/layers.md",
         "Models" => "api/models.md",
+        "Conceptors" => "api/conceptors.md",
         "Utilities" => "api/utils.md",
         "Train" => "api/train.md",
         "Predict" => "api/predict.md",
