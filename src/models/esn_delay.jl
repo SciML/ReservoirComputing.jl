@@ -517,3 +517,42 @@ function Base.show(io::IO, esn::DelayESN)
 
     return
 end
+
+# `InputDelayESN`/`DelayESN` carry an extra `input_delay` field that must run
+# *before* the reservoir. The generic `AbstractReservoirComputer` machinery in
+# `reservoircomputer.jl` only knows about `(:reservoir, :states_modifiers,
+# :readout)`, so these models need their own parameter/state setup and their
+# own `_partial_apply`. The generic forward call and `collectstates` both route
+# through `_partial_apply`, so overriding it here is enough to make them work.
+const _InputDelayedESN = Union{InputDelayESN, DelayESN}
+
+function initialparameters(rng::AbstractRNG, esn::_InputDelayedESN)
+    return (
+        input_delay = initialparameters(rng, esn.input_delay),
+        reservoir = initialparameters(rng, esn.reservoir),
+        states_modifiers = map(l -> initialparameters(rng, l), esn.states_modifiers) |>
+            Tuple,
+        readout = initialparameters(rng, esn.readout),
+    )
+end
+
+function initialstates(rng::AbstractRNG, esn::_InputDelayedESN)
+    return (
+        input_delay = initialstates(rng, esn.input_delay),
+        reservoir = initialstates(rng, esn.reservoir),
+        states_modifiers = map(l -> initialstates(rng, l), esn.states_modifiers) |> Tuple,
+        readout = initialstates(rng, esn.readout),
+    )
+end
+
+function _partial_apply(esn::_InputDelayedESN, inp, ps, st)
+    inp_delayed, st_input_delay = apply(
+        esn.input_delay, inp, ps.input_delay, st.input_delay
+    )
+    res_state, st_res = apply(esn.reservoir, inp_delayed, ps.reservoir, st.reservoir)
+    out, st_mods = _apply_seq(
+        esn.states_modifiers, res_state, ps.states_modifiers, st.states_modifiers
+    )
+    return out,
+        (input_delay = st_input_delay, reservoir = st_res, states_modifiers = st_mods)
+end

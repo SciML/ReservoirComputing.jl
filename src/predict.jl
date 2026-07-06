@@ -1,5 +1,5 @@
 @doc raw"""
-    predict(rc, steps::Integer, ps, st; initialdata=nothing)
+    predict(rc, steps::Integer, ps, st; initialdata)
     predict(rc, data::AbstractMatrix, ps, st)
 
 Run the model either in (1) closed-loop (auto-regressive) mode for a fixed number
@@ -22,8 +22,7 @@ sequence.
 
 ### Keyword Arguments
 
-- `initialdata=nothing`: Column vector used as the first input.
-  Has to be provided.
+- `initialdata`: Column vector used as the first input. Required keyword argument.
 
 ### Returns
 

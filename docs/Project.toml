@@ -23,7 +23,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [compat]
 CellularAutomata = "0.0.6"
 ConcreteStructs = "0.2"
-DataInterpolations = "6, 7, 8"
+DataInterpolations = "6, 7, 8, 9.0"
 DelayDiffEq = "6"
 Documenter = "1"
 DocumenterCitations = "1"
