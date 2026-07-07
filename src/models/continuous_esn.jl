@@ -45,8 +45,8 @@ Reservoir (passed to [`ContinuousESNCell`](@ref)):
   - `init_bias`: Initialiser for `b`. Default: `zeros32`.
   - `init_state`: Initialiser for the initial hidden state.
     Default: `randn32`.
-  - `equations`: ODE right-hand side. Default:
-    [`_continuous_esn_rhs!`](@ref).
+  - `equations`: ODE right-hand side function `(dx, x, p, t) -> nothing`.
+    Default is the continuous-time leaky-integrator ESN ODE.
 
 Composition:
 

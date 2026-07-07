@@ -35,7 +35,7 @@ Continuous-time Echo State Network cell
   - `init_state`: Initialiser for the initial hidden state.
     Default: `zeros32`.
   - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`.
-    Default: [`_continuous_esn_rhs!`](@ref).
+    Default: continuous-time leaky-integrator ESN ODE.
   - `kwargs...`: Forwarded to `solve` as keyword arguments.
 
 ## Parameters
@@ -89,21 +89,6 @@ function initialstates(::AbstractRNG, ::ContinuousESNCell)
     return NamedTuple()
 end
 
-@doc raw"""
-    _continuous_esn_rhs!(dx, x, p, t)
-
-Default right-hand side for [`ContinuousESNCell`](@ref). Implements
-[Lukosevicius2012](@cite) §3.2.6 eq (5):
-
-```math
-\dot{\mathbf{x}} = -\mathbf{x} + \tanh\!\left(
-    \mathbf{W}_{\text{in}}\,\mathbf{u}(t)
-    + \mathbf{W}_r\,\mathbf{x} + \mathbf{b}\right)
-```
-
-`p.input(t)` provides the interpolated input signal. The bias term is
-included only when `p.bias` is present.
-"""
 function _continuous_esn_rhs!(dx, x, p, t)
     input_t = p.input(t)
     mul!(dx, p.reservoir_matrix, x)

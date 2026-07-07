@@ -4,7 +4,6 @@ using LinearAlgebra
 using Statistics
 using ReservoirComputing
 using OrdinaryDiffEq
-using OrdinaryDiffEqLowOrderRK: Euler
 using SciMLBase
 using DataInterpolations
 
