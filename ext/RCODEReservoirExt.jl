@@ -1,36 +1,24 @@
 module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
+using LinearAlgebra: mul!
 using LuxCore: apply
-# `solve` and `remake` come from `SciMLBase`. The user picks the concrete
-# solver type (e.g. `Tsit5()`) and loads its package separately
-# (`OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`, …); dispatch at solve time
-# selects the right method via the type they passed in `res.args[1]`. We
-# deliberately don't list a solver package as a weakdep trigger so users
-# aren't forced to pull the full `OrdinaryDiffEq` meta-package in.
-using SciMLBase: remake, solve, NullParameters
+using Random: AbstractRNG
+using SciMLBase: ODEProblem, remake, solve, NullParameters
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
     AbstractSampler,
     AbstractSciMLProblemReservoir,
+    ContinuousESN,
+    ContinuousESNCell,
+    LinearReadout,
     TerminalStateSampling,
-    collectstates
+    _wrap_layers,
+    collectstates,
+    rand_sparse,
+    scaled_rand
 import ReservoirComputing: _collectstates, _predict
-
-# ---------------------------------------------------------------------------
-# Parameter assembly
-#
-# At solve time the extension must hand the ODE three things:
-#   (1) the interpolated input signal `u(t)` exposed as `p.input`,
-#   (2) the user's static parameters (if any) from `prob.p`,
-#   (3) any Lux-managed reservoir parameters from `ps.reservoir`.
-#
-# `_to_namedtuple` normalises `prob.p` so that nothing / `NullParameters` / a
-# user `NamedTuple` all collapse into a single `NamedTuple` we can merge into.
-# Anything else is rejected with a clear error — wrapping unknown payloads
-# silently would hide bugs in user-defined ODEs.
-# ---------------------------------------------------------------------------
 
 _to_namedtuple(prob_p::NamedTuple) = prob_p
 _to_namedtuple(::NullParameters) = NamedTuple()
@@ -74,19 +62,6 @@ function _build_solve_params(prob_p, ps_reservoir, input_interp)
     merged = isempty(ps_reservoir) ? base : merge(base, ps_reservoir)
     return merge(merged, (input = input_interp,))
 end
-
-# ---------------------------------------------------------------------------
-# Input signal construction
-#
-# `collectstates` sees a discrete `data::AbstractMatrix` and reconstructs the
-# continuous-time input via linear interpolation between input columns. The
-# grid mirrors the `saveat` grid so an input column and its corresponding
-# state sample share the same time stamp.
-#
-# `_make_const_input_fn` is the closed-loop counterpart used inside the
-# autoregressive `predict`: between two reservoir-output events the input is
-# the previous output, held constant.
-# ---------------------------------------------------------------------------
 
 """
     ZeroOrderHoldInterp(data, ts)
@@ -135,33 +110,12 @@ function _make_input_fn(data::AbstractMatrix, ts::AbstractVector)
 end
 
 function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
-    # `cache_parameters=true` is fine for vector u (autoregressive predict
-    # always holds the previous readout output constant over one sub-interval).
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
-
-# ---------------------------------------------------------------------------
-# Samplers
-#
-# A sampler maps a continuous trajectory into the discrete state matrix the
-# readout sees. `TerminalStateSampling` reads the solution exactly at the
-# user-visible time grid (the same one we pass through `saveat`), so the
-# result is just the columnar view of `sol.u`.
-# ---------------------------------------------------------------------------
 
 function _sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
 end
-
-# ---------------------------------------------------------------------------
-# State-modifier composition
-#
-# The discrete fallback threads `states_modifiers` per reservoir step (see
-# `_partial_apply` in `reservoircomputer.jl`). For the continuous path we
-# evolve the trajectory first and then apply modifiers column-by-column to
-# the sampled matrix. This keeps the per-sample semantics identical to the
-# discrete code without contaminating the ODE right-hand side.
-# ---------------------------------------------------------------------------
 
 function _apply_modifiers_continuous(
         modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
@@ -187,28 +141,6 @@ function _apply_modifiers_continuous(
     end
     return output, new_st
 end
-
-# ---------------------------------------------------------------------------
-# Continuous `_collectstates`
-#
-# Pipeline:
-#   1. Split `res.tspan` into `n_samples` equal-width windows.
-#   2. Place input column `k` at the *start* of window `k` (time
-#      `t0 + (k-1)Δt`) and request a sample at the *end* of window `k`
-#      (time `t0 + kΔt`). This alignment matches the discrete reservoir
-#      semantics — `states[:, k]` is the state after processing input `k`
-#      — and is what makes the Euler-equivalence test land without an
-#      off-by-one shift.
-#   3. `remake` the user's problem with the locked `tspan` and the merged
-#      parameter pack (interpolated input injected as `p.input`).
-#   4. `solve(...; saveat = sample_ts, save_everystep=false, dense=false)`.
-#      `res.kwargs` come last so user kwargs win on collision — the
-#      constructor already rejects the three protected keys, so they
-#      cannot collide in practice.
-#   5. Push the trajectory through the sampler → raw state matrix.
-#   6. Apply state modifiers → final state matrix matching the discrete
-#      `(state_dims, n_samples)` shape expected by the readout.
-# ---------------------------------------------------------------------------
 
 function _collectstates(
         res::AbstractSciMLProblemReservoir,
@@ -264,14 +196,6 @@ function _collectstates(
     return modified_states, newst
 end
 
-# ---------------------------------------------------------------------------
-# Teacher-forced `predict`
-#
-# Solve once over the whole tspan, then apply the readout column-by-column.
-# Cheaper than the autoregressive path because the ODE never has to be
-# restarted between samples.
-# ---------------------------------------------------------------------------
-
 function _predict(
         ::AbstractSciMLProblemReservoir,
         rc::AbstractReservoirComputer,
@@ -292,22 +216,6 @@ function _predict(
     end
     return outputs, merge(new_st, (readout = st_ro,))
 end
-
-# ---------------------------------------------------------------------------
-# Autoregressive `predict`
-#
-# Split `tspan` into `steps` equal sub-intervals. For each sub-interval the
-# input is the previous readout output, held constant via a
-# `ConstantInterpolation`. After each sub-solve we:
-#   - sample the terminal state,
-#   - apply state modifiers (per-sample, consistent with the discrete loop),
-#   - apply the readout,
-#   - feed the output back as the next input.
-#
-# The initial reservoir state is `res.prob.u0`; users who want to continue
-# from a previously computed trajectory should `remake(prob; u0 = …)` before
-# constructing the reservoir.
-# ---------------------------------------------------------------------------
 
 function _predict(
         res::AbstractSciMLProblemReservoir,
@@ -362,6 +270,180 @@ function _predict(
             save_everystep = false,
             dense = false,
             res.kwargs...
+        )
+        current_state = sol.u[end]
+
+        if !isempty(rc.states_modifiers)
+            state_after_mods, st_mods = ReservoirComputing._apply_seq(
+                rc.states_modifiers, current_state, ps.states_modifiers, st_mods
+            )
+        else
+            state_after_mods = current_state
+        end
+
+        current_output, st_ro = apply(rc.readout, state_after_mods, ps.readout, st_ro)
+        if step_idx == 1
+            outputs = similar(current_output, length(current_output), steps)
+        end
+        outputs[:, step_idx] .= current_output
+        current_input = current_output
+    end
+
+    newst = (
+        reservoir = st.reservoir,
+        states_modifiers = st_mods,
+        readout = st_ro,
+    )
+    return outputs, newst
+end
+
+function ReservoirComputing.ContinuousESN(
+        in_dims::Integer, res_dims::Integer, out_dims::Integer,
+        activation, tspan, args...;
+        use_bias::Bool = false,
+        init_bias = ReservoirComputing.zeros32,
+        init_reservoir = rand_sparse,
+        init_input = scaled_rand,
+        init_state = ReservoirComputing.randn32,
+        equations = ReservoirComputing._continuous_esn_rhs!,
+        state_modifiers = (),
+        readout_activation = identity,
+        kwargs...
+    )
+    in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
+    res_dims > 0 || throw(ArgumentError("res_dims must be positive, got $res_dims"))
+    out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
+    length(tspan) == 2 || throw(
+        ArgumentError(
+            "tspan must be a length-2 tuple/pair (t0, t1), got length $(length(tspan))"
+        )
+    )
+    (isfinite(tspan[1]) && isfinite(tspan[2])) || throw(
+        ArgumentError("tspan endpoints must be finite, got $tspan")
+    )
+    tspan[2] > tspan[1] || throw(
+        ArgumentError(
+            "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = $tspan"
+        )
+    )
+    ReservoirComputing._check_protected_kwargs(kwargs)
+
+    cell = ContinuousESNCell(
+        activation, in_dims, res_dims,
+        init_bias, init_reservoir, init_input, init_state,
+        ReservoirComputing.static(use_bias),
+        equations, tspan, args, kwargs
+    )
+
+    mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+        Tuple(state_modifiers) : (state_modifiers,)
+    mods = _wrap_layers(mods_tuple)
+
+    readout = LinearReadout(res_dims => out_dims, readout_activation)
+    return ContinuousESN(cell, mods, readout)
+end
+
+function ReservoirComputing.ContinuousESN(
+        in_dims::Integer, res_dims::Integer, out_dims::Integer,
+        tspan::Union{Tuple, Pair}, args...; kwargs...
+    )
+    return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
+end
+
+function _collectstates(
+        cell::ContinuousESNCell,
+        rc::AbstractReservoirComputer,
+        data::AbstractMatrix,
+        ps::NamedTuple,
+        st::NamedTuple
+    )
+    n_samples = size(data, 2)
+    n_samples ≥ 2 || throw(
+        ArgumentError(
+            "ContinuousESN collectstates needs at least 2 input columns " *
+                "to define a time grid; got $n_samples."
+        )
+    )
+
+    t0, t1 = cell.tspan
+    t1 > t0 || throw(
+        ArgumentError(
+            "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = ($t0, $t1)."
+        )
+    )
+
+    Δt = (t1 - t0) / n_samples
+    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
+    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+
+    input_interp = _make_input_fn(data, input_ts)
+    solve_p = _build_solve_params(nothing, ps.reservoir, input_interp)
+
+    # `u0` element type follows `ps.reservoir.input_matrix` so the solver
+    # state, the parameter pack, and the input signal share a numeric
+    # type. The user controls eltype through the `init_*` initialisers.
+    u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    prob = ODEProblem(cell.equations, u0, cell.tspan, solve_p)
+
+    sol = solve(
+        prob, cell.args...;
+        saveat = sample_ts,
+        save_everystep = false,
+        dense = false,
+        cell.kwargs...
+    )
+
+    raw_states = _sample(TerminalStateSampling(), sol)
+    modified_states, st_mods = _apply_modifiers_continuous(
+        rc.states_modifiers, raw_states, ps.states_modifiers, st.states_modifiers
+    )
+
+    newst = (
+        reservoir = st.reservoir,
+        states_modifiers = st_mods,
+        readout = st.readout,
+    )
+    return modified_states, newst
+end
+
+function _predict(
+        cell::ContinuousESNCell,
+        rc::AbstractReservoirComputer,
+        steps::Integer,
+        ps::NamedTuple,
+        st::NamedTuple;
+        initialdata::AbstractVector
+    )
+    steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
+
+    t0, t1 = cell.tspan
+    t1 > t0 || throw(
+        ArgumentError(
+            "Autoregressive predict requires `tspan[2] > tspan[1]`, got " *
+                "tspan = ($t0, $t1)."
+        )
+    )
+    ts = collect(range(t0, t1; length = steps + 1))
+    window_starts = @view ts[1:(end - 1)]
+    window_ends = @view ts[2:end]
+
+    current_state = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    current_input = initialdata
+
+    st_mods = st.states_modifiers
+    st_ro = st.readout
+
+    local outputs
+    for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
+        input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
+        solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
+        sub_prob = ODEProblem(cell.equations, current_state, (t_lo, t_hi), solve_p)
+        sol = solve(
+            sub_prob, cell.args...;
+            saveat = [t_hi],
+            save_everystep = false,
+            dense = false,
+            cell.kwargs...
         )
         current_state = sol.u[end]
 
