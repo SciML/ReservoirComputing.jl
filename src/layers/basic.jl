@@ -95,7 +95,11 @@ outputsize(ro::LinearReadout, _, ::AbstractRNG) = (ro.out_dims,)
 function (ro::LinearReadout)(inp::AbstractArray, ps, st::NamedTuple)
     out_tmp = ps.weight * inp
     if has_bias(ro)
-        out_tmp += ps.bias
+        if ndims(out_tmp) == 1
+            out_tmp .+= ps.bias
+        else
+            out_tmp .+= reshape(ps.bias, :, ntuple(Returns(1), ndims(out_tmp) - 1)...)
+        end
     end
     output = ro.activation.(out_tmp)
     return output, st
