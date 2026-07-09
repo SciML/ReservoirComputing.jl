@@ -1,4 +1,4 @@
-@testitem "continuous_esn" tags=[:models, :continuous, :extensions] begin
+@testitem "continuous_esn" tags = [:models, :continuous, :extensions] begin
     using Test
     using Random
     using LinearAlgebra

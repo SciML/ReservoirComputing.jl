@@ -1,4 +1,4 @@
-@testitem "sciml_reservoir" tags=[:extensions, :ode] begin
+@testitem "sciml_reservoir" tags = [:extensions, :ode] begin
     using Test
     using Random
     using ReservoirComputing

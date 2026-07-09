@@ -1,4 +1,4 @@
-@testitem "inits" tags=[:inits, :core] begin
+@testitem "inits" tags = [:inits, :core] begin
     using ReservoirComputing, LinearAlgebra, Random, SparseArrays
 
     const res_size = 16
@@ -70,19 +70,19 @@
         end
 
         @testset "Minimum complexity: $init" for init in [
-            delay_line,
-            delayline_backward,
-            cycle_jumps,
-            simple_cycle,
-            true_doublecycle,
-            double_cycle,
-            selfloop_cycle,
-            selfloop_delayline_backward,
-            selfloop_backward_cycle,
-            selfloop_forwardconnection,
-            forward_connection,
-            permutation_init,
-        ]
+                delay_line,
+                delayline_backward,
+                cycle_jumps,
+                simple_cycle,
+                true_doublecycle,
+                double_cycle,
+                selfloop_cycle,
+                selfloop_delayline_backward,
+                selfloop_backward_cycle,
+                selfloop_forwardconnection,
+                forward_connection,
+                permutation_init,
+            ]
             dl = init(res_size, res_size)
             @test sort(unique(dl)) == Float32.([0.0, 0.1])
         end
@@ -103,9 +103,9 @@
         end
 
         @testset "Minimum complexity: $init" for init in [
-            minimal_init,
-            minimal_init(; sampling_type = :irrational_sample!),
-        ]
+                minimal_init,
+                minimal_init(; sampling_type = :irrational_sample!),
+            ]
             dl = init(res_size, in_size)
             @test sort(unique(dl)) == Float32.([-0.1, 0.1])
         end

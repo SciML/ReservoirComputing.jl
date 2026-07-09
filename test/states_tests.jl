@@ -1,4 +1,4 @@
-@testitem "states" tags=[:core, :states] begin
+@testitem "states" tags = [:core, :states] begin
     using ReservoirComputing
 
     test_array = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -17,7 +17,7 @@
 
     @testset "States Testing" for T in test_types
         @testset "Nonlinear Algorithms Testing: $algo $T" for (algo, expected_output) in
-                                                              nlas
+            nlas
 
             nla_array = algo(T.(test_array))
             @test nla_array == expected_output

@@ -1,4 +1,4 @@
-@testitem "svmreadout" tags=[:layers, :svm, :extensions] begin
+@testitem "svmreadout" tags = [:layers, :svm, :extensions] begin
     using Test
     using Random
     using ReservoirComputing

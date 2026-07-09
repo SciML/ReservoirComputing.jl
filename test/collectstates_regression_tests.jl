@@ -1,4 +1,4 @@
-@testitem "collectstates_regression" tags=[:core, :regression] begin
+@testitem "collectstates_regression" tags = [:core, :regression] begin
     using Test
     using Random
     using ReservoirComputing
@@ -69,11 +69,11 @@
     # before the two-level `_collectstates` refactor. The refactor must produce
     # the same output for every model that flows through the generic dispatch.
     function reference_collectstates(
-        rc::ReservoirComputing.AbstractReservoirComputer,
-        data::AbstractMatrix,
-        ps,
-        st::NamedTuple,
-    )
+            rc::ReservoirComputing.AbstractReservoirComputer,
+            data::AbstractMatrix,
+            ps,
+            st::NamedTuple,
+        )
         newst = st
         nsteps = size(data, 2)
         cols = eachcol(data)

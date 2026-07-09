@@ -1,4 +1,4 @@
-@testitem "esn_hybrid" tags=[:models, :esn] begin
+@testitem "esn_hybrid" tags = [:models, :esn] begin
     using Test
     using Random
     using ReservoirComputing
@@ -46,15 +46,15 @@
             )
             ps, st = setup(rng, hesn)
             @test haskey(ps, :reservoir) &&
-                  haskey(ps, :knowledge_model) &&
-                  haskey(ps, :states_modifiers) &&
-                  haskey(ps, :readout)
+                haskey(ps, :knowledge_model) &&
+                haskey(ps, :states_modifiers) &&
+                haskey(ps, :readout)
             @test size(ps.reservoir.input_matrix) == (res_dims, in_dims + km_dims)
             @test size(ps.readout.weight) == (out_dims, res_dims + km_dims)
             @test haskey(st, :reservoir) &&
-                  haskey(st, :knowledge_model) &&
-                  haskey(st, :states_modifiers) &&
-                  haskey(st, :readout)
+                haskey(st, :knowledge_model) &&
+                haskey(st, :states_modifiers) &&
+                haskey(st, :readout)
         end
 
         @testset "forward: vector as batch=1, identity pipeline with concatenated features" begin
@@ -116,7 +116,7 @@
             ps, st = setup(rng, hesn)
             ps =
                 _pin_identity_readout(ps; out_dims = out_dims, in_dims = res_dims + km_dims)
-            X = reshape(Float32.(1:(in_dims*B)), in_dims, B)
+            X = reshape(Float32.(1:(in_dims * B)), in_dims, B)
             Y, _ = hesn(X, ps, st)
             k = fill(2.0f0, km_dims, B)
             expected = vcat(k, vcat(k, X))

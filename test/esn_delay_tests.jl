@@ -1,4 +1,4 @@
-@testitem "esn_delay" tags=[:models, :delay, :workflows] begin
+@testitem "esn_delay" tags = [:models, :delay, :workflows] begin
     using Test
     using Random
     using ReservoirComputing
@@ -336,7 +336,7 @@
             @test all(isfinite, out_tf)
             @test st_pred.input_delay.clock == st_t.input_delay.clock + n_steps
             @test st_pred.states_modifiers[1].clock ==
-                  st_t.states_modifiers[1].clock + n_steps
+                st_t.states_modifiers[1].clock + n_steps
         end
     end
 

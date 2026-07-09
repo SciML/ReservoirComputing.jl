@@ -1,4 +1,4 @@
-@testitem "lif" tags=[:layers, :lif] begin
+@testitem "lif" tags = [:layers, :lif] begin
     using Test
     using Random
     using LinearAlgebra
@@ -120,7 +120,7 @@
                     # oldest-first convention: [0, X1, X2] OR [X1, X2, 0] depending on fill policy,
                     # but your implementation (Base.tail... , inp) is oldest-first with left shift:
                     @test buf2[end] == X2
-                    @test buf2[end-1] == X1
+                    @test buf2[end - 1] == X1
                 end
 
                 (_, st3) = lif(X3, ps, st2)
@@ -131,8 +131,8 @@
                     @test buf3[3] == X1
                 else
                     @test buf3[end] == X3
-                    @test buf3[end-1] == X2
-                    @test buf3[end-2] == X1
+                    @test buf3[end - 1] == X2
+                    @test buf3[end - 2] == X1
                 end
 
                 (_, st4) = lif(X4, ps, st3)
@@ -145,8 +145,8 @@
                 else
                     # [..., X2, X3, X4]
                     @test buf4[end] == X4
-                    @test buf4[end-1] == X3
-                    @test buf4[end-2] == X2
+                    @test buf4[end - 1] == X3
+                    @test buf4[end - 2] == X2
                 end
             end
         end

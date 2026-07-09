@@ -1,4 +1,4 @@
-@testitem "additiveeiesn" tags=[:models, :ei] begin
+@testitem "additiveeiesn" tags = [:models, :ei] begin
     using ReservoirComputing
     using Random
     using Test

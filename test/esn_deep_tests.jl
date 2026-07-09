@@ -1,4 +1,4 @@
-@testitem "esn_deep" tags=[:models, :esn] begin
+@testitem "esn_deep" tags = [:models, :esn] begin
     using Test
     using Random
     using ReservoirComputing
@@ -77,8 +77,8 @@
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :cells) &&
-                  haskey(st2, :states_modifiers) &&
-                  haskey(st2, :readout)
+                haskey(st2, :states_modifiers) &&
+                haskey(st2, :readout)
         end
 
         @testset "forward: batch matrix, identity across layers" begin
@@ -100,7 +100,7 @@
             )
             ps, st = setup(rng, desn)
             ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
-            X = reshape(Float32.(1:(D*B)), D, B)
+            X = reshape(Float32.(1:(D * B)), D, B)
             Y, _ = desn(X, ps, st)
             @test size(Y) == (D, B)
             @test Y ≈ X
@@ -232,7 +232,7 @@
                 readout_activation = identity,
             )
             ps, st = setup(rng, desn)
-            X = reshape(Float32.(1:(D*Tlen)), D, Tlen)
+            X = reshape(Float32.(1:(D * Tlen)), D, Tlen)
             S, st2 = collectstates(desn, X, ps, st)
             @test size(S) == size(X)
             @test S ≈ X

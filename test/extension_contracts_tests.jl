@@ -1,4 +1,4 @@
-@testitem "extension loading contracts" tags=[:extensions, :sparse, :mlj] begin
+@testitem "extension loading contracts" tags = [:extensions, :sparse, :mlj] begin
     using Random
     using SparseArrays
     using MLJLinearModels

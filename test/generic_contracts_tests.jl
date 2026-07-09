@@ -1,4 +1,4 @@
-@testitem "layer generic input and boolean contracts" tags=[:layers, :generic] setup=[GenericTestSetup] begin
+@testitem "layer generic input and boolean contracts" tags = [:layers, :generic] setup = [GenericTestSetup] begin
     using Random
     using Static
     using ReservoirComputing
@@ -136,13 +136,13 @@
             ps = initialparameters(rng, cell)
             @test eltype(ps.input_matrix) === T
             @test has_anykey(ps, (:bias_ex, :bias_inh, :bias_in)) ==
-                  ReservoirComputing.known(use_bias)
+                ReservoirComputing.known(use_bias)
         end
     end
 
     for T in (Float32, Float64),
-        use_bias in (False(), True()),
-        include_collect in (False(), True())
+            use_bias in (False(), True()),
+            include_collect in (False(), True())
 
         ro = LinearReadout(
             3 => 2;
@@ -174,7 +174,7 @@
     end
 end
 
-@testitem "ESN-family model generic smoke contracts" tags=[:models, :esn] setup=[GenericTestSetup] begin
+@testitem "ESN-family model generic smoke contracts" tags = [:models, :esn] setup = [GenericTestSetup] begin
     using Random
     using Static
     using Test
@@ -209,7 +209,7 @@ end
     end
 end
 
-@testitem "EI-family model generic smoke contracts" tags=[:models, :ei] setup=[GenericTestSetup] begin
+@testitem "EI-family model generic smoke contracts" tags = [:models, :ei] setup = [GenericTestSetup] begin
     using Random
     using Static
     using Test
@@ -234,7 +234,7 @@ end
     end
 end
 
-@testitem "delay model generic smoke contracts" tags=[:models, :delay] setup=[GenericTestSetup] begin
+@testitem "delay model generic smoke contracts" tags = [:models, :delay] setup = [GenericTestSetup] begin
     using Random
     using Static
     using Test
@@ -279,7 +279,7 @@ end
     end
 end
 
-@testitem "memory model generic smoke contracts" tags=[:models, :memory] setup=[GenericTestSetup] begin
+@testitem "memory model generic smoke contracts" tags = [:models, :memory] setup = [GenericTestSetup] begin
     using Random
     using Static
     using Test
@@ -323,7 +323,7 @@ end
     end
 end
 
-@testitem "NGRC model generic smoke contracts" tags=[:models, :ngrc] setup=[GenericTestSetup] begin
+@testitem "NGRC model generic smoke contracts" tags = [:models, :ngrc] setup = [GenericTestSetup] begin
     using Random
     using Static
     using Test

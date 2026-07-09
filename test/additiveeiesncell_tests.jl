@@ -1,4 +1,4 @@
-@testitem "additiveeiesncell" tags=[:layers, :cells, :ei] begin
+@testitem "additiveeiesncell" tags = [:layers, :cells, :ei] begin
     using Test
     using Random
     using LinearAlgebra

@@ -1,4 +1,4 @@
-@testitem "esn" tags=[:models, :esn] begin
+@testitem "esn" tags = [:models, :esn] begin
     using Test
     using Random
     using ReservoirComputing
@@ -43,21 +43,21 @@
     default_reservoir_kwargs(::Type{ResESN}) = (init_orthogonal = _W_I, alpha = 1.0)
 
     function build_model(
-        ::Type{M},
-        in_dims::Int,
-        res_dims::Int,
-        out_dims::Int,
-        activation;
-        state_modifiers = (),
-        readout_activation = identity,
-        mix::Real = 1.0,
-        use_bias = False(),
-        init_input = _W_I,
-        init_reservoir = _W_ZZ,
-        init_bias = _O32,
-        init_state = init_state3,
-        extra::NamedTuple = NamedTuple(),
-    ) where {M}
+            ::Type{M},
+            in_dims::Int,
+            res_dims::Int,
+            out_dims::Int,
+            activation;
+            state_modifiers = (),
+            readout_activation = identity,
+            mix::Real = 1.0,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_bias = _O32,
+            init_state = init_state3,
+            extra::NamedTuple = NamedTuple(),
+        ) where {M}
         base = (
             use_bias = use_bias,
             init_input = init_input,
@@ -151,8 +151,8 @@
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                  haskey(st2, :states_modifiers) &&
-                  haskey(st2, :readout)
+                haskey(st2, :states_modifiers) &&
+                haskey(st2, :readout)
         end
 
         @testset "$(model_name(M)): forward (batch matrix) with identity pipeline -> Y == X" begin
@@ -296,21 +296,21 @@
     end
 
     function build_model(
-        ::Type{RMNESN},
-        in_dims::Int,
-        res_dims::Int,
-        out_dims::Int,
-        activation;
-        mem_dims::Int = res_dims,
-        state_modifiers = (),
-        readout_activation = identity,
-        use_bias = False(),
-        init_input = _W_I,
-        init_reservoir = _W_ZZ,
-        init_bias = _O32,
-        init_state = init_state3,
-        extra::NamedTuple = NamedTuple(),
-    )
+            ::Type{RMNESN},
+            in_dims::Int,
+            res_dims::Int,
+            out_dims::Int,
+            activation;
+            mem_dims::Int = res_dims,
+            state_modifiers = (),
+            readout_activation = identity,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_bias = _O32,
+            init_state = init_state3,
+            extra::NamedTuple = NamedTuple(),
+        )
         base = (
             use_bias = use_bias,
             init_input = init_input,
@@ -458,8 +458,8 @@
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                  haskey(st2, :states_modifiers) &&
-                  haskey(st2, :readout)
+                haskey(st2, :states_modifiers) &&
+                haskey(st2, :readout)
         end
 
         @testset "RMNESN: forward (batch matrix) with identity pipeline -> Y == X" begin
@@ -702,23 +702,23 @@
     end
 
     function build_model(
-        ::Type{RMNResESN},
-        in_dims::Int,
-        res_dims::Int,
-        out_dims::Int,
-        activation;
-        mem_dims::Int = res_dims,
-        state_modifiers = (),
-        readout_activation = identity,
-        use_bias = False(),
-        init_input = _W_I,
-        init_reservoir = _W_ZZ,
-        init_bias = _O32,
-        init_state = init_state3,
-        alpha::Real = 1.0,
-        beta::Real = 1.0,
-        extra::NamedTuple = NamedTuple(),
-    )
+            ::Type{RMNResESN},
+            in_dims::Int,
+            res_dims::Int,
+            out_dims::Int,
+            activation;
+            mem_dims::Int = res_dims,
+            state_modifiers = (),
+            readout_activation = identity,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_bias = _O32,
+            init_state = init_state3,
+            alpha::Real = 1.0,
+            beta::Real = 1.0,
+            extra::NamedTuple = NamedTuple(),
+        )
         base = (
             use_bias = use_bias,
             init_input = init_input,
@@ -871,8 +871,8 @@
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                  haskey(st2, :states_modifiers) &&
-                  haskey(st2, :readout)
+                haskey(st2, :states_modifiers) &&
+                haskey(st2, :readout)
         end
 
         @testset "RMNResESN: forward (batch matrix) with identity pipeline -> Y == X" begin
@@ -980,8 +980,8 @@
             D = 3
             ps_init_state =
                 (rng, m, B) -> begin
-                    B == 1 ? Float32[1, 2, 3] : repeat(Float32[1, 2, 3], 1, B)
-                end
+                B == 1 ? Float32[1, 2, 3] : repeat(Float32[1, 2, 3], 1, B)
+            end
 
             model = build_model(
                 RMNResESN,

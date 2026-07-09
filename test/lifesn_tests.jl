@@ -1,4 +1,4 @@
-@testitem "lifesn" tags=[:models, :lif, :workflows] begin
+@testitem "lifesn" tags = [:models, :lif, :workflows] begin
     using Test
     using Random
     using ReservoirComputing
@@ -98,8 +98,8 @@
         @test size(Y) == (D, 1)
         @test vec(Y) ≈ x
         @test haskey(st2, :reservoir) &&
-              haskey(st2, :states_modifiers) &&
-              haskey(st2, :readout)
+            haskey(st2, :states_modifiers) &&
+            haskey(st2, :readout)
     end
 
     @testset "LIFESN: forward (batch matrix) with identity pipeline" begin

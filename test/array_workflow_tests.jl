@@ -1,4 +1,4 @@
-@testitem "array wrappers and vector type contracts" tags=[:array_types] setup=[GenericTestSetup] begin
+@testitem "array wrappers and vector type contracts" tags = [:array_types] setup = [GenericTestSetup] begin
     using LinearAlgebra
     using Random
     using SparseArrays
@@ -20,7 +20,7 @@
 
             x = T[1, 2, 3]
             x_view = view(hcat(x, 2 .* x), :, 1)
-            x_static = SVector{3,T}(x)
+            x_static = SVector{3, T}(x)
             x_sparse = sparsevec([1, 3], T[1, 3], 3)
             x_batch = hcat(x, 2 .* x)
             x_batch_view = view(hcat(x_batch, 3 .* x), :, 1:2)
@@ -80,7 +80,7 @@
     end
 end
 
-@testitem "train predict workflow type contracts" tags=[:workflows] setup=[GenericTestSetup] begin
+@testitem "train predict workflow type contracts" tags = [:workflows] setup = [GenericTestSetup] begin
     using LinearAlgebra
     using Random
     using Static

@@ -1,4 +1,4 @@
-@testitem "ngrc" tags=[:models, :ngrc, :workflows] begin
+@testitem "ngrc" tags = [:models, :ngrc, :workflows] begin
     using Random
     using ReservoirComputing
     using LuxCore
@@ -103,11 +103,11 @@
             T = 200
             x = zeros(Float32, T)
             x[1] = 1.0f0
-            for t = 1:(T-1)
-                x[t+1] = a * x[t]
+            for t in 1:(T - 1)
+                x[t + 1] = a * x[t]
             end
 
-            X_in = reshape(x[1:(end-1)], 1, :)
+            X_in = reshape(x[1:(end - 1)], 1, :)
             Y_out = reshape(x[2:end], 1, :)
 
             ngrc = NGRC(

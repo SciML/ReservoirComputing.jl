@@ -1,4 +1,4 @@
-@testitem "esncell" tags=[:layers, :cells, :esn] begin
+@testitem "esncell" tags = [:layers, :cells, :esn] begin
     using Test
     using Random
     using LinearAlgebra
@@ -38,18 +38,18 @@
     extra_param_keys(::Type{ResESNCell}) = (:orthogonal_matrix,)
 
     function build_cell(
-        ::Type{C},
-        in_dims::Integer,
-        out_dims::Integer;
-        activation = tanh,
-        mix::Real = 1.0,
-        use_bias = False(),
-        init_input = _W_I,
-        init_reservoir = _W_I,
-        init_bias = _O32,
-        init_state = _Z32,
-        extra::NamedTuple = NamedTuple(),
-    ) where {C}
+            ::Type{C},
+            in_dims::Integer,
+            out_dims::Integer;
+            activation = tanh,
+            mix::Real = 1.0,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_I,
+            init_bias = _O32,
+            init_state = _Z32,
+            extra::NamedTuple = NamedTuple(),
+        ) where {C}
         base = (
             use_bias = use_bias,
             init_input = init_input,
@@ -321,7 +321,7 @@
 
         # No single ES2N proximity p can reproduce this result:
         # matching requires alpha=1-p AND beta=p simultaneously → alpha+beta=1.
-        @testset "unreachable by ES2N proximity p=$p" for p = 0.0f0:0.05f0:1.0f0
+        @testset "unreachable by ES2N proximity p=$p" for p in 0.0f0:0.05f0:1.0f0
             es2n_result = (1.0f0 - p) .* h0 .+ p .* x
             @test !(y ≈ es2n_result)
         end

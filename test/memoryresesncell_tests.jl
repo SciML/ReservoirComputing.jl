@@ -1,4 +1,4 @@
-@testitem "memoryresesncell" tags=[:layers, :cells, :memory] begin
+@testitem "memoryresesncell" tags = [:layers, :cells, :memory] begin
     using Test
     using Random
     using LinearAlgebra
@@ -16,20 +16,20 @@
     end
 
     function build_memresesn(
-        in_dims::Integer,
-        mem_dims::Integer,
-        res_dims::Integer;
-        activation = identity,
-        use_bias = False(),
-        init_input = _W_I,
-        init_reservoir = _W_ZZ,
-        init_memory = _W_I,
-        init_orthogonal = _W_ZZ,
-        init_bias = _O32,
-        init_state = init_state3,
-        alpha = 1.0,
-        beta = 1.0,
-    )
+            in_dims::Integer,
+            mem_dims::Integer,
+            res_dims::Integer;
+            activation = identity,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_memory = _W_I,
+            init_orthogonal = _W_ZZ,
+            init_bias = _O32,
+            init_state = init_state3,
+            alpha = 1.0,
+            beta = 1.0,
+        )
         return MemoryResESNCell(
             (in_dims, mem_dims) => res_dims,
             activation;

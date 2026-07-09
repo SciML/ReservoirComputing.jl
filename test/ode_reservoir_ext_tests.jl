@@ -1,4 +1,4 @@
-@testitem "ode_reservoir_ext" tags=[:extensions, :ode, :slow] begin
+@testitem "ode_reservoir_ext" tags = [:extensions, :ode, :slow] begin
     using Test
     using Random
     using LinearAlgebra
@@ -23,10 +23,10 @@
         initial_state = zeros(res_dim)
         params = (Wr = Wr, Win = Win, b = bias)
         return ODEProblem(esn_rhs!, initial_state, tspan, params),
-        Wr,
-        Win,
-        bias,
-        initial_state
+            Wr,
+            Win,
+            bias,
+            initial_state
     end
 
     # ---------------------------------------------------------------------------

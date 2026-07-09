@@ -1,4 +1,4 @@
-@testitem "basic" tags=[:layers, :core] begin
+@testitem "basic" tags = [:layers, :core] begin
     using Test
     using Random
     using ReservoirComputing
@@ -204,7 +204,7 @@
             ps = initialparameters(rng, dl)
             st = initialstates(rng, dl)
 
-            inputs = [Float32(t) for t = 1:5]
+            inputs = [Float32(t) for t in 1:5]
             outputs = Vector{Vector{Float32}}()
 
             for x in inputs
@@ -225,7 +225,7 @@
             ps = initialparameters(rng, dl)
             st = initialstates(rng, dl)
 
-            inputs = [Float32(t) for t = 1:6]
+            inputs = [Float32(t) for t in 1:6]
             hists = Vector{Vector{Float32}}()
             outputs = Vector{Vector{Float32}}()
 

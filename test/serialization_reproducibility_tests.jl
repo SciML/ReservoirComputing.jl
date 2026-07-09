@@ -1,4 +1,4 @@
-@testitem "serialization and reproducibility contracts" tags=[:serialization, :reproducibility] setup=[GenericTestSetup] begin
+@testitem "serialization and reproducibility contracts" tags = [:serialization, :reproducibility] setup = [GenericTestSetup] begin
     using Random
     using Serialization
     using Static

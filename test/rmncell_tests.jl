@@ -1,4 +1,4 @@
-@testitem "rmncell" tags=[:layers, :cells, :memory] begin
+@testitem "rmncell" tags = [:layers, :cells, :memory] begin
     using Test
     using Random
     using LinearAlgebra
@@ -16,22 +16,22 @@
     end
 
     function build_rmncell(
-        in_dims::Integer,
-        mem_dims::Integer,
-        res_dims::Integer;
-        activation = identity,
-        use_memory_bias = False(),
-        use_bias = False(),
-        init_memory_input = _W_I,
-        init_memory_reservoir = _W_ZZ,
-        init_memory_bias = _O32,
-        init_memory_state = init_state3,
-        init_input = _W_I,
-        init_reservoir = _W_ZZ,
-        init_memory = _W_I,
-        init_bias = _O32,
-        init_state = init_state3,
-    )
+            in_dims::Integer,
+            mem_dims::Integer,
+            res_dims::Integer;
+            activation = identity,
+            use_memory_bias = False(),
+            use_bias = False(),
+            init_memory_input = _W_I,
+            init_memory_reservoir = _W_ZZ,
+            init_memory_bias = _O32,
+            init_memory_state = init_state3,
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_memory = _W_I,
+            init_bias = _O32,
+            init_state = init_state3,
+        )
         linear_reservoir = ESNCell(
             in_dims => mem_dims,
             identity;

@@ -1,4 +1,4 @@
-@testitem "svesm" tags=[:models, :svm, :extensions, :workflows] begin
+@testitem "svesm" tags = [:models, :svm, :extensions, :workflows] begin
     using Test
     using Random
     using ReservoirComputing
