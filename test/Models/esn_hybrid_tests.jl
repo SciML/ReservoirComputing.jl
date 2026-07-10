@@ -1,4 +1,5 @@
-@testitem "esn_hybrid" tags = [:models, :esn] begin
+# Hybrid ESN model contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

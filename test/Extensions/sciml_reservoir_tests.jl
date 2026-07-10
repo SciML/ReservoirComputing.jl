@@ -1,4 +1,5 @@
-@testitem "sciml_reservoir" tags = [:extensions, :ode] begin
+# SciML reservoir interface contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

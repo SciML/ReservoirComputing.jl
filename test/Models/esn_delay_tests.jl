@@ -1,4 +1,5 @@
-@testitem "esn_delay" tags = [:models, :delay, :workflows] begin
+# Delay ESN model contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

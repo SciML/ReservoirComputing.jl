@@ -1,4 +1,7 @@
-@testitem "layer generic input and boolean contracts" tags = [:layers, :generic] setup = [GenericTestSetup] begin
+include("../shared/generic_testsetup.jl")
+using .GenericTestSetup
+
+begin
     using Random
     using Static
     using ReservoirComputing
@@ -174,7 +177,7 @@
     end
 end
 
-@testitem "ESN-family model generic smoke contracts" tags = [:models, :esn] setup = [GenericTestSetup] begin
+begin
     using Random
     using Static
     using Test
@@ -209,7 +212,7 @@ end
     end
 end
 
-@testitem "EI-family model generic smoke contracts" tags = [:models, :ei] setup = [GenericTestSetup] begin
+begin
     using Random
     using Static
     using Test
@@ -234,7 +237,7 @@ end
     end
 end
 
-@testitem "delay model generic smoke contracts" tags = [:models, :delay] setup = [GenericTestSetup] begin
+begin
     using Random
     using Static
     using Test
@@ -279,7 +282,7 @@ end
     end
 end
 
-@testitem "memory model generic smoke contracts" tags = [:models, :memory] setup = [GenericTestSetup] begin
+begin
     using Random
     using Static
     using Test
@@ -323,7 +326,7 @@ end
     end
 end
 
-@testitem "NGRC model generic smoke contracts" tags = [:models, :ngrc] setup = [GenericTestSetup] begin
+begin
     using Random
     using Static
     using Test

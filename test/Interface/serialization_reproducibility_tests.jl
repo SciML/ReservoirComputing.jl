@@ -1,4 +1,7 @@
-@testitem "serialization and reproducibility contracts" tags = [:serialization, :reproducibility] setup = [GenericTestSetup] begin
+include("../shared/generic_testsetup.jl")
+using .GenericTestSetup
+
+begin
     using Random
     using Serialization
     using Static

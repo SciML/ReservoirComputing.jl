@@ -1,4 +1,5 @@
-@testitem "eiesn" tags = [:models, :ei] begin
+# EI reservoir model contracts.
+begin
     using ReservoirComputing
     using Random
     using Test

@@ -1,4 +1,4 @@
-@testitem "inits" tags = [:inits, :core] begin
+begin
     using ReservoirComputing, LinearAlgebra, Random, SparseArrays
 
     const res_size = 16

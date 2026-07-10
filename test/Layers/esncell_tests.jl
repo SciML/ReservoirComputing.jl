@@ -1,4 +1,5 @@
-@testitem "esncell" tags = [:layers, :cells, :esn] begin
+# Echo-state reservoir cell contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

@@ -1,4 +1,5 @@
-@testitem "esn_deep" tags = [:models, :esn] begin
+# Deep ESN model contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

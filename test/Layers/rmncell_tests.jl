@@ -1,4 +1,5 @@
-@testitem "rmncell" tags = [:layers, :cells, :memory] begin
+# Recurrent memory-network cell contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

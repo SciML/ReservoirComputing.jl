@@ -1,4 +1,5 @@
-@testitem "memoryresesncell" tags = [:layers, :cells, :memory] begin
+# Memory reservoir cell contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

@@ -1,4 +1,5 @@
-@testitem "lifesn" tags = [:models, :lif, :workflows] begin
+# Local-information-flow ESN model contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

@@ -2,11 +2,14 @@
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-ReTestItems = "817f1d60-ba6b-4fd5-9520-3cf149f6a823"
 ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
+SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+ReservoirComputing = {path = "../.."}
 
 [compat]
 CUDA = "5"
-ReTestItems = "1.35"
+SafeTestsets = "0.1"
 julia = "1.10"

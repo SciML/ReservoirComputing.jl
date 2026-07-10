@@ -1,4 +1,5 @@
-@testitem "ode_reservoir_ext" tags = [:extensions, :ode, :slow] begin
+# ODE reservoir extension contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

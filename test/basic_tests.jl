@@ -1,4 +1,4 @@
-@testitem "basic" tags = [:layers, :core] begin
+begin
     using Test
     using Random
     using ReservoirComputing

@@ -1,4 +1,5 @@
-@testitem "svesm" tags = [:models, :svm, :extensions, :workflows] begin
+# Support-vector reservoir workflow contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

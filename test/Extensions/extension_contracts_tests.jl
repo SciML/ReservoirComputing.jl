@@ -1,4 +1,5 @@
-@testitem "extension loading contracts" tags = [:extensions, :sparse, :mlj] begin
+# Optional extension loading contracts.
+begin
     using Random
     using SparseArrays
     using MLJLinearModels

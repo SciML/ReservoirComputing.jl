@@ -1,4 +1,4 @@
-@testitem "collectstates_regression" tags = [:core, :regression] begin
+begin
     using Test
     using Random
     using ReservoirComputing

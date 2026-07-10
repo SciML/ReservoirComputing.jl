@@ -1,4 +1,5 @@
-@testitem "additiveeiesncell" tags = [:layers, :cells, :ei] begin
+# Additive EI reservoir cell contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

@@ -1,4 +1,7 @@
-@testitem "array wrappers and vector type contracts" tags = [:array_types] setup = [GenericTestSetup] begin
+include("../shared/generic_testsetup.jl")
+using .GenericTestSetup
+
+begin
     using LinearAlgebra
     using Random
     using SparseArrays
@@ -80,7 +83,7 @@
     end
 end
 
-@testitem "train predict workflow type contracts" tags = [:workflows] setup = [GenericTestSetup] begin
+begin
     using LinearAlgebra
     using Random
     using Static

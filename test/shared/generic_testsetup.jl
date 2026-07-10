@@ -1,4 +1,4 @@
-@testsetup module GenericTestSetup
+module GenericTestSetup
 
 using Random
 using Test

@@ -1,4 +1,5 @@
-@testitem "continuous_esn" tags = [:models, :continuous, :extensions] begin
+# Continuous ESN extension contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

@@ -1,4 +1,5 @@
-@testitem "esn" tags = [:models, :esn] begin
+# ESN-family model contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

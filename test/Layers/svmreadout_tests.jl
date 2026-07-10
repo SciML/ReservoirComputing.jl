@@ -1,4 +1,5 @@
-@testitem "svmreadout" tags = [:layers, :svm, :extensions] begin
+# SVM readout layer contracts.
+begin
     using Test
     using Random
     using ReservoirComputing

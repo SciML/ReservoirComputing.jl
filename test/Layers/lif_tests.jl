@@ -1,4 +1,5 @@
-@testitem "lif" tags = [:layers, :lif] begin
+# Local-information-flow layer contracts.
+begin
     using Test
     using Random
     using LinearAlgebra

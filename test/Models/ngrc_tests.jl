@@ -1,4 +1,5 @@
-@testitem "ngrc" tags = [:models, :ngrc, :workflows] begin
+# Next-generation reservoir model contracts.
+begin
     using Random
     using ReservoirComputing
     using LuxCore

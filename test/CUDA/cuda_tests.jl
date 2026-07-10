@@ -1,4 +1,4 @@
-@testitem "CUDA array contracts" tags = [:cuda, :gpu, :array_types] begin
+begin
     using LinearAlgebra
     using Random
     using Test

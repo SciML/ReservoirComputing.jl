@@ -1,14 +1,29 @@
 [Core]
-versions = ["lts", "1"]
+versions = ["lts", "1", "pre"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
-# ReTestItems 1.35.1 is incompatible with Julia 1.13 after Test's internal
-# test-set state moved to ScopedValue. Keep exercising pre, but do not block
-# merges until ReTestItems supports the new Test API.
-[Pre]
-versions = ["pre"]
+[Layers]
+versions = ["lts", "1", "pre"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
-continue_on_error = true
+
+[Models]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+[Extensions]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+[Interface]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
 [QA]
 versions = ["lts", "1"]
+in_all = false
+
+[CUDA]
+versions = ["1"]
+runner = ["self-hosted", "Linux", "X64", "gpu"]
+timeout = 120
+in_all = false
