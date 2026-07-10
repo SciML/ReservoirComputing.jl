@@ -1,6 +1,14 @@
 [Core]
-versions = ["lts", "1", "pre"]
+versions = ["lts", "1"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+# ReTestItems 1.35.1 is incompatible with Julia 1.13 after Test's internal
+# test-set state moved to ScopedValue. Keep exercising pre, but do not block
+# merges until ReTestItems supports the new Test API.
+[Pre]
+versions = ["pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+continue_on_error = true
 
 [QA]
 versions = ["lts", "1"]
