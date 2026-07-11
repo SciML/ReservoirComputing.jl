@@ -64,6 +64,12 @@ function RandomMapping(permutations; expansion_size = 40)
     return RandomMapping(permutations, expansion_size)
 end
 
+"""
+    RandomMaps
+
+Precomputed random input-mapping data used by [`RECACell`](@ref) and [`RECA`](@ref).
+Construct it from a [`RandomMapping`](@ref) with `create_encoding`.
+"""
 struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     permutations::T
     expansion_size::E
