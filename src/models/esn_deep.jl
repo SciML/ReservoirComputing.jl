@@ -96,57 +96,20 @@ Composition:
 end
 
 function DeepESN(
-        in_dims::IntegerType,
-        res_dims::AbstractVector{<:IntegerType},
-        out_dims::IntegerType,
-        activation = tanh;
-        leak_coefficient = 1.0,
-        init_reservoir = rand_sparse,
-        init_input = scaled_rand,
-        init_bias = zeros32,
-        init_state = randn32,
-        use_bias = false,
-        state_modifiers = (),
-        readout_activation = identity
+        cells::Tuple,
+        readout;
+        states_modifiers = nothing
     )
-    n_layers = length(res_dims)
-    acts = _asvec(activation, n_layers)
-    leaks = _asvec(leak_coefficient, n_layers)
-    ires = _asvec(init_reservoir, n_layers)
-    iinp = _asvec(init_input, n_layers)
-    ibias = _asvec(init_bias, n_layers)
-    istate = _asvec(init_state, n_layers)
-    ub = _asvec(use_bias, n_layers)
-    mods0 = _asvec(state_modifiers, n_layers)
+    n_layers = length(cells)
 
-    cells = Vector{Any}(undef, n_layers)
-    states_modifiers = Vector{Any}(undef, n_layers)
+    # Ensure cells are wrapped in StatefulLayer to maintain continuous memory
+    stateful_cells = map(c -> c isa StatefulLayer ? c : StatefulLayer(c), cells)
 
-    prev = in_dims
-    for idx in firstindex(res_dims):lastindex(res_dims)
-        cell = ESNCell(
-            prev => res_dims[idx], acts[idx];
-            use_bias = static(ub[idx]),
-            init_bias = ibias[idx],
-            init_reservoir = ires[idx],
-            init_input = iinp[idx],
-            init_state = istate[idx],
-            leak_coefficient = leaks[idx]
-        )
-        cells[idx] = StatefulLayer(cell)
-        states_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])
-        prev = res_dims[idx]
-    end
-    mods_per_layer = map(_coerce_layer_mods, states_modifiers) |> Tuple
-    ro = LinearReadout(prev => out_dims, readout_activation)
-    return DeepESN(Tuple(cells), mods_per_layer, ro)
-end
+    # Handle state modifiers
+    mods = states_modifiers === nothing ? ntuple(_ -> nothing, n_layers) : states_modifiers
+    mods_per_layer = map(_coerce_layer_mods, mods) |> Tuple
 
-function DeepESN(
-        in_dims::Int, res_dim::Int, out_dims::Int,
-        activation = tanh; depth::Int = 2, kwargs...
-    )
-    return DeepESN(in_dims, fill(res_dim, depth), out_dims, activation; kwargs...)
+    return DeepESN(stateful_cells, mods_per_layer, readout)
 end
 
 function initialparameters(rng::AbstractRNG, desn::DeepESN)
@@ -184,26 +147,26 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
 end
 
 function _partial_apply(desn::DeepESN, inp, ps, st)
-    inp_t = inp
     n_layers = length(desn.cells)
-    new_cell_st = Vector{Any}(undef, n_layers)
-    new_mods_st = Vector{Any}(undef, n_layers)
-    for idx in firstindex(desn.cells):lastindex(desn.cells)
-        inp_t, st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], st.cells[idx])
-        new_cell_st[idx] = st_cell_i
-        inp_t,
-            st_mods_i = _apply_seq(
-            desn.states_modifiers[idx], inp_t,
+    current_inp = inp
+
+    # Using ntuple ensures strict type-stability across arbitrary hybrid layers
+    new_states = ntuple(n_layers) do idx
+        cell_out, st_cell_i = apply(desn.cells[idx], current_inp, ps.cells[idx], st.cells[idx])
+
+        mod_out, st_mods_i = _apply_seq(
+            desn.states_modifiers[idx], cell_out,
             ps.states_modifiers[idx], st.states_modifiers[idx]
         )
-        new_mods_st[idx] = st_mods_i
+
+        current_inp = mod_out
+        return (cell = st_cell_i, mod = st_mods_i)
     end
 
-    return inp_t,
-        (;
-            cells = tuple(new_cell_st...),
-            states_modifiers = tuple(new_mods_st...),
-        )
+    new_cell_st = map(x -> x.cell, new_states)
+    new_mods_st = map(x -> x.mod, new_states)
+
+    return current_inp, (; cells = new_cell_st, states_modifiers = new_mods_st)
 end
 
 function (desn::DeepESN)(inp, ps, st)
@@ -258,34 +221,34 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
     newst = st
     collected = Any[]
     n_layers = length(desn.cells)
+
     for inp in eachcol(data)
-        inp_t = inp
-        cell_st_parts = Vector{Any}(undef, n_layers)
-        mods_st_parts = Vector{Any}(undef, n_layers)
-        for idx in firstindex(desn.cells):lastindex(desn.cells)
-            inp_t,
-                st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], newst.cells[idx])
-            cell_st_parts[idx] = st_cell_i
-            inp_t,
-                st_mods_i = _apply_seq(
-                desn.states_modifiers[idx], inp_t,
+        current_inp = inp
+
+        # Type-stable folding for arbitrary custom cells
+        new_states = ntuple(n_layers) do idx
+            cell_out, st_cell_i = apply(desn.cells[idx], current_inp, ps.cells[idx], newst.cells[idx])
+
+            mod_out, st_mods_i = _apply_seq(
+                desn.states_modifiers[idx], cell_out,
                 ps.states_modifiers[idx], newst.states_modifiers[idx]
             )
-            mods_st_parts[idx] = st_mods_i
+
+            current_inp = mod_out
+            return (cell = st_cell_i, mod = st_mods_i)
         end
-        push!(collected, copy(inp_t))
+
+        push!(collected, copy(current_inp))
+
         newst = (;
-            cells = tuple(cell_st_parts...),
-            states_modifiers = tuple(mods_st_parts...),
+            cells = map(x -> x.cell, new_states),
+            states_modifiers = map(x -> x.mod, new_states),
             readout = newst.readout,
         )
     end
+
     @assert !isempty(collected)
     states = eltype(data).(reduce(hcat, collected))
 
     return states, newst
-end
-
-function collectstates(m::DeepESN, data::AbstractVector, ps, st::NamedTuple)
-    return collectstates(m, reshape(data, :, 1), ps, st)
 end
