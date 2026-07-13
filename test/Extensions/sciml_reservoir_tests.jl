@@ -4,13 +4,26 @@ begin
     using Random
     using ReservoirComputing
 
+    const SciMLReservoirError = @static isdefined(Base, :FieldError) ?
+        Union{ErrorException, FieldError} : ErrorException
+
+    function sciml_reservoir_fixture()
+        reservoir = SciMLProblemReservoir(
+            (placeholder = true,),
+            TerminalStateSampling(),
+            (0.0, 1.0),
+        )
+        model = ReservoirComputer(reservoir, LinearReadout(1 => 1))
+        ps, st = setup(MersenneTwister(0), model)
+        return model, randn(Float32, 1, 5), ps, st
+    end
+
     @testset "AbstractSampler hierarchy" begin
         @test TerminalStateSampling <: AbstractSampler
         @test TerminalStateSampling() isa AbstractSampler
     end
 
     @testset "SciMLProblemReservoir construction" begin
-        # Use a placeholder `prob` — PR1 keeps the type fully untyped, so any value works.
         prob = (placeholder = true,)
         sampler = TerminalStateSampling()
         tspan = (0.0, 1.0)
@@ -41,13 +54,8 @@ begin
     end
 
     @testset "Continuous _collectstates errors without extension" begin
-        prob = (placeholder = true,)
-        res = SciMLProblemReservoir(prob, TerminalStateSampling(), (0.0, 1.0))
-        rc = ReservoirComputer(res, LinearReadout(1 => 1))
-        rng = MersenneTwister(0)
-        ps, st = setup(rng, rc)
-        data = randn(Float32, 1, 5)
-        @test_throws ErrorException collectstates(rc, data, ps, st)
+        model, data, ps, st = sciml_reservoir_fixture()
+        @test_throws SciMLReservoirError collectstates(model, data, ps, st)
     end
 
     @testset "SciMLProblemReservoir rejects protected solve kwargs" begin
@@ -68,25 +76,15 @@ begin
     end
 
     @testset "Continuous _predict errors without extension" begin
-        prob = (placeholder = true,)
-        res = SciMLProblemReservoir(prob, TerminalStateSampling(), (0.0, 1.0))
-        rc = ReservoirComputer(res, LinearReadout(1 => 1))
-        rng = MersenneTwister(0)
-        ps, st = setup(rng, rc)
-        data = randn(Float32, 1, 5)
-        @test_throws ErrorException predict(rc, data, ps, st)
-        @test_throws ErrorException predict(rc, 3, ps, st; initialdata = randn(Float32, 1))
+        model, data, ps, st = sciml_reservoir_fixture()
+        initialdata = randn(Float32, 1)
+        @test_throws SciMLReservoirError predict(model, data, ps, st)
+        @test_throws SciMLReservoirError predict(model, 3, ps, st; initialdata)
     end
 
-    # `DeepESN` is an `AbstractReservoirComputer` subtype whose leading field is
-    # `:cells`, not `:reservoir`. The new two-level `predict` dispatch must not
-    # unconditionally reach for `rc.reservoir`, or DeepESN crashes with a
-    # `FieldError` (originally surfaced by the docs `@example` block in
-    # `tutorials/deep_esn.md`). This testset locks in the `hasfield` guard.
+    # DeepESN has `:cells`, not `:reservoir`; keep predict dispatch field-agnostic.
     @testset "predict works on reservoir computers without a :reservoir field" begin
         rng = MersenneTwister(0)
-        # `rand_sparse`'s sparsity defaults need a wide-enough reservoir for the
-        # spectral-radius rescaling to avoid degenerate NaNs.
         desn = DeepESN(3, [16, 16], 3)
         ps, st = setup(rng, desn)
         data = randn(3, 5)
