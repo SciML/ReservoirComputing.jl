@@ -1,15 +1,12 @@
 @doc raw"""
-    DeepESN(in_dims, res_dims, out_dims,
-            activation=tanh; depth=2, leak_coefficient=1.0, init_reservoir=rand_sparse,
-            init_input=scaled_rand, init_bias=zeros32, init_state=randn32,
-            use_bias=false, state_modifiers=(), readout_activation=identity)
+    DeepESN(cells::Tuple, readout; states_modifiers=nothing)
 
-Deep Echo State Network [Gallicchio2017](@cite).
+Deep Echo State Network wrapper [Gallicchio2017](@cite).
 
-`DeepESN` composes, for `L = length(res_dims)` layers:
-  1) a sequence of stateful [`ESNCell`](@ref) with widths `res_dims[ℓ]`,
-  2) zero or more per-layer `state_modifiers[ℓ]` applied to the layer's state, and
-  3) a final [`LinearReadout`](@ref) from the last layer's features to the output.
+`DeepESN` acts as a generic wrapper that composes, for `L = length(cells)` layers:
+  1) a sequence of arbitrary Lux layers (typically stateful `ESNCell`s or custom dynamical systems),
+  2) zero or more per-layer `states_modifiers[ℓ]` applied to the layer's state, and
+  3) a final `readout` layer from the last layer's features to the output.
 
 ## Equations
 
@@ -32,26 +29,14 @@ Deep Echo State Network [Gallicchio2017](@cite).
 
 ## Arguments
 
-  - `in_dims`: Input dimension.
-  - `res_dims`: Vector of reservoir (hidden) dimensions per layer; its length sets the depth `L`.
-  - `out_dims`: Output dimension.
-  - `activation`: Reservoir activation(s). Either a single function (broadcast to all layers)
-    or a vector/tuple of length `L`. Default: `tanh`.
+  - `cells`: A `Tuple` of pre-instantiated layers. If a layer is not already a `StatefulLayer`, it will be wrapped automatically to maintain continuous reservoir memory.
+  - `readout`: The final readout layer (e.g., `LinearReadout`) applied to the output of the last cell.
 
 ## Keyword arguments
 
-Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
-
-  - `leak_coefficient`: Leak rate(s) `α_ℓ ∈ (0,1]`. Scalar or length-`L` collection. Default: `1.0`.
-  - `init_reservoir`: Initializer(s) for `W_res^{(ℓ)}`. Scalar or length-`L`. Default: [`rand_sparse`](@ref).
-  - `init_input`: Initializer(s) for `W_in^{(ℓ)}`. Scalar or length-`L`. Default: [`scaled_rand`](@ref).
-  - `init_bias`: Initializer(s) for reservoir bias (used iff `use_bias[ℓ]=true`).
-    Scalar or length-`L`. Default: `zeros32`.
-  - `init_state`: Initializer(s) used when an external state is not provided.
-    Scalar or length-`L`. Default: `randn32`.
-  - `use_bias`: Whether each reservoir uses a bias term. Boolean scalar or length-`L`. Default: `false`.
-  - `depth`: Depth of the DeepESN. If the reservoir size is given as a number instead of a vector, this
-    parameter controls the depth of the model. Default is 2.
+  - `states_modifiers`: Per-layer modifier(s) applied to each layer’s state before it
+    feeds into the next layer (and the readout for the last layer). Accepts `nothing`,
+    a single layer, a vector/tuple of length `L`, or per-layer collections. Defaults to no modifiers.
 
 Composition:
 
@@ -71,23 +56,17 @@ Composition:
 
 ## Parameters
 
-  - `cells :: NTuple{L,NamedTuple}` — parameters for each [`ESNCell`](@ref), including:
-    + `input_matrix :: (res_dims[ℓ] × in_size[ℓ])` — `W_in^{(ℓ)}`
-    + `reservoir_matrix :: (res_dims[ℓ] × res_dims[ℓ])` — `W_res^{(ℓ)}`
-    + `bias :: (res_dims[ℓ],)` — present only if `use_bias[ℓ]=true`
+  - `cells :: NTuple{L,NamedTuple}` — parameters for each cell in the sequence.
   - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
-  - `readout` — parameters of [`LinearReadout`](@ref), typically:
-    + `weight :: (out_dims × res_dims[L])` — `W_out`
-    + `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
+  - `readout` — parameters for the readout layer.
 
-> Exact field names for modifiers/readout follow their respective layer definitions.
+> Exact field names for cells, modifiers, and readout follow their respective layer definitions.
 
 ## States
 
-  - `cells :: NTuple{L,NamedTuple}` — states for each [`ESNCell`](@ref).
+  - `cells :: NTuple{L,NamedTuple}` — states for each cell in the sequence.
   - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
-  - `readout` — states for [`LinearReadout`](@ref).
-
+  - `readout` — states for the readout layer.
 """
 @concrete struct DeepESN <: AbstractEchoStateNetwork{(:cells, :states_modifiers, :readout)}
     cells
