@@ -1,0 +1,331 @@
+# Echo-state reservoir cell contracts.
+begin
+    using Test
+    using Random
+    using LinearAlgebra
+    using ReservoirComputing
+    using Static
+
+    const _I32 = (m, n) -> Matrix{Float32}(I, m, n)
+    const _Z32 = m -> zeros(Float32, m)
+    const _O32 = (rng, m) -> zeros(Float32, m)
+    const _W_I = (rng, m, n) -> _I32(m, n)
+    const _W_ZZ = (rng, m, n) -> zeros(Float32, m, n)
+
+    function init_state3(rng::AbstractRNG, m::Integer, B::Integer)
+        return B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
+    end
+
+    cell_name(::Type{C}) where {C} = string(nameof(C))
+
+    mix_kw(::Type{ESNCell}) = :leak_coefficient
+    mix_kw(::Type{ES2NCell}) = :proximity
+    mix_kw(::Type{EuSNCell}) = :leak_coefficient
+    mix_kw(::Type{ResESNCell}) = :beta
+
+    mix_label(::Type{ESNCell}) = "leak_coefficient"
+    mix_label(::Type{ES2NCell}) = "proximity"
+    mix_label(::Type{EuSNCell}) = "leak_coefficient"
+    mix_label(::Type{ResESNCell}) = "beta"
+
+    default_extra_ctor_kwargs(::Type{ESNCell}) = NamedTuple()
+    default_extra_ctor_kwargs(::Type{ES2NCell}) = (init_orthogonal = _W_I,)
+    default_extra_ctor_kwargs(::Type{EuSNCell}) = NamedTuple()  # diffusion exists but we leave default unless overridden
+    default_extra_ctor_kwargs(::Type{ResESNCell}) = (init_orthogonal = _W_I, alpha = 1.0)
+
+    extra_param_keys(::Type{ESNCell}) = ()
+    extra_param_keys(::Type{ES2NCell}) = (:orthogonal_matrix,)
+    extra_param_keys(::Type{EuSNCell}) = ()
+    extra_param_keys(::Type{ResESNCell}) = (:orthogonal_matrix,)
+
+    function build_cell(
+            ::Type{C},
+            in_dims::Integer,
+            out_dims::Integer;
+            activation = tanh,
+            mix::Real = 1.0,
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_I,
+            init_bias = _O32,
+            init_state = _Z32,
+            extra::NamedTuple = NamedTuple(),
+        ) where {C}
+        base = (
+            use_bias = use_bias,
+            init_input = init_input,
+            init_reservoir = init_reservoir,
+            init_bias = init_bias,
+            init_state = init_state,
+        )
+
+        mixnt = NamedTuple{(mix_kw(C),)}((mix,))
+
+        kw = merge(base, default_extra_ctor_kwargs(C), mixnt, extra)
+
+        return C(in_dims => out_dims, activation; kw...)
+    end
+
+    function test_echo_state_cell_contract(::Type{C}) where {C}
+        @testset "$(cell_name(C)): constructor & show" begin
+            cell = build_cell(C, 3, 5; mix = 0.3, use_bias = False())
+            io = IOBuffer()
+            show(io, cell)
+            shown = String(take!(io))
+
+            @test occursin("$(cell_name(C))(3 => 5", shown)
+            @test occursin(Regex("$(mix_label(C))=0\\.3(f0)?"), shown)
+            @test occursin("use_bias=false", shown)
+        end
+
+        @testset "$(cell_name(C)): initialparameters shapes & bias flag" begin
+            rng = MersenneTwister(1)
+
+            cell_nobias = build_cell(
+                C,
+                3,
+                4;
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_bias = _O32,
+            )
+
+            ps_nb = initialparameters(rng, cell_nobias)
+            @test haskey(ps_nb, :input_matrix)
+            @test haskey(ps_nb, :reservoir_matrix)
+            @test size(ps_nb.input_matrix) == (4, 3)
+            @test size(ps_nb.reservoir_matrix) == (4, 4)
+            @test !haskey(ps_nb, :bias)
+
+            for k in extra_param_keys(C)
+                @test haskey(ps_nb, k)
+            end
+            if C === ES2NCell
+                @test size(ps_nb.orthogonal_matrix) == (4, 4)
+            end
+
+            cell_bias = build_cell(
+                C,
+                3,
+                4;
+                use_bias = True(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_bias = _O32,
+            )
+
+            ps_b = initialparameters(rng, cell_bias)
+            @test haskey(ps_b, :bias)
+            @test length(ps_b.bias) == 4
+        end
+
+        @testset "$(cell_name(C)): initialstates carries RNG replica" begin
+            rng = MersenneTwister(2)
+            cell = build_cell(C, 2, 2)
+            st = initialstates(rng, cell)
+            @test haskey(st, :rng)
+        end
+
+        @testset "$(cell_name(C)): forward (vector) — identity + mix=1 gives linear map" begin
+            cell = build_cell(
+                C,
+                3,
+                3;
+                activation = identity,
+                mix = 1.0,
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_ZZ,
+                init_state = _Z32,
+            )
+
+            ps = initialparameters(MersenneTwister(0), cell)
+            x = Float32[1, 2, 3]
+            h0 = zeros(Float32, 3)
+
+            (y_tuple, st2) = cell((x, (h0,)), ps, NamedTuple())
+            y, (hcarry,) = y_tuple
+            @test y ≈ x
+            @test hcarry ≈ y
+            @test st2 === NamedTuple()
+        end
+
+        @testset "$(cell_name(C)): forward (vector) — mix extremes" begin
+            cell0 = build_cell(
+                C,
+                3,
+                3;
+                activation = identity,
+                mix = 0.0,
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_I,
+                init_state = _Z32,
+            )
+
+            ps0 = initialparameters(MersenneTwister(0), cell0)
+            x = Float32[10, 20, 30]
+            h0 = Float32[4, 5, 6]
+            (y0_tuple, _) = cell0((x, (h0,)), ps0, NamedTuple())
+            y0, _ = y0_tuple
+            @test y0 ≈ h0
+
+            cell1 = build_cell(
+                C,
+                3,
+                3;
+                activation = identity,
+                mix = 1.0,
+                use_bias = True(),
+                init_input = _W_I,
+                init_reservoir = _W_ZZ,
+                init_bias = (rng, m) -> ones(Float32, m),
+                init_state = _Z32,
+            )
+
+            ps1 = initialparameters(MersenneTwister(0), cell1)
+            (y1_tuple, _) = cell1((x, (zeros(Float32, 3),)), ps1, NamedTuple())
+            y1, _ = y1_tuple
+            @test y1 ≈ x .+ 1.0f0
+        end
+
+        @testset "$(cell_name(C)): forward (matrix batch)" begin
+            cell = build_cell(
+                C,
+                3,
+                3;
+                activation = identity,
+                mix = 1.0,
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_ZZ,
+                init_state = _Z32,
+            )
+
+            ps = initialparameters(MersenneTwister(0), cell)
+            X = Float32[1 2; 3 4; 5 6]  # (3, 2)
+            H0 = zeros(Float32, 3, 2)
+
+            (Y_tuple, _) = cell((X, (H0,)), ps, NamedTuple())
+            Y, _ = Y_tuple
+            @test size(Y) == (3, 2)
+            @test Y ≈ X
+        end
+
+        if C === ESNCell
+            @testset "$(cell_name(C)): scalar vs vector leak equivalence" begin
+                rng = MersenneTwister(42)
+
+                in_dims = 4
+                out_dims = 6
+                batch = 3
+
+                α = 0.3f0
+                α_vec = fill(α, out_dims)
+
+                activation = identity
+
+                kwargs = (
+                    use_bias = False(),
+                    init_input = _W_I,
+                    init_reservoir = _W_I,
+                    init_state = _Z32,
+                )
+
+                cell_scalar = ESNCell(
+                    in_dims => out_dims,
+                    activation;
+                    leak_coefficient = α,
+                    kwargs...,
+                )
+
+                cell_vector = ESNCell(
+                    in_dims => out_dims,
+                    activation;
+                    leak_coefficient = α_vec,
+                    kwargs...,
+                )
+
+                ps = initialparameters(rng, cell_scalar)
+
+                x = rand(Float32, in_dims, batch)
+                h0 = rand(Float32, out_dims, batch)
+
+                (y_s_tuple, _) = cell_scalar((x, (h0,)), ps, NamedTuple())
+                (y_v_tuple, _) = cell_vector((x, (h0,)), ps, NamedTuple())
+
+                y_s, _ = y_s_tuple
+                y_v, _ = y_v_tuple
+
+                @test y_s ≈ y_v atol = 1.0e-6
+            end
+        end
+
+        return @testset "$(cell_name(C)): outer call computes its own initial hidden state" begin
+            rng = MersenneTwister(123)
+            cell = build_cell(
+                C,
+                2,
+                2;
+                activation = identity,
+                mix = 1.0,
+                use_bias = False(),
+                init_input = _W_I,
+                init_reservoir = _W_ZZ,
+                init_state = init_state3,
+            )
+
+            ps = initialparameters(rng, cell)
+            st = initialstates(rng, cell)
+
+            x = Float32[7, 9]
+            (y_tuple, st2) = cell(x, ps, st)
+            y, _ = y_tuple
+
+            @test y ≈ x
+            @test haskey(st2, :rng)
+        end
+    end
+
+    @testset "AbstractEchoStateNetworkCell contract" begin
+        for C in (ESNCell, ES2NCell, EuSNCell, ResESNCell)
+            test_echo_state_cell_contract(C)
+        end
+    end
+
+    @testset "ResESNCell: decoupled alpha/beta" begin
+        cell = ResESNCell(
+            3 => 3,
+            identity;
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_orthogonal = _W_I,
+            init_state = _Z32,
+            alpha = 0.4,
+            beta = 0.7,
+        )
+
+        ps = initialparameters(MersenneTwister(0), cell)
+        # Non-collinear vectors so the system alpha=1-p, beta=p is fully determined.
+        # Any ES2N proximity p forces (1-p)+p=1; since 0.4+0.7=1.1≠1, no p exists.
+        x = Float32[1, 0, 2]
+        h0 = Float32[0, 3, 1]
+
+        (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
+        y, _ = y_tuple
+
+        # h = alpha * I * h0 + beta * identity(I*x + 0*h0)
+        #   = 0.4 * h0 + 0.7 * x
+        @test y ≈ 0.4f0 .* h0 .+ 0.7f0 .* x
+
+        # No single ES2N proximity p can reproduce this result:
+        # matching requires alpha=1-p AND beta=p simultaneously → alpha+beta=1.
+        @testset "unreachable by ES2N proximity p=$p" for p in 0.0f0:0.05f0:1.0f0
+            es2n_result = (1.0f0 - p) .* h0 .+ p .* x
+            @test !(y ≈ es2n_result)
+        end
+    end
+
+end
