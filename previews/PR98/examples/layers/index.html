@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Using different layers · ReservoirComputing.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ReservoirComputing.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../esn/">Basics</a></li><li class="is-active"><a class="tocitem" href>Using different layers</a><ul class="internal"><li><a class="tocitem" href="#Delay-Line-Reservoir-and-dense-input-layer"><span>Delay Line Reservoir and dense input layer</span></a></li><li><a class="tocitem" href="#Pseudo-SVD-reservoir-and-irrational-input-layer"><span>Pseudo SVD reservoir and irrational input layer</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../linear/">Using different linear methods</a></li><li><a class="tocitem" href="../dafesn/">Double Activation Function ESN</a></li><li><a class="tocitem" href="../esgp/">ESGP</a></li></ul></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="../../user/models/">Models</a></li><li><a class="tocitem" href="../../user/layers/">Layers</a></li><li><a class="tocitem" href="../../user/linear/">Linear Models</a></li><li><a class="tocitem" href="../../user/spec/">Special ESNs</a></li><li><a class="tocitem" href="../../user/nla/">Non Linear Algorithm</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Using different layers</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Using different layers</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/examples/layers.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Using-different-layers"><a class="docs-heading-anchor" href="#Using-different-layers">Using different layers</a><a id="Using-different-layers-1"></a><a class="docs-heading-anchor-permalink" href="#Using-different-layers" title="Permalink"></a></h1><p>The composability of the ESN struct allows for the construction of the model with different reservoirs or input layers. In ReservoirComputing.jl there are different implementations of these layers found in the literature, but, of course, one is free to build a custom implementation. Following the prior example, we will continue to use the Lorenz system prediction as our test.</p><pre><code class="language-julia">using ParameterizedFunctions, OrdinaryDiffEq
+
+#lorenz system parameters
+u0 = [1.0,0.0,0.0]                       
+tspan = (0.0,1000.0)                      
+p = [10.0,28.0,8/3]
+
+#define lorenz system
+function lorenz(du,u,p,t)
+    du[1] = p[1]*(u[2]-u[1])
+    du[2] = u[1]*(p[2]-u[3]) - u[2]
+    du[3] = u[1]*u[2] - p[3]*u[3]
+end
+
+#solve system
+prob = ODEProblem(lorenz, u0, tspan, p)  
+sol = solve(prob, ABM54(), dt=0.02)   
+v = sol.u
+data = Matrix(hcat(v...))
+
+shift = 300
+train_len = 5000
+predict_len = 1250
+
+#get data
+train = data[:, shift:shift+train_len-1]
+test = data[:, shift+train_len:shift+train_len+predict_len-1]</code></pre><h2 id="Delay-Line-Reservoir-and-dense-input-layer"><a class="docs-heading-anchor" href="#Delay-Line-Reservoir-and-dense-input-layer">Delay Line Reservoir and dense input layer</a><a id="Delay-Line-Reservoir-and-dense-input-layer-1"></a><a class="docs-heading-anchor-permalink" href="#Delay-Line-Reservoir-and-dense-input-layer" title="Permalink"></a></h2><p>In order to change the default reservoir and input layer, we first need to define the ones we want to use. With the same parameters as the example before, we can define the ESN as follows:</p><pre><code class="language-julia">using ReservoirComputing
+#model parameters
+approx_res_size = 300
+radius = 1.2
+activation = tanh
+degree = 6
+sigma = 0.1
+beta = 0.0
+alpha = 1.0
+nla_type = NLADefault()
+extended_states = true
+
+#define the weight for the reservoir
+r= 0.95
+
+#define reservoir and input layer
+Random.seed!(42) #fixed seed for reproducibility
+W = DLR(approx_res_size, r)
+W_in = init_dense_input_layer(approx_res_size, size(train, 1), sigma)
+
+#create echo state network  
+esndlr = ESN(W,
+    train,
+    W_in,
+    activation = activation,
+    alpha = alpha,
+    nla_type = nla_type,
+    extended_states = extended_states)
+
+#training and prediction
+W_out = ESNtrain(esndlr, beta)
+output = ESNpredict(esndlr, predict_len, W_out)</code></pre><p>And we can plot the results as before:</p><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90959227-ffbe1d00-e499-11ea-8a0a-c4ba95ddb29a.png" alt="esndlrfixedseed"/></p><p>The reservoir used is taken from the paper [1]. The other reservoir illustrated therein are implemented in this package.</p><h2 id="Pseudo-SVD-reservoir-and-irrational-input-layer"><a class="docs-heading-anchor" href="#Pseudo-SVD-reservoir-and-irrational-input-layer">Pseudo SVD reservoir and irrational input layer</a><a id="Pseudo-SVD-reservoir-and-irrational-input-layer-1"></a><a class="docs-heading-anchor-permalink" href="#Pseudo-SVD-reservoir-and-irrational-input-layer" title="Permalink"></a></h2><p>Using another architecture just to have more examples, we can define the ESN using the reservoir obtained from the SVD-like method [2] and the irrational input layer, as described in [1]. We are going to use the same parameters as before, only adding the necessary ones for the construction of the new layers.</p><pre><code class="language-julia">max_value = 1.5
+sparsity = 0.15
+
+#constructing the pseudo svd reservoir and irrational input layer
+W = pseudoSVD(approx_res_size, max_value, sparsity)
+W_in = irrational_sign_input(approx_res_size, size(train, 1), sigma)
+
+esnsvd = ESN(W,
+    train,
+    W_in,
+    activation = activation,
+    alpha = alpha,
+    nla_type = nla_type,
+    extended_states = extended_states)
+
+#training and prediction
+W_out = ESNtrain(esnsvd, beta)
+output = ESNpredict(esnsvd, predict_len, W_out)</code></pre><p>And, of course, the result can be plotted as always:</p><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90959522-f59d1e00-e49b-11ea-9b34-9e88ae3b4adf.png" alt="esnsvdfixedseed"/></p><p>As we can see, the results can vary wildly from one architecture to another, so be careful with the choice of the layers.</p><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>[1]: Rodan, Ali, and Peter Tino. &quot;Minimum complexity echo state network.&quot; IEEE transactions on neural networks 22.1 (2010): 131-144.</p><p>[2]&quot; Yang, Cuili, et al. &quot;Design of polynomial echo state networks for time series prediction.&quot; Neurocomputing 290 (2018): 148-160.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../esn/">« Basics</a><a class="docs-footer-nextpage" href="../linear/">Using different linear methods »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 11 June 2021 13:56">Friday 11 June 2021</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Continuous-time reservoirs from a SciMLProblem · ReservoirComputing.jl</title><meta name="title" content="Continuous-time reservoirs from a SciMLProblem · ReservoirComputing.jl"/><meta property="og:title" content="Continuous-time reservoirs from a SciMLProblem · ReservoirComputing.jl"/><meta property="twitter:title" content="Continuous-time reservoirs from a SciMLProblem · ReservoirComputing.jl"/><meta name="description" content="Documentation for ReservoirComputing.jl."/><meta property="og:description" content="Documentation for ReservoirComputing.jl."/><meta property="twitter:description" content="Documentation for ReservoirComputing.jl."/><meta property="og:url" content="https://docs.sciml.ai/ReservoirComputing/stable/tutorials/sciml_reservoir/"/><meta property="twitter:url" content="https://docs.sciml.ai/ReservoirComputing/stable/tutorials/sciml_reservoir/"/><link rel="canonical" href="https://docs.sciml.ai/ReservoirComputing/stable/tutorials/sciml_reservoir/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ReservoirComputing.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ReservoirComputing.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><a class="tocitem" href="../getting_started/">Getting Started with ReservoirComputing.jl</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../scratch/">Building a model from scratch</a></li><li><a class="tocitem" href="../lorenz_basic/">Chaos forecasting with an ESN</a></li><li class="is-active"><a class="tocitem" href>Continuous-time reservoirs from a SciMLProblem</a><ul class="internal"><li><a class="tocitem" href="#Loading-the-extension"><span>Loading the extension</span></a></li><li><a class="tocitem" href="#Constructing-a-reservoir-from-an-ODE-problem"><span>Constructing a reservoir from an ODE problem</span></a></li><li><a class="tocitem" href="#How-time-is-laid-out"><span>How time is laid out</span></a></li><li><a class="tocitem" href="#A-worked-example:-linear-ODE-with-closed-form-solution"><span>A worked example: linear ODE with closed-form solution</span></a></li><li><a class="tocitem" href="#Calling-predict"><span>Calling <code>predict</code></span></a></li><li><a class="tocitem" href="#Eye-test:-Lorenz-chaos-forecasting-with-a-continuous-ESN"><span>Eye test: Lorenz chaos forecasting with a continuous ESN</span></a></li><li><a class="tocitem" href="#A-delay-equation-target:-Mackey-Glass"><span>A delay-equation target: Mackey-Glass</span></a></li><li><a class="tocitem" href="#Adding-your-own-sampler"><span>Adding your own sampler</span></a></li></ul></li><li><a class="tocitem" href="../continuous_esn/">Continuous ESN — forecasting Lorenz</a></li><li><a class="tocitem" href="../ngrc/">Fitting a Next Generation Reservoir Computer</a></li><li><a class="tocitem" href="../deep_esn/">Deep Echo State Networks</a></li><li><a class="tocitem" href="../train/">Training Reservoir Computing Models</a></li><li><a class="tocitem" href="../reca/">Reservoir Computing with Cellular Automata</a></li><li><a class="tocitem" href="../saveload/">Saving and loading models</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples/model_es2n/">Building a model to add to ReservoirComputing.jl</a></li></ul></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="../../api/layers/">Layers</a></li><li><a class="tocitem" href="../../api/models/">Models</a></li><li><a class="tocitem" href="../../api/utils/">Utilities</a></li><li><a class="tocitem" href="../../api/train/">Train</a></li><li><a class="tocitem" href="../../api/predict/">Predict</a></li><li><a class="tocitem" href="../../api/states/">States</a></li><li><a class="tocitem" href="../../api/inits/">Initializers</a></li></ul></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Continuous-time reservoirs from a SciMLProblem</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Continuous-time reservoirs from a SciMLProblem</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/tutorials/sciml_reservoir.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Continuous-Time-Reservoirs-from-a-SciMLProblem"><a class="docs-heading-anchor" href="#Continuous-Time-Reservoirs-from-a-SciMLProblem">Continuous-Time Reservoirs from a <code>SciMLProblem</code></a><a id="Continuous-Time-Reservoirs-from-a-SciMLProblem-1"></a><a class="docs-heading-anchor-permalink" href="#Continuous-Time-Reservoirs-from-a-SciMLProblem" title="Permalink"></a></h1><p>ReservoirComputing.jl exposes a continuous-time reservoir layer, <a href="../../api/layers/#ReservoirComputing.SciMLProblemReservoir"><code>SciMLProblemReservoir</code></a>, that wraps any <code>AbstractSciMLProblem</code> (<code>ODEProblem</code>, <code>SDEProblem</code>, <code>DDEProblem</code>) and plugs it into the standard <code>collectstates</code> / <code>predict</code> pipeline. The implementation lives in the <code>RCODEReservoirExt</code> package extension, so the extension is loaded automatically once <code>SciMLBase</code> and <code>DataInterpolations</code> are in scope. The user picks a concrete solver package (e.g. <code>OrdinaryDiffEqTsit5</code>, <code>OrdinaryDiffEq</code>) separately — its solver types are what the reservoir&#39;s <code>args[1]</code> consumes.</p><p>This page walks through the core type, how time is laid out internally, and a worked example that checks the continuous reservoir against a closed-form analytic solution.</p><h2 id="Loading-the-extension"><a class="docs-heading-anchor" href="#Loading-the-extension">Loading the extension</a><a id="Loading-the-extension-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-the-extension" title="Permalink"></a></h2><pre><code class="language-julia hljs">using ReservoirComputing
+using SciMLBase
+using DataInterpolations
+using OrdinaryDiffEqTsit5    # or `OrdinaryDiffEq`, or whichever solver pkg you need</code></pre><p><code>SciMLBase</code> provides <code>solve</code> / <code>remake</code>, <code>DataInterpolations</code> is used for the per-window input signal in the autoregressive <code>predict</code> path, and the chosen OrdinaryDiffEq solver package brings the concrete solver type (<code>Tsit5()</code>, <code>Euler()</code>, …).</p><h2 id="Constructing-a-reservoir-from-an-ODE-problem"><a class="docs-heading-anchor" href="#Constructing-a-reservoir-from-an-ODE-problem">Constructing a reservoir from an ODE problem</a><a id="Constructing-a-reservoir-from-an-ODE-problem-1"></a><a class="docs-heading-anchor-permalink" href="#Constructing-a-reservoir-from-an-ODE-problem" title="Permalink"></a></h2><p>The constructor follows the <a href="https://github.com/SciML/DiffEqFlux.jl/blob/master/src/neural_de.jl">DiffEqFlux <code>NeuralODE</code> pattern</a>:</p><pre><code class="language-julia hljs">SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)</code></pre><ul><li><code>prob</code> — any <code>AbstractSciMLProblem</code>. The reservoir&#39;s initial state is taken from <code>prob.u0</code>; the ODE right-hand side reads the time-varying input through <code>p.input(t)</code> (injected by the extension at solve time).</li><li><code>sampler</code> — an <a href="../../api/layers/#ReservoirComputing.AbstractSampler"><code>AbstractSampler</code></a>. The bundled <a href="../../api/layers/#ReservoirComputing.TerminalStateSampling"><code>TerminalStateSampling</code></a> records the reservoir state at the end of each input window.</li><li><code>tspan</code> — overrides <code>prob.tspan</code> via <code>remake</code> at solve time. The input column grid is synthesised from <code>tspan</code> and the input width.</li><li><code>args...</code> — forwarded to <code>solve</code> positionally; the solver algorithm is the first element (<code>Tsit5()</code>, <code>Euler()</code>, …).</li><li><code>kwargs...</code> — forwarded to <code>solve</code>. The three keys <code>saveat</code>, <code>save_everystep</code>, and <code>dense</code> are owned by the helper and rejected at construction.</li></ul><p>The user&#39;s ODE can carry static parameters as a <code>NamedTuple</code> (or <code>nothing</code> / <code>NullParameters()</code> if there are none). Anything else is rejected with an <code>ArgumentError</code>. The reserved name <code>:input</code> cannot appear in <code>prob.p</code> because the extension uses it to inject the interpolated input signal.</p><h2 id="How-time-is-laid-out"><a class="docs-heading-anchor" href="#How-time-is-laid-out">How time is laid out</a><a id="How-time-is-laid-out-1"></a><a class="docs-heading-anchor-permalink" href="#How-time-is-laid-out" title="Permalink"></a></h2><p><code>collectstates</code> receives a discrete <code>data::AbstractMatrix</code> of shape <code>(channels, n_samples)</code> and turns it into a continuous-time input:</p><ol><li><code>tspan</code> is split into <code>n_samples</code> equal-width windows of width <code>Δt = (t1 - t0) / n_samples</code>.</li><li>Input column <code>k</code> is held over window <code>k</code> (<code>t0 + (k-1)Δt ≤ t &lt; t0 + kΔt</code>) via zero-order hold.</li><li>The reservoir state at the <strong>end</strong> of window <code>k</code> (<code>t = t0 + kΔt</code>) is sampled and becomes <code>states[:, k]</code>.</li></ol><p>This input-at-start / sample-at-end alignment matches the discrete update semantics: <code>states[:, k]</code> is the reservoir state after processing input <code>k</code>, with no off-by-one offset.</p><h2 id="A-worked-example:-linear-ODE-with-closed-form-solution"><a class="docs-heading-anchor" href="#A-worked-example:-linear-ODE-with-closed-form-solution">A worked example: linear ODE with closed-form solution</a><a id="A-worked-example:-linear-ODE-with-closed-form-solution-1"></a><a class="docs-heading-anchor-permalink" href="#A-worked-example:-linear-ODE-with-closed-form-solution" title="Permalink"></a></h2><p>The scalar linear ODE <code>dx/dt = -x + u(t)</code> with <code>u(t) = 1</code> and <code>x(0) = 0</code> has the closed form <code>x(t) = 1 - exp(-t)</code>. Running it through the continuous reservoir at a tight solver tolerance recovers that curve to within ~1e-6:</p><pre><code class="language-julia hljs">using ReservoirComputing
+using SciMLBase
+using DataInterpolations
+using OrdinaryDiffEqTsit5
+using Random
+
+function linear_rhs!(dx, x, p, t)
+    input_t = p.input(t)
+    dx .= .-x .+ input_t
+end
+
+n_samples = 10
+tspan = (0.0, 1.0)
+Δt = (tspan[2] - tspan[1]) / n_samples
+sample_ts = collect(range(tspan[1] + Δt, tspan[2]; length = n_samples))
+
+u_const = 1.0
+data = fill(u_const, 1, n_samples)
+initial_state = [0.0]
+
+prob = ODEProblem(linear_rhs!, initial_state, tspan, (;))
+res = SciMLProblemReservoir(
+    prob, TerminalStateSampling(), tspan, Tsit5();
+    reltol = 1.0e-10, abstol = 1.0e-12
+)
+rc = ReservoirComputer(res, LinearReadout(1 =&gt; 1))
+ps, st = setup(MersenneTwister(0), rc)
+
+states, _ = collectstates(rc, data, ps, st)
+analytic = u_const .* (1 .- exp.(.-sample_ts))
+
+@assert states[1, :] ≈ analytic atol = 1.0e-6</code></pre><h2 id="Calling-predict"><a class="docs-heading-anchor" href="#Calling-predict">Calling <code>predict</code></a><a id="Calling-predict-1"></a><a class="docs-heading-anchor-permalink" href="#Calling-predict" title="Permalink"></a></h2><p>Both <code>predict</code> signatures route through the same continuous helper:</p><pre><code class="language-julia hljs">predict(rc, data, ps, st)                  # teacher-forced
+predict(rc, steps, ps, st; initialdata)    # autoregressive rollout</code></pre><ul><li>The teacher-forced path solves the full <code>tspan</code> once and applies the readout column-by-column to the sampled states.</li><li>The autoregressive path splits <code>tspan</code> into <code>steps</code> sub-intervals, feeds the previous readout output back as the constant input on the next sub-interval, and stitches the per-window readouts into the returned output matrix.</li></ul><p>In both cases the reservoir&#39;s initial state is <code>prob.u0</code>. To continue from a previously computed trajectory, <code>remake(prob; u0 = …)</code> before constructing the reservoir.</p><h2 id="Eye-test:-Lorenz-chaos-forecasting-with-a-continuous-ESN"><a class="docs-heading-anchor" href="#Eye-test:-Lorenz-chaos-forecasting-with-a-continuous-ESN">Eye test: Lorenz chaos forecasting with a continuous ESN</a><a id="Eye-test:-Lorenz-chaos-forecasting-with-a-continuous-ESN-1"></a><a class="docs-heading-anchor-permalink" href="#Eye-test:-Lorenz-chaos-forecasting-with-a-continuous-ESN" title="Permalink"></a></h2><p>The README example trains a discrete ESN on the Lorenz attractor and rolls it forward autoregressively. The same pipeline runs verbatim with <code>SciMLProblemReservoir</code> once you wrap the leaky-integrator continuous ESN equations</p><p class="math-container">\[\frac{dx}{dt} = -x + \tanh\!\left(W_r\, x + W_{in}\, u(t) + b\right)\]</p><p>as an <code>ODEProblem</code>. The reservoir matrices are random, the readout is linear, and the only training step fits the linear readout on the collected continuous states.</p><pre><code class="language-julia hljs">using ReservoirComputing
+using SciMLBase
+using DataInterpolations
+using OrdinaryDiffEqTsit5
+using Plots
+using Random
+
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+# 1. Lorenz data
+function lorenz!(du, u, p, t)
+    du[1] = p[1] * (u[2] - u[1])
+    du[2] = u[1] * (p[2] - u[3]) - u[2]
+    du[3] = u[1] * u[2] - p[3] * u[3]
+end
+data_prob = ODEProblem(lorenz!, [1.0, 0.0, 0.0], (0.0, 40.0), [10.0, 28.0, 8 / 3])
+data = Array(solve(data_prob, Tsit5(); saveat = 0.02))
+
+shift, train_len, predict_len = 300, 1000, 250
+input_data = data[:, shift:(shift + train_len - 1)]
+target_data = data[:, (shift + 1):(shift + train_len)]
+test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
+
+# 2. Continuous ESN reservoir parameters
+N_res = 100
+Wr = 0.3 .* randn(rng, N_res, N_res) ./ sqrt(N_res)
+Win = 0.5 .* randn(rng, N_res, 3)
+bias = 0.05 .* randn(rng, N_res)
+initial_state = zeros(N_res)
+
+# 3. Raw ODE equations — leaky-integrator continuous ESN
+function ctesn_rhs!(dx, x, p, t)
+    input_t = p.input(t)
+    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
+end
+
+# 4. Wrap as SciMLProblemReservoir with Δt = 1 per input window
+function build_rc(tspan_len)
+    prob = ODEProblem(
+        ctesn_rhs!, initial_state,
+        (0.0, Float64(tspan_len)), (Wr = Wr, Win = Win, b = bias)
+    )
+    res = SciMLProblemReservoir(
+        prob, TerminalStateSampling(),
+        (0.0, Float64(tspan_len)), Tsit5();
+        reltol = 1.0e-6, abstol = 1.0e-8
+    )
+    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res =&gt; 3))
+end
+
+rc_train = build_rc(train_len)
+rc_predict = build_rc(predict_len)
+ps, st = setup(rng, rc_train)
+
+# 5. Fit the linear readout on the collected continuous states
+ps, st = train!(rc_train, input_data, target_data, ps, st)
+
+# 6. Autoregressive rollout under the same continuous dynamics
+ps_pred, st_pred = setup(rng, rc_predict)
+ps_pred = merge(ps_pred, (readout = ps.readout,))
+st_pred = merge(st_pred, (readout = st.readout,))
+output, _ = predict(rc_predict, predict_len, ps_pred, st_pred; initialdata = test[:, 1])
+
+plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
+    label = &quot;predicted&quot;)
+plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
+    label = &quot;actual&quot;)</code></pre><img src="a36a3b20.svg" alt="Example block output"/><p>The two trajectories should agree on the early portion of the rollout before chaotic divergence — exactly the behaviour the discrete-ESN example produces. The point of the eye test is that nothing in the training loop changes: <code>train!</code> and <code>predict</code> still drive the <code>SciMLProblemReservoir</code> through the same pipeline they use for any discrete reservoir.</p><h2 id="A-delay-equation-target:-Mackey-Glass"><a class="docs-heading-anchor" href="#A-delay-equation-target:-Mackey-Glass">A delay-equation target: Mackey-Glass</a><a id="A-delay-equation-target:-Mackey-Glass-1"></a><a class="docs-heading-anchor-permalink" href="#A-delay-equation-target:-Mackey-Glass" title="Permalink"></a></h2><p><code>SciMLProblemReservoir</code> wraps <strong>any</strong> <code>AbstractSciMLProblem</code>, so the training data — and, if you want, the reservoir itself — can come from a delay-differential equation, a stochastic equation, or any other SciML problem type. The smallest non-trivial demonstration: forecast the Mackey-Glass time series, a 1-D delay equation that has been a reservoir-computing benchmark for two decades.</p><pre><code class="language-julia hljs">using ReservoirComputing
+using SciMLBase
+using DataInterpolations
+using OrdinaryDiffEqTsit5
+using DelayDiffEq
+using LinearAlgebra
+using Plots
+using Random
+using Statistics
+
+Random.seed!(42)
+rng = MersenneTwister(17)
+
+# Mackey-Glass: dx/dt = β x(t-τ) / (1 + x(t-τ)^n) - γ x(t).
+# With τ = 17 the trajectory is chaotic.
+const β_mg, γ_mg, n_mg, τ_mg = 0.2, 0.1, 10, 17.0
+function mackey_glass!(dx, x, h, p, t)
+    x_delay = h(p, t - τ_mg)[1]
+    return dx[1] = β_mg * x_delay / (1 + x_delay^n_mg) - γ_mg * x[1]
+end
+mg_history(p, t) = [1.2]
+
+mg_data_prob = DDEProblem(mackey_glass!, [1.2], mg_history, (0.0, 1500.0);
+    constant_lags = [τ_mg])
+mg_data = reduce(hcat,
+    solve(mg_data_prob, MethodOfSteps(Tsit5()); saveat = 1.0).u)
+
+shift, train_len, predict_len = 200, 1000, 200
+input_data = mg_data[:, shift:(shift + train_len - 1)]
+target_data = mg_data[:, (shift + 1):(shift + train_len)]
+test_data = mg_data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
+
+# Same continuous ESN reservoir machinery as the Lorenz example, retuned
+# for the much smaller Mackey-Glass amplitude (~1, vs Lorenz ~20).
+N_res = 150
+sparsity = 6 / N_res
+Wr_raw = randn(rng, N_res, N_res) .* (rand(rng, N_res, N_res) .&lt; sparsity)
+Wr = (0.9 / maximum(abs.(eigvals(Wr_raw)))) .* Wr_raw
+Win = 0.05 .* randn(rng, N_res, 1)
+bias = 0.0 .* randn(rng, N_res)
+initial_state = zeros(N_res)
+
+function mg_reservoir_rhs!(dx, x, p, t)
+    input_t = p.input(t)
+    return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
+end
+
+function build_mg_rc(n_steps)
+    tspan = (0.0, n_steps * 1.0)
+    prob = ODEProblem(mg_reservoir_rhs!, initial_state, tspan,
+        (Wr = Wr, Win = Win, b = bias))
+    res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5();
+        reltol = 1.0e-6, abstol = 1.0e-8)
+    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res =&gt; 1))
+end
+
+rc_mg_train = build_mg_rc(train_len)
+rc_mg_predict = build_mg_rc(predict_len)
+ps_mg, st_mg = setup(rng, rc_mg_train)
+ps_mg, st_mg = train!(rc_mg_train, input_data, target_data, ps_mg, st_mg,
+    StandardRidge(1.0e-6); washout = 0)
+
+ps_pred, st_pred = setup(rng, rc_mg_predict)
+ps_pred = merge(ps_pred, (readout = ps_mg.readout,))
+st_pred = merge(st_pred, (readout = st_mg.readout,))
+mg_output, _ = predict(rc_mg_predict, predict_len, ps_pred, st_pred;
+    initialdata = test_data[:, 1])
+
+plot([test_data[1, :], mg_output[1, :]];
+    label = [&quot;actual&quot; &quot;predicted&quot;], linewidth = 2,
+    xlabel = &quot;step&quot;, ylabel = &quot;x(t)&quot;,
+    title = &quot;Mackey-Glass (τ=17) — continuous ESN rollout&quot;)</code></pre><img src="831653bd.svg" alt="Example block output"/><p>Two things to notice:</p><ul><li>The <strong>data path</strong> uses a <code>DDEProblem</code> solved with <code>MethodOfSteps(Tsit5())</code> — no special handling on <code>SciMLProblemReservoir</code>&#39;s side; the wrapper only cares about the shape of the resulting matrix.</li><li>The <strong>reservoir</strong> is kept as an <code>ODEProblem</code> for simplicity. Because <code>SciMLProblemReservoir</code>&#39;s <code>prob</code> field is untyped, it would equally accept a <code>DDEProblem</code> of the form <code>dx/dt = -x(t) + tanh(W_r x(t-τ_r) + W_{in} u(t) + b)</code> — useful when the target has long-range temporal correlations. Delay-coupled reservoirs of that form are explored in the CTESN/delay-reservoir literature; a tuned implementation will land in PR3.</li></ul><p>As with the Lorenz example, this is a demonstration of the new plumbing rather than an optimised benchmark: hyperparameters were tuned by hand to land a watchable forecast, not chosen via cross-validation.</p><h2 id="Adding-your-own-sampler"><a class="docs-heading-anchor" href="#Adding-your-own-sampler">Adding your own sampler</a><a id="Adding-your-own-sampler-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-your-own-sampler" title="Permalink"></a></h2><p>The reservoir state sequence the readout sees is produced by an <a href="../../api/layers/#ReservoirComputing.AbstractSampler"><code>AbstractSampler</code></a>. To plug in a custom strategy (window mean, sub-sampling within a window, etc.), define a concrete subtype and a matching <code>_sample(::YourSampler, sol)</code> method inside an extension that also loads <code>OrdinaryDiffEq</code> and <code>SciMLBase</code>. The method should return a <code>(state_dim, n_samples)</code> matrix; everything downstream (state modifiers, readout, predict) is sampler-agnostic.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../lorenz_basic/">« Chaos forecasting with an ESN</a><a class="docs-footer-nextpage" href="../continuous_esn/">Continuous ESN — forecasting Lorenz »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 12 July 2026 09:50">Sunday 12 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
