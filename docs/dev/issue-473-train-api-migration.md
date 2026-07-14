@@ -290,6 +290,17 @@ targets**.
 - Clear errors for invalid objective/solver pairs
 - Optional: move LS code into core early if it simplifies testing
 
+**Status (branch work):**
+
+- [x] `RCLinearSolveExt`: one Gram factorization + multi-column RHS via
+  `LinearProblem(gram, rhs)` / `solve` (no per-output loop)
+- [x] Descriptive names in ext (`n_features`, `n_samples`, `n_outputs`)
+- [x] `QRSolver` path checks sample-count `DimensionMismatch`
+- [x] Fallback `_train_ridge` → clear `ArgumentError` for unknown solvers
+- [x] Tests: unsupported solver, QR + LS sample mismatch, multi-RHS vs reference
+- [ ] Still **not** default (`solver=nothing` → `QRSolver`)
+- [ ] Still weakdep (hard dep is Phase 5)
+
 **Exit:** default path *implementation* is production-quality; still not default.
 
 ### Phase 4 — Default solver flip (breaking numerics)

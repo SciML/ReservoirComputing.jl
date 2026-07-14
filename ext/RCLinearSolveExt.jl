@@ -1,6 +1,7 @@
 module RCLinearSolveExt
-using LinearAlgebra: mul!, I
-using LinearSolve: LinearProblem, init, solve!, SciMLLinearSolveAlgorithm
+
+using LinearAlgebra: I
+using LinearSolve: LinearProblem, solve, SciMLLinearSolveAlgorithm
 using ReservoirComputing: StandardRidge
 import ReservoirComputing: _train_ridge
 
@@ -8,23 +9,19 @@ function _train_ridge(
         solver::SciMLLinearSolveAlgorithm, sr::StandardRidge,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
+    n_features, n_samples = size(states)
+    n_outputs, n_target_samples = size(targets)
+    n_samples == n_target_samples || throw(
+        DimensionMismatch(
+            "states has $n_samples samples, targets has $n_target_samples"
+        )
+    )
 
-    nfeat, T = size(states)
-    nout, T2 = size(targets)
-    T == T2 || throw(DimensionMismatch("states has T=$T samples, targets has T=$T2"))
     λ = convert(eltype(states), sr.reg)
-    A = states * states' + λ * I
-    b = zeros(eltype(states), nfeat)
-    prob = LinearProblem(A, b)
-    linsolve = init(prob, solver; kwargs...)
-    Wt = zeros(eltype(states), nfeat, nout)
-    for idx in 1:nout
-        mul!(linsolve.b, states, targets[idx, :])
-        sol = solve!(linsolve)
-        Wt[:, idx] .= sol.u
-    end
-
-    return permutedims(Wt)  # (n_outputs, n_features)
+    gram = states * states' + λ * I
+    rhs = states * targets'
+    solution = solve(LinearProblem(gram, rhs), solver; kwargs...)
+    return Matrix(solution.u')
 end
 
 end #module

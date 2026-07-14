@@ -218,8 +218,39 @@ end
     states = randn(Float64, 5, 10)
     targets = randn(Float64, 2, 9)
     @test_throws DimensionMismatch train(
+        StandardRidge(1.0e-3), states, targets; solver = QRSolver()
+    )
+    @test_throws DimensionMismatch train(
         StandardRidge(1.0e-3), states, targets; solver = QRFactorization()
     )
+end
+
+@testset "train(StandardRidge): unsupported solver" begin
+    states = randn(Float64, 4, 20)
+    targets = randn(Float64, 2, 20)
+    @test_throws ArgumentError train(
+        StandardRidge(1.0e-3), states, targets; solver = :not_a_solver
+    )
+end
+
+@testset "train(StandardRidge): LinearSolve multi-RHS matches reference" begin
+    rng = MersenneTwister(41)
+    n_features, n_samples, n_outputs = 7, 45, 5
+    regularization = 5.0e-3
+    states, targets, _ = random_ridge_problem(
+        rng, Float64, n_features, n_samples, n_outputs
+    )
+    reference = reference_ridge(states, targets, regularization)
+
+    for solver in (QRFactorization(), SVDFactorization())
+        @testset "$(typeof(solver))" begin
+            weights = train(
+                StandardRidge(regularization), states, targets; solver = solver
+            )
+            @test size(weights) == (n_outputs, n_features)
+            @test weights ≈ reference rtol = 1.0e-10
+        end
+    end
 end
 
 @testset "_apply_washout" begin

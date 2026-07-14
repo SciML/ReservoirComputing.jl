@@ -102,6 +102,14 @@ function _train_ridge(
         ::QRSolver, sr::StandardRidge,
         states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
     )
+    n_samples = size(states, 2)
+    n_target_samples = size(target_data, 2)
+    n_samples == n_target_samples || throw(
+        DimensionMismatch(
+            "states has $n_samples samples, targets has $n_target_samples"
+        )
+    )
+
     n_states = size(states, 1)
     A = [states'; sqrt(sr.reg) * I(n_states)]
     b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]
@@ -109,6 +117,18 @@ function _train_ridge(
     Wt = F \ b
     output_layer = Matrix(Wt')
     return output_layer
+end
+
+function _train_ridge(
+        solver, ::StandardRidge, ::AbstractMatrix, ::AbstractMatrix; kwargs...
+    )
+    return throw(
+        ArgumentError(
+            "Unsupported ridge solver of type $(typeof(solver)). " *
+                "Use QRSolver() or a LinearSolve.jl algorithm " *
+                "(load LinearSolve.jl for SciML solvers)."
+        )
+    )
 end
 
 @doc raw"""
