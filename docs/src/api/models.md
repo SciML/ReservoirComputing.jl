@@ -53,4 +53,5 @@ The input encodings are the equivalent of the input matrices of the ESNs. These 
 
 ```@docs
     RandomMapping
+    RandomMaps
 ```

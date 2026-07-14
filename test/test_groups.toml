@@ -2,5 +2,28 @@
 versions = ["lts", "1", "pre"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
+[Layers]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+[Models]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+[Extensions]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
+[Interface]
+versions = ["lts", "1", "pre"]
+os = ["ubuntu-latest", "windows-latest", "macos-latest"]
+
 [QA]
 versions = ["lts", "1"]
+in_all = false
+
+[CUDA]
+versions = ["1"]
+runner = ["self-hosted", "Linux", "X64", "gpu"]
+timeout = 120
+in_all = false
