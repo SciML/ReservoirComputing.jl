@@ -79,7 +79,7 @@ ps, st = setup(rng, esn_train)
 ## Training
 
 ```@example continuous-esn-lorenz
-ps, st = train!(esn_train, input_data, target_data, ps, st)
+ps, st = train(esn_train, input_data, target_data, ps, st)
 ```
 
 ## Autoregressive rollout
@@ -107,7 +107,7 @@ The two trajectories agree on the early portion of the rollout before
 chaotic divergence dominates — the same behaviour the discrete-ESN
 tutorial produces. The point of the example is that nothing in the
 training loop changes between discrete ESN, `SciMLProblemReservoir`
-with hand-rolled equations, and `ContinuousESN`: the same `train!` /
+with hand-rolled equations, and `ContinuousESN`: the same `train` /
 `predict` pipeline drives all three.
 
 ## When to reach for `ContinuousESN` vs `SciMLProblemReservoir`

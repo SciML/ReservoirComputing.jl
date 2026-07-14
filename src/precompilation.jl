@@ -40,12 +40,10 @@ using PrecompileTools: @compile_workload, @setup_workload
         # collectstates
         states, st_after = collectstates(esn, train_data, ps, st)
 
-        # train (model-level) and train! compatibility wrapper
         ps_trained, st_trained = train(
             esn, train_data, target_data, ps, st;
             objective = StandardRidge(1.0e-6),
         )
-        ps_trained, st_trained = train!(esn, train_data, target_data, ps, st, StandardRidge(1.0e-6))
 
         # ES2NCell and ES2N (another common model)
         es2n_cell = ES2NCell(input_size => reservoir_size)

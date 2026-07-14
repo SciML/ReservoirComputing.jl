@@ -40,7 +40,8 @@ ps, st = setup(rng, reca)
 After this, the training can be performed with the chosen method.
 
 ```@example reca
-ps, st = train!(reca, input, output, ps, st, StandardRidge(0.00001))
+ps, st = train(reca, input, output, ps, st;
+    objective = StandardRidge(0.00001))
 ```
 
 We are going to test the recall ability of the model, feeding the input data

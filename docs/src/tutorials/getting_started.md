@@ -49,7 +49,7 @@ esn = ESN(3, 300, 3; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
     state_modifiers=NLAT2)
 
 ps, st = setup(rng, esn)
-ps, st = train!(esn, input_data, target_data, ps, st)
+ps, st = train(esn, input_data, target_data, ps, st)
 output, st = predict(esn, predict_len, ps, st; initialdata=test[:, 1])
 
 plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
@@ -180,8 +180,9 @@ be done by passing the `washout` keyword argument to `train`.
 #define training method
 training_method = StandardRidge(0.0)
 
-ps, st = train!(esn, input_data, target_data, ps, st, training_method;
-    washout = 0 # we use no washout
+ps, st = train(esn, input_data, target_data, ps, st;
+    objective = training_method,
+    washout = 0, # we use no washout
 )
 ```
 
@@ -191,11 +192,12 @@ ps, st = train!(esn, input_data, target_data, ps, st, training_method;
 
     The ESN states are internally used the training, however they are not returned by
     default. To inspect the states, it is necessary to set the boolean keyword
-    argument `return_states` as `true` in the [`train!`](@ref) call.
-    
+    argument `return_states` as `true` in the [`train`](@ref) call.
+
     ```julia
-    (ps, st), states = train!(esn, input_data, target_data, ps, st, training_method;
-        return_states = true
+    (ps, st), states = train(esn, input_data, target_data, ps, st;
+        objective = training_method,
+        return_states = true,
     )
     ```
 

@@ -4,9 +4,9 @@ using LinearAlgebra
 using ReservoirComputing
 using LinearSolve
 
-# Model-level `train` / `train!` API regression (#473).
+# Model-level `train` API and deprecated `train!` wrapper (#473 / #367).
 
-@testset "train model-level matches train!" begin
+@testset "train model-level smoke" begin
     rng = MersenneTwister(42)
     in_dims, res_dims, out_dims = 3, 12, 2
     n_steps = 35
@@ -16,15 +16,11 @@ using LinearSolve
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    ps_bang, st_bang = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-3)
-    )
     ps_new, st_new = train(
         model, train_data, target_data, ps, st;
         objective = StandardRidge(1.0e-3),
     )
 
-    @test ps_bang.readout.weight ≈ ps_new.readout.weight
     @test size(ps_new.readout.weight) == (out_dims, res_dims)
     @test all(isfinite, ps_new.readout.weight)
 end
@@ -81,13 +77,6 @@ end
     @test size(states) == (res_dims, n_steps - washout)
     @test size(ps_trained.readout.weight) == (out_dims, res_dims)
     @test all(isfinite, ps_trained.readout.weight)
-
-    (ps_bang, _), states_bang = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-4);
-        washout = washout, return_states = true,
-    )
-    @test states == states_bang
-    @test ps_trained.readout.weight ≈ ps_bang.readout.weight
 end
 
 @testset "train feature-level: solver nothing equals QRFactorization" begin
@@ -110,7 +99,7 @@ end
     @test size(weights_default) == (n_outputs, n_features)
 end
 
-@testset "train! positional method maps to objective" begin
+@testset "train! is deprecated and matches train" begin
     rng = MersenneTwister(31)
     in_dims, res_dims, out_dims = 2, 12, 1
     n_steps = 20
@@ -121,10 +110,11 @@ end
     ps, st = setup(rng, model)
     ridge = StandardRidge(2.0e-3)
 
-    ps_pos, _ = train!(model, train_data, target_data, ps, st, ridge)
     ps_kw, _ = train(
         model, train_data, target_data, ps, st; objective = ridge
     )
+    result = @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
+    ps_pos = result[1]
     @test ps_pos.readout.weight ≈ ps_kw.readout.weight
 end
 
@@ -138,10 +128,11 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    ps_trained, _ = train!(
+    result = @test_deprecated train!(
         model, train_data, target_data, ps, st, StandardRidge(1.0e-3);
         solver = SVDFactorization(),
     )
+    ps_trained = result[1]
     @test size(ps_trained.readout.weight) == (out_dims, res_dims)
     @test all(isfinite, ps_trained.readout.weight)
 end

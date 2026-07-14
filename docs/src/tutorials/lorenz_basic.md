@@ -117,7 +117,8 @@ be done by passing the `washout` keyword argument to `train`.
 #define training method
 training_method = StandardRidge(0.0)
 
-ps, st = train!(esn, input_data, target_data, ps, st, training_method)
+ps, st = train(esn, input_data, target_data, ps, st;
+    objective = training_method)
 ```
 
 `ps` now contains the trained parameters for the ESN.
@@ -126,7 +127,7 @@ ps, st = train!(esn, input_data, target_data, ps, st, training_method)
 
     The ESN states are internally used the training, however they are not returned by
     default. To inspect the states, it is necessary to set the boolean keyword
-    argument `return_states` as `true` in the [`train!`](@ref) call.
+    argument `return_states` as `true` in the [`train`](@ref) call.
 
 
 ReservoirComputing.jl provides

@@ -60,7 +60,7 @@ ps, st = train(model, input_data, target_data, ps, st;
 For a detailed list of LinearSolve algorithms, see LinearSolve's
 [documentation](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/).
 
-`train!` remains available as a compatibility wrapper around `train`.
+`train!` remains available as a deprecated compatibility wrapper around `train`.
 
 ## Changing Linear Regression Problem
 
@@ -81,8 +81,8 @@ and different solvers for the linear regression problem:
 ```@example training
 using MLJLinearModels
 
-ps, st = train!(model, input_data, target_data, ps, st,
-    LassoRegression(fit_intercept=false); # from MLJLinearModels
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = LassoRegression(fit_intercept=false), # from MLJLinearModels
     solver = ProxGrad()) # from MLJLinearModels
 ```
 
@@ -119,7 +119,6 @@ ps, st = setup(rng, model)
 We can now train our new `model` similarly to before:
 
 ```@example training
-ps, st = train!(model, input_data, target_data, ps, st,
-    EpsilonSVR() # from LIBSVM
-    )
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = EpsilonSVR()) # from LIBSVM
 ```

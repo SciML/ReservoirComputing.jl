@@ -67,7 +67,7 @@ end
     ps, st = setup(rng, model)
 
     svr = LIBSVM.EpsilonSVR(cost = 10.0, epsilon = 0.01)
-    ps, st = train!(model, train_data, target_data, ps, st, svr)
+    ps, st = train(model, train_data, target_data, ps, st; objective = svr)
 
     @test haskey(ps.readout, :models)
 
@@ -93,7 +93,7 @@ end
     ps, st = setup(rng, model)
 
     svr = LIBSVM.NuSVR()
-    ps, st = train!(model, train_data, target_data, ps, st, svr)
+    ps, st = train(model, train_data, target_data, ps, st; objective = svr)
 
     @test haskey(ps.readout, :models)
     @test ps.readout.models isa AbstractVector

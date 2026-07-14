@@ -221,16 +221,21 @@ end
            train_method=StandardRidge(0.0);
            washout=0, return_states=false, kwargs...)
 
-Compatibility wrapper around model-level [`train`](@ref).
+!!! warning "Deprecated"
+    `train!` is deprecated. Use [`train`](@ref) instead. The positional
+    `train_method` argument maps to the `objective` keyword of `train`.
 
-The positional `train_method` is passed as `objective`. Prefer
-`train(rc, train_data, target_data, ps, st; objective=..., solver=...)` for
-new code.
+Compatibility wrapper around model-level [`train`](@ref).
 """
 function train!(
         rc, train_data, target_data, ps, st,
         train_method = StandardRidge(0.0);
         washout::Int = 0, return_states::Bool = false, kwargs...
+    )
+    Base.depwarn(
+        "`train!` is deprecated; use `train(rc, train_data, target_data, ps, st; " *
+            "objective=..., solver=..., washout=..., return_states=...)` instead.",
+        :train!
     )
     return train(
         rc, train_data, target_data, ps, st;

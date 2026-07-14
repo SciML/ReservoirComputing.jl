@@ -240,7 +240,8 @@ end
     model = LIFESN(in_dims, res_dims, out_dims, tanh; lookback_horizon = 3)
     ps, st = setup(rng, model)
 
-    ps, st = train!(model, train_data, target_data, ps, st, StandardRidge())
+    ps, st = train(model, train_data, target_data, ps, st;
+        objective = StandardRidge())
 
     @test haskey(ps.readout, :weight)
 

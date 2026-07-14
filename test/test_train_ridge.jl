@@ -265,7 +265,7 @@ end
     @test_throws ArgumentError ReservoirComputing._apply_washout(states, targets, 5)
 end
 
-@testset "train!: ESN ridge smoke" begin
+@testset "train: ESN ridge smoke" begin
     rng = MersenneTwister(42)
     in_dims, res_dims, out_dims = 3, 12, 2
     n_steps = 40
@@ -275,16 +275,19 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    ps_trained, st_trained = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-4)
+    ps_trained, st_trained = train(
+        model, train_data, target_data, ps, st;
+        objective = StandardRidge(1.0e-4),
     )
     @test haskey(ps_trained.readout, :weight)
     @test size(ps_trained.readout.weight) == (out_dims, res_dims)
     @test all(isfinite, ps_trained.readout.weight)
 
-    (ps2, st2), collected = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-4);
-        return_states = true, washout = 5,
+    (ps2, st2), collected = train(
+        model, train_data, target_data, ps, st;
+        objective = StandardRidge(1.0e-4),
+        return_states = true,
+        washout = 5,
     )
     @test size(collected) == (res_dims, n_steps - 5)
     @test size(ps2.readout.weight) == (out_dims, res_dims)
@@ -295,7 +298,7 @@ end
     @test all(isfinite, prediction)
 end
 
-@testset "train!: LinearSolve solver kwarg" begin
+@testset "train: LinearSolve solver kwarg" begin
     rng = MersenneTwister(99)
     in_dims, res_dims, out_dims = 3, 10, 2
     n_steps = 30
@@ -305,12 +308,14 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    ps_qr, _ = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-3);
+    ps_qr, _ = train(
+        model, train_data, target_data, ps, st;
+        objective = StandardRidge(1.0e-3),
         solver = QRSolver(),
     )
-    ps_ls, _ = train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-3);
+    ps_ls, _ = train(
+        model, train_data, target_data, ps, st;
+        objective = StandardRidge(1.0e-3),
         solver = QRFactorization(),
     )
 

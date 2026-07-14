@@ -213,8 +213,9 @@ end
     end
 
     @testset "train! + predict" begin
-        (ps_t, st_t), states = train!(
-            idesn, data, target, ps, st, StandardRidge(1.0e-6); return_states = true
+        (ps_t, st_t), states = train(
+            idesn, data, target, ps, st;
+            objective = StandardRidge(1.0e-6), return_states = true,
         )
         @test size(states) == (res_dims, n_steps)
 
@@ -247,7 +248,10 @@ end
         @test all(isfinite, states_s)
         @test st_states.input_delay.clock == n_steps
 
-        ps_t, st_t = train!(strided, data, target, ps_s, st_s, StandardRidge(1.0e-6))
+        ps_t, st_t = train(
+            strided, data, target, ps_s, st_s;
+            objective = StandardRidge(1.0e-6),
+        )
         out_tf, st_pred = predict(strided, data, ps_t, st_t)
         @test size(out_tf) == (out_dims, n_steps)
         @test all(isfinite, out_tf)
@@ -283,7 +287,10 @@ end
     end
 
     @testset "train! + predict" begin
-        ps_t, st_t = train!(fesn, data, target, ps, st, StandardRidge(1.0e-6))
+        ps_t, st_t = train(
+            fesn, data, target, ps, st;
+            objective = StandardRidge(1.0e-6),
+        )
 
         out_tf, _ = predict(fesn, data, ps_t, st_t)
         @test size(out_tf) == (out_dims, n_steps)
@@ -306,7 +313,10 @@ end
         @test st_states.input_delay.clock == n_steps
         @test st_states.states_modifiers[1].clock == n_steps
 
-        ps_t, st_t = train!(strided, data, target, ps_s, st_s, StandardRidge(1.0e-6))
+        ps_t, st_t = train(
+            strided, data, target, ps_s, st_s;
+            objective = StandardRidge(1.0e-6),
+        )
         out_tf, st_pred = predict(strided, data, ps_t, st_t)
         @test size(out_tf) == (out_dims, n_steps)
         @test all(isfinite, out_tf)
@@ -329,7 +339,10 @@ end
     states, _ = collectstates(sdesn, data, ps, st)
     @test size(states) == (res_dims * (num_delays + 1), n_steps)
 
-    ps_t, st_t = train!(sdesn, data, target, ps, st, StandardRidge(1.0e-6))
+    ps_t, st_t = train(
+        sdesn, data, target, ps, st;
+        objective = StandardRidge(1.0e-6),
+    )
     out_tf, _ = predict(sdesn, data, ps_t, st_t)
     @test size(out_tf) == (out_dims, n_steps)
     @test all(isfinite, out_tf)

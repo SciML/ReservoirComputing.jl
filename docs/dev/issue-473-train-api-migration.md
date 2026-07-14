@@ -1,14 +1,14 @@
 # Migration contract: train API v1.0 + LinearSolve default
 
-**Status:** phases 1–5 implemented on branch; phases 6–7 open  
+**Status:** phases 1–6 implemented on branch; phase 7 (remove `train!`) open  
 **Branch:** `wip/473-linearsolve-default-readout`  
 **Package version target:** `0.12.28` (breaking: default ridge solver + LinearSolve hard dep)  
 **Issues:** [#473](https://github.com/SciML/ReservoirComputing.jl/issues/473), [#367](https://github.com/SciML/ReservoirComputing.jl/issues/367)  
 **Related:** closed [#294](https://github.com/SciML/ReservoirComputing.jl/issues/294) (LinearSolve as extension)
 
 Working notes for Option B (full train redesign). Not a public user guide.
-Phases 1–5 are landed; `train!` deprecation (phase 6) and removal (phase 7)
-remain follow-ups.
+Phases 1–6 are landed (`train!` depwarn + docs on `train`). Phase 7 removes
+`train!` in a future breaking release.
 
 ---
 
@@ -341,6 +341,13 @@ targets**.
 - `train!` → `Base.depwarn` once per session / standard Julia deprecation
 - Docs tutorials switched to `train`
 - Optional: deprecate `QRSolver` public export
+
+**Status (branch work):**
+
+- [x] `Base.depwarn` on `train!`
+- [x] Tutorials / README / examples prefer `train`
+- [x] `@test_deprecated` coverage for `train!` wrapper
+- [ ] `QRSolver` remains public (not deprecated yet)
 
 **Exit:** docs + examples use new API; depwarn tests exist
 
