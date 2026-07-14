@@ -4,6 +4,7 @@
     train
     train!
     QRSolver
+    QRFactorization
 ```
 
 For ridge regression, `solver = nothing` selects LinearSolve's
