@@ -3,6 +3,7 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!, Symmetric, norm
+using LinearSolve: LinearProblem, solve, SciMLLinearSolveAlgorithm, QRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
@@ -84,7 +85,8 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
     selfloop_forwardconnection, simple_cycle, toepliz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
-export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
+    resetcarry!, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
 export RMNESN, RMNResESN

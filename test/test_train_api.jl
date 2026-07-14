@@ -4,8 +4,7 @@ using LinearAlgebra
 using ReservoirComputing
 using LinearSolve
 
-# Phase 2 dual-API characterization (#473 / #367): model-level `train` and
-# silent `train!` forwarding. No default-numerics or hard-dependency change.
+# Dual-API tests for model-level `train` and silent `train!` forwarding (#473).
 
 @testset "train model-level matches train!" begin
     rng = MersenneTwister(42)
@@ -45,20 +44,20 @@ end
         model, train_data, target_data, ps, st;
         objective = StandardRidge(regularization),
     )
-    ps_qr, _ = train(
-        model, train_data, target_data, ps, st;
-        objective = StandardRidge(regularization),
-        solver = QRSolver(),
-    )
     ps_ls, _ = train(
         model, train_data, target_data, ps, st;
         objective = StandardRidge(regularization),
         solver = QRFactorization(),
     )
+    ps_legacy, _ = train(
+        model, train_data, target_data, ps, st;
+        objective = StandardRidge(regularization),
+        solver = QRSolver(),
+    )
 
-    @test ps_default.readout.weight ≈ ps_qr.readout.weight
+    @test ps_default.readout.weight == ps_ls.readout.weight
     @test size(ps_ls.readout.weight) == (out_dims, res_dims)
-    @test ps_qr.readout.weight ≈ ps_ls.readout.weight rtol = 1.0e-3
+    @test ps_default.readout.weight ≈ ps_legacy.readout.weight rtol = 1.0e-3
 end
 
 @testset "train model-level: washout and return_states" begin
@@ -91,7 +90,7 @@ end
     @test ps_trained.readout.weight ≈ ps_bang.readout.weight
 end
 
-@testset "train feature-level: solver nothing equals QRSolver" begin
+@testset "train feature-level: solver nothing equals QRFactorization" begin
     rng = MersenneTwister(23)
     n_features, n_samples, n_outputs = 5, 40, 2
     states = randn(rng, Float64, n_features, n_samples)
@@ -102,12 +101,12 @@ end
     weights_nothing = train(
         StandardRidge(regularization), states, targets; solver = nothing
     )
-    weights_qr = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+    weights_ls = train(
+        StandardRidge(regularization), states, targets; solver = QRFactorization()
     )
 
     @test weights_default == weights_nothing
-    @test weights_default == weights_qr
+    @test weights_default == weights_ls
     @test size(weights_default) == (n_outputs, n_features)
 end
 

@@ -56,7 +56,8 @@ reservoir computing models. More specifically the software offers:
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
-- Multiple linear solvers via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
+- Ridge training via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
+  (`QRFactorization` default; other algorithms selectable)
 
 ## Installation
 

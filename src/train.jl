@@ -46,11 +46,14 @@ abstract type AbstractReservoirComputingSolver end
 @doc raw"""
     QRSolver()
 
-Built-in QR solver for [`StandardRidge`](@ref) training.
+Legacy built-in QR solver for [`StandardRidge`](@ref) training.
+
+The package default is LinearSolve's `QRFactorization()`. Prefer that
+unless you need this implementation explicitly.
 """
 struct QRSolver <: AbstractReservoirComputingSolver end
 
-_default_ridge_solver() = QRSolver()
+_default_ridge_solver() = QRFactorization()
 _resolve_ridge_solver(::Nothing) = _default_ridge_solver()
 _resolve_ridge_solver(solver) = solver
 
@@ -76,10 +79,9 @@ Fit a readout from precomputed reservoir features and targets.
 
 ## Keyword arguments
 
-- `solver`: for [`StandardRidge`](@ref), a ridge solver such as [`QRSolver`](@ref)
-  or a LinearSolve algorithm. Default `nothing` uses the package default
-  ([`QRSolver`](@ref) for ridge). Other objectives may interpret `solver`
-  differently, or ignore it.
+- `solver`: for [`StandardRidge`](@ref), a LinearSolve algorithm such as
+  `QRFactorization()` (default) or the legacy [`QRSolver`](@ref).
+  Default `nothing` selects the package default for the objective.
 - `kwargs...`: forwarded to the objective backend.
 
 ## Returns
@@ -120,13 +122,31 @@ function _train_ridge(
 end
 
 function _train_ridge(
+        solver::SciMLLinearSolveAlgorithm, sr::StandardRidge,
+        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+    )
+    n_features, n_samples = size(states)
+    n_outputs, n_target_samples = size(targets)
+    n_samples == n_target_samples || throw(
+        DimensionMismatch(
+            "states has $n_samples samples, targets has $n_target_samples"
+        )
+    )
+
+    λ = convert(eltype(states), sr.reg)
+    gram = states * states' + λ * I
+    rhs = states * targets'
+    solution = solve(LinearProblem(gram, rhs), solver; kwargs...)
+    return Matrix(solution.u')
+end
+
+function _train_ridge(
         solver, ::StandardRidge, ::AbstractMatrix, ::AbstractMatrix; kwargs...
     )
     return throw(
         ArgumentError(
             "Unsupported ridge solver of type $(typeof(solver)). " *
-                "Use QRSolver() or a LinearSolve.jl algorithm " *
-                "(load LinearSolve.jl for SciML solvers)."
+                "Use QRFactorization(), QRSolver(), or another LinearSolve.jl algorithm."
         )
     )
 end
@@ -154,9 +174,9 @@ modified in place.
 ## Keyword arguments
 
 - `objective`: training objective. Default [`StandardRidge`](@ref).
-- `solver`: solver for the objective when applicable (ridge: [`QRSolver`](@ref)
-  or a LinearSolve algorithm). Default `nothing` selects the package default
-  for that objective.
+- `solver`: solver for the objective when applicable. For ridge, the default
+  (`nothing`) is LinearSolve's `QRFactorization()`; pass [`QRSolver`](@ref)
+  or another LinearSolve algorithm to override.
 - `washout`: number of initial steps to discard from features and targets.
   Default `0`.
 - `return_states`: if `true`, also return the feature matrix used for the fit.

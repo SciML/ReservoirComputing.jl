@@ -179,14 +179,14 @@ end
     end
 end
 
-@testset "train(StandardRidge): default solver is QRSolver" begin
+@testset "train(StandardRidge): default solver is QRFactorization" begin
     rng = MersenneTwister(23)
     states, targets, _ = random_ridge_problem(rng, Float64, 5, 30, 2)
     regularization = 1.0e-3
 
     weights_default = train(StandardRidge(regularization), states, targets)
     weights_explicit = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+        StandardRidge(regularization), states, targets; solver = QRFactorization()
     )
     @test weights_default == weights_explicit
 end

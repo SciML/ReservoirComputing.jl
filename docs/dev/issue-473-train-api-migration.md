@@ -310,6 +310,13 @@ targets**.
 - Update goldens only where defaults are asserted
 - Precompile uses new default
 
+**Status (branch work, shipped with Phase 5):**
+
+- [x] `_default_ridge_solver() = QRFactorization()`
+- [x] Tests assert default ≡ explicit `QRFactorization()`
+- [x] Training tutorial documents new default
+- [x] Breaking: default ridge numerics may differ from pre-#473 `QRSolver`
+
 **Exit:** tests define and pass new default; versioning policy decided (minor vs 1.0-rc)
 
 ### Phase 5 — Hard dependency
@@ -318,6 +325,14 @@ targets**.
 - Remove `RCLinearSolveExt`
 - Export / document default algorithm story
 - Measure load/precompile vs Phase 1 baseline
+
+**Status (branch work, combined with Phase 4):**
+
+- [x] LinearSolve in `[deps]`; removed from weakdeps / extensions
+- [x] Multi-RHS `_train_ridge(::SciMLLinearSolveAlgorithm, …)` in `src/train.jl`
+- [x] Deleted `ext/RCLinearSolveExt.jl`
+- [x] Export `QRFactorization` for the pinned default without `using LinearSolve`
+- [x] Advanced algs (e.g. `SVDFactorization`) still need `using LinearSolve`
 
 **Exit:** `using ReservoirComputing` alone can `train` with default ridge solver
 
