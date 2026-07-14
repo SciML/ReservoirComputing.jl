@@ -1,8 +1,9 @@
 # Train
 
 ```@docs
-    train!
     train
+    train!
+    QRSolver
 ```
 
 ## Training methods

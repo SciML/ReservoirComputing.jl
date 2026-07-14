@@ -43,46 +43,59 @@ _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple(
 
 abstract type AbstractReservoirComputingSolver end
 
+@doc raw"""
+    QRSolver()
+
+Built-in QR solver for [`StandardRidge`](@ref) training.
+"""
 struct QRSolver <: AbstractReservoirComputingSolver end
 
+_default_ridge_solver() = QRSolver()
+_resolve_ridge_solver(::Nothing) = _default_ridge_solver()
+_resolve_ridge_solver(solver) = solver
+
+function _fit_readout(objective, states, targets, ::Nothing; kwargs...)
+    return train(objective, states, targets; kwargs...)
+end
+
+function _fit_readout(objective, states, targets, solver; kwargs...)
+    return train(objective, states, targets; solver = solver, kwargs...)
+end
+
 @doc raw"""
-    train(train_method, states, target_data; kwargs...)
+    train(objective, states, target_data; solver=nothing, kwargs...)
 
-Lower level training hook to fit a readout from precomputed
-reservoir features and given targets.
-
-Dispatching on this method with different training methods
-allows one to hook directly into [`train!`](@ref) without
-additional changes.
+Fit a readout from precomputed reservoir features and targets.
 
 ## Arguments
 
-- `train_method`: An object describing the training algorithm and its hyperparameters
-  (e.g. regularization strength, solver choice, constraints).
-- `states`: Feature matrix with reservoir states (ie. obtained with [`collectstates`](@ref)).
-  Shape `(n_features, T)`, where `T` is the number of samples (e.g. time steps).
-- `target_data`: Target matrix aligned with `states`. Shape `(n_outputs, T)`.
+- `objective`: training objective (for example [`StandardRidge`](@ref), or a
+  method from an extension such as MLJLinearModels / LIBSVM).
+- `states`: feature matrix from [`collectstates`](@ref), shape `(n_features, T)`.
+- `target_data`: targets aligned with `states`, shape `(n_outputs, T)`.
+
+## Keyword arguments
+
+- `solver`: for [`StandardRidge`](@ref), a ridge solver such as [`QRSolver`](@ref)
+  or a LinearSolve algorithm. Default `nothing` uses the package default
+  ([`QRSolver`](@ref) for ridge). Other objectives may interpret `solver`
+  differently, or ignore it.
+- `kwargs...`: forwarded to the objective backend.
 
 ## Returns
 
-- `output_weights`: Trained readout. Should be a forward method to be hooked into a
-  layer. For instance, in case of linear regression `output_weights` is a matrix
-  consumable by [`LinearReadout`](@ref).
+Readout weights or backend-specific fit result (for ridge, a matrix usable by
+[`LinearReadout`](@ref)).
 
-## Notes
-
-- Any sequence pre-processing (e.g. washout) should be handled by the caller before
-  invoking `train`. See [`train!`](@ref) for an end-to-end workflow.
-- For very long `T`, consider chunked or iterative solvers to reduce memory usage.
-- If your approach returns additional artifacts (e.g. diagnostics), prefer storing
-  them inside `train_method` or exposing a separate API; keep `train`’s return
-  value as the forward method only.
+Washout and state collection are handled by the model-level [`train`](@ref)
+method, not here.
 """
 function train(
         sr::StandardRidge, states::AbstractMatrix, target_data::AbstractMatrix;
-        solver = QRSolver(), kwargs...
+        solver = nothing, kwargs...
     )
-    return _train_ridge(solver, sr, states, target_data; kwargs...)
+    ridge_solver = _resolve_ridge_solver(solver)
+    return _train_ridge(ridge_solver, sr, states, target_data; kwargs...)
 end
 
 function _train_ridge(
@@ -99,59 +112,86 @@ function _train_ridge(
 end
 
 @doc raw"""
-    train!(rc, train_data, target_data, ps, st,
-           train_method=StandardRidge(0.0);
-           washout=0, return_states=false)
+    train(rc, train_data, target_data, ps, st;
+          objective=StandardRidge(0.0), solver=nothing,
+          washout=0, return_states=false)
 
-Trains a given reservoir computing by creating the reservoir states from `train_data`,
-and then fitting the readout layer using `target_data` as target.
-The learned weights/layer are written into `ps`. Use `return_states=true` to also
-obtain the feature matrix used for the fit, or call [`collectstates`](@ref) directly.
+Train the readout of a reservoir computer.
+
+Collects features from `train_data`, fits the readout to `target_data` using
+`objective`, and returns updated parameters and states. Parameters are not
+modified in place.
 
 ## Arguments
 
-- `rc`: A reservoir computing model, either provided by ReservoirComputing.jl
-  or built with [`ReservoirChain`](@ref). Must contain a trainable layer
-  (for example [`LinearReadout`](@ref)), and a collection point [`Collect`](@ref).
-- `train_data`: input sequence where columns are time steps.
+- `rc`: reservoir model (built-in model or [`ReservoirChain`](@ref)) with a
+  trainable readout such as [`LinearReadout`](@ref).
+- `train_data`: input sequence; columns are time steps.
 - `target_data`: targets aligned with `train_data`.
 - `ps`: model parameters.
 - `st`: model states.
-- `train_method`: training algorithm. Default is [`StandardRidge`](@ref).
 
 ## Keyword arguments
 
-- `washout`: number of initial time steps to discard (applied equally to features
-  and targets). Default `0`.
-- `return_states`: if `true`, also returns the feature matrix used
-  for the fit.
-- `kwargs...`: additional keyword arguments for the training algorithm, if needed.
-  Defaults vary according to the different training method.
+- `objective`: training objective. Default [`StandardRidge`](@ref).
+- `solver`: solver for the objective when applicable (ridge: [`QRSolver`](@ref)
+  or a LinearSolve algorithm). Default `nothing` selects the package default
+  for that objective.
+- `washout`: number of initial steps to discard from features and targets.
+  Default `0`.
+- `return_states`: if `true`, also return the feature matrix used for the fit.
+- `kwargs...`: forwarded to the objective backend.
 
 ## Returns
 
-- `(ps, st)`: updated model parameters and states.
-- `(ps, st), states`: If `return_states=true`.
+- `(ps, st)` normally.
+- `((ps, st), states)` if `return_states=true`.
 
-## Notes
+If the readout uses implicit collection, create it with `include_collect=true`
+or place an explicit [`Collect`](@ref) earlier in the chain.
+"""
+function train(
+        rc, train_data, target_data, ps, st;
+        objective = StandardRidge(0.0),
+        solver = nothing,
+        washout::Int = 0,
+        return_states::Bool = false,
+        kwargs...
+    )
+    raw_states, st_after = collectstates(rc, train_data, ps, st)
+    states_wo,
+        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        (raw_states, target_data)
+    output_matrix = _fit_readout(
+        objective, states_wo, traindata_wo, solver; kwargs...
+    )
+    ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
+    return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
+end
 
-- Features are produced by `collectstates(rc, train_data, ps, st)`. If you rely on
-  the implicit collection of a [`LinearReadout`](@ref), make sure that readout was created with
-  `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the
-  [`ReservoirChain`](@ref).
+@doc raw"""
+    train!(rc, train_data, target_data, ps, st,
+           train_method=StandardRidge(0.0);
+           washout=0, return_states=false, kwargs...)
+
+Compatibility wrapper around model-level [`train`](@ref).
+
+The positional `train_method` is passed as `objective`. Prefer
+`train(rc, train_data, target_data, ps, st; objective=..., solver=...)` for
+new code.
 """
 function train!(
         rc, train_data, target_data, ps, st,
         train_method = StandardRidge(0.0);
         washout::Int = 0, return_states::Bool = false, kwargs...
     )
-    raw_states, st_after = collectstates(rc, train_data, ps, st)
-    states_wo,
-        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
-        (raw_states, target_data)
-    output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
-    ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
-    return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
+    return train(
+        rc, train_data, target_data, ps, st;
+        objective = train_method,
+        washout = washout,
+        return_states = return_states,
+        kwargs...
+    )
 end
 
 #_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
