@@ -51,11 +51,22 @@ _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple(
 abstract type AbstractReservoirComputingSolver end
 
 @doc raw"""
+    QRFactorization()
+
+Default LinearSolve algorithm for [`StandardRidge`](@ref) training.
+
+Re-exported from LinearSolve.jl so ridge training works without a separate
+`using LinearSolve`. Pass other LinearSolve algorithms as `solver` after
+loading LinearSolve.jl.
+"""
+const QRFactorization = LinearSolveQRFactorization
+
+@doc raw"""
     QRSolver()
 
 Legacy built-in QR solver for [`StandardRidge`](@ref) training.
 
-The package default is LinearSolve's `QRFactorization()`. Prefer that
+The package default is LinearSolve's [`QRFactorization`](@ref). Prefer that
 unless you need this implementation explicitly.
 """
 struct QRSolver <: AbstractReservoirComputingSolver end
