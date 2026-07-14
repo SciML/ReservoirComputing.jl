@@ -1,13 +1,14 @@
 # Migration contract: train API v1.0 + LinearSolve default
 
-**Status:** draft contract (Step 0) — not implemented  
+**Status:** phases 1–5 implemented on branch; phases 6–7 open  
 **Branch:** `wip/473-linearsolve-default-readout`  
+**Package version target:** `0.12.28` (breaking: default ridge solver + LinearSolve hard dep)  
 **Issues:** [#473](https://github.com/SciML/ReservoirComputing.jl/issues/473), [#367](https://github.com/SciML/ReservoirComputing.jl/issues/367)  
 **Related:** closed [#294](https://github.com/SciML/ReservoirComputing.jl/issues/294) (LinearSolve as extension)
 
-This document is the source of truth for Option B (full train redesign) with a
-**phased, tests-gated** migration. No public default or hard-dependency change
-ships until the phase exit criteria below are green.
+Working notes for Option B (full train redesign). Not a public user guide.
+Phases 1–5 are landed; `train!` deprecation (phase 6) and removal (phase 7)
+remain follow-ups.
 
 ---
 
@@ -198,9 +199,8 @@ Do **not** use random ESN weight bit-identity as the primary oracle.
 | 5 | **hard dep** | **removed** | optional legacy |
 | 7 | hard dep | gone | **removed** (or undocumented internal) |
 
-**Compat bounds:** do not jump to LinearSolve 5.0 in the same PR as the default
-flip unless #472 / compat work is already merged. Prefer land on current
-compat (`3.57 / 4.2`) first; bump majors separately.
+**Compat bounds:** multi-RHS Gram solves require LinearSolve **4.2+**
+(`LinearSolve = "4.2"`). Bump to 5.x separately if/when Dependabot #472 lands.
 
 **Precompile:** Phase 4+ workload must call default ridge `train` so TTFX
 reflects the real default path. Record rough numbers in the PR body.

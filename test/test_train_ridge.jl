@@ -4,9 +4,7 @@ using LinearAlgebra
 using ReservoirComputing
 using LinearSolve
 
-# Phase 1 characterization for ridge readout training (#473 / #367 migration).
-# Documents current public behavior of `train` / `train!` with `StandardRidge`
-# and available solvers. No API redesign in this file.
+# Ridge readout training regression (#473).
 
 """
 Reference ridge solution matching the LinearSolve extension path and the
@@ -263,8 +261,8 @@ end
     @test states_wo == states[:, 3:5]
     @test targets_wo == targets[:, 3:5]
 
-    @test_throws Exception ReservoirComputing._apply_washout(states, targets, -1)
-    @test_throws Exception ReservoirComputing._apply_washout(states, targets, 5)
+    @test_throws ArgumentError ReservoirComputing._apply_washout(states, targets, -1)
+    @test_throws ArgumentError ReservoirComputing._apply_washout(states, targets, 5)
 end
 
 @testset "train!: ESN ridge smoke" begin

@@ -1,21 +1,25 @@
 @doc raw"""
-
     StandardRidge([Type], [reg])
 
-Ridge regression method.
+Ridge regression for readout training.
 
-## Equations
+With feature matrix ``\mathbf{X}`` of size `(n_features, T)` and target matrix
+``\mathbf{Y}`` of size `(n_outputs, T)`, the fitted weights
+``\mathbf{W}`` of size `(n_outputs, n_features)` satisfy
 
 ```math
-\mathbf{w} = (\mathbf{X}^\top \mathbf{X} +
-\lambda \mathbf{I})^{-1} \mathbf{X}^\top \mathbf{y}
+\mathbf{W}^{\top}
+=
+(\mathbf{X}\mathbf{X}^{\top} + \lambda \mathbf{I})^{-1}
+\mathbf{X}\mathbf{Y}^{\top}
 ```
+
+so that ``\mathbf{Y} \approx \mathbf{W}\mathbf{X}``.
 
 ## Arguments
 
- - `Type`: type of the regularization argument. Default is inferred internally,
-   there's usually no need to tweak this
- - `reg`: regularization coefficient. Default is set to 0.0 (linear regression).
+ - `Type`: type of the regularization coefficient. Default is inferred internally.
+ - `reg`: regularization coefficient ``\lambda``. Default `0.0` (ordinary least squares).
 """
 struct StandardRidge
     reg::Number
@@ -30,10 +34,13 @@ function StandardRidge()
 end
 
 function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
-    @assert washout ≥ 0 "washout must be ≥ 0"
-    len_states = size(states, 2)
-    @assert washout < len_states "washout=$washout is ≥ number of time steps=$len_states"
-    first_idx = washout + 1
+    washout ≥ 0 || throw(ArgumentError("washout must be ≥ 0, got $washout"))
+    n_samples = size(states, 2)
+    washout < n_samples || throw(
+        ArgumentError(
+            "washout=$washout is ≥ number of time steps=$n_samples"
+        )
+    )
     states_wo = states[:, (washout + 1):end]
     targets_wo = targets[:, (washout + 1):end]
     return states_wo, targets_wo
@@ -125,8 +132,8 @@ function _train_ridge(
         solver::SciMLLinearSolveAlgorithm, sr::StandardRidge,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
-    n_features, n_samples = size(states)
-    n_outputs, n_target_samples = size(targets)
+    n_samples = size(states, 2)
+    n_target_samples = size(targets, 2)
     n_samples == n_target_samples || throw(
         DimensionMismatch(
             "states has $n_samples samples, targets has $n_target_samples"

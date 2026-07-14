@@ -4,7 +4,7 @@ using LinearAlgebra
 using ReservoirComputing
 using LinearSolve
 
-# Dual-API tests for model-level `train` and silent `train!` forwarding (#473).
+# Model-level `train` / `train!` API regression (#473).
 
 @testset "train model-level matches train!" begin
     rng = MersenneTwister(42)
