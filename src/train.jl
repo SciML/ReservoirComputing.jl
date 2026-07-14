@@ -107,30 +107,10 @@ function train(
     return _train_ridge(ridge_solver, sr, states, target_data; kwargs...)
 end
 
-function _train_ridge(
-        ::QRSolver, sr::StandardRidge,
-        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
-    )
-    n_samples = size(states, 2)
-    n_target_samples = size(target_data, 2)
-    n_samples == n_target_samples || throw(
-        DimensionMismatch(
-            "states has $n_samples samples, targets has $n_target_samples"
-        )
-    )
-
-    n_states = size(states, 1)
-    A = [states'; sqrt(sr.reg) * I(n_states)]
-    b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]
-    F = qr(A)
-    Wt = F \ b
-    output_layer = Matrix(Wt')
-    return output_layer
-end
-
-function _train_ridge(
-        solver::SciMLLinearSolveAlgorithm, sr::StandardRidge,
-        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+function _ridge_augmented_system(
+        sr::StandardRidge,
+        states::AbstractMatrix,
+        targets::AbstractMatrix,
     )
     n_samples = size(states, 2)
     n_target_samples = size(targets, 2)
@@ -140,10 +120,29 @@ function _train_ridge(
         )
     )
 
+    n_features = size(states, 1)
+    n_outputs = size(targets, 1)
     λ = convert(eltype(states), sr.reg)
-    gram = states * states' + λ * I
-    rhs = states * targets'
-    solution = solve(LinearProblem(gram, rhs), solver; kwargs...)
+    design = [states'; sqrt(λ) * I(n_features)]
+    rhs = [targets'; zeros(eltype(targets), n_features, n_outputs)]
+    return design, rhs
+end
+
+function _train_ridge(
+        ::QRSolver, sr::StandardRidge,
+        states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
+    )
+    design, rhs = _ridge_augmented_system(sr, states, target_data)
+    weight_transpose = qr(design) \ rhs
+    return Matrix(weight_transpose')
+end
+
+function _train_ridge(
+        solver::SciMLLinearSolveAlgorithm, sr::StandardRidge,
+        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+    )
+    design, rhs = _ridge_augmented_system(sr, states, targets)
+    solution = solve(LinearProblem(design, rhs), solver; kwargs...)
     return Matrix(solution.u')
 end
 
@@ -201,7 +200,7 @@ function train(
         rc, train_data, target_data, ps, st;
         objective = StandardRidge(0.0),
         solver = nothing,
-        washout::Int = 0,
+        washout::Integer = 0,
         return_states::Bool = false,
         kwargs...
     )
@@ -230,7 +229,7 @@ Compatibility wrapper around model-level [`train`](@ref).
 function train!(
         rc, train_data, target_data, ps, st,
         train_method = StandardRidge(0.0);
-        washout::Int = 0, return_states::Bool = false, kwargs...
+        washout::Integer = 0, return_states::Bool = false, kwargs...
     )
     Base.depwarn(
         "`train!` is deprecated; use `train(rc, train_data, target_data, ps, st; " *

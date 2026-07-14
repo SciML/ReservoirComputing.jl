@@ -7,9 +7,23 @@ import ReservoirComputing: train, addreadout!
 
 function train(
         svr::LIBSVM.AbstractSVR,
-        states::AbstractMatrix, target::AbstractMatrix
+        states::AbstractMatrix, target::AbstractMatrix;
+        solver = nothing,
+        kwargs...,
     )
-    @assert size(states, 2) == size(target, 2) "states and target must share columns."
+    solver === nothing || throw(
+        ArgumentError(
+            "solver is not supported for LIBSVM objectives; omit the solver keyword."
+        )
+    )
+    isempty(kwargs) || throw(
+        ArgumentError(
+            "unsupported keyword arguments for LIBSVM train: $(Tuple(keys(kwargs)))"
+        )
+    )
+    size(states, 2) == size(target, 2) || throw(
+        DimensionMismatch("states and target must share the same number of columns.")
+    )
     perm_states = permutedims(states)
     size_target = size(target, 1)
 

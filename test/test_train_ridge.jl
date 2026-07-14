@@ -251,6 +251,23 @@ end
     end
 end
 
+@testset "train(StandardRidge): LinearSolve uses same augmented system as QRSolver" begin
+    rng = MersenneTwister(43)
+    n_features, n_samples, n_outputs = 6, 25, 3
+    regularization = 1.0e-8
+    states, targets, _ = random_ridge_problem(
+        rng, Float64, n_features, n_samples, n_outputs
+    )
+
+    weights_legacy = train(
+        StandardRidge(regularization), states, targets; solver = QRSolver()
+    )
+    weights_ls = train(
+        StandardRidge(regularization), states, targets; solver = QRFactorization()
+    )
+    @test weights_ls ≈ weights_legacy rtol = 1.0e-10
+end
+
 @testset "_apply_washout" begin
     states = reshape(collect(1.0:20.0), 4, 5)
     targets = reshape(collect(100.0:109.0), 2, 5)

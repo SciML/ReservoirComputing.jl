@@ -151,8 +151,7 @@ end
     ps, st = setup(rng, model)
 
     svr = EpsilonSVR()
-    # LIBSVM feature-level `train` does not accept keyword arguments.
-    @test_throws MethodError train(
+    @test_throws ArgumentError train(
         model, train_data, target_data, ps, st;
         objective = svr,
         solver = QRFactorization(),
