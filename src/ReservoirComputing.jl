@@ -42,6 +42,7 @@ include("inits/inits_components.jl")
 include("inits/inits_input.jl")
 include("inits/inits_reservoir.jl")
 #full models
+include("models/deep_reservoir.jl")
 include("models/esn_generics.jl")
 include("models/esn.jl")
 include("models/additive_eiesn.jl")
@@ -79,7 +80,7 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
-export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
+export AdditiveEIESN, DeepESN, DelayESN, DeepReservoir, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
 export RMNESN
 #ext
