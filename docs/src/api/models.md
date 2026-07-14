@@ -13,11 +13,18 @@
     EuSN
     HybridESN
     RMNESN
+    RMNResESN
     InputDelayESN
     StateDelayESN
     SVESM
     LIFESN
     ResESN
+```
+
+## Continuous-time Echo State Networks
+
+```@docs
+    ContinuousESN
 ```
 
 ## Next generation reservoir computing
@@ -47,4 +54,5 @@ The input encodings are the equivalent of the input matrices of the ESNs. These 
 
 ```@docs
     RandomMapping
+    RandomMaps
 ```

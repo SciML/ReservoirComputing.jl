@@ -27,6 +27,7 @@
     ESNCell
     EuSNCell
     MemoryESNCell
+    MemoryResESNCell
 ```
 
 ```@docs
@@ -35,10 +36,25 @@
     LIFESNCell
 ```
 
+## Continuous-time Layers
+
+```@docs
+    ContinuousESNCell
+```
+
 ## Wrappers
 
 ```@docs
     LocalInformationFlow
+```
+
+## Continuous-Time Reservoirs
+
+```@docs
+    AbstractSciMLProblemReservoir
+    SciMLProblemReservoir
+    AbstractSampler
+    TerminalStateSampling
 ```
 
 ## Reservoir computing with cellular automata

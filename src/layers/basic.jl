@@ -95,7 +95,11 @@ outputsize(ro::LinearReadout, _, ::AbstractRNG) = (ro.out_dims,)
 function (ro::LinearReadout)(inp::AbstractArray, ps, st::NamedTuple)
     out_tmp = ps.weight * inp
     if has_bias(ro)
-        out_tmp += ps.bias
+        if ndims(out_tmp) == 1
+            out_tmp .+= ps.bias
+        else
+            out_tmp .+= reshape(ps.bias, :, ntuple(Returns(1), ndims(out_tmp) - 1)...)
+        end
     end
     output = ro.activation.(out_tmp)
     return output, st
@@ -220,10 +224,10 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
     end
     @assert !isempty(collected)
     firstcol = collected[1]
-    Tcol = eltype(firstcol)
-    empty_mat = zeros(Tcol, length(firstcol), 0)
-    states_raw = reduce(hcat, collected; init = empty_mat)
-    states = eltype(data).(states_raw)
+    states = similar(firstcol, eltype(data), length(firstcol), length(collected))
+    for idx in eachindex(collected)
+        states[:, idx] .= collected[idx]
+    end
     return states, newst
 end
 

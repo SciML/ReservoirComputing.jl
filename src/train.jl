@@ -43,6 +43,12 @@ _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple(
 
 abstract type AbstractReservoirComputingSolver end
 
+"""
+    QRSolver()
+
+Use a QR factorization to solve the linear least-squares system in [`train`](@ref)
+for [`StandardRidge`](@ref).
+"""
 struct QRSolver <: AbstractReservoirComputingSolver end
 
 @doc raw"""
@@ -66,7 +72,7 @@ additional changes.
 ## Returns
 
 - `output_weights`: Trained readout. Should be a forward method to be hooked into a
-  layer. For instance, in case of linear regression `output_weights` is a mtrix
+  layer. For instance, in case of linear regression `output_weights` is a matrix
   consumable by [`LinearReadout`](@ref).
 
 ## Notes
@@ -104,7 +110,7 @@ end
            washout=0, return_states=false)
 
 Trains a given reservoir computing by creating the reservoir states from `train_data`,
-and then fiting the readout layer using `target_data` as target.
+and then fitting the readout layer using `target_data` as target.
 The learned weights/layer are written into `ps`. Use `return_states=true` to also
 obtain the feature matrix used for the fit, or call [`collectstates`](@ref) directly.
 

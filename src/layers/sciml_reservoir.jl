@@ -1,0 +1,133 @@
+"""
+    AbstractSampler
+
+Abstract supertype for samplers that extract a discrete state matrix from a
+continuous-time reservoir's trajectory. Concrete subtypes determine how the
+ODE/SDE/DDE solution is mapped onto the columns of the state matrix that the
+readout sees.
+"""
+abstract type AbstractSampler end
+
+"""
+    TerminalStateSampling()
+
+Sampler that records the reservoir state at the *end* of each input window.
+With `T` input columns and `tspan = (t0, t1)`, `collectstates` splits
+`tspan` into `T` equal-width windows; input column `k` is applied at the
+start of window `k` (time `t0 + (k-1)Δt`) and the state at the end of that
+window (time `t0 + kΔt`) becomes the `k`-th column of the returned state
+matrix. This is the continuous analogue of the discrete update: one state
+per input column, with `states[:, k]` representing the reservoir's state
+after having processed input `k`.
+"""
+struct TerminalStateSampling <: AbstractSampler end
+
+"""
+    AbstractSciMLProblemReservoir <: AbstractLuxLayer
+
+Abstract supertype for reservoirs whose dynamics are defined by an
+`AbstractSciMLProblem` (typically `ODEProblem`, `SDEProblem`, or `DDEProblem`).
+Concrete subtypes provide `_collectstates` methods that run the solver and
+hand back a state matrix to the readout.
+
+The continuous-time `_collectstates` implementation lives in the
+`RCODEReservoirExt` package extension and requires `SciMLBase` and
+`DataInterpolations` to be loaded. Pick any concrete solver package
+separately (e.g. `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`) — its solver
+types are what `SciMLProblemReservoir`'s `args[1]` consumes.
+"""
+abstract type AbstractSciMLProblemReservoir <: AbstractLuxLayer end
+
+"""
+    SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)
+
+Generic continuous-time reservoir layer wrapping any `AbstractSciMLProblem`.
+Following the [DiffEqFlux NeuralDE pattern](https://github.com/SciML/DiffEqFlux.jl/blob/master/src/neural_de.jl)
+the solver positional arguments and keyword arguments are captured at
+construction time and forwarded to `solve` when `collectstates` runs.
+
+## Arguments
+
+- `prob`: an `AbstractSciMLProblem` (ODE/SDE/DDE) defining the reservoir
+  dynamics. Left untyped so that any problem subtype can plug in without
+  changes to the core types.
+- `sampler`: an [`AbstractSampler`](@ref) controlling how the continuous
+  trajectory is mapped to a discrete state matrix.
+- `tspan`: the integration interval for `collectstates`. Overrides
+  `prob.tspan` via `remake` at solve time, mirroring DiffEqFlux's NeuralODE.
+- `args...`: positional arguments forwarded to `solve`. The solver algorithm
+  (e.g. `Tsit5()`) is the first element by convention.
+- `kwargs...`: keyword arguments forwarded to `solve`. The continuous helper
+  owns three protected keys — `saveat`, `save_everystep`, and `dense` — because
+  `collectstates` needs to synthesise a sample grid from `tspan` and the input
+  width. Passing any of them at construction errors immediately.
+
+The real `_collectstates` implementation lives in the `RCODEReservoirExt`
+package extension. Without it loaded, calling `collectstates` on a
+reservoir computer holding a `SciMLProblemReservoir` will error with a
+message instructing the user to load `SciMLBase` and `DataInterpolations`
+(plus a concrete solver package — `OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`,
+…).
+"""
+@concrete struct SciMLProblemReservoir <: AbstractSciMLProblemReservoir
+    prob
+    sampler
+    tspan
+    args
+    kwargs
+end
+
+# Keyword arguments owned by the continuous `_collectstates` helper:
+#   - `saveat` is derived from `tspan` and the input width, so a user value
+#     would silently desync the sample grid from the input grid.
+#   - `save_everystep` and `dense` are hardcoded to `false` because the
+#     sampler only ever reads `sol.u` at the `saveat` points; allocating
+#     the full trajectory would waste memory without changing the result.
+# All three are rejected at construction so the user finds out immediately
+# rather than getting a wrong-shape state matrix at solve time. Internal —
+# not a docstring so Documenter's `:missing_docs` check leaves it alone.
+const _PROTECTED_SOLVE_KWARGS = (:saveat, :save_everystep, :dense)
+
+function _check_protected_kwargs(kwargs)
+    collisions = filter(key -> key in _PROTECTED_SOLVE_KWARGS, keys(kwargs))
+    isempty(collisions) && return nothing
+    return throw(
+        ArgumentError(
+            "SciMLProblemReservoir rejects $(collect(collisions)) in `kwargs`: " *
+                "these keys are set by `collectstates` from `tspan` and the input " *
+                "data width. Drop them from the constructor call."
+        )
+    )
+end
+
+function SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)
+    # No type constraint on `sampler` here: a constrained outer constructor
+    # makes this method strictly more specific than the inner constructor
+    # generated by `@concrete`, causing infinite recursion at the 5-arg
+    # call below. The DiffEqFlux NeuralDE pattern keeps these arguments
+    # untyped for the same reason.
+    _check_protected_kwargs(kwargs)
+    return SciMLProblemReservoir(prob, sampler, tspan, args, kwargs)
+end
+
+# Empty parameters/state by default. Concrete subtypes (e.g. `ContinuousESN`)
+# override these to expose reservoir matrices and any solver caches.
+function initialparameters(::AbstractRNG, ::AbstractSciMLProblemReservoir)
+    return NamedTuple()
+end
+
+function initialstates(::AbstractRNG, ::AbstractSciMLProblemReservoir)
+    return NamedTuple()
+end
+
+function Base.show(io::IO, res::SciMLProblemReservoir)
+    print(io, "SciMLProblemReservoir(")
+    print(io, "prob = ")
+    show(io, res.prob)
+    print(io, ", sampler = ")
+    show(io, res.sampler)
+    print(io, ", tspan = ")
+    show(io, res.tspan)
+    print(io, ")")
+    return
+end

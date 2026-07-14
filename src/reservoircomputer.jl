@@ -89,6 +89,23 @@ end
 function collectstates(
         rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
     )
+    return _collectstates(rc.reservoir, rc, data, ps, st)
+end
+
+function _collectstates(
+        ::AbstractSciMLProblemReservoir, ::AbstractReservoirComputer,
+        ::AbstractMatrix, _, ::NamedTuple
+    )
+    return error(
+        "collectstates for a `SciMLProblemReservoir` requires the " *
+            "`RCODEReservoirExt` extension. Load `OrdinaryDiffEq`, `SciMLBase`, " *
+            "and `DataInterpolations` to enable continuous-time reservoirs."
+    )
+end
+
+function _collectstates(
+        _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
+    )
     newst = st
     nsteps = size(data, 2)
     cols = eachcol(data)

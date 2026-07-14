@@ -19,17 +19,20 @@ using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, U
 
 #reservoir computers
 include("generics.jl")
+include("layers/sciml_reservoir.jl")
 include("reservoircomputer.jl")
 #layers
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
+include("layers/continuous_esn_cell.jl")
 include("layers/additive_eiesn_cell.jl")
 include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
 include("layers/resesn_cell.jl")
 include("layers/eusn_cell.jl")
 include("layers/memoryesn_cell.jl")
+include("layers/memoryresesn_cell.jl")
 include("layers/rmn_cell.jl")
 include("layers/svmreadout.jl")
 include("layers/lif_wrapper.jl")
@@ -57,16 +60,19 @@ include("models/lifesn.jl")
 include("models/ngrc.jl")
 include("models/rmnesn.jl")
 include("models/deep_reservoir.jl")
+include("models/rmnresesn.jl")
+include("models/continuous_esn.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export ESNCell, ES2NCell, EuSNCell, MemoryESNCell, RMNCell
+export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN
+export AbstractSampler, TerminalStateSampling
+export ContinuousESNCell
+export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell,
+    MemoryESNCell, MemoryResESNCell, ResESNCell, RMNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
     DelayLayer, NonlinearFeaturesLayer
-export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell, ResESNCell
-export Collect, collectstates, DelayLayer, LinearReadout, NonlinearFeaturesLayer,
-    ReservoirChain, StatefulLayer
 export SVMReadout
 export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
@@ -76,13 +82,13 @@ export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
 export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
     diagonal_init, double_cycle, forward_connection, low_connectivity, lower_triangular, permutation_init,
     pseudo_svd, rand_hyper, rand_sparse, selfloop_backward_cycle, selfloop_cycle, selfloop_delayline_backward,
-    selfloop_forwardconnection, simple_cycle, true_doublecycle, wigner_init
+    selfloop_forwardconnection, simple_cycle, toepliz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM, DeepReservoir
 export NGRC
-export RMNESN
+export RMNESN, RMNResESN
 #ext
 export RECACell, RECA
 export RandomMapping, RandomMaps

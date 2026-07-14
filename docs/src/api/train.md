@@ -9,4 +9,5 @@
 
 ```@docs
     StandardRidge
+    QRSolver
 ```
