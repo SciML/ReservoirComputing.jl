@@ -231,6 +231,17 @@ end
     )
 end
 
+@testset "train(StandardRidge): negative regularization rejected" begin
+    states = randn(Float64, 4, 20)
+    targets = randn(Float64, 2, 20)
+    @test_throws ArgumentError train(
+        StandardRidge(-1.0e-3), states, targets; solver = QRSolver()
+    )
+    @test_throws ArgumentError train(
+        StandardRidge(-1.0e-3), states, targets; solver = QRFactorization()
+    )
+end
+
 @testset "train(StandardRidge): LinearSolve multi-RHS matches reference" begin
     rng = MersenneTwister(41)
     n_features, n_samples, n_outputs = 7, 45, 5

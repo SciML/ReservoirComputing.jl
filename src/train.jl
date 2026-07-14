@@ -123,6 +123,11 @@ function _ridge_augmented_system(
     n_features = size(states, 1)
     n_outputs = size(targets, 1)
     λ = convert(eltype(states), sr.reg)
+    λ ≥ zero(λ) || throw(
+        ArgumentError(
+            "StandardRidge regularization must be ≥ 0, got reg=$(sr.reg)"
+        )
+    )
     design = [states'; sqrt(λ) * I(n_features)]
     rhs = [targets'; zeros(eltype(targets), n_features, n_outputs)]
     return design, rhs
@@ -206,10 +211,10 @@ function train(
     )
     raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        targets_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)
     output_matrix = _fit_readout(
-        objective, states_wo, traindata_wo, solver; kwargs...
+        objective, states_wo, targets_wo, solver; kwargs...
     )
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
