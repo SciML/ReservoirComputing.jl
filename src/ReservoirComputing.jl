@@ -3,7 +3,7 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, eigen, I, qr, Diagonal, diag, mul!, Symmetric, norm,
-    svd, svdvals, nullspace, pinv, tr, checksquare, issymmetric
+    svdvals, nullspace, pinv, tr, checksquare, issymmetric
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
@@ -93,9 +93,9 @@ export Conceptor, correlation_matrix, conceptor_matrix, conceptor_from_states,
     conceptor_singular_values, quota
 export aperture_adapt, adapt_singular_value, reaperture, attenuation, optimal_aperture
 export conceptor_not, conceptor_and, conceptor_or
-export has_conceptor, get_conceptor, store_conceptor!, store_conceptors!,
+export has_conceptor, get_conceptor, store_conceptor, store_conceptors,
     set_active_conceptor, active_conceptor
-export ridge_map, load!, generate, morph_conceptor
+export load, generate, morph_conceptor
 #ext
 export RECACell, RECA
 export RandomMapping, RandomMaps

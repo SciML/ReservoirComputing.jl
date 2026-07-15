@@ -37,7 +37,7 @@ Conceptors after Jaeger (2014), [Jaeger2014conceptors](@cite). See the
     Conceptor
     has_conceptor
     get_conceptor
-    store_conceptor!
+    store_conceptor
     set_active_conceptor
     active_conceptor
 ```
@@ -45,14 +45,13 @@ Conceptors after Jaeger (2014), [Jaeger2014conceptors](@cite). See the
 ## Loading, generation, and morphing
 
 ```@docs
-    load!
+    load
     generate
     morph_conceptor
-    ridge_map
 ```
 
 ## Conceptor-filtered training
 
 ```@docs
-    store_conceptors!
+    store_conceptors
 ```

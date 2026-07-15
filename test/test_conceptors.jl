@@ -120,7 +120,10 @@ end
         @test haskey(ps, :model)
         @test isempty(st.conceptors)
         conceptor = conceptor_matrix(sample_correlation(rng2, 30, 100), 10.0)
-        store_conceptor!(st, :first_pattern, conceptor, 10.0)
+        new_st = store_conceptor(st, :first_pattern, conceptor, 10.0)
+        # the input state is untouched; the returned state holds the conceptor
+        @test !has_conceptor(st, :first_pattern)
+        st = new_st
         @test has_conceptor(st, :first_pattern)
         @test get_conceptor(st, :first_pattern) ≈ conceptor
         st = set_active_conceptor(st, :first_pattern)
@@ -128,7 +131,7 @@ end
         @test_throws KeyError set_active_conceptor(st, :missing)
     end
 
-    @testset "load! / generate roundtrip" begin
+    @testset "load / generate roundtrip" begin
         rng3 = Xoshiro(99)
         bias_init(random_generator, dims...) =
             0.2f0 .* randn(random_generator, Float32, dims...)
@@ -147,7 +150,7 @@ end
         sample_indices = 1:1000
         period = 8.8342522
         signal = reshape(Float32.(sin.(2pi .* sample_indices ./ period)), 1, :)
-        ps, st = load!(
+        ps, st = load(
             rng3, concept, [:sine => signal], ps, st; aperture = 1000.0, washout = 400
         )
         @test has_conceptor(st, :sine)
@@ -180,8 +183,8 @@ end
         st = initialstates(rng4, concept)
         first_conceptor = conceptor_matrix(sample_correlation(rng4, 25, 100), 10.0)
         second_conceptor = conceptor_matrix(sample_correlation(rng4, 25, 100), 10.0)
-        store_conceptor!(st, :first_pattern, first_conceptor, 10.0)
-        store_conceptor!(st, :second_pattern, second_conceptor, 10.0)
+        st = store_conceptor(st, :first_pattern, first_conceptor, 10.0)
+        st = store_conceptor(st, :second_pattern, second_conceptor, 10.0)
         @test morph_conceptor(st, (; first_pattern = 1.0, second_pattern = 0.0)) ≈
             first_conceptor
         @test morph_conceptor(st, (; first_pattern = 0.3, second_pattern = 0.7)) ≈

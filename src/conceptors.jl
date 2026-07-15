@@ -5,20 +5,20 @@ State correlation matrix ``R = X X^\top / L`` for a reservoir state collection
 `states` of size ``N \times L`` (one state per column). This is the matrix whose
 regularized-identity map defines a conceptor.
 
-# Arguments
+## Arguments
 
 - `states::AbstractMatrix{<:Real}`: Reservoir states arranged as
   `(reservoir_dimension, sample_count)`.
 
-# Returns
+## Returns
 
 - A dense square matrix with the floating-point element type inferred from `states`.
 
-# Throws
+## Throws
 
 - `ArgumentError`: If `states` has no elements.
 
-# Example
+## Example
 
 ```julia
 states = rand(Float32, 50, 1_000)
@@ -35,27 +35,27 @@ end
 @doc raw"""
     conceptor_matrix(correlation, aperture) -> Matrix
 
-Conceptor derived from a correlation matrix and the given `aperture` using
-Jaeger (2014), Equation 7. The result is
-symmetric positive semidefinite with singular values in ``[0, 1)``.
+Conceptor derived from a correlation matrix and the given `aperture`
+[Jaeger2014conceptors](@cite). The result is symmetric positive semidefinite
+with singular values in ``[0, 1)``.
 
-# Arguments
+## Arguments
 
 - `correlation::AbstractMatrix{<:Real}`: Symmetric state correlation matrix.
 - `aperture::Real`: Finite positive aperture. Larger values admit more state-space
   directions; smaller values suppress more directions.
 
-# Returns
+## Returns
 
 - A dense conceptor matrix with the floating-point element type of `correlation`.
 
-# Throws
+## Throws
 
 - `ArgumentError`: If `aperture` is not finite and positive, or if `correlation`
   is not symmetric.
 - `DimensionMismatch`: If `correlation` is not square.
 
-# Example
+## Example
 
 ```julia
 correlation = correlation_matrix(states)
@@ -91,16 +91,16 @@ Convenience composition of [`correlation_matrix`](@ref) and
 [`conceptor_matrix`](@ref): the conceptor characterizing a reservoir state cloud
 `states` (size `N × L`) at the given `aperture`.
 
-# Arguments
+## Arguments
 
 - `states::AbstractMatrix{<:Real}`: Reservoir states, one state per column.
 - `aperture::Real`: Finite positive aperture.
 
-# Returns
+## Returns
 
 - The conceptor associated with the sample correlation of `states`.
 
-# Example
+## Example
 
 ```julia
 conceptor = conceptor_from_states(states, 10)
@@ -116,15 +116,15 @@ end
 Singular values of a (symmetric) conceptor matrix `C`, in descending order. For a
 conceptor these coincide with its eigenvalues and lie in `[0, 1]`.
 
-# Arguments
+## Arguments
 
 - `conceptor::AbstractMatrix{<:Real}`: Square conceptor matrix.
 
-# Returns
+## Returns
 
 - A vector of singular values in descending order.
 
-# Throws
+## Throws
 
 - `DimensionMismatch`: If `conceptor` is not square.
 """
@@ -139,11 +139,11 @@ end
 Mean singular value of a conceptor, `tr(C) / N`. Jaeger's "quota" measures the
 fraction of reservoir state space the conceptor leaves open (0 = point, 1 = all).
 
-# Arguments
+## Arguments
 
 - `conceptor::AbstractMatrix{<:Real}`: Square conceptor matrix.
 
-# Returns
+## Returns
 
 - The mean singular value. Values near zero indicate a restrictive conceptor;
   values near one indicate a permissive conceptor.
@@ -161,20 +161,20 @@ end
     adapt_singular_value(singular_value, aperture_factor) -> Real
 
 Aperture-adapted value for an input `singular_value` in `[0, 1]` and a
-nonnegative `aperture_factor` (Jaeger 2014, Proposition 3, Equation 19).
+nonnegative `aperture_factor` [Jaeger2014conceptors](@cite).
 The boundary values zero and one are fixed points.
 
-# Arguments
+## Arguments
 
 - `singular_value::Real`: Value to adapt, normally in `[0, 1]`.
 - `aperture_factor::Real`: Nonnegative factor applied to the aperture.
 
-# Returns
+## Returns
 
 - The adapted singular value, using the floating-point type inferred from
   `singular_value`.
 
-# Throws
+## Throws
 
 - `ArgumentError`: If `aperture_factor` is negative.
 """
@@ -196,24 +196,24 @@ end
     aperture_adapt(conceptor, aperture_factor) -> Matrix
 
 Aperture adaptation of a `conceptor` by a nonnegative `aperture_factor`
-(Jaeger 2014, Definition 3). This is equivalent to multiplying its aperture by
+[Jaeger2014conceptors](@cite). This is equivalent to multiplying its aperture by
 the supplied factor. Zero and infinite factors are handled exactly.
 
-# Arguments
+## Arguments
 
 - `conceptor::AbstractMatrix{<:Real}`: Symmetric square conceptor matrix.
 - `aperture_factor::Real`: Nonnegative aperture multiplier.
 
-# Returns
+## Returns
 
 - A conceptor with the same principal directions and adapted singular values.
 
-# Throws
+## Throws
 
 - `ArgumentError`: If the factor is negative or `conceptor` is not symmetric.
 - `DimensionMismatch`: If `conceptor` is not square.
 
-# Example
+## Example
 
 ```julia
 wider_conceptor = aperture_adapt(conceptor, 2)
@@ -245,15 +245,15 @@ end
     reaperture(conceptor, from_aperture, to_aperture) -> Matrix
 
 Re-express a conceptor `C` that currently has aperture `from_aperture` so that it
-has aperture `to_aperture` (Jaeger 2014, Proposition 5).
+has aperture `to_aperture` [Jaeger2014conceptors](@cite).
 
-# Arguments
+## Arguments
 
 - `conceptor::AbstractMatrix{<:Real}`: Conceptor formed at `from_aperture`.
 - `from_aperture::Real`: Finite positive current aperture.
 - `to_aperture::Real`: Nonnegative target aperture; `Inf` is allowed.
 
-# Returns
+## Returns
 
 - The aperture-adapted conceptor.
 """
@@ -271,18 +271,18 @@ end
 
 Attenuation ``a_C = E[\|z(n) - x(n)\|^2] / E[\|z(n)\|^2]`` of a loaded reservoir
 (recurrent weights `W`, bias `b`) run autonomously under conceptor `C`
-(Jaeger 2014, Eq. 23), where ``z(n) = \tanh(W x(n-1) + b)`` is the unconstrained
+[Jaeger2014conceptors](@cite), where ``z(n) = \tanh(W x(n-1) + b)`` is the unconstrained
 update and ``x(n) = C z(n)`` is the conceptor-constrained state. The attenuation
 is the fraction of reservoir signal energy suppressed by `C`; as a function of
 aperture it passes through a minimum at the best-reconstructing aperture.
 
-# Arguments
+## Arguments
 
 - `conceptor`: Square conceptor matching the recurrent reservoir dimension.
 - `recurrent_weights`: Square autonomous recurrent weight matrix.
 - `bias`: Reservoir bias vector.
 
-# Keywords
+## Keywords
 
 - `steps::Int = 500`: Number of samples included in the energy ratio.
 - `washout::Int = 200`: Initial autonomous steps excluded from the ratio.
@@ -290,7 +290,7 @@ aperture it passes through a minimum at the best-reconstructing aperture.
 - `rng = Random.default_rng()`: Random number generator used when `init_state` is
   omitted.
 
-# Returns
+## Returns
 
 - The fraction of unconstrained reservoir energy suppressed by the conceptor.
 """
@@ -349,14 +349,14 @@ the minimizing aperture together with the full vector of attenuations (aligned w
 `apertures`) so the characteristic trough can be inspected. `kwargs` are forwarded
 to [`attenuation`](@ref).
 
-# Arguments
+## Arguments
 
 - `correlation`: Symmetric state correlation matrix.
 - `recurrent_weights`: Loaded recurrent weight matrix.
 - `bias`: Reservoir bias vector.
 - `apertures`: Nonempty vector of finite positive candidate apertures.
 
-# Returns
+## Returns
 
 - `(best_aperture, attenuations)`, where `attenuations` follows the order of
   `apertures`.
@@ -384,14 +384,14 @@ end
 @doc raw"""
     conceptor_not(conceptor) -> Matrix
 
-Logical negation of a conceptor (Jaeger 2014, Equation 28).
+Logical negation of a conceptor [Jaeger2014conceptors](@cite).
 Exchanges the roles of the directions the conceptor admits and suppresses.
 
-# Arguments
+## Arguments
 
 - `conceptor::AbstractMatrix{<:Real}`: Square conceptor matrix.
 
-# Returns
+## Returns
 
 - The complementary conceptor. Its singular values are one minus those of
   `conceptor`.
@@ -406,24 +406,24 @@ end
 @doc raw"""
     conceptor_and(first_conceptor, second_conceptor) -> Matrix
 
-Logical conjunction of two conceptors (Jaeger 2014, Equation 32). For
+Logical conjunction of two conceptors [Jaeger2014conceptors](@cite). For
 full-rank conceptors this equals ``(C^{-1} + B^{-1} - I)^{-1}``; the implementation
 uses the range-intersection projector form so that singular conceptors are handled
 robustly. The result admits exactly the reservoir directions admitted by *both*
 `C` and `B`.
 
-# Arguments
+## Arguments
 
 - `first_conceptor::AbstractMatrix{<:Real}`: First symmetric conceptor.
 - `second_conceptor::AbstractMatrix{<:Real}`: Second symmetric conceptor of the
   same size.
 
-# Returns
+## Returns
 
 - The conjunction of the two conceptors, including when either input is
   rank-deficient.
 
-# Throws
+## Throws
 
 - `DimensionMismatch`: If the conceptors are not square or have different sizes.
 - `ArgumentError`: If either conceptor is not symmetric.
@@ -463,17 +463,17 @@ end
 @doc raw"""
     conceptor_or(first_conceptor, second_conceptor) -> Matrix
 
-Logical disjunction of two conceptors (Jaeger 2014, Equation 31), defined
+Logical disjunction of two conceptors [Jaeger2014conceptors](@cite), defined
 via De Morgan's law. The result admits
 every reservoir direction admitted by `C` or by `B`.
 
-# Arguments
+## Arguments
 
 - `first_conceptor::AbstractMatrix{<:Real}`: First symmetric conceptor.
 - `second_conceptor::AbstractMatrix{<:Real}`: Second symmetric conceptor of the
   same size.
 
-# Returns
+## Returns
 
 - The disjunction of the two conceptors.
 """
@@ -495,23 +495,23 @@ end
 
 Wrap a ReservoirComputing `model` (e.g. an [`ESN`](@ref)) so that conceptor
 matrices can be derived from it, stored by name, combined with the conceptor
-algebra, and used to constrain autonomous generation (Jaeger 2014).
+algebra, and used to constrain autonomous generation [Jaeger2014conceptors](@cite).
 
 The wrapped `model` provides the reservoir update; the `Conceptor` adds a
 conceptor library to the model state. Parameters and states are nested under the
 `model` field, leaving room for conceptor bookkeeping at the top level.
 
-# Arguments
+## Arguments
 
 - `model`: Reservoir computer to wrap. Pattern loading expects an ESN-compatible
   parameter layout with reservoir, input, bias, and readout weights.
 
-# Returns
+## Returns
 
 - A conceptor-enabled reservoir computer used with [`initialparameters`](@ref),
-  [`initialstates`](@ref), [`load!`](@ref), and [`generate`](@ref).
+  [`initialstates`](@ref), [`load`](@ref), and [`generate`](@ref).
 
-# Example
+## Example
 
 ```julia
 model = Conceptor(ESN(1, 100, 1; use_bias = true))
@@ -520,7 +520,7 @@ states = initialstates(rng, model)
 ```
 """
 @concrete struct Conceptor <: AbstractReservoirComputer{(:model,)}
-    model::Any
+    model
 end
 
 function initialparameters(rng::AbstractRNG, concept::Conceptor)
@@ -555,23 +555,24 @@ Use [`has_conceptor`](@ref) when absence should be checked separately.
 get_conceptor(st::NamedTuple, name::Symbol) = get(st.conceptors, name, nothing)
 
 """
-    store_conceptor!(st, name, conceptor, aperture) -> st
+    store_conceptor(st, name, conceptor, aperture) -> st
 
 Record conceptor matrix `C` (formed at `aperture`) under `name` in the state's
-conceptor library. Mutates the library dictionaries in place and returns `st`.
+conceptor library. The input state is left untouched; an updated state is
+returned.
 
-# Arguments
+## Arguments
 
 - `st::NamedTuple`: State returned by `initialstates` for a [`Conceptor`](@ref).
 - `name::Symbol`: Name used to retrieve the conceptor later.
 - `conceptor::AbstractMatrix{<:Real}`: Square conceptor matrix.
 - `aperture::Real`: Finite positive aperture associated with the matrix.
 
-# Returns
+## Returns
 
-- The same state object, with its conceptor and aperture dictionaries updated.
+- A state with the conceptor and aperture recorded in its library.
 """
-function store_conceptor!(
+function store_conceptor(
         st::NamedTuple,
         name::Symbol,
         conceptor::AbstractMatrix{<:Real},
@@ -580,9 +581,11 @@ function store_conceptor!(
     checksquare(conceptor)
     isfinite(aperture) && aperture > 0 ||
         throw(ArgumentError("aperture must be finite and positive, got $aperture"))
-    st.conceptors[name] = Matrix(conceptor)
-    st.apertures[name] = convert(float(eltype(conceptor)), aperture)
-    return st
+    conceptors = copy(st.conceptors)
+    apertures = copy(st.apertures)
+    conceptors[name] = Matrix(conceptor)
+    apertures[name] = convert(float(eltype(conceptor)), aperture)
+    return merge(st, (; conceptors, apertures))
 end
 
 """
@@ -675,24 +678,8 @@ function set_readout_weight(ps::NamedTuple, weights::AbstractMatrix)
     return merge(ps, (; model = merge(ps.model, (; readout = readout))))
 end
 
-@doc raw"""
-    ridge_map(features, targets, reg) -> Matrix
-
-Tikhonov-regularized linear map `M` minimizing
-``\|M \,\text{features} - \text{targets}\|^2 + \text{reg}\,\|M\|^2``. `features` is
-``n_\text{in} \times T``, `targets` is ``n_\text{out} \times T``, and the returned
-`M` has size ``n_\text{out} \times n_\text{in}``.
-
-# Arguments
-
-- `features`: Feature matrix with observations in columns.
-- `targets`: Target matrix with observations in columns.
-- `reg::Real`: Nonnegative ridge penalty.
-
-# Returns
-
-- A matrix mapping feature columns to target columns.
-"""
+# Tikhonov-regularized linear map M minimizing |M features - targets|^2 + reg |M|^2.
+# `features` is n_in × T, `targets` is n_out × T; returns M of size n_out × n_in.
 function ridge_map(
         features::AbstractMatrix{<:Real},
         targets::AbstractMatrix{<:Real},
@@ -734,11 +721,11 @@ function _drive_pattern(
 end
 
 @doc raw"""
-    load!(rng, concept, named_signals, ps, st;
+    load(rng, concept, named_signals, ps, st;
           aperture=10.0, washout=500, reg_recurrent=1e-4, reg_readout=1e-2)
 
 Load named driving patterns into the reservoir wrapped by `concept`
-(Jaeger 2014, Section 3.2). For each `name => signal` pair the reservoir is run
+[Jaeger2014conceptors](@cite). For each `name => signal` pair the reservoir is run
 from a cleared carry, the first `washout` states are discarded, and the remaining
 states are used to
 
@@ -755,7 +742,7 @@ scalar or a dictionary mapping each name to an aperture.
 Returns `(ps, st)` with `reservoir_matrix` and `readout.weight` replaced and the
 conceptor library populated.
 
-# Arguments
+## Arguments
 
 - `rng::AbstractRNG`: Random number generator used when reservoir carries reset.
 - `concept::Conceptor`: Conceptor-wrapped reservoir.
@@ -764,7 +751,7 @@ conceptor library populated.
 - `ps::NamedTuple`: Current parameters.
 - `st::NamedTuple`: Current states.
 
-# Keywords
+## Keywords
 
 - `aperture = 10.0`: One aperture for every pattern, or a dictionary keyed by
   pattern name.
@@ -772,17 +759,17 @@ conceptor library populated.
 - `reg_recurrent::Real = 1.0e-4`: Ridge penalty for recurrent weights.
 - `reg_readout::Real = 1.0e-2`: Ridge penalty for readout weights.
 
-# Returns
+## Returns
 
 - `(parameters, states)`: Updated parameters and a state containing one conceptor
   per named signal.
 
-# Throws
+## Throws
 
 - `ArgumentError`: If a name is not a `Symbol`, an aperture is missing, or washout
   is not shorter than a signal.
 """
-function load!(
+function load(
         rng::AbstractRNG,
         concept::Conceptor,
         named_signals,
@@ -811,7 +798,7 @@ function load!(
         current_states, lagged_states, aligned_signal, st_acc =
             _drive_pattern(rng, concept, signal_matrix, ps, st_acc, washout)
         pattern_aperture = aperture_for(aperture, name)
-        store_conceptor!(
+        st_acc = store_conceptor(
             st_acc, name, conceptor_from_states(current_states, pattern_aperture),
             pattern_aperture
         )
@@ -836,7 +823,7 @@ function load!(
 end
 
 # ======================================================================
-#  Autonomous pattern generation (Jaeger 2014, Section 3.2)
+#  Autonomous pattern generation (Jaeger 2014, Section 3.4)
 # ======================================================================
 
 @doc raw"""
@@ -856,13 +843,13 @@ x(n) = C \tanh(W x(n-1) + b), \qquad y(n) = W_\text{out} x(n).
 the post-washout observer outputs (`out_dims × steps`) and reservoir states
 (`res_dims × steps`). The rollout uses the element type of the reservoir parameters.
 
-# Arguments
+## Arguments
 
 - `concept::Conceptor`: Loaded conceptor model.
-- `ps::NamedTuple`: Parameters returned by [`load!`](@ref).
+- `ps::NamedTuple`: Parameters returned by [`load`](@ref).
 - `st::NamedTuple`: State containing the requested conceptor.
 
-# Keywords
+## Keywords
 
 - `conceptor`: Stored conceptor name or an explicit square conceptor matrix.
 - `steps::Int`: Number of returned time steps; must be positive.
@@ -871,19 +858,19 @@ the post-washout observer outputs (`out_dims × steps`) and reservoir states
   when omitted.
 - `rng = Random.default_rng()`: Random number generator for the initial state.
 
-# Returns
+## Returns
 
 - `(outputs, states)`: Observer outputs and reservoir states, with time along
   columns.
 
-# Throws
+## Throws
 
 - `KeyError`: If a requested conceptor name is absent.
 - `DimensionMismatch`: If the conceptor or initial state does not match the
   reservoir dimension.
 - `ArgumentError`: If `steps` is not positive or `washout` is negative.
 
-# Example
+## Example
 
 ```julia
 outputs, states = generate(
@@ -945,20 +932,20 @@ end
     morph_conceptor(st, weights) -> Matrix
 
 Linearly combine stored conceptors into a morphed conceptor
-(Jaeger 2014). `weights` is an iterable of name-to-weight pairs, a `NamedTuple`,
+[Jaeger2014conceptors](@cite). `weights` is an iterable of name-to-weight pairs, a `NamedTuple`,
 or a `Dict{Symbol,<:Real}`. Coefficients summing to one
 interpolate between the named prototypes; coefficients outside `[0, 1]` extrapolate.
 
-# Arguments
+## Arguments
 
 - `st::NamedTuple`: State containing stored conceptors.
 - `weights`: Named tuple, dictionary, or iterable of name-to-weight pairs.
 
-# Returns
+## Returns
 
 - The weighted sum of the named conceptors.
 
-# Throws
+## Throws
 
 - `KeyError`: If a named conceptor is absent.
 - `ArgumentError`: If `weights` is empty.
@@ -985,7 +972,7 @@ _as_matrix(target::AbstractMatrix) = target
 _as_matrix(target::AbstractVector) = reshape(target, 1, :)
 
 """
-    store_conceptors!(rng, concept, named_signals, ps, st;
+    store_conceptors(rng, concept, named_signals, ps, st;
                       aperture=1.0, init_carry=nothing) -> st
 
 Derive and store one conceptor per named signal without modifying the reservoir
@@ -994,15 +981,15 @@ the conceptor of its state cloud is stored. Use
 this to build a conceptor library for classification, where each class pattern
 gets its own conceptor. `aperture` is a scalar or a dictionary keyed by name.
 
-# Returns
+## Returns
 
 - The updated state. Reservoir parameters are unchanged.
 
-# See also
+## See also
 
-[`load!`](@ref), [`train!`](@ref), [`store_conceptor!`](@ref)
+[`load`](@ref), [`train!`](@ref), [`store_conceptor`](@ref)
 """
-function store_conceptors!(
+function store_conceptors(
         rng::AbstractRNG,
         concept::Conceptor,
         named_signals,
@@ -1020,7 +1007,7 @@ function store_conceptors!(
         states, st_model = collectstates(concept.model, sig, ps.model, st_reset)
         st_acc = merge(st_acc, (; model = st_model))
         pattern_aperture = aperture_for(aperture, name)
-        store_conceptor!(
+        st_acc = store_conceptor(
             st_acc, name, conceptor_from_states(states, pattern_aperture), pattern_aperture
         )
     end
@@ -1034,26 +1021,26 @@ end
 
 Train a single readout on conceptor-filtered reservoir features. For each
 `name => signal` the states are collected through the conceptor named `name`
-(stored beforehand via [`store_conceptors!`](@ref)), the first `washout` columns
+(stored beforehand via [`store_conceptors`](@ref)), the first `washout` columns
 are dropped, and features and the matching `named_targets` are pooled across
 patterns before the readout is fit with `train_method`. With `return_states=true`
 the pooled feature matrix is also returned.
 
-# Arguments
+## Arguments
 
 - `named_signals`: Iterable of named input sequences.
 - `named_targets`: Iterable containing one target sequence for every signal name.
 - `train_method`: Readout fitting method; defaults to unregularized
   [`StandardRidge`](@ref).
 
-# Keywords
+## Keywords
 
 - `washout::Int = 0`: Initial columns removed from every feature and target.
 - `return_states::Bool = false`: Return pooled conceptor-filtered features.
 - `init_carry = nothing`: Initial carry passed when resetting each sequence.
 - `kwargs...`: Additional options forwarded to `train`.
 
-# Returns
+## Returns
 
 - `(parameters, states)` by default.
 - `((parameters, states), features)` when `return_states = true`.
