@@ -178,6 +178,70 @@ begin
             )
             @test best < 0.05
             @test count(>(0.5), conceptor_singular_values(get_conceptor(st, :sine))) < 80
+
+            # aperture selection on the loaded reservoir
+            att = attenuation(
+                concept, ps, st; conceptor = :sine, steps = 200, washout = 100, rng = rng3
+            )
+            @test 0 <= att < 1
+            states_driven, _ = collectstates(concept, signal, ps, st)
+            driven_correlation = correlation_matrix(states_driven[:, 401:end])
+            candidates = [1.0, 100.0, 1.0e4]
+            best_aperture, attenuations = optimal_aperture(
+                concept, driven_correlation, candidates, ps, st;
+                steps = 100, washout = 50, rng = rng3
+            )
+            @test best_aperture in candidates
+            @test length(attenuations) == 3
+            @test all(>=(0), attenuations)
+            @test attenuations[findfirst(==(best_aperture), candidates)] ==
+                minimum(attenuations)
+        end
+
+        @testset "generate follows the wrapped cell's fields" begin
+            rng5 = MersenneTwister(11)
+            activation = x -> tanh(0.7 * x)
+            leak = 0.6f0
+            esn = ESN(1, 12, 1, activation; use_bias = true, leak_coefficient = leak)
+            concept = Conceptor(esn)
+            ps = initialparameters(rng5, concept)
+            st = initialstates(rng5, concept)
+            conceptor = conceptor_matrix(sample_correlation(rng5, 12, 60), 5.0)
+            st = store_conceptor(st, :probe, conceptor, 5.0)
+            init_state = 0.3f0 .* randn(rng5, Float32, 12)
+
+            outputs, states = generate(
+                concept, ps, st;
+                conceptor = :probe, steps = 4, washout = 0, init_state = init_state
+            )
+
+            # manual recursion with the cell's own activation, leak, and bias
+            recurrent = ps.model.reservoir.reservoir_matrix
+            bias = ps.model.reservoir.bias
+            readout_weights = ps.model.readout.weight
+            conceptor32 = Float32.(conceptor)
+            state = copy(init_state)
+            for step in 1:4
+                candidate = activation.(recurrent * state .+ bias)
+                state = conceptor32 * ((1 - leak) .* state .+ leak .* candidate)
+                @test states[:, step] ≈ state
+                @test outputs[:, step] ≈ readout_weights * state
+            end
+        end
+
+        @testset "model validation" begin
+            rng6 = MersenneTwister(3)
+            esn_mod = ESN(1, 10, 1; use_bias = true, state_modifiers = (NLAT1(),))
+            concept_mod = Conceptor(esn_mod)
+            ps_mod = initialparameters(rng6, concept_mod)
+            st_mod = initialstates(rng6, concept_mod)
+            signal_mod = reshape(Float32.(sin.(0.5 .* (1:50))), 1, :)
+            @test_throws ArgumentError loadpatterns(
+                rng6, concept_mod, [:s => signal_mod], ps_mod, st_mod; washout = 10
+            )
+            @test_throws ArgumentError generate(
+                concept_mod, ps_mod, st_mod; conceptor = zeros(10, 10), steps = 5
+            )
         end
 
         @testset "morph_conceptor" begin

@@ -154,7 +154,7 @@ function quota(conceptor::AbstractMatrix{<:Real})
 end
 
 # ======================================================================
-#  Aperture adaptation and aperture selection
+#  Aperture adaptation
 # ======================================================================
 
 @doc raw"""
@@ -264,117 +264,6 @@ function reaperture(
         throw(ArgumentError("from_aperture must be finite and positive"))
     to_aperture >= 0 || throw(ArgumentError("to_aperture must be nonnegative"))
     return aperture_adapt(conceptor, to_aperture / from_aperture)
-end
-
-@doc raw"""
-    attenuation(conceptor, recurrent_weights, bias; steps, washout, init_state, rng) -> Real
-
-Attenuation ``a_C = E[\|z(n) - x(n)\|^2] / E[\|z(n)\|^2]`` of a loaded reservoir
-(recurrent weights `W`, bias `b`) run autonomously under conceptor `C`
-[Jaeger2014conceptors](@cite), where ``z(n) = \tanh(W x(n-1) + b)`` is the unconstrained
-update and ``x(n) = C z(n)`` is the conceptor-constrained state. The attenuation
-is the fraction of reservoir signal energy suppressed by `C`; as a function of
-aperture it passes through a minimum at the best-reconstructing aperture.
-
-## Arguments
-
-- `conceptor`: Square conceptor matching the recurrent reservoir dimension.
-- `recurrent_weights`: Square autonomous recurrent weight matrix.
-- `bias`: Reservoir bias vector.
-
-## Keywords
-
-- `steps::Int = 500`: Number of samples included in the energy ratio.
-- `washout::Int = 200`: Initial autonomous steps excluded from the ratio.
-- `init_state = nothing`: Optional initial reservoir state.
-- `rng = Random.default_rng()`: Random number generator used when `init_state` is
-  omitted.
-
-## Returns
-
-- The fraction of unconstrained reservoir energy suppressed by the conceptor.
-"""
-function attenuation(
-        conceptor::AbstractMatrix{<:Real},
-        recurrent_weights::AbstractMatrix{<:Real},
-        bias::AbstractVector{<:Real};
-        steps::Int = 500,
-        washout::Int = 200,
-        init_state::Union{Nothing, AbstractVector} = nothing,
-        rng::AbstractRNG = Random.default_rng(),
-    )
-    checksquare(conceptor)
-    checksquare(recurrent_weights)
-    size(conceptor) == size(recurrent_weights) ||
-        throw(DimensionMismatch("conceptor and recurrent_weights must have equal dimensions"))
-    size(recurrent_weights, 1) == length(bias) ||
-        throw(DimensionMismatch("bias length must equal the recurrent matrix dimension"))
-    steps > 0 || throw(ArgumentError("steps must be positive"))
-    washout >= 0 || throw(ArgumentError("washout must be nonnegative"))
-    element_type = float(
-        promote_type(eltype(conceptor), eltype(recurrent_weights), eltype(bias))
-    )
-    conceptor_matrix = element_type.(conceptor)
-    recurrent_matrix = element_type.(recurrent_weights)
-    bias_vector = element_type.(bias)
-    reservoir_dimension = size(recurrent_matrix, 1)
-    state = init_state === nothing ?
-        element_type(0.5) .* randn(rng, element_type, reservoir_dimension) :
-        element_type.(init_state)
-    length(state) == reservoir_dimension ||
-        throw(DimensionMismatch("init_state must have length $reservoir_dimension"))
-
-    suppressed_energy = zero(element_type)
-    total_energy = zero(element_type)
-    for step in 1:(washout + steps)
-        unconstrained_state = tanh.(recurrent_matrix * state .+ bias_vector)
-        state = conceptor_matrix * unconstrained_state
-        if step > washout
-            suppressed_energy += sum(abs2, unconstrained_state .- state)
-            total_energy += sum(abs2, unconstrained_state)
-        end
-    end
-    iszero(total_energy) &&
-        throw(ArgumentError("attenuation is undefined for a zero-energy rollout"))
-    return suppressed_energy / total_energy
-end
-
-"""
-    optimal_aperture(correlation, recurrent_weights, bias, apertures; kwargs...)
-
-Select the aperture minimizing the [`attenuation`](@ref) criterion over a grid
-`apertures`. For each candidate aperture, its conceptor is formed and the
-loaded reservoir (`W`, `b`) is run autonomously to measure its attenuation. Returns
-the minimizing aperture together with the full vector of attenuations (aligned with
-`apertures`) so the characteristic trough can be inspected. `kwargs` are forwarded
-to [`attenuation`](@ref).
-
-## Arguments
-
-- `correlation`: Symmetric state correlation matrix.
-- `recurrent_weights`: Loaded recurrent weight matrix.
-- `bias`: Reservoir bias vector.
-- `apertures`: Nonempty vector of finite positive candidate apertures.
-
-## Returns
-
-- `(best_aperture, attenuations)`, where `attenuations` follows the order of
-  `apertures`.
-"""
-function optimal_aperture(
-        correlation::AbstractMatrix{<:Real},
-        recurrent_weights::AbstractMatrix{<:Real},
-        bias::AbstractVector{<:Real},
-        apertures::AbstractVector{<:Real};
-        kwargs...,
-    )
-    isempty(apertures) && throw(ArgumentError("apertures must not be empty"))
-    attenuations = [
-        attenuation(
-                conceptor_matrix(correlation, aperture), recurrent_weights, bias; kwargs...
-            ) for aperture in apertures
-    ]
-    return apertures[argmin(attenuations)], attenuations
 end
 
 # ======================================================================
@@ -661,13 +550,6 @@ end
 reservoir_params(ps::NamedTuple) = ps.model.reservoir
 readout_params(ps::NamedTuple) = ps.model.readout
 
-function reservoir_bias(ps::NamedTuple)
-    rps = reservoir_params(ps)
-    element_type = eltype(rps.reservoir_matrix)
-    return haskey(rps, :bias) ?
-        vec(rps.bias) : zeros(element_type, size(rps.reservoir_matrix, 1))
-end
-
 function set_reservoir_matrix(ps::NamedTuple, weights::AbstractMatrix)
     reservoir = merge(ps.model.reservoir, (; reservoir_matrix = weights))
     return merge(ps, (; model = merge(ps.model, (; reservoir = reservoir))))
@@ -784,6 +666,7 @@ function loadpatterns(
         reg_recurrent::Real = 1.0e-4,
         reg_readout::Real = 1.0e-2,
     )
+    _check_conceptor_model(concept.model)
     rps = reservoir_params(ps)
     element_type = float(eltype(rps.reservoir_matrix))
     original_recurrent_weights = element_type.(rps.reservoir_matrix)
@@ -830,6 +713,55 @@ end
 #  Autonomous pattern generation (Jaeger 2014, Section 3.4)
 # ======================================================================
 
+# The conceptor formalism identifies the collected states with the hidden state of
+# a single recurrent cell, so the wrapped model must expose its reservoir as a
+# `StatefulLayer` around one cell and must not post-process states.
+function _check_conceptor_model(model)
+    modifiers = hasproperty(model, :states_modifiers) ? model.states_modifiers : ()
+    isempty(modifiers) ||
+        throw(
+        ArgumentError(
+            "conceptors operate on raw reservoir states; wrap a model without " *
+                "state_modifiers"
+        )
+    )
+    hasproperty(model, :reservoir) && model.reservoir isa StatefulLayer ||
+        throw(
+        ArgumentError(
+            "conceptors require a model whose reservoir is a StatefulLayer around " *
+                "a recurrent cell, got $(typeof(model))"
+        )
+    )
+    return model.reservoir.cell
+end
+
+# Everything needed to run the wrapped reservoir cell autonomously: with the input
+# drive internalized into the recurrent weights by `loadpatterns`, one update is the
+# cell applied to a zero input, using the model's own activation, leak, and bias.
+function _autonomous_setup(concept::Conceptor, ps::NamedTuple, st::NamedTuple)
+    cell = _check_conceptor_model(concept.model)
+    cell_ps = reservoir_params(ps)
+    cell_st = st.model.reservoir.cell
+    element_type = float(eltype(cell_ps.reservoir_matrix))
+    reservoir_dimension = size(cell_ps.reservoir_matrix, 1)
+    zero_input = zeros(element_type, cell.in_dims)
+    probe_state = zeros(element_type, reservoir_dimension)
+    applicable(cell, (zero_input, (probe_state,)), cell_ps, cell_st) ||
+        throw(
+        ArgumentError(
+            "$(nameof(typeof(cell))) does not support a single hidden-state carry; " *
+                "conceptors require single-state reservoir dynamics"
+        )
+    )
+    return cell, cell_ps, cell_st, zero_input, element_type, reservoir_dimension
+end
+
+# Unconstrained autonomous update z(n) from x(n-1): the cell stepped with zero input.
+function _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
+    (unconstrained_state, _), _ = cell((zero_input, (state,)), cell_ps, cell_st)
+    return unconstrained_state
+end
+
 @doc raw"""
     generate(concept, ps, st; conceptor, steps, washout=200,
              init_state=nothing, rng=Random.default_rng()) -> (Y, X)
@@ -838,8 +770,13 @@ Run the loaded reservoir autonomously under `conceptor` and read out the observe
 signal:
 
 ```math
-x(n) = C \tanh(W x(n-1) + b), \qquad y(n) = W_\text{out} x(n).
+x(n) = C \, f(x(n-1)), \qquad y(n) = W_\text{out} x(n),
 ```
+
+where ``f`` is one update of the wrapped model's reservoir cell driven with a zero
+input, so the cell's own activation, leak coefficient, and bias are used (for a
+default [`ESN`](@ref) this is ``f(x) = \tanh(W x + b)``), and the readout is the
+wrapped model's readout layer.
 
 `conceptor` is either a stored conceptor `Symbol` or an explicit conceptor matrix
 (e.g. the output of [`morph_conceptor`](@ref) or the Boolean operations). The first
@@ -872,7 +809,8 @@ the post-washout observer outputs (`out_dims × steps`) and reservoir states
 - `KeyError`: If a requested conceptor name is absent.
 - `DimensionMismatch`: If the conceptor or initial state does not match the
   reservoir dimension.
-- `ArgumentError`: If `steps` is not positive or `washout` is negative.
+- `ArgumentError`: If `steps` is not positive, `washout` is negative, or the
+  wrapped model has state modifiers or a multi-state reservoir cell.
 
 ## Example
 
@@ -893,15 +831,11 @@ function generate(
         init_state::Union{Nothing, AbstractVector} = nothing,
         rng::AbstractRNG = Random.default_rng(),
     )
-    rps = reservoir_params(ps)
-    element_type = float(eltype(rps.reservoir_matrix))
-    recurrent_weights = element_type.(rps.reservoir_matrix)
-    bias = reservoir_bias(ps)
-    readout_weights = element_type.(readout_params(ps).weight)
-    conceptor_matrix = element_type.(resolve_conceptor(st, conceptor))
-    reservoir_dimension = size(recurrent_weights, 1)
-    checksquare(conceptor_matrix)
-    size(conceptor_matrix, 1) == reservoir_dimension ||
+    cell, cell_ps, cell_st, zero_input, element_type, reservoir_dimension =
+        _autonomous_setup(concept, ps, st)
+    conceptor_filter = element_type.(resolve_conceptor(st, conceptor))
+    checksquare(conceptor_filter)
+    size(conceptor_filter, 1) == reservoir_dimension ||
         throw(
         DimensionMismatch(
             "conceptor size must match the reservoir dimension $reservoir_dimension"
@@ -915,19 +849,145 @@ function generate(
         element_type.(init_state)
     length(state) == reservoir_dimension ||
         throw(DimensionMismatch("init_state must have length $reservoir_dimension"))
-    output_dimension = size(readout_weights, 1)
+    readout = concept.model.readout
+    readout_ps = readout_params(ps)
+    readout_st = st.model.readout
+    output_dimension = size(readout_ps.weight, 1)
     outputs = zeros(element_type, output_dimension, steps)
     states = zeros(element_type, reservoir_dimension, steps)
 
     for step in 1:(washout + steps)
-        state = conceptor_matrix * tanh.(recurrent_weights * state .+ bias)
+        state = conceptor_filter *
+            _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
         if step > washout
             output_index = step - washout
+            output, _ = apply(readout, state, readout_ps, readout_st)
             @views states[:, output_index] = state
-            @views outputs[:, output_index] = readout_weights * state
+            @views outputs[:, output_index] = output
         end
     end
     return outputs, states
+end
+
+# ======================================================================
+#  Aperture selection
+# ======================================================================
+
+@doc raw"""
+    attenuation(concept, ps, st; conceptor, steps=500, washout=200,
+                init_state=nothing, rng=Random.default_rng()) -> Real
+
+Attenuation ``a_C = E[\|z(n) - x(n)\|^2] / E[\|z(n)\|^2]`` of the loaded reservoir
+wrapped by `concept` run autonomously under `conceptor`
+[Jaeger2014conceptors](@cite), where ``z(n) = f(x(n-1))`` is the unconstrained
+update of the wrapped model's reservoir cell (zero input, same convention as
+[`generate`](@ref)) and ``x(n) = C z(n)`` is the conceptor-constrained state. The
+attenuation is the fraction of reservoir signal energy suppressed by `C`; as a
+function of aperture it passes through a minimum at the best-reconstructing
+aperture.
+
+## Arguments
+
+- `concept::Conceptor`: Loaded conceptor model.
+- `ps::NamedTuple`: Parameters returned by [`loadpatterns`](@ref).
+- `st::NamedTuple`: Current states.
+
+## Keywords
+
+- `conceptor`: Stored conceptor name or an explicit square conceptor matrix.
+- `steps::Int = 500`: Number of samples included in the energy ratio.
+- `washout::Int = 200`: Initial autonomous steps excluded from the ratio.
+- `init_state = nothing`: Optional initial reservoir state.
+- `rng = Random.default_rng()`: Random number generator used when `init_state` is
+  omitted.
+
+## Returns
+
+- The fraction of unconstrained reservoir energy suppressed by the conceptor.
+"""
+function attenuation(
+        concept::Conceptor,
+        ps::NamedTuple,
+        st::NamedTuple;
+        conceptor::Union{Symbol, AbstractMatrix},
+        steps::Int = 500,
+        washout::Int = 200,
+        init_state::Union{Nothing, AbstractVector} = nothing,
+        rng::AbstractRNG = Random.default_rng(),
+    )
+    cell, cell_ps, cell_st, zero_input, element_type, reservoir_dimension =
+        _autonomous_setup(concept, ps, st)
+    conceptor_filter = element_type.(resolve_conceptor(st, conceptor))
+    checksquare(conceptor_filter)
+    size(conceptor_filter, 1) == reservoir_dimension ||
+        throw(
+        DimensionMismatch(
+            "conceptor size must match the reservoir dimension $reservoir_dimension"
+        )
+    )
+    steps > 0 || throw(ArgumentError("steps must be positive"))
+    washout >= 0 || throw(ArgumentError("washout must be nonnegative"))
+    state = init_state === nothing ?
+        element_type(0.5) .* randn(rng, element_type, reservoir_dimension) :
+        element_type.(init_state)
+    length(state) == reservoir_dimension ||
+        throw(DimensionMismatch("init_state must have length $reservoir_dimension"))
+
+    suppressed_energy = zero(element_type)
+    total_energy = zero(element_type)
+    for step in 1:(washout + steps)
+        unconstrained_state =
+            _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
+        state = conceptor_filter * unconstrained_state
+        if step > washout
+            suppressed_energy += sum(abs2, unconstrained_state .- state)
+            total_energy += sum(abs2, unconstrained_state)
+        end
+    end
+    iszero(total_energy) &&
+        throw(ArgumentError("attenuation is undefined for a zero-energy rollout"))
+    return suppressed_energy / total_energy
+end
+
+"""
+    optimal_aperture(concept, correlation, apertures, ps, st; kwargs...)
+
+Select the aperture minimizing the [`attenuation`](@ref) criterion over a grid
+`apertures`. For each candidate aperture, its conceptor is formed from
+`correlation` and the loaded reservoir wrapped by `concept` is run autonomously to
+measure its attenuation. Returns the minimizing aperture together with the full
+vector of attenuations (aligned with `apertures`) so the characteristic trough can
+be inspected. `kwargs` are forwarded to [`attenuation`](@ref).
+
+## Arguments
+
+- `concept::Conceptor`: Loaded conceptor model.
+- `correlation`: Symmetric state correlation matrix.
+- `apertures`: Nonempty vector of finite positive candidate apertures.
+- `ps::NamedTuple`: Parameters returned by [`loadpatterns`](@ref).
+- `st::NamedTuple`: Current states.
+
+## Returns
+
+- `(best_aperture, attenuations)`, where `attenuations` follows the order of
+  `apertures`.
+"""
+function optimal_aperture(
+        concept::Conceptor,
+        correlation::AbstractMatrix{<:Real},
+        apertures::AbstractVector{<:Real},
+        ps::NamedTuple,
+        st::NamedTuple;
+        kwargs...,
+    )
+    isempty(apertures) && throw(ArgumentError("apertures must not be empty"))
+    attenuations = [
+        attenuation(
+                concept, ps, st;
+                conceptor = conceptor_matrix(correlation, aperture), kwargs...
+            ) for aperture in apertures
+    ]
+    return apertures[argmin(attenuations)], attenuations
 end
 
 # morphing
