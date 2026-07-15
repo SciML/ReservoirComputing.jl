@@ -98,7 +98,7 @@ export aperture_adapt, adapt_singular_value, reaperture, attenuation, optimal_ap
 export conceptor_not, conceptor_and, conceptor_or
 export has_conceptor, get_conceptor, store_conceptor, store_conceptors,
     set_active_conceptor, active_conceptor
-export load, generate, morph_conceptor
+export loadpatterns, generate, morph_conceptor
 #ext
 export RECACell, RECA
 export RandomMapping, RandomMaps

@@ -45,7 +45,7 @@ Conceptors after Jaeger (2014), [Jaeger2014conceptors](@cite). See the
 ## Loading, generation, and morphing
 
 ```@docs
-    load
+    loadpatterns
     generate
     morph_conceptor
 ```

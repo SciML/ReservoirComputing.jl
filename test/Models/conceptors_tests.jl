@@ -132,7 +132,7 @@ begin
             @test_throws KeyError set_active_conceptor(st, :missing)
         end
 
-        @testset "load / generate roundtrip" begin
+        @testset "loadpatterns / generate roundtrip" begin
             rng3 = MersenneTwister(99)
             bias_init(random_generator, dims...) =
                 0.2f0 .* randn(random_generator, Float32, dims...)
@@ -151,7 +151,10 @@ begin
             sample_indices = 1:1000
             period = 8.8342522
             signal = reshape(Float32.(sin.(2pi .* sample_indices ./ period)), 1, :)
-            ps, st = load(
+            @test_throws ArgumentError loadpatterns(
+                rng3, concept, [:sine => signal], ps, st; washout = 0
+            )
+            ps, st = loadpatterns(
                 rng3, concept, [:sine => signal], ps, st; aperture = 1000.0, washout = 400
             )
             @test has_conceptor(st, :sine)
@@ -190,7 +193,15 @@ begin
                 first_conceptor
             @test morph_conceptor(st, (; first_pattern = 0.3, second_pattern = 0.7)) ≈
                 0.3 .* first_conceptor .+ 0.7 .* second_conceptor
+            # equivalent inputs: vector of pairs and dictionary
+            expected = 0.3 .* first_conceptor .+ 0.7 .* second_conceptor
+            @test morph_conceptor(st, [:first_pattern => 0.3, :second_pattern => 0.7]) ≈
+                expected
+            @test morph_conceptor(
+                st, Dict(:first_pattern => 0.3, :second_pattern => 0.7)
+            ) ≈ expected
             @test_throws KeyError morph_conceptor(st, (; missing_name = 1.0))
+            @test_throws ArgumentError morph_conceptor(st, Pair{Symbol, Float64}[])
         end
     end
 end

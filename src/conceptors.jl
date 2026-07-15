@@ -509,7 +509,7 @@ conceptor library to the model state. Parameters and states are nested under the
 ## Returns
 
 - A conceptor-enabled reservoir computer used with [`initialparameters`](@ref),
-  [`initialstates`](@ref), [`load`](@ref), and [`generate`](@ref).
+  [`initialstates`](@ref), [`loadpatterns`](@ref), and [`generate`](@ref).
 
 ## Example
 
@@ -709,6 +709,9 @@ function _drive_pattern(
         st::NamedTuple,
         washout::Int,
     )
+    washout >= 1 ||
+        throw(ArgumentError("washout must be at least 1, got $washout: fitting the \
+                             recurrent weights pairs each state with its predecessor"))
     st_reset = resetcarry!(rng, concept.model, st.model; init_carry = nothing)
     states, st_model = collectstates(concept.model, signal, ps.model, st_reset)
     signal_length = size(states, 2)
@@ -721,7 +724,7 @@ function _drive_pattern(
 end
 
 @doc raw"""
-    load(rng, concept, named_signals, ps, st;
+    loadpatterns(rng, concept, named_signals, ps, st;
           aperture=10.0, washout=500, reg_recurrent=1e-4, reg_readout=1e-2)
 
 Load named driving patterns into the reservoir wrapped by `concept`
@@ -755,7 +758,8 @@ conceptor library populated.
 
 - `aperture = 10.0`: One aperture for every pattern, or a dictionary keyed by
   pattern name.
-- `washout::Int = 500`: Initial samples excluded from fitting.
+- `washout::Int = 500`: Initial samples excluded from fitting; at least 1 and
+  shorter than every signal.
 - `reg_recurrent::Real = 1.0e-4`: Ridge penalty for recurrent weights.
 - `reg_readout::Real = 1.0e-2`: Ridge penalty for readout weights.
 
@@ -767,9 +771,9 @@ conceptor library populated.
 ## Throws
 
 - `ArgumentError`: If a name is not a `Symbol`, an aperture is missing, or washout
-  is not shorter than a signal.
+  is not in `1:(signal length - 1)`.
 """
-function load(
+function loadpatterns(
         rng::AbstractRNG,
         concept::Conceptor,
         named_signals,
@@ -846,7 +850,7 @@ the post-washout observer outputs (`out_dims × steps`) and reservoir states
 ## Arguments
 
 - `concept::Conceptor`: Loaded conceptor model.
-- `ps::NamedTuple`: Parameters returned by [`load`](@ref).
+- `ps::NamedTuple`: Parameters returned by [`loadpatterns`](@ref).
 - `st::NamedTuple`: State containing the requested conceptor.
 
 ## Keywords
@@ -951,8 +955,10 @@ interpolate between the named prototypes; coefficients outside `[0, 1]` extrapol
 - `ArgumentError`: If `weights` is empty.
 """
 function morph_conceptor(st::NamedTuple, weights)
+    # `pairs` on a plain iterable of Pairs would enumerate index => pair.
+    weight_pairs = weights isa Union{NamedTuple, AbstractDict} ? pairs(weights) : weights
     morphed_conceptor = nothing
-    for (name, weight) in pairs(weights)
+    for (name, weight) in weight_pairs
         stored_conceptor = get_conceptor(st, Symbol(name))
         stored_conceptor === nothing && throw(KeyError(Symbol(name)))
         contribution = convert(eltype(stored_conceptor), weight) .* stored_conceptor
@@ -987,7 +993,7 @@ gets its own conceptor. `aperture` is a scalar or a dictionary keyed by name.
 
 ## See also
 
-[`load`](@ref), [`train!`](@ref), [`store_conceptor`](@ref)
+[`loadpatterns`](@ref), [`train!`](@ref), [`store_conceptor`](@ref)
 """
 function store_conceptors(
         rng::AbstractRNG,

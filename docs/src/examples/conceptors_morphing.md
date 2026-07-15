@@ -47,7 +47,7 @@ nothing # hide
 
 We build a 100-unit [`ESN`](@ref) with the scalings used in the report
 (spectral radius 1.5, input scaling 1.5, bias scaling 0.2) and wrap it in a
-[`Conceptor`](@ref). [`load`](@ref) drives the reservoir with each pattern,
+[`Conceptor`](@ref). [`loadpatterns`](@ref) drives the reservoir with each pattern,
 stores a conceptor for it, and recomputes the recurrent weights into an
 input-internalizing matrix so the reservoir can run autonomously.
 
@@ -64,7 +64,7 @@ concept = Conceptor(esn)
 ps = initialparameters(rng, concept)
 st = initialstates(rng, concept)
 
-ps, st = load(rng, concept, patterns, ps, st; aperture = 4.0, washout = 500)
+ps, st = loadpatterns(rng, concept, patterns, ps, st; aperture = 4.0, washout = 500)
 nothing # hide
 ```
 
