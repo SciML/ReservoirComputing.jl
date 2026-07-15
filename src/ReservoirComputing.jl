@@ -26,6 +26,7 @@ include("reservoircomputer.jl")
 include("layers/basic.jl")
 include("layers/lux_layers.jl")
 include("layers/esn_cell.jl")
+include("layers/continuous_esn_cell.jl")
 include("layers/additive_eiesn_cell.jl")
 include("layers/eiesn_cell.jl")
 include("layers/es2n_cell.jl")
@@ -60,14 +61,16 @@ include("models/lifesn.jl")
 include("models/ngrc.jl")
 include("models/rmnesn.jl")
 include("models/rmnresesn.jl")
+include("models/continuous_esn.jl")
 #conceptors
 include("conceptors.jl")
 #extensions
 include("extensions/reca.jl")
 
 export ReservoirComputer
-export AbstractSciMLProblemReservoir, SciMLProblemReservoir
+export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN
 export AbstractSampler, TerminalStateSampling
+export ContinuousESNCell
 export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell,
     MemoryESNCell, MemoryResESNCell, ResESNCell, RMNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,

@@ -43,6 +43,12 @@ _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple(
 
 abstract type AbstractReservoirComputingSolver end
 
+"""
+    QRSolver()
+
+Use a QR factorization to solve the linear least-squares system in [`train`](@ref)
+for [`StandardRidge`](@ref).
+"""
 struct QRSolver <: AbstractReservoirComputingSolver end
 
 @doc raw"""

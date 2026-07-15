@@ -36,6 +36,12 @@
     LIFESNCell
 ```
 
+## Continuous-time Layers
+
+```@docs
+    ContinuousESNCell
+```
+
 ## Wrappers
 
 ```@docs
