@@ -55,26 +55,36 @@ function run_E1(cfg)
 
     m_train = build_continuous_esn(n_res, data.train_len)
     m_pred = build_continuous_esn(n_res, data.predict_len)
-    tr = train_pair(m_train, m_pred, data; ridge = cfg.ridge, rng = rng)
+    (tr, train_s) = timed() do
+        train_pair(m_train, m_pred, data; ridge = cfg.ridge, rng = rng)
+    end
     ps_ar, st_ar = align_pred_params(
         tr.ps_train, tr.st_train, tr.ps_pred, tr.st_pred
     )
 
-    cold, _ = predict_ar_cold(
-        tr.model_pred, data.predict_len, ps_ar, st_ar;
-        initialdata = data.test_data[:, 1],
-    )
-    sc_cold = _score(cold, data.test_data, data)
+    (cold, cold_s) = timed() do
+        predict_ar_cold(
+            tr.model_pred, data.predict_len, ps_ar, st_ar;
+            initialdata = data.test_data[:, 1],
+        )
+    end
+    cold_out = first(cold)
+    sc_cold = _score(cold_out, data.test_data, data)
 
-    u0 = raw_terminal_ode_state(
-        tr.model_train, data.input_data, tr.ps_train, tr.st_train
-    )
-    warm, _ = predict_ar_seeded(
-        tr.model_pred, data.predict_len, ps_ar, st_ar;
-        initialdata = data.test_data[:, 1],
-        initial_state = u0,
-    )
-    sc_warm = _score(warm, data.test_data, data)
+    (u0, warm_collect_s) = timed() do
+        raw_terminal_ode_state(
+            tr.model_train, data.input_data, tr.ps_train, tr.st_train
+        )
+    end
+    (warm, warm_ar_s) = timed() do
+        predict_ar_seeded(
+            tr.model_pred, data.predict_len, ps_ar, st_ar;
+            initialdata = data.test_data[:, 1],
+            initial_state = u0,
+        )
+    end
+    warm_out = first(warm)
+    sc_warm = _score(warm_out, data.test_data, data)
 
     # Sanity: seeded with zeros should match package cold path
     zero_u0 = zeros(eltype(u0), length(u0))
@@ -83,8 +93,9 @@ function run_E1(cfg)
         initialdata = data.test_data[:, 1],
         initial_state = zero_u0,
     )
-    match_cold = maximum(abs.(seeded_zero .- cold))
+    match_cold = maximum(abs.(seeded_zero .- cold_out))
 
+    hs = lyap_horizons(data)
     rows = [
         _row(;
             experiment = "E1",
@@ -96,6 +107,8 @@ function run_E1(cfg)
             vpt_lyap = sc_cold.vpt,
             train_len = data.train_len,
             predict_len = data.predict_len,
+            wall_train_s = train_s,
+            wall_ar_s = cold_s,
         ),
         _row(;
             experiment = "E1",
@@ -108,6 +121,9 @@ function run_E1(cfg)
             train_len = data.train_len,
             predict_len = data.predict_len,
             u0_norm = norm(u0),
+            wall_train_s = train_s,
+            wall_warmup_collect_s = warm_collect_s,
+            wall_ar_s = warm_ar_s,
         ),
         _row(;
             experiment = "E1",
@@ -118,9 +134,36 @@ function run_E1(cfg)
             match_ok = match_cold < 1.0e-8,
         ),
     ]
+    for h in hs
+        tλ = h * data.dt * data.λ_max
+        push!(
+            rows,
+            _row(;
+                experiment = "E1",
+                variant = "cold_horizon",
+                model = "ContinuousESN",
+                horizon_steps = h,
+                horizon_lyap = tλ,
+                nrmse = nrmse(@view(cold_out[:, 1:h]), @view(data.test_data[:, 1:h])),
+            )
+        )
+        push!(
+            rows,
+            _row(;
+                experiment = "E1",
+                variant = "warm_horizon",
+                model = "ContinuousESN",
+                horizon_steps = h,
+                horizon_lyap = tλ,
+                nrmse = nrmse(@view(warm_out[:, 1:h]), @view(data.test_data[:, 1:h])),
+            )
+        )
+    end
 
     @info "E1 cold nrmse=$(round(sc_cold.nrmse; digits=4)) warm=$(round(sc_warm.nrmse; digits=4)) " *
-        "Δ=$(round(sc_cold.nrmse - sc_warm.nrmse; digits=4)) zero_match=$(match_cold)"
+        "Δ=$(round(sc_cold.nrmse - sc_warm.nrmse; digits=4)) zero_match=$(match_cold) " *
+        "train=$(round(train_s; digits=1))s ar_cold=$(round(cold_s; digits=1))s " *
+        "ar_warm=$(round(warm_ar_s; digits=1))s"
     return rows
 end
 

@@ -40,29 +40,36 @@ julia --project=. -e 'using Pkg; Pkg.develop(path="../.."); Pkg.instantiate()'
 
 ## Run
 
-Smoke (smaller N / shorter series — minutes):
+Smoke (plumbing only — small N, short series, ~20s):
 
 ```bash
 julia --project=. run.jl --smoke
 ```
 
-Full matrix (closer to #456 Lorenz setup):
+**Full matrix** (forecast analysis — matches #456 Lorenz scale):
+
+| knob | full default |
+|------|----------------|
+| `n_res` | 300 |
+| train / predict | 5000 / 1250 |
+| Wr spectral radius | 0.9 |
+| Win scale / bias scale | 0.1 / 0.05 |
+| solver | Tsit5 (`reltol=1e-6`) |
 
 ```bash
-julia --project=. run.jl
+julia --project=. run.jl            # full
+julia --project=. run.jl --n-res=300
+julia --project=. run.jl --only=E1,E2,E5,E7
 ```
 
-Single experiment:
-
-```bash
-julia --project=. run.jl --only=E1,E5
-```
+Expect minutes–tens of minutes for continuous `collectstates` at N=300 / T=5000 (wall times are recorded per experiment).
 
 Outputs land in `results/`:
 
-- `results/summary.json` — machine-readable table  
-- `results/summary.md` — human table  
-- `results/FINDINGS.md` — interpretation checklist (edit after runs)
+- `results/summary_full.json` / `summary_smoke.json` — machine-readable  
+- `results/summary_full.md` / `summary_smoke.md` — tables  
+- `results/summary.json` — latest run copy  
+- `results/FINDINGS.md` — interpretation
 
 ## Design options under test (no API change yet)
 

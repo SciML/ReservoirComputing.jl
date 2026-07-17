@@ -22,7 +22,8 @@ function make_lorenz(;
         t_end::Float64 = 200.0,
         shift::Int = 300,
         train_len::Int = 5000,
-        predict_len::Int = 500,
+        # Match the #456 Lorenz probe (predict ≈ 1250 samples ≈ 22.6 t_λ at dt=0.02).
+        predict_len::Int = 1250,
         u0 = [1.0, 0.0, 0.0],
         p = [10.0, 28.0, 8 / 3],
     )
