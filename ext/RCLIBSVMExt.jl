@@ -101,7 +101,7 @@ function addreadout!(
 
     throw(
         ArgumentError(
-            "This training method produced a non-matrix readout (e.g. LIBSVM models), " *
+            "This objective produced a non-matrix readout (e.g. LIBSVM models), " *
                 "but the model readout is $(typeof(rc.readout)). Use SVMReadout as the readout layer."
         )
     )

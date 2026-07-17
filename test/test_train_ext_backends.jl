@@ -16,7 +16,7 @@ using LIBSVM
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    regressor = RidgeRegression(1.0e-3; fit_intercept = false)
+    regressor = MLJLinearModels.RidgeRegression(1.0e-3; fit_intercept = false)
     ps_trained, st_trained = train(
         model, train_data, target_data, ps, st;
         objective = regressor,
@@ -41,7 +41,7 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    regressor = RidgeRegression(1.0e-2; fit_intercept = true)
+    regressor = MLJLinearModels.RidgeRegression(1.0e-2; fit_intercept = true)
     @test_throws ArgumentError train(
         model, train_data, target_data, ps, st;
         objective = regressor,

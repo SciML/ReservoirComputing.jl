@@ -114,11 +114,8 @@ is discarded, to account for the dynamics of the ESN to settle. This can
 be done by passing the `washout` keyword argument to `train`.
 
 ```@example lorenz
-#define training method
-training_method = StandardRidge(0.0)
-
 ps, st = train(esn, input_data, target_data, ps, st;
-    objective = training_method)
+    objective = RidgeRegression(0.0))
 ```
 
 `ps` now contains the trained parameters for the ESN.

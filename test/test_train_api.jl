@@ -4,8 +4,6 @@ using LinearAlgebra
 using ReservoirComputing
 using LinearSolve
 
-# Model-level `train` API and deprecated `train!` wrapper (#473 / #367).
-
 @testset "train model-level smoke" begin
     rng = MersenneTwister(42)
     in_dims, res_dims, out_dims = 3, 12, 2
@@ -18,7 +16,7 @@ using LinearSolve
 
     ps_new, st_new = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-3),
+        objective = RidgeRegression(1.0e-3),
     )
 
     @test size(ps_new.readout.weight) == (out_dims, res_dims)
@@ -38,16 +36,16 @@ end
 
     ps_default, _ = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(regularization),
+        objective = RidgeRegression(regularization),
     )
     ps_ls, _ = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(regularization),
+        objective = RidgeRegression(regularization),
         solver = QRFactorization(),
     )
     ps_legacy, _ = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(regularization),
+        objective = RidgeRegression(regularization),
         solver = QRSolver(),
     )
 
@@ -69,7 +67,7 @@ end
 
     (ps_trained, st_trained), states = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-4),
+        objective = RidgeRegression(1.0e-4),
         washout = washout,
         return_states = true,
     )
@@ -86,53 +84,15 @@ end
     targets = randn(rng, Float64, n_outputs, n_samples)
     regularization = 1.0e-2
 
-    weights_default = train(StandardRidge(regularization), states, targets)
+    weights_default = train(RidgeRegression(regularization), states, targets)
     weights_nothing = train(
-        StandardRidge(regularization), states, targets; solver = nothing
+        RidgeRegression(regularization), states, targets; solver = nothing
     )
     weights_ls = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
 
     @test weights_default == weights_nothing
     @test weights_default == weights_ls
     @test size(weights_default) == (n_outputs, n_features)
-end
-
-@testset "train! is deprecated and matches train" begin
-    rng = MersenneTwister(31)
-    in_dims, res_dims, out_dims = 2, 12, 1
-    n_steps = 20
-    train_data = randn(rng, Float32, in_dims, n_steps)
-    target_data = randn(rng, Float32, out_dims, n_steps)
-
-    model = ESN(in_dims, res_dims, out_dims)
-    ps, st = setup(rng, model)
-    ridge = StandardRidge(2.0e-3)
-
-    ps_kw, _ = train(
-        model, train_data, target_data, ps, st; objective = ridge
-    )
-    result = @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
-    ps_pos = result[1]
-    @test ps_pos.readout.weight ≈ ps_kw.readout.weight
-end
-
-@testset "train! still accepts solver kwarg" begin
-    rng = MersenneTwister(37)
-    in_dims, res_dims, out_dims = 3, 10, 2
-    n_steps = 28
-    train_data = randn(rng, Float32, in_dims, n_steps)
-    target_data = randn(rng, Float32, out_dims, n_steps)
-
-    model = ESN(in_dims, res_dims, out_dims)
-    ps, st = setup(rng, model)
-
-    result = @test_deprecated train!(
-        model, train_data, target_data, ps, st, StandardRidge(1.0e-3);
-        solver = SVDFactorization(),
-    )
-    ps_trained = result[1]
-    @test size(ps_trained.readout.weight) == (out_dims, res_dims)
-    @test all(isfinite, ps_trained.readout.weight)
 end

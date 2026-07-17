@@ -8,7 +8,7 @@ using LinearSolve
 
 """
 Reference ridge solution matching the LinearSolve extension path and the
-`StandardRidge` docstring form, with package layout:
+`RidgeRegression` docstring form, with package layout:
 
 - `states` :: `(n_features, T)`
 - `targets` :: `(n_outputs, T)`
@@ -38,13 +38,13 @@ function random_ridge_problem(
     return states, targets, true_weights
 end
 
-@testset "StandardRidge constructors" begin
-    @test StandardRidge().reg == 0.0
-    @test StandardRidge(1.0e-3).reg == 1.0e-3
-    @test StandardRidge(Float32, 1.0e-2).reg isa Float32
+@testset "RidgeRegression constructors" begin
+    @test RidgeRegression().reg == 0.0
+    @test RidgeRegression(1.0e-3).reg == 1.0e-3
+    @test RidgeRegression(Float32, 1.0e-2).reg isa Float32
 end
 
-@testset "train(StandardRidge): shape contract" begin
+@testset "train(RidgeRegression): shape contract" begin
     rng = MersenneTwister(42)
     n_features, n_samples, n_outputs = 6, 40, 3
     states, targets, _ = random_ridge_problem(
@@ -53,14 +53,14 @@ end
     regularization = 1.0e-3
 
     weights = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+        RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
     @test size(weights) == (n_outputs, n_features)
     @test eltype(weights) <: Real
     @test all(isfinite, weights)
 end
 
-@testset "train(StandardRidge): closed-form orthogonal features" begin
+@testset "train(RidgeRegression): closed-form orthogonal features" begin
     # X = √(T) * I so XX' = T I, and with λ the Gram is (T+λ)I.
     n_features = 4
     n_samples = n_features
@@ -81,7 +81,7 @@ end
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
             weights = train(
-                StandardRidge(regularization), states, targets; solver = solver
+                RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
             @test weights ≈ expected rtol = 1.0e-10
@@ -89,7 +89,7 @@ end
     end
 end
 
-@testset "train(StandardRidge): well-conditioned agreement" begin
+@testset "train(RidgeRegression): well-conditioned agreement" begin
     rng = MersenneTwister(7)
     n_features, n_samples, n_outputs = 5, 60, 2
     regularization = 1.0e-2
@@ -99,13 +99,13 @@ end
     reference = reference_ridge(states, targets, regularization)
 
     weights_qr = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+        RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
     weights_ls_qr = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     weights_ls_svd = train(
-        StandardRidge(regularization), states, targets; solver = SVDFactorization()
+        RidgeRegression(regularization), states, targets; solver = SVDFactorization()
     )
 
     @test weights_qr ≈ reference rtol = 1.0e-10
@@ -115,7 +115,7 @@ end
     @test weights_ls_qr ≈ weights_ls_svd rtol = 1.0e-10
 end
 
-@testset "train(StandardRidge): Float32 agreement" begin
+@testset "train(RidgeRegression): Float32 agreement" begin
     rng = MersenneTwister(11)
     n_features, n_samples, n_outputs = 4, 50, 2
     regularization = 1.0f-3
@@ -125,10 +125,10 @@ end
     reference = reference_ridge(states, targets, regularization)
 
     weights_qr = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+        RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
     weights_ls = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
 
     @test size(weights_qr) == (n_outputs, n_features)
@@ -139,7 +139,7 @@ end
     @test eltype(weights_ls) == Float32
 end
 
-@testset "train(StandardRidge): T != n_features" begin
+@testset "train(RidgeRegression): T != n_features" begin
     rng = MersenneTwister(3)
     n_features, n_samples, n_outputs = 8, 20, 3
     regularization = 1.0e-4
@@ -151,7 +151,7 @@ end
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
             weights = train(
-                StandardRidge(regularization), states, targets; solver = solver
+                RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
             @test weights ≈ reference rtol = 1.0e-9
@@ -159,7 +159,7 @@ end
     end
 end
 
-@testset "train(StandardRidge): zero regularization, overdetermined" begin
+@testset "train(RidgeRegression): zero regularization, overdetermined" begin
     rng = MersenneTwister(19)
     n_features, n_samples, n_outputs = 4, 50, 2
     states, targets, _ = random_ridge_problem(
@@ -169,7 +169,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(StandardRidge(0.0), states, targets; solver = solver)
+            weights = train(RidgeRegression(0.0), states, targets; solver = solver)
             @test size(weights) == (n_outputs, n_features)
             @test all(isfinite, weights)
             @test weights ≈ reference rtol = 1.0e-9
@@ -177,19 +177,19 @@ end
     end
 end
 
-@testset "train(StandardRidge): default solver is QRFactorization" begin
+@testset "train(RidgeRegression): default solver is QRFactorization" begin
     rng = MersenneTwister(23)
     states, targets, _ = random_ridge_problem(rng, Float64, 5, 30, 2)
     regularization = 1.0e-3
 
-    weights_default = train(StandardRidge(regularization), states, targets)
+    weights_default = train(RidgeRegression(regularization), states, targets)
     weights_explicit = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test weights_default == weights_explicit
 end
 
-@testset "train(StandardRidge): multi-output consistency" begin
+@testset "train(RidgeRegression): multi-output consistency" begin
     rng = MersenneTwister(29)
     n_features, n_samples = 6, 40
     regularization = 1.0e-2
@@ -197,13 +197,13 @@ end
     targets = randn(rng, Float64, 4, n_samples)
 
     weights_all = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test size(weights_all) == (4, n_features)
 
     for output_index in 1:4
         weights_one = train(
-            StandardRidge(regularization),
+            RidgeRegression(regularization),
             states,
             targets[output_index:output_index, :];
             solver = QRFactorization(),
@@ -212,37 +212,37 @@ end
     end
 end
 
-@testset "train(StandardRidge): DimensionMismatch on sample count" begin
+@testset "train(RidgeRegression): DimensionMismatch on sample count" begin
     states = randn(Float64, 5, 10)
     targets = randn(Float64, 2, 9)
     @test_throws DimensionMismatch train(
-        StandardRidge(1.0e-3), states, targets; solver = QRSolver()
+        RidgeRegression(1.0e-3), states, targets; solver = QRSolver()
     )
     @test_throws DimensionMismatch train(
-        StandardRidge(1.0e-3), states, targets; solver = QRFactorization()
+        RidgeRegression(1.0e-3), states, targets; solver = QRFactorization()
     )
 end
 
-@testset "train(StandardRidge): unsupported solver" begin
+@testset "train(RidgeRegression): unsupported solver" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
     @test_throws ArgumentError train(
-        StandardRidge(1.0e-3), states, targets; solver = :not_a_solver
+        RidgeRegression(1.0e-3), states, targets; solver = :not_a_solver
     )
 end
 
-@testset "train(StandardRidge): negative regularization rejected" begin
+@testset "train(RidgeRegression): negative regularization rejected" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
     @test_throws ArgumentError train(
-        StandardRidge(-1.0e-3), states, targets; solver = QRSolver()
+        RidgeRegression(-1.0e-3), states, targets; solver = QRSolver()
     )
     @test_throws ArgumentError train(
-        StandardRidge(-1.0e-3), states, targets; solver = QRFactorization()
+        RidgeRegression(-1.0e-3), states, targets; solver = QRFactorization()
     )
 end
 
-@testset "train(StandardRidge): LinearSolve multi-RHS matches reference" begin
+@testset "train(RidgeRegression): LinearSolve multi-RHS matches reference" begin
     rng = MersenneTwister(41)
     n_features, n_samples, n_outputs = 7, 45, 5
     regularization = 5.0e-3
@@ -254,7 +254,7 @@ end
     for solver in (QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
             weights = train(
-                StandardRidge(regularization), states, targets; solver = solver
+                RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
             @test weights ≈ reference rtol = 1.0e-10
@@ -262,7 +262,7 @@ end
     end
 end
 
-@testset "train(StandardRidge): LinearSolve uses same augmented system as QRSolver" begin
+@testset "train(RidgeRegression): LinearSolve uses same augmented system as QRSolver" begin
     rng = MersenneTwister(43)
     n_features, n_samples, n_outputs = 6, 25, 3
     regularization = 1.0e-8
@@ -271,10 +271,10 @@ end
     )
 
     weights_legacy = train(
-        StandardRidge(regularization), states, targets; solver = QRSolver()
+        RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
     weights_ls = train(
-        StandardRidge(regularization), states, targets; solver = QRFactorization()
+        RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test weights_ls ≈ weights_legacy rtol = 1.0e-10
 end
@@ -305,7 +305,7 @@ end
 
     ps_trained, st_trained = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-4),
+        objective = RidgeRegression(1.0e-4),
     )
     @test haskey(ps_trained.readout, :weight)
     @test size(ps_trained.readout.weight) == (out_dims, res_dims)
@@ -313,7 +313,7 @@ end
 
     (ps2, st2), collected = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-4),
+        objective = RidgeRegression(1.0e-4),
         return_states = true,
         washout = 5,
     )
@@ -338,12 +338,12 @@ end
 
     ps_qr, _ = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-3),
+        objective = RidgeRegression(1.0e-3),
         solver = QRSolver(),
     )
     ps_ls, _ = train(
         model, train_data, target_data, ps, st;
-        objective = StandardRidge(1.0e-3),
+        objective = RidgeRegression(1.0e-3),
         solver = QRFactorization(),
     )
 
@@ -352,7 +352,7 @@ end
     @test ps_qr.readout.weight ≈ ps_ls.readout.weight rtol = 1.0e-3
 end
 
-@testset "train(StandardRidge): ill-conditioned λ=0 is finite (no tight agreement)" begin
+@testset "train(RidgeRegression): ill-conditioned λ=0 is finite (no tight agreement)" begin
     # Characterization only: n == T and λ == 0 is poorly conditioned.
     # Solvers need not agree; they must return finite weights of the right shape.
     rng = MersenneTwister(1)
@@ -364,7 +364,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(StandardRidge(0.0), states, targets; solver = solver)
+            weights = train(RidgeRegression(0.0), states, targets; solver = solver)
             @test size(weights) == (n_outputs, n_features)
             @test all(isfinite, weights)
         end

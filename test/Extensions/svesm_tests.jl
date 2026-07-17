@@ -60,7 +60,7 @@ begin
         @test occursin("SVMReadout", s)
     end
 
-    @testset "SVESM: train! with EpsilonSVR" begin
+    @testset "SVESM: train with EpsilonSVR" begin
         rng = MersenneTwister(99)
         in_dims, res_dims, out_dims = 1, 30, 1
         T = 200
@@ -80,7 +80,7 @@ begin
         @test length(pred) == out_dims
     end
 
-    @testset "SVESM: train! with NuSVR and state_modifiers" begin
+    @testset "SVESM: train with NuSVR and state_modifiers" begin
         rng = MersenneTwister(77)
         in_dims, res_dims, out_dims = 2, 20, 2
         T = 100

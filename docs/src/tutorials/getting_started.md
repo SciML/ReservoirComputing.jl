@@ -157,8 +157,7 @@ the best results.
 
 Training for ESNs usually means solving a linear regression. The library supports
 solvers from [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl),
-in addition to a custom implementation of ridge regression [`StandardRidge`](@ref).
-In this example we will use the latter.
+and the built-in [`RidgeRegression`](@ref) objective used below.
 
 Since `ReservoirComputing.jl` builds on
 [`LuxCore.jl`](https://lux.csail.mit.edu/stable/api/Building_Blocks/LuxCore)
@@ -177,11 +176,8 @@ is discarded, to account for the dynamics of the ESN to settle. This can
 be done by passing the `washout` keyword argument to `train`.
 
 ```@example lorenz
-#define training method
-training_method = StandardRidge(0.0)
-
 ps, st = train(esn, input_data, target_data, ps, st;
-    objective = training_method,
+    objective = RidgeRegression(0.0),
     washout = 0, # we use no washout
 )
 ```
@@ -196,7 +192,7 @@ ps, st = train(esn, input_data, target_data, ps, st;
 
     ```julia
     (ps, st), states = train(esn, input_data, target_data, ps, st;
-        objective = training_method,
+        objective = RidgeRegression(0.0),
         return_states = true,
     )
     ```

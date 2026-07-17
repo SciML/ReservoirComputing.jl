@@ -19,6 +19,7 @@ run_qa(
             :randn16, :randn32, :randn64, :randnC16, :randnC32, :randnC64,
             :setup, :sparse_init, :truncated_normal, :zeros16, :zeros32, :zeros64,
             :zerosC16, :zerosC32, :zerosC64,
+            :StandardRidge,  # deprecated alias of RidgeRegression
         ),
     ),
     ei_kwargs = (;
@@ -26,6 +27,7 @@ run_qa(
             ignore = (
                 :OneTo,        # Base (non-public)
                 :tail,         # Base (non-public)
+                Symbol("@deprecate_binding"),  # Base (non-public deprecation macro)
                 :aos_to_soa,   # ArrayInterface (non-public)
                 :Partial,      # WeightInitializers.PartialFunction (non-public)
                 :default_rng,  # WeightInitializers.Utils (non-public)

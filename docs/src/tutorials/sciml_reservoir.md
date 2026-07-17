@@ -298,7 +298,7 @@ rc_mg_train = build_mg_rc(train_len)
 rc_mg_predict = build_mg_rc(predict_len)
 ps_mg, st_mg = setup(rng, rc_mg_train)
 ps_mg, st_mg = train(rc_mg_train, input_data, target_data, ps_mg, st_mg;
-    objective = StandardRidge(1.0e-6), washout = 0)
+    objective = RidgeRegression(1.0e-6), washout = 0)
 
 ps_pred, st_pred = setup(rng, rc_mg_predict)
 ps_pred = merge(ps_pred, (readout = ps_mg.readout,))

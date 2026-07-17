@@ -125,7 +125,7 @@ begin
 
             ps_tr, st_tr = train(
                 ngrc, X_in, Y_out, ps, st;
-                objective = StandardRidge(1.0e-6),
+                objective = RidgeRegression(1.0e-6),
             )
 
             @test hasproperty(ps_tr, :readout)

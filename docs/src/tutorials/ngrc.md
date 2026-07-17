@@ -134,10 +134,8 @@ We now train the linear readout using ridge regression on the increment `train_d
 
 ```@example ngrc
 ps, st = train(ngrc, train_norm_x, train_delta_y, ps, st;
-    objective = StandardRidge(2.5e-6))
+    objective = RidgeRegression(2.5e-6))
 ```
-
-where [`StandardRidge`](@ref) is the ridge regression provided natively by ReservoirComputing.jl.
 
 ## 6. Generative prediction
 

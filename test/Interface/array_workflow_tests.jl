@@ -126,7 +126,7 @@ begin
                 target,
                 ps,
                 st;
-                objective = StandardRidge(T, T(0)),
+                objective = RidgeRegression(T, T(0)),
                 return_states = true,
             )
             @test states ≈ data
@@ -167,7 +167,7 @@ begin
                 target,
                 ps,
                 st;
-                objective = StandardRidge(T, T(1.0e-6)),
+                objective = RidgeRegression(T, T(1.0e-6)),
                 return_states = true,
             )
             @test size(states) == (4, 8)

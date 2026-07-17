@@ -92,7 +92,7 @@ begin
         )
         ps_trained, st_trained = train(
             rc, data, target, ps, st;
-            objective = StandardRidge(Float32, 0.0f0),
+            objective = RidgeRegression(Float32, 0.0f0),
         )
         pred, _ = predict(rc, data, ps_trained, st_trained)
 

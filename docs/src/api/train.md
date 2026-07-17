@@ -5,14 +5,7 @@
     train!
     QRSolver
     QRFactorization
+    RidgeRegression
 ```
 
-For ridge regression, `solver = nothing` selects LinearSolve's
-[`QRFactorization`](@ref). Other LinearSolve algorithms require
-`using LinearSolve`.
-
-## Training methods
-
-```@docs
-    StandardRidge
-```
+`StandardRidge` is a deprecated alias of [`RidgeRegression`](@ref).

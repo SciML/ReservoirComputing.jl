@@ -42,6 +42,7 @@ include("layers/lif_wrapper.jl")
 include("states.jl")
 include("predict.jl")
 include("train.jl")
+include("deprecated.jl")
 #initializers
 include("inits/inits_components.jl")
 include("inits/inits_input.jl")
@@ -77,7 +78,7 @@ export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
 export SVMReadout
 export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
-export StandardRidge
+export RidgeRegression
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
     modified_lm, scaled_rand, weighted_init, weighted_minimal
 export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
