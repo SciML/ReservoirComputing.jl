@@ -1,0 +1,6 @@
+Manifest.toml
+results/summary.json
+results/summary.md
+# Keep FINDINGS.md tracked once filled; ignore local scratch:
+*.png
+*.jld2
