@@ -64,3 +64,15 @@ NRMSE on prefixes of length `h` for each `h` in `horizons`.
 function horizon_nrmse(pred::AbstractMatrix, truth::AbstractMatrix; horizons)
     return Dict(string(h) => nrmse(@view(pred[:, 1:h]), @view(truth[:, 1:h])) for h in horizons)
 end
+
+"""
+    timed(f) -> (result, wall_s)
+
+Wall-clock seconds for `f()` via `time_ns` (includes compile on first call —
+callers should warm once if they need steady-state timings).
+"""
+function timed(f)
+    t0 = time_ns()
+    result = f()
+    return result, (time_ns() - t0) / 1.0e9
+end

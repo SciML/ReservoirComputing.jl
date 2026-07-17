@@ -12,6 +12,35 @@ init_reservoir_f64(rng, dims...) = rand_sparse(rng, Float64, dims...)
 init_bias_f64(rng, dims...) = zeros(Float64, dims...)
 init_state_f64(rng, dims...) = zeros(Float64, dims...)
 
+"""
+#456-style continuous inits: spectral radius 0.9, modest input drive (~0.1),
+small bias (~0.05). Package `scaled_rand` defaults are too aggressive for
+continuous eq. (5) forecasting and wash out the cold/warm signal.
+"""
+function continuous_inits(;
+        use_bias::Bool = true,
+        radius::Float64 = 0.9,
+        input_scale::Float64 = 0.1,
+        bias_scale::Float64 = 0.05,
+    )
+    init_res = (rng, dims...) -> rand_sparse(rng, Float64, dims...; radius = radius)
+    init_in = (rng, dims...) -> input_scale .* randn(rng, Float64, dims...)
+    init_b = if use_bias
+        (rng, dims...) -> bias_scale .* randn(rng, Float64, dims...)
+    else
+        init_bias_f64
+    end
+    return (
+        use_bias = use_bias,
+        init_input = init_in,
+        init_reservoir = init_res,
+        init_bias = init_b,
+        init_state = init_state_f64,
+        reltol = RELTOL,
+        abstol = ABSTOL,
+    )
+end
+
 function f64_inits(; use_bias = true)
     return (
         use_bias = use_bias,
@@ -28,11 +57,7 @@ end
     build_continuous_esn(n_res, n_steps; radius=0.9, kwargs...)
 
 `tspan = (0, n_steps)` so one sample ≈ one unit of reservoir time
-(tutorial / #456 convention).
-
-`radius` is applied to `rand_sparse` (spectral radius of `W_r`). Continuous
-eq. (5) needs a tighter bound than many discrete demos; 0.9 matches the
-#456 Lorenz probe.
+(tutorial / #456 convention). Defaults match the #456 Lorenz probe.
 """
 function build_continuous_esn(
         n_res::Integer,
@@ -41,13 +66,13 @@ function build_continuous_esn(
         use_bias::Bool = true,
         solver = Tsit5(),
         radius::Float64 = 0.9,
+        input_scale::Float64 = 0.1,
+        bias_scale::Float64 = 0.05,
         extra...,
     )
-    init_res = (rng, dims...) -> rand_sparse(rng, Float64, dims...; radius = radius)
     return ContinuousESN(
         3, n_res, 3, (0.0, Float64(n_steps)), solver;
-        f64_inits(; use_bias)...,
-        init_reservoir = init_res,
+        continuous_inits(; use_bias, radius, input_scale, bias_scale)...,
         state_modifiers = state_modifiers,
         extra...,
     )
