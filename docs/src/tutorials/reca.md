@@ -37,10 +37,11 @@ reca = RECA(4, 4, DCA(90);
            input_encoding=RandomMapping(16, 40))
 ps, st = setup(rng, reca)
 ```
-After this, the training can be performed with the chosen method.
+After this, train the readout:
 
 ```@example reca
-ps, st = train!(reca, input, output, ps, st, StandardRidge(0.00001))
+ps, st = train(reca, input, output, ps, st;
+    objective = RidgeRegression(0.00001))
 ```
 
 We are going to test the recall ability of the model, feeding the input data

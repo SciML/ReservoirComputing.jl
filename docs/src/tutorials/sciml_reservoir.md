@@ -207,7 +207,7 @@ rc_predict = build_rc(predict_len)
 ps, st = setup(rng, rc_train)
 
 # 5. Fit the linear readout on the collected continuous states
-ps, st = train!(rc_train, input_data, target_data, ps, st)
+ps, st = train(rc_train, input_data, target_data, ps, st)
 
 # 6. Autoregressive rollout under the same continuous dynamics
 ps_pred, st_pred = setup(rng, rc_predict)
@@ -224,7 +224,7 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
 The two trajectories should agree on the early portion of the rollout
 before chaotic divergence — exactly the behaviour the discrete-ESN
 example produces. The point of the eye test is that nothing in the
-training loop changes: `train!` and `predict` still drive the
+training loop changes: `train` and `predict` still drive the
 `SciMLProblemReservoir` through the same pipeline they use for any
 discrete reservoir.
 
@@ -297,8 +297,8 @@ end
 rc_mg_train = build_mg_rc(train_len)
 rc_mg_predict = build_mg_rc(predict_len)
 ps_mg, st_mg = setup(rng, rc_mg_train)
-ps_mg, st_mg = train!(rc_mg_train, input_data, target_data, ps_mg, st_mg,
-    StandardRidge(1.0e-6); washout = 0)
+ps_mg, st_mg = train(rc_mg_train, input_data, target_data, ps_mg, st_mg;
+    objective = RidgeRegression(1.0e-6), washout = 0)
 
 ps_pred, st_pred = setup(rng, rc_mg_predict)
 ps_pred = merge(ps_pred, (readout = ps_mg.readout,))

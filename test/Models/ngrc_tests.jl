@@ -123,8 +123,10 @@ begin
 
             ps, st = setup(rng, ngrc)
 
-            ps_tr, st_tr =
-                train!(ngrc, X_in, Y_out, ps, st; train_method = StandardRidge(1.0e-6))
+            ps_tr, st_tr = train(
+                ngrc, X_in, Y_out, ps, st;
+                objective = RidgeRegression(1.0e-6),
+            )
 
             @test hasproperty(ps_tr, :readout)
             w = ps_tr.readout.weight

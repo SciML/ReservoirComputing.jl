@@ -258,7 +258,7 @@ begin
         @test occursin("LinearReadout", s)
     end
 
-    @testset "LIFESN: train! with StandardRidge" begin
+    @testset "LIFESN: train with RidgeRegression" begin
         rng = MersenneTwister(99)
         in_dims, res_dims, out_dims = 1, 30, 1
         T = 200
@@ -269,7 +269,10 @@ begin
         model = LIFESN(in_dims, res_dims, out_dims, tanh; lookback_horizon = 3)
         ps, st = setup(rng, model)
 
-        ps, st = train!(model, train_data, target_data, ps, st, StandardRidge())
+        ps, st = train(
+            model, train_data, target_data, ps, st;
+            objective = RidgeRegression(),
+        )
 
         @test haskey(ps.readout, :weight)
 

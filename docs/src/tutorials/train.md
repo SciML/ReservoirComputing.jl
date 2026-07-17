@@ -1,15 +1,9 @@
 # Training Reservoir Computing Models
 
-Training reservoir computing (RC) models usually means solving a linear
-regression problem. ReservoirComputing.jl offers multiple stratedies to
-provide a readout; in this page we will show the basics, while also pointing out
-the possible extensions.
+Training an RC model means fitting the readout. The default objective is ridge
+regression; other linear and SVM objectives are available through extensions.
 
-## Training in ReservoirComputing.jl: Ridge Regression
-
-The most simple training of RC models is through ridge regression.
-Given the widepread adoption of this training mechanism, ridge regression is the
-default training algorithm for RC models in the library.
+## Ridge regression
 
 ```@example training
 using ReservoirComputing
@@ -22,76 +16,69 @@ target_data = rand(Float32, 5, 100)
 
 model = ESN(3, 100, 5)
 ps, st = setup(rng, model)
-ps, st = train!(model, input_data, target_data, ps, st,
-    StandardRidge(); # default
-    solver = QRSolver()) # default
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = RidgeRegression(),
+    solver = QRFactorization())
 ```
 
-In this call you can see that there are two possible knobs to be modified: the
-loss function, in this case ridge, and the solver, in this case the build in QR
-factorization. In the remaining part of this tutorial we will see how it is possible
-to change either.
+`objective` chooses what to fit (here ridge). `solver` chooses how to solve it;
+omitting `solver` uses [`QRFactorization`](@ref).
 
-## Changing Ridge Regression Solver
+```@example training
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = RidgeRegression())
+```
 
-Building on SciML's [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl), it is
-possible to leverage multiple solvers for the ridge problem. For instance, building
-on the previous example:
+## Changing the ridge solver
+
+Other [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl) algorithms:
 
 ```@example training
 using LinearSolve
 
-ps, st = train!(model, input_data, target_data, ps, st,
-    StandardRidge(); # default
-    solver = SVDFactorization()) # from LinearSolve
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = RidgeRegression(),
+    solver = SVDFactorization())
 ```
 
-or 
+Legacy built-in path:
 
 ```@example training
-ps, st = train!(model, input_data, target_data, ps, st,
-    StandardRidge(); # default
-    solver = QRFactorization()) # from LinearSolve
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = RidgeRegression(),
+    solver = QRSolver())
 ```
 
-For a detailed explanation of the different solvers, as well as a complete list of them,
-we suggest visiting the appropriate page in LinearSolve's
-[documentation](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/)
+See LinearSolve's
+[solver list](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/).
 
-## Changing Linear Regression Problem
+## Other linear objectives
 
-Linear regression is a general problem, which can be espressed through multiple different
-loss functions. While ridge regression is the most common in RC, due to its closed form,
-there are multiple other available. ReservoirComputing.jl leverages
-[MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl) to access all the methods
-available from that library.
+[MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl) provides
+additional regressors (lasso, elastic net, …).
 
 !!! warn
-    
-    Currently MLJLinearModels.jl only supports `Float64`. If a certain precision is of the
-    upmost importance to you, please refrain from using this external package
-    
-The train function can be called as before, only this time you can specify different models
-and different solvers for the linear regression problem:
+
+    MLJLinearModels currently supports `Float64` only.
 
 ```@example training
 using MLJLinearModels
 
-ps, st = train!(model, input_data, target_data, ps, st,
-    LassoRegression(fit_intercept=false); # from MLJLinearModels
-    solver = ProxGrad()) # from MLJLinearModels
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = LassoRegression(fit_intercept = false),
+    solver = ProxGrad())
 ```
 
-Make sure to check the MLJLinearModels documentation pages for the available
+See MLJLinearModels
 [models](https://juliaai.github.io/MLJLinearModels.jl/stable/models/) and
-[solvers](https://juliaai.github.io/MLJLinearModels.jl/stable/solvers/). Please note that
-not all solvers can be used on all the models. 
+[solvers](https://juliaai.github.io/MLJLinearModels.jl/stable/solvers/). Not
+every solver works with every model. MLJ also exports a type named
+`RidgeRegression`; write `MLJLinearModels.RidgeRegression` when both packages
+are loaded.
 
 !!! note
-    
-    Currently the support for MLJLinearModels.jl is limited to regressors with
-    `fit_intercept=false`. We are working on a solution, but until then you will always
-    need to specify it on the regressor.
+
+    Only regressors with `fit_intercept=false` are supported for now.
 
 ## Support Vector Regression
 
@@ -115,7 +102,6 @@ ps, st = setup(rng, model)
 We can now train our new `model` similarly to before:
 
 ```@example training
-ps, st = train!(model, input_data, target_data, ps, st,
-    EpsilonSVR() # from LIBSVM
-    )
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = EpsilonSVR()) # from LIBSVM
 ```

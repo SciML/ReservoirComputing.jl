@@ -1,13 +1,11 @@
 # Train
 
 ```@docs
-    train!
     train
-```
-
-## Training methods
-
-```@docs
-    StandardRidge
+    train!
     QRSolver
+    QRFactorization
+    RidgeRegression
 ```
+
+`StandardRidge` is a deprecated alias of [`RidgeRegression`](@ref).
