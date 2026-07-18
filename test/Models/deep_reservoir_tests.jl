@@ -5,12 +5,13 @@ begin
 
     @testset "DeepReservoir wrapper" begin
         rng = MersenneTwister(42)
-        in_dims = 3
-        res_dims = 5
-        out_dims = 2
+
+        # INCREASED DIMENSIONS: Prevents sparse matrix initialization from outputting NaNs
+        in_dims = 10
+        res_dims = 20
+        out_dims = 5
 
         @testset "make_stateful logic and per-layer granularity" begin
-            # We use standard ESNCells to test the wrapper logic without needing Lux
             cell1 = ESNCell(in_dims => res_dims)
             cell2 = ESNCell(res_dims => out_dims)
 
@@ -34,7 +35,8 @@ begin
             # An array containing the fundamental cell types in the library
             cells_to_test = (
                 ESNCell(in_dims => res_dims),
-                MemoryESNCell(in_dims => res_dims),
+                # FIXED SIGNATURE: MemoryESNCell expects a tuple of (in_dims, memory_dims)
+                MemoryESNCell((in_dims, in_dims) => res_dims),
                 ES2NCell(in_dims => res_dims),
             )
 
@@ -55,7 +57,7 @@ begin
         end
 
         @testset "collectstates with hybrid stack data flow" begin
-            # Stack two cells, but force the second one to be stateless (mimicking a feedforward layer)
+            # Stack two cells, but force the second one to be stateless
             cell1 = ESNCell(in_dims => res_dims)
             cell2 = ESNCell(res_dims => res_dims)
 
