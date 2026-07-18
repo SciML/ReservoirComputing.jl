@@ -2,11 +2,11 @@ begin
     using Test
     using Random
     using ReservoirComputing
+    using Functors
 
     @testset "DeepReservoir wrapper" begin
         rng = MersenneTwister(42)
 
-        # INCREASED DIMENSIONS: Prevents sparse matrix initialization from outputting NaNs
         in_dims = 10
         res_dims = 20
         out_dims = 5
