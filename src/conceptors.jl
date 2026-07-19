@@ -32,6 +32,50 @@ function correlation_matrix(states::AbstractMatrix{<:Real})
     return (state_matrix * state_matrix') / size(state_matrix, 2)
 end
 
+# LAPACK's default dense factorizations (syevr for symmetric eigen, gesdd for
+# SVD/nullspace/pinv) can fail to converge (LAPACKException) on large
+# ill-conditioned matrices. The fallbacks below retry with the slower but
+# robust QR-iteration SVD (gesvd); for the symmetric PSD matrices used here it
+# is an equivalent factorization (identical values/vectors up to roundoff).
+function psd_eigen(matrix::Symmetric)
+    try
+        decomposition = eigen(matrix)
+        return decomposition.values, decomposition.vectors
+    catch err
+        err isa LAPACKException || rethrow()
+        decomposition = svd(Matrix(matrix); alg = QRIteration())
+        return decomposition.S, decomposition.U
+    end
+end
+
+# Mirrors stdlib `nullspace`'s default tolerance on the QR-iteration fallback.
+function robust_nullspace(matrix::AbstractMatrix)
+    try
+        return nullspace(matrix)
+    catch err
+        err isa LAPACKException || rethrow()
+        decomposition = svd(matrix; full = true, alg = QRIteration())
+        tolerance = minimum(size(matrix)) * eps(real(float(oneunit(eltype(matrix))))) *
+            first(decomposition.S)
+        rank = count(>(tolerance), decomposition.S)
+        return copy(decomposition.Vt[(rank + 1):end, :]')
+    end
+end
+
+# Mirrors stdlib `pinv`'s default tolerance on the QR-iteration fallback.
+function robust_pinv(matrix::AbstractMatrix)
+    try
+        return pinv(matrix)
+    catch err
+        err isa LAPACKException || rethrow()
+        decomposition = svd(matrix; alg = QRIteration())
+        tolerance = minimum(size(matrix)) * eps(real(float(oneunit(eltype(matrix))))) *
+            first(decomposition.S)
+        inverted = [s > tolerance ? inv(s) : zero(s) for s in decomposition.S]
+        return decomposition.V * Diagonal(inverted) * decomposition.U'
+    end
+end
+
 @doc raw"""
     conceptor_matrix(correlation, aperture) -> Matrix
 
@@ -72,11 +116,11 @@ function conceptor_matrix(correlation::AbstractMatrix{<:Real}, aperture::Real)
     typed_aperture = element_type(aperture)
     inverse_aperture_squared = inv(typed_aperture * typed_aperture)
     conceptor = if element_type <: Union{Float32, Float64}
-        decomposition = eigen(Symmetric(correlation_matrix))
-        values = max.(decomposition.values, zero(element_type))
-        decomposition.vectors *
+        raw_values, vectors = psd_eigen(Symmetric(correlation_matrix))
+        values = max.(raw_values, zero(element_type))
+        vectors *
             Diagonal(values ./ (values .+ inverse_aperture_squared)) *
-            decomposition.vectors'
+            vectors'
     else
         correlation_matrix /
             Symmetric(correlation_matrix + inverse_aperture_squared * I)
@@ -234,11 +278,11 @@ function aperture_adapt(conceptor::AbstractMatrix{<:Real}, aperture_factor::Real
             Symmetric(conceptor_matrix + inverse_factor_squared * (I - conceptor_matrix))
         return (adapted + adapted') / element_type(2)
     end
-    decomposition = eigen(Symmetric(conceptor_matrix))
+    values, vectors = psd_eigen(Symmetric(conceptor_matrix))
     adapted_values = adapt_singular_value.(
-        clamp.(decomposition.values, zero(element_type), one(element_type)), typed_factor
+        clamp.(values, zero(element_type), one(element_type)), typed_factor
     )
-    return decomposition.vectors * Diagonal(adapted_values) * decomposition.vectors'
+    return vectors * Diagonal(adapted_values) * vectors'
 end
 
 """
@@ -332,16 +376,17 @@ function conceptor_and(
     issymmetric(second_matrix) || throw(ArgumentError("second_conceptor must be symmetric"))
 
     # Basis of R(C) ∩ R(B) = N(P_{N(C)} + P_{N(B)}), via the null-space projectors.
-    first_nullspace = nullspace(first_matrix)
-    second_nullspace = nullspace(second_matrix)
+    first_nullspace = robust_nullspace(first_matrix)
+    second_nullspace = robust_nullspace(second_matrix)
     nullspace_projector =
         first_nullspace * first_nullspace' + second_nullspace * second_nullspace'
-    intersection_basis = nullspace(nullspace_projector)
+    intersection_basis = robust_nullspace(nullspace_projector)
 
     if size(intersection_basis, 2) == 0
         return zeros(element_type, size(first_matrix))
     end
-    core = intersection_basis' * (pinv(first_matrix) + pinv(second_matrix) - I) *
+    core = intersection_basis' *
+        (robust_pinv(first_matrix) + robust_pinv(second_matrix) - I) *
         intersection_basis
     result = intersection_basis *
         (core \ Matrix{element_type}(I, size(core))) *
