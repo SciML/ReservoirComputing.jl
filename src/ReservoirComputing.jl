@@ -9,7 +9,7 @@ using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLa
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
 using NNlib: tanh_fast
-using Random: Random, AbstractRNG, randperm, randn
+using Random: Random, AbstractRNG, randperm
 using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
 using Reexport: Reexport, @reexport
 using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, Utils,

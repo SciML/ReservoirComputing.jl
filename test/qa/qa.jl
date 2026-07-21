@@ -41,6 +41,7 @@ run_qa(
                 :PartialFunction,    # WeightInitializers (non-public)
                 :Utils,              # WeightInitializers (non-public)
                 :StaticInteger,      # Static (non-public)
+                :QRIteration,        # LinearAlgebra (non-public algorithm selector)
                 :apply,              # LuxCore (non-public)
                 :initialparameters,  # LuxCore (non-public)
                 :initialstates,      # LuxCore (non-public)
