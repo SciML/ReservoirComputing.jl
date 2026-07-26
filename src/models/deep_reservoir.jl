@@ -1,5 +1,5 @@
 @doc raw"""
-    DeepReservoir(cells::Tuple, readout; states_modifiers=nothing)
+    DeepReservoir(cells, readout; states_modifiers=nothing)
 
 Deep Reservoir Network wrapper, generalizing deep architectures [Gallicchio2017](@cite).
 
@@ -7,26 +7,6 @@ Deep Reservoir Network wrapper, generalizing deep architectures [Gallicchio2017]
   1) a sequence of arbitrary `Lux` layers (typically stateful `ESNCell`s or custom dynamical systems),
   2) zero or more per-layer `states_modifiers[ℓ]` applied to the layer's state, and
   3) a final `readout` layer from the last layer's features to the output.
-
-## Equations
-For a standard architecture utilizing `ESNCell`s, the dynamics follow:
-
-```math
-\begin{aligned}
-    \mathbf{x}^{(1)}(t) &= (1-\alpha_1)\, \mathbf{x}^{(1)}(t-1)
-        + \alpha_1\, \phi_1\!\left(\mathbf{W}^{(1)}_{\text{in}}\, \mathbf{u}(t)
-        + \mathbf{W}^{(1)}_r\, \mathbf{x}^{(1)}(t-1) + \mathbf{b}^{(1)} \right), \\
-    \mathbf{u}^{(1)}(t) &= \mathrm{Mods}_1\!\left(\mathbf{x}^{(1)}(t)\right), \\
-    \mathbf{x}^{(\ell)}(t) &= (1-\alpha_\ell)\, \mathbf{x}^{(\ell)}(t-1)
-        + \alpha_\ell\, \phi_\ell\!\left(\mathbf{W}^{(\ell)}_{\text{in}}\,
-        \mathbf{u}^{(\ell-1)}(t) + \mathbf{W}^{(\ell)}_r\, \mathbf{x}^{(\ell)}(t-1)
-        + \mathbf{b}^{(\ell)} \right), \quad \ell = 2,\dots,L, \\
-    \mathbf{u}^{(\ell)}(t) &= \mathrm{Mods}_\ell\!\left(\mathbf{x}^{(\ell)}(t)\right),
-        \quad \ell = 2,\dots,L, \\
-    \mathbf{y}(t) &= \rho\!\left(\mathbf{W}_{\text{out}}\, \mathbf{u}^{(L)}(t)
-        + \mathbf{b}_{\text{out}} \right).
-\end{aligned}
-```
 
 ## Arguments
 
@@ -71,14 +51,14 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `readout` — states for the readout layer.
 
 """
-@concrete struct DeepReservoir <: AbstractEchoStateNetwork{(:cells, :states_modifiers, :readout)}
+@concrete struct DeepReservoir <: AbstractReservoirComputer
     cells
     states_modifiers
     readout
 end
 
 function DeepReservoir(
-        cells::Tuple,
+        cells, # Removed ::Tuple here
         readout;
         states_modifiers = nothing,
         make_stateful = true
@@ -120,22 +100,6 @@ function _partial_apply(desn::DeepReservoir, inp, ps, st)
     return current_inp, (; cells = new_cell_st, states_modifiers = new_mods_st)
 end
 
-function collectstates(desn::DeepReservoir, data::AbstractMatrix, ps, st::NamedTuple)
-    newst = st
-    collected = Any[]
-
-    for inp in eachcol(data)
-        out, partial_st = _partial_apply(desn, inp, ps, newst)
-        push!(collected, out)
-        newst = merge(partial_st, (readout = newst.readout,))
-    end
-
-    @assert !isempty(collected)
-    states = eltype(data).(reduce(hcat, collected))
-
-    return states, newst
-end
-
 function initialparameters(rng::AbstractRNG, dres::DeepReservoir)
     ps_cells = map(layer -> initialparameters(rng, layer), dres.cells) |> Tuple
     mods = dres.states_modifiers === nothing ? ntuple(_ -> (), length(dres.cells)) :
@@ -168,12 +132,6 @@ function initialstates(rng::AbstractRNG, dres::DeepReservoir)
 
     st_ro = initialstates(rng, dres.readout)
     return (cells = st_cells, states_modifiers = st_mods, readout = st_ro)
-end
-
-function (dres::DeepReservoir)(inp, ps, st)
-    out, new_st = _partial_apply(dres, inp, ps, st)
-    inp_t, st_ro = apply(dres.readout, out, ps.readout, st.readout)
-    return inp_t, merge(new_st, (readout = st_ro,))
 end
 
 function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = nothing)
@@ -216,8 +174,4 @@ function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = not
         states_modifiers = st.states_modifiers,
         readout = st.readout,
     )
-end
-
-function collectstates(m::DeepReservoir, data::AbstractVector, ps, st::NamedTuple)
-    return collectstates(m, reshape(data, :, 1), ps, st)
 end
