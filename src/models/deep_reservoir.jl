@@ -51,7 +51,7 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `readout` — states for the readout layer.
 
 """
-@concrete struct DeepReservoir <: AbstractReservoirComputer
+@concrete struct DeepReservoir <: AbstractReservoirComputer{(:cells, :states_modifiers, :readout)}
     cells
     states_modifiers
     readout
