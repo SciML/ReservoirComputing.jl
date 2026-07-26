@@ -2,21 +2,20 @@ begin
     using Test
     using Random
     using ReservoirComputing
-    # Removed `using Functors` completely
 
     @testset "DeepReservoir wrapper" begin
-        rng = MersenneTwister(42)
+        rng = MersenneTwister(777)
 
-        in_dims = 10
-        res_dims = 20
-        out_dims = 5
+        in_dims = 20
+        res_dims = 100
+        out_dims = 10
 
         # Use a native library cell instead of `identity` to bypass LuxCore parsing issues
         dummy_readout = ESNCell(res_dims => out_dims)
 
         @testset "make_stateful logic and per-layer granularity" begin
             cell1 = ESNCell(in_dims => res_dims)
-            cell2 = ESNCell(res_dims => res_dims) # Matched dimensions for chaining
+            cell2 = ESNCell(res_dims => res_dims)
 
             desn_default = DeepReservoir((cell1, cell2), dummy_readout)
             @test desn_default.cells[1] isa ReservoirComputing.StatefulLayer
