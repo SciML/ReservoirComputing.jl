@@ -4,7 +4,8 @@ using DataInterpolations: ConstantInterpolation
 using LinearAlgebra: mul!
 using LuxCore: apply
 using Random: AbstractRNG
-using SciMLBase: ODEProblem, init, reinit!, remake, solve, solve!, NullParameters
+using SciMLBase: FullSpecialize, ODEProblem, init, reinit!, remake, solve, solve!,
+    NullParameters
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
@@ -398,7 +399,7 @@ function _collectstates(
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    prob = ODEProblem(cell.equations, u0, cell.tspan, solve_p)
+    prob = ODEProblem{true, FullSpecialize}(cell.equations, u0, cell.tspan, solve_p)
 
     sol = solve(
         prob, cell.args...;
@@ -450,7 +451,7 @@ function _predict(
 
     input_fn = ConstantInputWindow(current_input)
     solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
-    sub_prob = ODEProblem(
+    sub_prob = ODEProblem{true, FullSpecialize}(
         cell.equations, current_state, (window_starts[1], window_ends[1]), solve_p
     )
     integrator = init(
