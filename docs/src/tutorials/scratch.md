@@ -59,7 +59,7 @@ ps, st = setup(rng, esn)
 ps_s.layer_1.input_matrix == ps.reservoir.input_matrix
 ```
 
-Both the models can be trained using [`train!`](@ref), and predictions can be
+Both the models can be trained using [`train`](@ref), and predictions can be
 obtained with [`predict`](@ref). The internal states collected for linear
 regression are computed by traversing the [`ReservoirChain`](@ref), and
 stopping right before the [`LinearReadout`](@ref).

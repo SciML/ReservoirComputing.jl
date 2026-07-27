@@ -60,7 +60,7 @@ Random.seed!(42)
 rng = MersenneTwister(17)
 
 ps, st = setup(rng, desn)
-ps, st = train!(desn, input_data, target_data, ps, st)
+ps, st = train(desn, input_data, target_data, ps, st)
 
 output, st = predict(desn, 1250, ps, st; initialdata=test_data[:, 1])
 ```

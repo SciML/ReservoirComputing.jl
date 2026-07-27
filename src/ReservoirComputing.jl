@@ -3,6 +3,8 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!, Symmetric, norm
+using LinearSolve: LinearProblem, solve, SciMLLinearSolveAlgorithm
+using LinearSolve: QRFactorization as LinearSolveQRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
@@ -40,6 +42,7 @@ include("layers/lif_wrapper.jl")
 include("states.jl")
 include("predict.jl")
 include("train.jl")
+include("deprecated.jl")
 #initializers
 include("inits/inits_components.jl")
 include("inits/inits_input.jl")
@@ -75,7 +78,7 @@ export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
 export SVMReadout
 export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
-export StandardRidge
+export RidgeRegression
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
     modified_lm, scaled_rand, weighted_init, weighted_minimal
 export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
@@ -84,7 +87,8 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
     selfloop_forwardconnection, simple_cycle, toepliz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
-export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
+    resetcarry!, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
 export RMNESN, RMNResESN

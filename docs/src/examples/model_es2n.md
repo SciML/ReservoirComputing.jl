@@ -140,7 +140,7 @@ esn = CustomES2NApproach2(3, 300, 3; init_reservoir=rand_sparse(; radius=1.2, sp
     state_modifiers=NLAT2)
 
 ps, st = setup(rng, esn)
-ps, st = train!(esn, input_data, target_data, ps, st)
+ps, st = train(esn, input_data, target_data, ps, st)
 output, st = predict(esn, predict_len, ps, st; initialdata=test[:, 1])
 
 plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
