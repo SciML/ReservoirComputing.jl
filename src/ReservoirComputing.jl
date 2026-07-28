@@ -3,7 +3,8 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!, Symmetric, norm
-using LinearSolve: LinearProblem, solve, SciMLLinearSolveAlgorithm
+using LinearSolve: LinearProblem, solve, SciMLLinearSolveAlgorithm, needs_square_A,
+    SVDFactorization
 using LinearSolve: QRFactorization as LinearSolveQRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
