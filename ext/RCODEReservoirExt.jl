@@ -115,11 +115,19 @@ function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
 end
 
 # Sparsity of J(x) = -I + diag(1 - tanh²(z))·Wr is exactly Wr's pattern
-# unioned with the diagonal. Only worth telling the solver when Wr itself
-# is stored sparsely — a dense Wr would produce a dense prototype, giving
-# implicit solvers no help.
-_reservoir_jac_prototype(::AbstractMatrix) = nothing
-_reservoir_jac_prototype(Wr::AbstractSparseMatrixCSC) = Wr + I
+# unioned with the diagonal — but only for the built-in leaky-integrator
+# ESN RHS. Custom `equations` may touch entries outside pattern(Wr),
+# whose Jacobian entries an implicit solver would silently skip if we
+# forced this prototype on them. Restrict the prototype to the built-in
+# RHS; custom RHS falls back to the default dense FD Jacobian.
+_reservoir_jac_prototype(_equations, ::AbstractMatrix) = nothing
+_reservoir_jac_prototype(_equations, ::AbstractSparseMatrixCSC) = nothing
+function _reservoir_jac_prototype(
+        ::typeof(ReservoirComputing._continuous_esn_rhs!),
+        reservoir_matrix::AbstractSparseMatrixCSC,
+    )
+    return reservoir_matrix + I
+end
 
 function _sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
@@ -393,7 +401,9 @@ function _collectstates(
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
     ode_fn = ODEFunction(
         cell.equations;
-        jac_prototype = _reservoir_jac_prototype(ps.reservoir.reservoir_matrix),
+        jac_prototype = _reservoir_jac_prototype(
+            cell.equations, ps.reservoir.reservoir_matrix
+        ),
     )
     prob = ODEProblem(ode_fn, u0, cell.tspan, solve_p)
 
@@ -447,7 +457,9 @@ function _predict(
 
     ode_fn = ODEFunction(
         cell.equations;
-        jac_prototype = _reservoir_jac_prototype(ps.reservoir.reservoir_matrix),
+        jac_prototype = _reservoir_jac_prototype(
+            cell.equations, ps.reservoir.reservoir_matrix
+        ),
     )
 
     local outputs
