@@ -118,7 +118,7 @@ mutable struct ConstantInputWindow{T <: AbstractVector}
     u_vec::T
 end
 
-(f::ConstantInputWindow)(t) = f.u_vec
+(input::ConstantInputWindow)(t) = input.u_vec
 
 function _sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
