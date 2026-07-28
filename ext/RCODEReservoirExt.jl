@@ -391,11 +391,11 @@ function _collectstates(
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    f = ODEFunction(
+    ode_fn = ODEFunction(
         cell.equations;
         jac_prototype = _reservoir_jac_prototype(ps.reservoir.reservoir_matrix),
     )
-    prob = ODEProblem(f, u0, cell.tspan, solve_p)
+    prob = ODEProblem(ode_fn, u0, cell.tspan, solve_p)
 
     sol = solve(
         prob, cell.args...;
@@ -445,7 +445,7 @@ function _predict(
     st_mods = st.states_modifiers
     st_ro = st.readout
 
-    f = ODEFunction(
+    ode_fn = ODEFunction(
         cell.equations;
         jac_prototype = _reservoir_jac_prototype(ps.reservoir.reservoir_matrix),
     )
@@ -454,7 +454,7 @@ function _predict(
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
         input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
         solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
-        sub_prob = ODEProblem(f, current_state, (t_lo, t_hi), solve_p)
+        sub_prob = ODEProblem(ode_fn, current_state, (t_lo, t_hi), solve_p)
         sol = solve(
             sub_prob, cell.args...;
             saveat = [t_hi],
