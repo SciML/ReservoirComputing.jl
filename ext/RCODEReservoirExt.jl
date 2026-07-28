@@ -278,7 +278,7 @@ function _predict(
     # conversion at the column assignment.
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn.u_vec = current_input
+        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
         reinit!(
             integrator, current_state;
             t0 = t_lo,
@@ -463,7 +463,7 @@ function _predict(
 
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn.u_vec = current_input
+        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
         reinit!(
             integrator, current_state;
             t0 = t_lo,
