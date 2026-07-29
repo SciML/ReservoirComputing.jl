@@ -552,7 +552,7 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> add_jumps!(matrix, 1.0)
+julia> add_jumps!(matrix, 1.0, 2)
 5×5 Matrix{Float32}:
   0.0  0.0   1.0   0.0   0.0
   0.0  0.0   0.0   0.0   0.0
