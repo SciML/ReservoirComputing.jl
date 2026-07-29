@@ -183,7 +183,7 @@ None
 ```jldoctest nlat1
 julia> nlat1 = NLAT1();
 
-julia> nlat1(0:9) == [0, 1, 4, 3, 16, 5, 36, 7, 64, 9]
+julia> nlat1(collect(0:9)) == [0, 1, 4, 3, 16, 5, 36, 7, 64, 9]
 true
 ```
 
@@ -254,7 +254,7 @@ None
 ```jldoctest nlat2
 julia> nlat2 = NLAT2();
 
-julia> nlat2(0:9) == [0, 1, 0, 3, 6, 5, 20, 7, 42, 9]
+julia> nlat2(collect(0:9)) == [0, 1, 0, 3, 6, 5, 20, 7, 42, 9]
 true
 
 ```
@@ -326,7 +326,7 @@ None
 ```jldoctest nlat3
 julia> nlat3 = NLAT3();
 
-julia> nlat3(0:9) == [0, 1, 3, 3, 15, 5, 35, 7, 63, 9]
+julia> nlat3(collect(0:9)) == [0, 1, 3, 3, 15, 5, 35, 7, 63, 9]
 true
 
 ```
@@ -397,7 +397,7 @@ Implement a partial squaring of the states as described in [Barbosa2021](@cite).
 ```jldoctest partialsq
 julia> partialsq = PartialSquare(0.6);
 
-julia> partialsq(0:9) == [0, 1, 4, 9, 16, 25, 6, 7, 8, 9]
+julia> partialsq(collect(0:9)) == [0, 1, 4, 9, 16, 25, 6, 7, 8, 9]
 true
 ```
 """

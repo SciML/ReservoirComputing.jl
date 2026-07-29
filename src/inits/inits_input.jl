@@ -34,7 +34,9 @@ a range defined by `scaling`.
 Standard behavior with scaling given by a scalar:
 
 ```jldoctest scaledrand
-julia> using Random, ReservoirComputing: scaled_rand
+julia> using Random
+
+julia> using ReservoirComputing: scaled_rand
 
 julia> res_input = scaled_rand(MersenneTwister(1), Float32, 8, 3);
 
@@ -129,7 +131,9 @@ warning.
 Standard call with scaling provided by a scalar:
 
 ```jldoctest weightedinit
-julia> using Random, Test, ReservoirComputing: weighted_init
+julia> using Random, Test
+
+julia> using ReservoirComputing: weighted_init
 
 julia> res_input = weighted_init(MersenneTwister(5), Float32, 9, 3; scaling = 0.1);
 
@@ -262,7 +266,9 @@ warning.
 Standard call, changing the init weight:
 
 ```jldoctest weightedminimal
-julia> using Random, Test, ReservoirComputing: weighted_minimal
+julia> using Random, Test
+
+julia> using ReservoirComputing: weighted_minimal
 
 julia> res_input = weighted_minimal(MersenneTwister(11), Float32, 9, 3; weight = 0.99);
 
@@ -275,7 +281,8 @@ Random sign for each weight, drawn from a bernoulli distribution:
 ```jldoctest weightedminimal
 julia> res_input = weighted_minimal(MersenneTwister(12), Float32, 9, 3; sampling_type = :bernoulli_sample!);
 
-julia> all(count(!iszero, column) == 3 for column in eachcol(res_input)) && all(abs.(res_input) .== 0.1f0 .| (res_input .== 0))
+julia> all(count(!iszero, column) == 3 for column in eachcol(res_input)) &&
+       all(weight -> iszero(weight) || abs(weight) == 0.1f0, res_input)
 true
 ```
 
@@ -431,7 +438,9 @@ determined by the `sampling` chosen.
 Standard call:
 
 ```jldoctest minimalinit
-julia> using Random, ReservoirComputing: minimal_init
+julia> using Random
+
+julia> using ReservoirComputing: minimal_init
 
 julia> res_input = minimal_init(MersenneTwister(14), Float32, 8, 3);
 
@@ -679,14 +688,16 @@ the number of rows is overridden.
 ## Examples
 
 ```jldoctest
-julia> using SparseArrays, ReservoirComputing: modified_lm
+julia> using SparseArrays
 
-julia> input_matrix = modified_lm(20, 10; factor = 2);
+julia> using ReservoirComputing: modified_lm
+
+julia> input_matrix = modified_lm(20, 10; factor = 2, return_sparse = true);
 
 julia> issparse(input_matrix) && size(input_matrix) == (20, 10) && nnz(input_matrix) == 18
 true
 
-julia> input_matrix = modified_lm(12, 4; factor = 3);
+julia> input_matrix = modified_lm(12, 4; factor = 3, return_sparse = true);
 
 julia> issparse(input_matrix) && size(input_matrix) == (12, 4) && nnz(input_matrix) == 9
 true
