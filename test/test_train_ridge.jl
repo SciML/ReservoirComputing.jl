@@ -223,12 +223,41 @@ end
     )
 end
 
+@testset "train(RidgeRegression): empty training data rejected" begin
+    states = Matrix{Float64}(undef, 4, 0)
+    targets = Matrix{Float64}(undef, 2, 0)
+    for solver in (QRSolver(), QRFactorization(), LUFactorization())
+        err = try
+            train(RidgeRegression(1.0e-3), states, targets; solver = solver)
+            nothing
+        catch caught
+            caught
+        end
+        @test err isa ArgumentError
+        @test occursin("at least one training sample", sprint(showerror, err))
+    end
+end
+
 @testset "train(RidgeRegression): unsupported solver" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
     @test_throws ArgumentError train(
         RidgeRegression(1.0e-3), states, targets; solver = :not_a_solver
     )
+end
+
+@testset "train(RidgeRegression): square-only LinearSolve algorithm errors clearly" begin
+    states = randn(Float64, 4, 20)
+    targets = randn(Float64, 2, 20)
+    @test_throws ArgumentError train(
+        RidgeRegression(1.0e-3), states, targets; solver = LUFactorization()
+    )
+    try
+        train(RidgeRegression(1.0e-3), states, targets; solver = LUFactorization())
+    catch err
+        @test occursin("QRFactorization", err.msg)
+        @test occursin("square", err.msg)
+    end
 end
 
 @testset "train(RidgeRegression): negative regularization rejected" begin

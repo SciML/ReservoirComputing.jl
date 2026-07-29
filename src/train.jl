@@ -125,6 +125,9 @@ function _ridge_augmented_system(
             "states has $n_samples samples, targets has $n_target_samples"
         )
     )
+    n_samples > 0 || throw(
+        ArgumentError("ridge regression requires at least one training sample")
+    )
 
     n_features = size(states, 1)
     n_outputs = size(targets, 1)
@@ -148,11 +151,22 @@ function _train_ridge(
     return Matrix(weight_transpose')
 end
 
+_ridge_solver_supported(solver::SciMLLinearSolveAlgorithm) = !needs_square_A(solver)
+_ridge_solver_supported(::SVDFactorization) = true
+
 function _train_ridge(
         solver::SciMLLinearSolveAlgorithm, objective::RidgeRegression,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
     design, rhs = _ridge_augmented_system(objective, states, targets)
+    _ridge_solver_supported(solver) || throw(
+        ArgumentError(
+            "solver $(typeof(solver)) requires a square matrix, but ridge regression's " *
+                "augmented system is always rectangular (more rows than features). " *
+                "Use QRFactorization(), SVDFactorization(), or NormalCholeskyFactorization() " *
+                "instead."
+        )
+    )
     solution = solve(LinearProblem(design, rhs), solver; kwargs...)
     return Matrix(solution.u')
 end
