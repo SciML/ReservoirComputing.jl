@@ -3,6 +3,7 @@ begin
     using Test
     using Random
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates, setup
 
     const SciMLReservoirError = @static isdefined(Base, :FieldError) ?
         Union{ErrorException, FieldError} : ErrorException

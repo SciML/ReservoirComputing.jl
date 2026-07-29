@@ -2,6 +2,7 @@ using Test
 using Random
 using LinearAlgebra
 using ReservoirComputing
+using LuxCore: setup
 using LinearSolve
 
 # Ridge readout training regression (#473).

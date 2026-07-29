@@ -5,6 +5,7 @@ begin
     using Random
     using Static
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates
 
     function has_anykey(nt::NamedTuple, names)
         return any(Base.Fix1(haskey, nt), names)

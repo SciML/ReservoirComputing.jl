@@ -4,6 +4,7 @@ begin
     using Random
     using LinearAlgebra
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates
     using Static
 
     const _I32 = (m, n) -> Matrix{Float32}(I, m, n)

@@ -3,6 +3,8 @@ begin
     using Random
     using ReservoirComputing
     using LuxCore
+    import LuxCore: initialparameters, initialstates, setup
+    using WeightInitializers: zeros32
     using Static
 
     @testset "NGRC" begin

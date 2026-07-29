@@ -1,21 +1,10 @@
 using SciMLTesting, ReservoirComputing, Test
 using JET
 
-# names re-exported wholesale from WeightInitializers/LuxCore via `@reexport`
-const _REEXPORTED_NAMES = (
-    :WeightInitializers, :apply, :glorot_normal, :glorot_uniform, :identity_init,
-    :initialparameters, :initialstates, :kaiming_normal, :kaiming_uniform,
-    :ones16, :ones32, :ones64, :onesC16, :onesC32, :onesC64, :orthogonal,
-    :rand16, :rand32, :rand64, :randC16, :randC32, :randC64,
-    :randn16, :randn32, :randn64, :randnC16, :randnC32, :randnC64,
-    :setup, :sparse_init, :truncated_normal, :zeros16, :zeros32, :zeros64,
-    :zerosC16, :zerosC32, :zerosC64,
-)
-
 run_qa(
     ReservoirComputing;
     explicit_imports = true,
-    reexports_allow = (_REEXPORTED_NAMES..., :QRFactorization),  # QRFactorization aliases LinearSolve's
+    reexports_allow = (:QRFactorization,),  # QRFactorization aliases LinearSolve's
     jet_kwargs = (;
         target_modules = (ReservoirComputing,),
         mode = :typo,
@@ -24,7 +13,6 @@ run_qa(
     api_docs_kwargs = (;
         rendered = true,
         rendered_ignore = (
-            _REEXPORTED_NAMES...,
             :StandardRidge,  # deprecated alias of RidgeRegression
         ),
     ),

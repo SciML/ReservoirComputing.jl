@@ -7,6 +7,7 @@ begin
     using SparseArrays
     using StaticArrays
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates, setup
 
     rng = MersenneTwister(101)
 
