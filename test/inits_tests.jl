@@ -35,7 +35,7 @@ begin
         selfloop_backward_cycle,
         selfloop_forwardconnection,
         simple_cycle,
-        toepliz_init,
+        toeplitz_init,
         true_doublecycle,
         permutation_init,
         diagonal_init,

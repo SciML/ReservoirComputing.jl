@@ -3,6 +3,8 @@
 
 Base.@deprecate_binding StandardRidge RidgeRegression
 
+@deprecate toepliz_init(args...; kwargs...) toeplitz_init(args...; kwargs...)
+
 @doc raw"""
     train!(rc, train_data, target_data, ps, st,
            train_method=RidgeRegression(0.0);

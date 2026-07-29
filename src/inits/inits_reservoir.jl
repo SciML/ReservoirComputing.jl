@@ -2973,7 +2973,7 @@ function band_init(
 end
 
 @doc raw"""
-    toepliz_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+    toeplitz_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
 
 Create and return a sparse reservoir matrix with a Toeplitz-like topology [Cossu2025](@cite).
 This function builds outward from the main diagonal, generating a single random uniform weight 
@@ -3005,32 +3005,32 @@ minimal-complexity Echo State Networks (ESNs).
 
 Default call (creating a dense matrix with shared weights along each diagonal):
 
-```jldoctest toepliz
-julia> W = toepliz_init(5, 5; sparsity=0.5)
+```jldoctest toeplitz
+julia> W = toeplitz_init(5, 5; sparsity=0.5)
 5×5 Matrix{Float32}:
-  0.512311  -0.812451   0.0        0.0        0.0
- -0.214159   0.512311  -0.812451   0.0        0.0
-  0.115412  -0.214159   0.512311  -0.812451   0.0
-  0.0        0.115412  -0.214159   0.512311  -0.812451
-  0.0        0.0        0.115412  -0.214159   0.512311
+  0.431022  -0.336238   0.0        0.0       0.0
+ -0.367764   0.431022  -0.336238   0.0       0.0
+  0.0       -0.367764   0.431022  -0.336238  0.0
+  0.0        0.0       -0.367764   0.431022  0.0
+  0.0        0.0        0.0       -0.367764  0.431022
 ```
 
-Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer -0.7612 and -0.8123 bands):
+Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer bands):
 
-```jldoctest toepliz
+```jldoctest toeplitz
 julia> using SparseArrays
 
-julia> W_sparse = toepliz_init(6, 6; sparsity=0.6, return_sparse=true)
+julia> W_sparse = toeplitz_init(6, 6; sparsity=0.6, return_sparse=true)
 6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
-  0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
- -0.7612    0.4512    ⋅         ⋅         ⋅         ⋅
-  ⋅        -0.7612    0.4512   -0.8123    ⋅         ⋅
-  ⋅         ⋅        -0.7612    0.4512   -0.8123    ⋅
-  ⋅         ⋅         ⋅        -0.7612    0.4512   -0.8123
-  ⋅         ⋅         ⋅         ⋅        -0.7612    0.4512
+  0.367709  -0.486726    ⋅          ⋅          ⋅         ⋅
+ -0.313743   0.367709  -0.486726    ⋅          ⋅         ⋅
+   ⋅        -0.313743   0.367709  -0.486726    ⋅         ⋅
+   ⋅          ⋅        -0.313743   0.367709    ⋅         ⋅
+   ⋅          ⋅          ⋅        -0.313743   0.367709   ⋅
+   ⋅          ⋅          ⋅          ⋅        -0.313743  0.367709
 ```
 """
-function toepliz_init(
+function toeplitz_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius = T(1.0), sparsity = 0.9, return_sparse = false
     ) where {T <: Number}
@@ -3105,7 +3105,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toepliz_init,
+        :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toeplitz_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
