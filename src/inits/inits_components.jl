@@ -230,29 +230,20 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 # Examples
 
 ```jldoctest
-julia> matrix = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
+julia> matrix = zeros(Float32, 5, 5);
 
-julia> delay_line!(matrix, 5.0, 2)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 5.0  0.0  0.0  0.0  0.0
- 0.0  5.0  0.0  0.0  0.0
- 0.0  0.0  5.0  0.0  0.0
+julia> delay_line!(matrix, 5.0, 2);
 
- julia> delay_line!(matrix, 5.0, 2; sampling_type=:bernoulli_sample!)
-5×5 Matrix{Float32}:
- 0.0   0.0  0.0  0.0  0.0
- 0.0   0.0  0.0  0.0  0.0
- 5.0   0.0  0.0  0.0  0.0
- 0.0  -5.0  0.0  0.0  0.0
- 0.0   0.0  5.0  0.0  0.0
+julia> matrix[3, 1] == matrix[4, 2] == matrix[5, 3] == 5.0f0
+true
+
+julia> sampled_matrix = zeros(Float32, 5, 5);
+
+julia> delay_line!(MersenneTwister(123), sampled_matrix, 5.0, 2;
+           sampling_type=:bernoulli_sample!);
+
+julia> all(abs.(sampled_matrix[3:5, 1:3][diagind(sampled_matrix[3:5, 1:3])]) .== 5.0f0)
+true
 ```
 """
 function delay_line!(
@@ -544,21 +535,12 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 # Examples
 
 ```jldoctest
-julia> matrix = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
+julia> matrix = zeros(Float32, 5, 5);
 
-julia> add_jumps!(matrix, 1.0, 2)
-5×5 Matrix{Float32}:
-  0.0  0.0   1.0   0.0   0.0
-  0.0  0.0   0.0   0.0   0.0
-  1.0  0.0   0.0   0.0   0.0
-  0.0  0.0   0.0   0.0   1.0
-  0.0  0.0   1.0   0.0   0.0
+julia> add_jumps!(matrix, 1.0, 2);
+
+julia> matrix[1, 3] == matrix[3, 1] == matrix[3, 5] == matrix[5, 3] == 1.0f0
+true
 ```
 """
 function add_jumps!(
@@ -685,13 +667,10 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> self_loop!(matrix, 1.0)
-5×5 Matrix{Float32}:
-  1.0  0.0   0.0   0.0   0.0
-  0.0  1.0   0.0   0.0   0.0
-  0.0  0.0   1.0   0.0   0.0
-  0.0  0.0   0.0   1.0   0.0
-  0.0  0.0   0.0   0.0   1.0
+julia> self_loop!(matrix, 1.0);
+
+julia> diag(matrix) == fill(1.0f0, 5)
+true
 ```
 """
 function self_loop!(
