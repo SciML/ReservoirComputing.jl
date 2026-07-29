@@ -205,6 +205,7 @@ that time step.
 
 """
 function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
+    _require_nonempty_data(data, "collectstates")
     newst = st
     collected = Any[]
     for inp in eachcol(data)
@@ -222,7 +223,6 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
         end
         push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
     end
-    @assert !isempty(collected)
     firstcol = collected[1]
     states = similar(firstcol, eltype(data), length(firstcol), length(collected))
     for idx in eachindex(collected)
@@ -302,7 +302,12 @@ end
 
 function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
     if init_delay isa Tuple
-        @assert length(init_delay) == num_delays
+        length(init_delay) == num_delays || throw(
+            DimensionMismatch(
+                "init_delay tuple must have length num_delays=$num_delays, " *
+                    "got $(length(init_delay))."
+            )
+        )
     else
         init_delay = ntuple(_ -> init_delay, num_delays)
     end
@@ -335,7 +340,11 @@ function init_delay_history(history::AbstractMatrix, rng::AbstractRNG, dl::Delay
 end
 
 function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
-    @assert size(inp, 1) == dl.in_dims
+    size(inp, 1) == dl.in_dims || throw(
+        DimensionMismatch(
+            "DelayLayer expected input with $(dl.in_dims) rows, got $(size(inp, 1))."
+        )
+    )
     history = init_delay_history(st.history, st.rng, dl, inp)
     inp_with_delay = vcat(inp, vec(history))
     clock = st.clock + 1

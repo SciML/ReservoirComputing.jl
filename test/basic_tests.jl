@@ -248,7 +248,7 @@ begin
             st = initialstates(rng, dl)
 
             badx = rand(rng, Float32, 2)
-            @test_throws AssertionError dl(badx, ps, st)
+            @test_throws DimensionMismatch dl(badx, ps, st)
         end
     end
 

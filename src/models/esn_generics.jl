@@ -20,7 +20,7 @@ end
     elseif len == 1
         return _fillvec(comp[1], n)
     else
-        error("Expected length $n or 1, got $len")
+        throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
@@ -31,7 +31,7 @@ end
     elseif len == 1
         return _fillvec(comp[1], n)
     else
-        error("Expected length $n or 1, got $len")
+        throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
