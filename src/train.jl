@@ -48,6 +48,30 @@ end
 
 _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
+"""
+    AbstractReservoirComputingSolver
+
+Developer marker for the package's legacy reservoir-training solver family.
+
+## Extension contract
+
+`QRSolver` is the only built-in subtype. The public [`train`](@ref) API also
+accepts `LinearSolve.jl` algorithms directly. There is currently no public
+generic extension point for arbitrary `AbstractReservoirComputingSolver`
+subtypes: a new subtype is rejected by ridge training unless ReservoirComputing
+adds a corresponding implementation itself.
+
+For a custom solver, implement the documented `LinearSolve.jl` algorithm
+interface and pass that algorithm to `train(...; solver=...)`. Do not extend
+private training helpers from another package.
+
+## Example
+
+```julia
+weights = train(RidgeRegression(1.0e-3), states, targets;
+    solver = QRFactorization())
+```
+"""
 abstract type AbstractReservoirComputingSolver end
 
 @doc raw"""
