@@ -30,3 +30,27 @@ function train!(
         kwargs...
     )
 end
+
+@doc raw"""
+    train(objective, states, target_data; solver=nothing, kwargs...)
+
+!!! warning "Deprecated"
+    The objective-level entry point is deprecated. Use the model-level
+    `train(rc, train_data, target_data, ps, st; objective=..., solver=...)`
+    API instead.
+"""
+function train(
+        objective, states::AbstractMatrix, target_data::AbstractMatrix;
+        solver = nothing, kwargs...
+    )
+    Base.depwarn(
+        "`train(objective, states, target_data; solver, kwargs...)` is deprecated. " *
+            "Use the model-level `train(rc, train_data, target_data, ps, st; " *
+            "objective=..., solver=...)` API instead.",
+        :train
+    )
+    if isnothing(solver)
+        return _fit_readout(objective, states, target_data; kwargs...)
+    end
+    return _fit_readout(objective, states, target_data; solver = solver, kwargs...)
+end

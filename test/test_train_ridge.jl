@@ -44,7 +44,7 @@ end
     @test RidgeRegression(Float32, 1.0e-2).reg isa Float32
 end
 
-@testset "train(RidgeRegression): shape contract" begin
+@testset "_fit_readout(RidgeRegression): shape contract" begin
     rng = MersenneTwister(42)
     n_features, n_samples, n_outputs = 6, 40, 3
     states, targets, _ = random_ridge_problem(
@@ -52,7 +52,7 @@ end
     )
     regularization = 1.0e-3
 
-    weights = train(
+    weights = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
     @test size(weights) == (n_outputs, n_features)
@@ -60,7 +60,7 @@ end
     @test all(isfinite, weights)
 end
 
-@testset "train(RidgeRegression): closed-form orthogonal features" begin
+@testset "_fit_readout(RidgeRegression): closed-form orthogonal features" begin
     # X = √(T) * I so XX' = T I, and with λ the Gram is (T+λ)I.
     n_features = 4
     n_samples = n_features
@@ -80,7 +80,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(
+            weights = ReservoirComputing._fit_readout(
                 RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
@@ -89,7 +89,7 @@ end
     end
 end
 
-@testset "train(RidgeRegression): well-conditioned agreement" begin
+@testset "_fit_readout(RidgeRegression): well-conditioned agreement" begin
     rng = MersenneTwister(7)
     n_features, n_samples, n_outputs = 5, 60, 2
     regularization = 1.0e-2
@@ -98,13 +98,13 @@ end
     )
     reference = reference_ridge(states, targets, regularization)
 
-    weights_qr = train(
+    weights_qr = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
-    weights_ls_qr = train(
+    weights_ls_qr = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
-    weights_ls_svd = train(
+    weights_ls_svd = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = SVDFactorization()
     )
 
@@ -115,7 +115,7 @@ end
     @test weights_ls_qr ≈ weights_ls_svd rtol = 1.0e-10
 end
 
-@testset "train(RidgeRegression): Float32 agreement" begin
+@testset "_fit_readout(RidgeRegression): Float32 agreement" begin
     rng = MersenneTwister(11)
     n_features, n_samples, n_outputs = 4, 50, 2
     regularization = 1.0f-3
@@ -124,10 +124,10 @@ end
     )
     reference = reference_ridge(states, targets, regularization)
 
-    weights_qr = train(
+    weights_qr = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
-    weights_ls = train(
+    weights_ls = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
 
@@ -139,7 +139,7 @@ end
     @test eltype(weights_ls) == Float32
 end
 
-@testset "train(RidgeRegression): T != n_features" begin
+@testset "_fit_readout(RidgeRegression): T != n_features" begin
     rng = MersenneTwister(3)
     n_features, n_samples, n_outputs = 8, 20, 3
     regularization = 1.0e-4
@@ -150,7 +150,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(
+            weights = ReservoirComputing._fit_readout(
                 RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
@@ -159,7 +159,7 @@ end
     end
 end
 
-@testset "train(RidgeRegression): zero regularization, overdetermined" begin
+@testset "_fit_readout(RidgeRegression): zero regularization, overdetermined" begin
     rng = MersenneTwister(19)
     n_features, n_samples, n_outputs = 4, 50, 2
     states, targets, _ = random_ridge_problem(
@@ -169,7 +169,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(RidgeRegression(0.0), states, targets; solver = solver)
+            weights = ReservoirComputing._fit_readout(RidgeRegression(0.0), states, targets; solver = solver)
             @test size(weights) == (n_outputs, n_features)
             @test all(isfinite, weights)
             @test weights ≈ reference rtol = 1.0e-9
@@ -177,32 +177,32 @@ end
     end
 end
 
-@testset "train(RidgeRegression): default solver is QRFactorization" begin
+@testset "_fit_readout(RidgeRegression): default solver is QRFactorization" begin
     rng = MersenneTwister(23)
     states, targets, _ = random_ridge_problem(rng, Float64, 5, 30, 2)
     regularization = 1.0e-3
 
-    weights_default = train(RidgeRegression(regularization), states, targets)
-    weights_explicit = train(
+    weights_default = ReservoirComputing._fit_readout(RidgeRegression(regularization), states, targets)
+    weights_explicit = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test weights_default == weights_explicit
 end
 
-@testset "train(RidgeRegression): multi-output consistency" begin
+@testset "_fit_readout(RidgeRegression): multi-output consistency" begin
     rng = MersenneTwister(29)
     n_features, n_samples = 6, 40
     regularization = 1.0e-2
     states = randn(rng, Float64, n_features, n_samples)
     targets = randn(rng, Float64, 4, n_samples)
 
-    weights_all = train(
+    weights_all = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test size(weights_all) == (4, n_features)
 
     for output_index in 1:4
-        weights_one = train(
+        weights_one = ReservoirComputing._fit_readout(
             RidgeRegression(regularization),
             states,
             targets[output_index:output_index, :];
@@ -212,23 +212,23 @@ end
     end
 end
 
-@testset "train(RidgeRegression): DimensionMismatch on sample count" begin
+@testset "_fit_readout(RidgeRegression): DimensionMismatch on sample count" begin
     states = randn(Float64, 5, 10)
     targets = randn(Float64, 2, 9)
-    @test_throws DimensionMismatch train(
+    @test_throws DimensionMismatch ReservoirComputing._fit_readout(
         RidgeRegression(1.0e-3), states, targets; solver = QRSolver()
     )
-    @test_throws DimensionMismatch train(
+    @test_throws DimensionMismatch ReservoirComputing._fit_readout(
         RidgeRegression(1.0e-3), states, targets; solver = QRFactorization()
     )
 end
 
-@testset "train(RidgeRegression): empty training data rejected" begin
+@testset "_fit_readout(RidgeRegression): empty training data rejected" begin
     states = Matrix{Float64}(undef, 4, 0)
     targets = Matrix{Float64}(undef, 2, 0)
     for solver in (QRSolver(), QRFactorization(), LUFactorization())
         err = try
-            train(RidgeRegression(1.0e-3), states, targets; solver = solver)
+            ReservoirComputing._fit_readout(RidgeRegression(1.0e-3), states, targets; solver = solver)
             nothing
         catch caught
             caught
@@ -238,40 +238,40 @@ end
     end
 end
 
-@testset "train(RidgeRegression): unsupported solver" begin
+@testset "_fit_readout(RidgeRegression): unsupported solver" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
-    @test_throws ArgumentError train(
+    @test_throws ArgumentError ReservoirComputing._fit_readout(
         RidgeRegression(1.0e-3), states, targets; solver = :not_a_solver
     )
 end
 
-@testset "train(RidgeRegression): square-only LinearSolve algorithm errors clearly" begin
+@testset "_fit_readout(RidgeRegression): square-only LinearSolve algorithm errors clearly" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
-    @test_throws ArgumentError train(
+    @test_throws ArgumentError ReservoirComputing._fit_readout(
         RidgeRegression(1.0e-3), states, targets; solver = LUFactorization()
     )
     try
-        train(RidgeRegression(1.0e-3), states, targets; solver = LUFactorization())
+        ReservoirComputing._fit_readout(RidgeRegression(1.0e-3), states, targets; solver = LUFactorization())
     catch err
         @test occursin("QRFactorization", err.msg)
         @test occursin("square", err.msg)
     end
 end
 
-@testset "train(RidgeRegression): negative regularization rejected" begin
+@testset "_fit_readout(RidgeRegression): negative regularization rejected" begin
     states = randn(Float64, 4, 20)
     targets = randn(Float64, 2, 20)
-    @test_throws ArgumentError train(
+    @test_throws ArgumentError ReservoirComputing._fit_readout(
         RidgeRegression(-1.0e-3), states, targets; solver = QRSolver()
     )
-    @test_throws ArgumentError train(
+    @test_throws ArgumentError ReservoirComputing._fit_readout(
         RidgeRegression(-1.0e-3), states, targets; solver = QRFactorization()
     )
 end
 
-@testset "train(RidgeRegression): LinearSolve multi-RHS matches reference" begin
+@testset "_fit_readout(RidgeRegression): LinearSolve multi-RHS matches reference" begin
     rng = MersenneTwister(41)
     n_features, n_samples, n_outputs = 7, 45, 5
     regularization = 5.0e-3
@@ -282,7 +282,7 @@ end
 
     for solver in (QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(
+            weights = ReservoirComputing._fit_readout(
                 RidgeRegression(regularization), states, targets; solver = solver
             )
             @test size(weights) == (n_outputs, n_features)
@@ -291,7 +291,7 @@ end
     end
 end
 
-@testset "train(RidgeRegression): LinearSolve uses same augmented system as QRSolver" begin
+@testset "_fit_readout(RidgeRegression): LinearSolve uses same augmented system as QRSolver" begin
     rng = MersenneTwister(43)
     n_features, n_samples, n_outputs = 6, 25, 3
     regularization = 1.0e-8
@@ -299,10 +299,10 @@ end
         rng, Float64, n_features, n_samples, n_outputs
     )
 
-    weights_legacy = train(
+    weights_legacy = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRSolver()
     )
-    weights_ls = train(
+    weights_ls = ReservoirComputing._fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
     @test weights_ls ≈ weights_legacy rtol = 1.0e-10
@@ -381,7 +381,7 @@ end
     @test ps_qr.readout.weight ≈ ps_ls.readout.weight rtol = 1.0e-3
 end
 
-@testset "train(RidgeRegression): ill-conditioned λ=0 is finite (no tight agreement)" begin
+@testset "_fit_readout(RidgeRegression): ill-conditioned λ=0 is finite (no tight agreement)" begin
     # Characterization only: n == T and λ == 0 is poorly conditioned.
     # Solvers need not agree; they must return finite weights of the right shape.
     rng = MersenneTwister(1)
@@ -393,7 +393,7 @@ end
 
     for solver in (QRSolver(), QRFactorization(), SVDFactorization())
         @testset "$(typeof(solver))" begin
-            weights = train(RidgeRegression(0.0), states, targets; solver = solver)
+            weights = ReservoirComputing._fit_readout(RidgeRegression(0.0), states, targets; solver = solver)
             @test size(weights) == (n_outputs, n_features)
             @test all(isfinite, weights)
         end
