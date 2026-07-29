@@ -62,6 +62,13 @@ function initialstates(rng::AbstractRNG, rc::AbstractReservoirComputer)
     return (reservoir = st_res, states_modifiers = st_mods, readout = st_ro)
 end
 
+function _require_nonempty_data(data::AbstractMatrix, context::AbstractString)
+    size(data, 2) ≥ 1 || throw(
+        ArgumentError("$context data must have at least one column, got $(size(data, 2)).")
+    )
+    return nothing
+end
+
 @inline function _apply_seq(layers::Tuple, inp, ps::Tuple, st::Tuple)
     new_st_parts = Vector{Any}(undef, length(layers))
     for idx in eachindex(layers)
@@ -106,10 +113,10 @@ end
 function _collectstates(
         _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
     )
+    _require_nonempty_data(data, "collectstates")
     newst = st
     nsteps = size(data, 2)
     cols = eachcol(data)
-    @assert !isempty(cols)
     x1 = first(cols)
     current_state, partial_st = _partial_apply(rc, x1, ps, newst)
     state_dims = size(current_state, 1)

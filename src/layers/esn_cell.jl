@@ -88,7 +88,12 @@ function ESNCell(
     )
 
     if isa(leak_coefficient, AbstractVector)
-        @assert length(leak_coefficient) == out_dims "leak_coefficient must match reservoir size"
+        length(leak_coefficient) == out_dims || throw(
+            DimensionMismatch(
+                "leak_coefficient must have length out_dims=$out_dims, " *
+                    "got $(length(leak_coefficient))."
+            )
+        )
     end
 
     return ESNCell(

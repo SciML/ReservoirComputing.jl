@@ -8,7 +8,7 @@ function apply_scale!(
         scaling::Tuple{<:Number, <:Number}, ::Type{T}
     ) where {T}
     lower, upper = T(scaling[1]), T(scaling[2])
-    @assert lower < upper "lower < upper required"
+    lower < upper || throw(ArgumentError("scaling tuple must satisfy lower < upper, got $scaling"))
     scale = upper - lower
     @. input_matrix = input_matrix * scale + lower
     return input_matrix
@@ -19,7 +19,9 @@ function apply_scale!(
         scaling::AbstractVector, ::Type{T}
     ) where {T <: Number}
     ncols = size(input_matrix, 2)
-    @assert length(scaling) == ncols "need one scaling per column"
+    length(scaling) == ncols || throw(
+        DimensionMismatch("need one scaling value per column, got $(length(scaling)) for $ncols columns")
+    )
     for (idx, col) in enumerate(eachcol(input_matrix))
         apply_scale!(col, scaling[idx], T)
     end
@@ -58,11 +60,10 @@ end
 
 function check_res_size(dims::Integer...)
     return if length(dims) != 2 || dims[1] != dims[2]
-        error(
-            """\n
-                Internal reservoir matrix must be square (e.g., (100, 100)).
-                Got dims = $(dims)\n
-            """
+        throw(
+            DimensionMismatch(
+                "Internal reservoir matrix must be square (e.g., (100, 100)). Got dims = $(dims)"
+            )
         )
     end
 end

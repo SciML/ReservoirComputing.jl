@@ -334,7 +334,7 @@ function pseudo_svd(
         return_sparse::Bool = false,
         return_diag::Bool = false
     ) where {T <: Number}
-    @assert !isempty(dims) "expected at least one dimension"
+    isempty(dims) && throw(ArgumentError("expected at least one dimension, got none"))
     res_dim = Int(dims[1])
 
     reservoir_matrix = create_diag(
@@ -584,10 +584,10 @@ function low_connectivity(
     check_res_size(dims...)
     res_size = dims[1]
     if in_degree > res_size
-        error(
-            """
-                In-degree k (got k=$(in_degree)) cannot exceed number of nodes N=$(res_size)
-            """
+        throw(
+            ArgumentError(
+                "in_degree k (got k=$(in_degree)) cannot exceed number of nodes N=$(res_size)"
+            )
         )
     end
     if in_degree == 1
@@ -2363,9 +2363,12 @@ function block_diagonal(
     end
     weights = isa(block_weight, AbstractVector) ? T.(block_weight) :
         fill(T(block_weight), num_blocks)
-    @assert length(weights) == num_blocks "
-      weight vector must have length = number of blocks
-  "
+    length(weights) == num_blocks || throw(
+        DimensionMismatch(
+            "weight vector must have length = number of blocks ($num_blocks), " *
+                "got $(length(weights))."
+        )
+    )
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, n_rows, n_cols)
     for block in 1:num_blocks
         row_start = (block - 1) * block_size + 1
