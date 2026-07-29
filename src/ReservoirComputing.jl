@@ -43,11 +43,11 @@ include("layers/lif_wrapper.jl")
 include("states.jl")
 include("predict.jl")
 include("train.jl")
-include("deprecated.jl")
 #initializers
 include("inits/inits_components.jl")
 include("inits/inits_input.jl")
 include("inits/inits_reservoir.jl")
+include("deprecated.jl")
 #full models
 include("models/esn_generics.jl")
 include("models/esn.jl")

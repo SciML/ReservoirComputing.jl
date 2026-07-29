@@ -2,23 +2,7 @@
 # https://invenia.github.io/blog/2022/06/17/deprecating-in-julia/
 
 Base.@deprecate_binding StandardRidge RidgeRegression
-
-export toepliz_init
-
-@doc raw"""
-    toepliz_init([rng], [T], dims...; kwargs...)
-
-!!! warning "Deprecated"
-    `toepliz_init` was a misspelling of `toeplitz_init`. Use
-    [`toeplitz_init`](@ref) instead.
-"""
-function toepliz_init(args...; kwargs...)
-    Base.depwarn(
-        "`toepliz_init` is deprecated; use `toeplitz_init` instead.",
-        :toepliz_init
-    )
-    return toeplitz_init(args...; kwargs...)
-end
+Base.@deprecate_binding toepliz_init toeplitz_init
 
 @doc raw"""
     train!(rc, train_data, target_data, ps, st,

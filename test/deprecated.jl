@@ -46,10 +46,8 @@ end
 end
 
 @testset "toepliz_init is deprecated alias of toeplitz_init" begin
-    rng = MersenneTwister(7)
-    expected = toeplitz_init(MersenneTwister(7), 5, 5)
-    result = @test_deprecated toepliz_init(rng, 5, 5)
-    @test result == expected
+    @test toepliz_init === toeplitz_init
+    @test toepliz_init(MersenneTwister(7), 5, 5) == toeplitz_init(MersenneTwister(7), 5, 5)
 end
 
 @testset "train! still accepts solver kwarg" begin
