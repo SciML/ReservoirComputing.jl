@@ -165,8 +165,8 @@ function _train_ridge(
                 "augmented system is always rectangular (more rows than features). " *
                 "Use QRFactorization(), SVDFactorization(), or NormalCholeskyFactorization() " *
                 "instead."
-            )
         )
+    )
     solution = solve(LinearProblem(design, rhs), solver; kwargs...)
     return Matrix(solution.u')
 end
