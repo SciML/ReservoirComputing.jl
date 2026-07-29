@@ -26,6 +26,7 @@ run_qa(
         rendered_ignore = (
             _REEXPORTED_NAMES...,
             :StandardRidge,  # deprecated alias of RidgeRegression
+            :toepliz_init,  # deprecated alias of toeplitz_init
         ),
     ),
     ei_kwargs = (;
