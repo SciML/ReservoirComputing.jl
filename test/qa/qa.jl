@@ -51,6 +51,7 @@ run_qa(
                 :setup,              # LuxCore (non-public)
                 :statelength,        # LuxCore (non-public)
                 :SciMLLinearSolveAlgorithm,  # LinearSolve (non-public abstract type)
+                :needs_square_A,     # LinearSolve (non-public)
             ),
         ),
     )
