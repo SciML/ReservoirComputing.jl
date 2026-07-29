@@ -23,6 +23,7 @@ that needs to be called as well to define the `RECA` struct:
 
 ```@example reca
 using ReservoirComputing, CellularAutomata, Random
+using LuxCore: setup
 Random.seed!(42)
 rng = MersenneTwister(17)
 

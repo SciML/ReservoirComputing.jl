@@ -1,4 +1,11 @@
-using Documenter, DocumenterCitations, DocumenterInterLinks, ReservoirComputing
+using Documenter, DocumenterCitations, DocumenterInterLinks, ReservoirComputing, SparseArrays, Test
+
+DocMeta.setdocmeta!(
+    ReservoirComputing,
+    :DocTestSetup,
+    :(using ReservoirComputing, Random, SparseArrays, LinearAlgebra, Test);
+    recursive = true,
+)
 
 cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml"; force = true)
 cp("./docs/Project.toml", "./docs/src/assets/Project.toml"; force = true)
@@ -20,7 +27,7 @@ links = InterLinks(
 makedocs(;
     modules = [ReservoirComputing],
     sitename = "ReservoirComputing.jl",
-    clean = true, doctest = false, linkcheck = false,
+    clean = true, doctest = true, linkcheck = false,
     plugins = [links, bib],
     format = Documenter.HTML(;
         mathengine,
