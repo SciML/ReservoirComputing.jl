@@ -32,6 +32,19 @@ end
     @test ps_pos.readout.weight ≈ ps_kw.readout.weight
 end
 
+@testset "train(objective, states, target_data) is deprecated and matches fitting" begin
+    rng = MersenneTwister(53)
+    states = randn(rng, Float64, 5, 30)
+    targets = randn(rng, Float64, 2, 30)
+    ridge = RidgeRegression(1.0e-3)
+
+    weights_new = ReservoirComputing._fit_readout(
+        ridge, states, targets; solver = QRFactorization()
+    )
+    result = @test_deprecated train(ridge, states, targets; solver = QRFactorization())
+    @test result ≈ weights_new
+end
+
 @testset "train! still accepts solver kwarg" begin
     rng = MersenneTwister(37)
     in_dims, res_dims, out_dims = 3, 10, 2

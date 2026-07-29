@@ -176,3 +176,31 @@ end
     )
     @test haskey(ps_trained.readout, :models)
 end
+
+@testset "objective-level MLJ train remains available during deprecation" begin
+    states = Float64[
+        1 2 3 4 5
+        2 1 0 -1 -2
+        1 1 1 1 1
+    ]
+    targets = Float64[
+        2 4 6 8 10
+        1 0 -1 -2 -3
+    ]
+    regressor = MLJLinearModels.LinearRegression(fit_intercept = false)
+
+    expected = ReservoirComputing._fit_readout(regressor, states, targets)
+    result = @test_deprecated train(regressor, states, targets)
+    @test result ≈ expected
+end
+
+@testset "objective-level LIBSVM train remains available during deprecation" begin
+    rng = MersenneTwister(41)
+    states = randn(rng, Float64, 2, 30)
+    targets = reshape(2 .* states[1, :] .- states[2, :], 1, :)
+
+    fitted_model = @test_deprecated train(NuSVR(), states, targets; solver = nothing)
+    prediction = LIBSVM.predict(fitted_model, permutedims(states))
+    @test length(prediction) == size(states, 2)
+    @test all(isfinite, prediction)
+end

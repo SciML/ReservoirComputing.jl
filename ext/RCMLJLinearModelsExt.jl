@@ -2,7 +2,7 @@ module RCMLJLinearModelsExt
 using ReservoirComputing
 using MLJLinearModels
 
-function ReservoirComputing.train(
+function ReservoirComputing._fit_readout(
         regressor::MLJLinearModels.GeneralizedLinearRegression,
         states::AbstractMatrix{<:Real}, target::AbstractMatrix{<:Real};
         kwargs...

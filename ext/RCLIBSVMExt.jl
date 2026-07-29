@@ -3,9 +3,9 @@ module RCLIBSVMExt
 using LIBSVM
 using ReservoirComputing:
     SVMReadout, ReservoirChain, AbstractReservoirComputer
-import ReservoirComputing: train, addreadout!
+import ReservoirComputing: _fit_readout, addreadout!
 
-function train(
+function _fit_readout(
         svr::LIBSVM.AbstractSVR,
         states::AbstractMatrix, target::AbstractMatrix;
         solver = nothing,

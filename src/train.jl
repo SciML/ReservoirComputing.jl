@@ -73,39 +73,7 @@ _default_ridge_solver() = QRFactorization()
 _resolve_ridge_solver(::Nothing) = _default_ridge_solver()
 _resolve_ridge_solver(solver) = solver
 
-function _fit_readout(objective, states, targets, ::Nothing; kwargs...)
-    return train(objective, states, targets; kwargs...)
-end
-
-function _fit_readout(objective, states, targets, solver; kwargs...)
-    return train(objective, states, targets; solver = solver, kwargs...)
-end
-
-@doc raw"""
-    train(objective, states, target_data; solver=nothing, kwargs...)
-
-Fit a readout from precomputed features and targets.
-
-## Arguments
-
-  - `objective`: what to fit, e.g. [`RidgeRegression`](@ref), or an MLJ / LIBSVM
-    regressor when those packages are loaded.
-  - `states`: feature matrix from [`collectstates`](@ref), size
-    `(n_features, T)`.
-  - `target_data`: targets aligned with `states`, size `(n_outputs, T)`.
-
-## Keyword arguments
-
-  - `solver`: how to solve the fit when the objective needs one. For ridge,
-    default `nothing` uses [`QRFactorization`](@ref); also
-    [`QRSolver`](@ref) or other LinearSolve algorithms.
-  - `kwargs...`: passed to the objective's backend when applicable.
-
-## Returns
-
-Readout weights (ridge) or the backend fit object (e.g. SVM models).
-"""
-function train(
+function _fit_readout(
         objective::RidgeRegression, states::AbstractMatrix, target_data::AbstractMatrix;
         solver = nothing, kwargs...
     )
@@ -226,9 +194,11 @@ function train(
     states_wo,
         targets_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)
-    output_matrix = _fit_readout(
-        objective, states_wo, targets_wo, solver; kwargs...
-    )
+    output_matrix = if isnothing(solver)
+        _fit_readout(objective, states_wo, targets_wo; kwargs...)
+    else
+        _fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
+    end
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
