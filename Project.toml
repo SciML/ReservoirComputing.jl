@@ -33,7 +33,7 @@ RCSparseArraysExt = "SparseArrays"
 
 [compat]
 ArrayInterface = "7.19.0"
-CellularAutomata = "0.0.6"
+CellularAutomata = "0.0.6, 0.1"
 ConcreteStructs = "0.2.3"
 DataInterpolations = "6, 7, 8, 9.0"
 DifferentialEquations = "7.16.1, 8"
