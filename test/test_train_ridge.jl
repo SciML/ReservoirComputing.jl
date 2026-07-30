@@ -3,7 +3,7 @@ using Random
 using LinearAlgebra
 using ReservoirComputing
 using LuxCore: setup
-using LinearSolve
+using LinearSolve: LUFactorization, SVDFactorization
 
 # Ridge readout training regression (#473).
 
@@ -245,6 +245,16 @@ end
     @test_throws ArgumentError ReservoirComputing._fit_readout(
         RidgeRegression(1.0e-3), states, targets; solver = :not_a_solver
     )
+end
+
+@testset "_fit_readout(RidgeRegression): integer states promote for regularization" begin
+    states = [1 2 3 4; 2 1 0 1]
+    targets = [1.0 2.0 3.0 4.0]
+    weights = ReservoirComputing._fit_readout(
+        RidgeRegression(1.0e-3), states, targets; solver = QRFactorization()
+    )
+    @test eltype(weights) <: AbstractFloat
+    @test size(weights) == (1, 2)
 end
 
 @testset "_fit_readout(RidgeRegression): square-only LinearSolve algorithm errors clearly" begin

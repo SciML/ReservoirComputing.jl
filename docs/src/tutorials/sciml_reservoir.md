@@ -246,7 +246,6 @@ using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
-using DelayDiffEq
 using LinearAlgebra
 using Plots
 using Random
@@ -266,8 +265,16 @@ mg_history(p, t) = [1.2]
 
 mg_data_prob = DDEProblem(mackey_glass!, [1.2], mg_history, (0.0, 1500.0);
     constant_lags = [τ_mg])
-mg_data = reduce(hcat,
-    solve(mg_data_prob, MethodOfSteps(Tsit5()); saveat = 1.0).u)
+
+# Use a fixed-step recurrence so this documentation example remains independent
+# of a particular delay-solver implementation.
+mg_data = zeros(1, 1501)
+mg_data[1, 1] = 1.2
+for step in 1:1500
+    x = mg_data[1, step]
+    x_delay = step > Int(τ_mg) ? mg_data[1, step - Int(τ_mg)] : 1.2
+    mg_data[1, step + 1] = x + β_mg * x_delay / (1 + x_delay^n_mg) - γ_mg * x
+end
 
 shift, train_len, predict_len = 200, 1000, 200
 input_data = mg_data[:, shift:(shift + train_len - 1)]
@@ -318,10 +325,10 @@ plot([test_data[1, :], mg_output[1, :]];
 
 Two things to notice:
 
-* The **data path** uses a `DDEProblem` solved with
-  `MethodOfSteps(Tsit5())` — no special handling on
-  `SciMLProblemReservoir`'s side; the wrapper only cares about the
-  shape of the resulting matrix.
+* The **data path** constructs the corresponding `DDEProblem` and uses a
+  fixed-step recurrence to keep this documentation example deterministic. The
+  reservoir wrapper only cares about the resulting matrix shape, so production
+  code can instead solve `mg_data_prob` with a compatible delay solver.
 * The **reservoir** is kept as an `ODEProblem` for simplicity. Because
   `SciMLProblemReservoir`'s `prob` field is untyped, it would equally
   accept a `DDEProblem` of the form

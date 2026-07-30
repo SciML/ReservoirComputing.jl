@@ -2,7 +2,7 @@ using Test
 using Random
 using ReservoirComputing
 using LuxCore: setup
-using LinearSolve
+using LinearSolve: SVDFactorization
 
 # Delete with src/deprecated.jl at v1.0.
 
@@ -40,9 +40,11 @@ end
     ridge = RidgeRegression(1.0e-3)
 
     weights_new = ReservoirComputing._fit_readout(
-        ridge, states, targets; solver = QRFactorization()
+        ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
-    result = @test_deprecated train(ridge, states, targets; solver = QRFactorization())
+    result = @test_deprecated train(
+        ridge, states, targets; solver = ReservoirComputing.QRFactorization()
+    )
     @test result ≈ weights_new
 end
 

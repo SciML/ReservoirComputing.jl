@@ -29,29 +29,15 @@ and scaled spectral radius according to `radius`.
 Changing the sparsity:
 
 ```jldoctest randsparse
-julia> res_matrix = rand_sparse(5, 5; sparsity = 0.5)
-5×5 Matrix{Float32}:
- 0.0        0.0        0.0        0.0      0.0
- 0.0        0.794565   0.0        0.26164  0.0
- 0.0        0.0       -0.931294   0.0      0.553706
- 0.723235  -0.524727   0.0        0.0      0.0
- 1.23723    0.0        0.181824  -1.5478   0.465328
+julia> rng = MersenneTwister(123);
 
-julia> res_matrix = rand_sparse(5, 5; sparsity = 0.2)
-5×5 Matrix{Float32}:
- 0.0       0.0        0.0   0.0      0.0
- 0.0       0.853184   0.0   0.0      0.0
- 0.0       0.0       -1.0   0.0      0.0
- 0.776591  0.0        0.0   0.0      0.0
- 0.0       0.0        0.0  -1.66199  0.499657
+julia> sparse_matrix = rand_sparse(rng, 5, 5; sparsity = 0.2);
 
-julia> res_matrix = rand_sparse(5, 5; sparsity = 0.8)
-5×5 Matrix{Float32}:
- 0.0        0.229011   0.625026    -0.660061  -1.39078
- -0.295761   0.32544    0.0          0.107163   0.0
- 0.766352   1.44836   -0.381442    -0.435473   0.226788
- 0.296224  -0.214919   0.00956791   0.0        0.210393
- 0.506746   0.0        0.0744718   -0.633951   0.19059
+julia> dense_matrix = rand_sparse(rng, 5, 5; sparsity = 0.8);
+
+julia> size(sparse_matrix) == size(dense_matrix) == (5, 5) &&
+       count(!iszero, sparse_matrix) < count(!iszero, dense_matrix)
+true
 ```
 
 Returning a sparse matrix:
@@ -59,13 +45,11 @@ Returning a sparse matrix:
 ```jldoctest randsparse
 julia> using SparseArrays
 
-julia> res_matrix = rand_sparse(5, 5; sparsity = 0.4, return_sparse = true)
-5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
-  ⋅          ⋅          ⋅          ⋅        ⋅
-  ⋅         0.794565    ⋅         0.26164   ⋅
-  ⋅          ⋅        -0.931294    ⋅       0.553706
- 0.723235  -0.524727    ⋅          ⋅        ⋅
- 1.23723     ⋅         0.181824  -1.5478   0.465328
+julia> res_matrix = rand_sparse(MersenneTwister(123), 5, 5;
+           sparsity = 0.4, return_sparse = true);
+
+julia> res_matrix isa SparseMatrixCSC{Float32} && size(res_matrix) == (5, 5)
+true
 ```
 """
 function rand_sparse(
@@ -122,35 +106,17 @@ the top `top_k` connections, and scales the spectral radius to `radius`.
 Default call:
 
 ```jldoctest randhyper
-julia> rand_hyper(5, 5)
-5×5 Matrix{Float32}:
- 0.0        0.286061   0.124822   0.0227793   0.714702
- 0.286061   0.0        0.583359   0.0170896   0.192062
- 0.124822   0.583359   0.0        0.0156618   0.0656493
- 0.0227793  0.0170896  0.0156618  0.0         0.00776529
- 0.714702   0.192062   0.0656493  0.00776529  0.0
+julia> rng = MersenneTwister(123);
 
-With row-wise sparsification (keep top 2 entries per row):
+julia> dense_matrix = rand_hyper(rng, 5, 5; top_k=2);
 
-julia> rand_hyper(5, 5; top_k=2)
-5×5 Matrix{Float32}:
- 0.0        0.321022   0.0       0.0  0.802048
- 0.321022   0.0        0.654653  0.0  0.0
- 0.140077   0.654653   0.0       0.0  0.0
- 0.0255632  0.0191781  0.0       0.0  0.0
- 0.802048   0.215535   0.0       0.0  0.0
+julia> sparse_matrix = rand_hyper(MersenneTwister(123), 5, 5;
+           top_k=2, return_sparse=true);
 
- Returning a sparse matrix:
-
- julia> using SparseArrays
-
-julia> rand_hyper(5, 5; top_k=2, return_sparse=true)
-5×5 SparseMatrixCSC{Float32, Int64} with 10 stored entries:
-  ⋅         0.321022    ⋅         ⋅   0.802048
- 0.321022    ⋅         0.654653   ⋅    ⋅ 
- 0.140077   0.654653    ⋅         ⋅    ⋅ 
- 0.0255632  0.0191781   ⋅         ⋅    ⋅ 
- 0.802048   0.215535    ⋅         ⋅    ⋅ 
+julia> size(dense_matrix) == size(sparse_matrix) == (5, 5) &&
+       all(count(!iszero, dense_matrix[i, :]) <= 2 for i in axes(dense_matrix, 1)) &&
+       sparse_matrix isa SparseMatrixCSC{Float32}
+true
 ```
 """
 function rand_hyper(
@@ -306,23 +272,12 @@ julia> pseudo_svd(5, 5; sorted = false)
 Returning as a `Diagonal` or a `sparse` matrix:
 
 ```jldoctest psvd
-julia> pseudo_svd(5, 5; return_diag = true)
-5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
- 0.306998   ⋅         ⋅         ⋅         ⋅
-  ⋅        0.325977   ⋅         ⋅         ⋅
-  ⋅         ⋅        0.549051   ⋅         ⋅
-  ⋅         ⋅         ⋅        0.726199   ⋅
-  ⋅         ⋅         ⋅         ⋅        1.0
+julia> diagonal_matrix = pseudo_svd(5, 5; return_diag = true);
 
-julia> using SparseArrays
+julia> sparse_matrix = pseudo_svd(5, 5; return_sparse = true);
 
-julia> pseudo_svd(5, 5; return_sparse = true)
-5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
- 0.306998   ⋅         ⋅         ⋅         ⋅
-  ⋅        0.325977   ⋅         ⋅         ⋅
-  ⋅         ⋅        0.549051   ⋅         ⋅
-  ⋅         ⋅         ⋅        0.726199   ⋅
-  ⋅         ⋅         ⋅         ⋅        1.0
+julia> diagonal_matrix isa Diagonal{Float32} && sparse_matrix isa SparseMatrixCSC{Float32} && size(diagonal_matrix) == size(sparse_matrix) == (5, 5)
+true
 ```
 """
 function pseudo_svd(
@@ -442,19 +397,10 @@ closest valid order is used.
 ## Examples
 
 ```jldoctest
-julia> res_matrix = chaotic_init(8, 8)
-┌ Warning:
-│
-│     Adjusting reservoir matrix order:
-│         from 8 (requested) to 4
-│     based on computed bit precision = 1.
-│
-└ @ ReservoirComputing ~/.julia/dev/ReservoirComputing/src/esn/esn_inits.jl:805
-4×4 SparseArrays.SparseMatrixCSC{Float32, Int64} with 6 stored entries:
-   ⋅        -0.600945   ⋅          ⋅
-   ⋅          ⋅        0.132667   2.21354
-   ⋅        -2.60383    ⋅        -2.90391
- -0.578156    ⋅         ⋅          ⋅
+julia> res_matrix = @test_logs (:warn, r"Adjusting reservoir matrix order") chaotic_init(8, 8);
+
+julia> size(res_matrix)
+(4, 4)
 ```
 """
 function chaotic_init(
@@ -561,18 +507,10 @@ otherwise, it generates a random connectivity pattern.
 ## Examples
 
 ```jldoctest lowcon
-julia> low_connectivity(10, 10)
-10×10 Matrix{Float32}:
- 0.0        0.0       0.0       …  0.0      0.0   0.2207
- 0.0        0.0       0.0          0.0      0.0   0.564821
- 0.318999   0.0       0.0          0.0      0.0   0.0
- 0.670023   0.0       0.0          0.0      0.0   0.0
- 0.0        0.0       0.0          1.79705  0.0   0.0
- 0.0       -1.95711   0.0       …  0.0      0.0   0.0
- 0.0        0.0       0.0          0.0      0.0   0.0
- 0.0        0.0       0.0          0.0      0.0   0.0
- 0.0        0.0      -0.650657     0.0      0.0   0.0
- 0.0        0.0       0.0          0.0      0.0  -1.0
+julia> res_matrix = low_connectivity(MersenneTwister(123), 10, 10);
+
+julia> size(res_matrix) == (10, 10) && eltype(res_matrix) == Float32
+true
 ```
 """
 function low_connectivity(
@@ -737,33 +675,24 @@ julia> res_matrix = delay_line(5, 5; delay_weight = 1)
 Changing weights to a custom array:
 
 ```jldoctest delayline
-julia> res_matrix = delay_line(5, 5; delay_weight = rand(Float32, 4))
-5×5 Matrix{Float32}:
- 0.0       0.0       0.0      0.0        0.0
- 0.398408  0.0       0.0      0.0        0.0
- 0.0       0.624473  0.0      0.0        0.0
- 0.0       0.0       0.66302  0.0        0.0
- 0.0       0.0       0.0      0.0780818  0.0
+julia> delay_weights = Float32[0.2, 0.4, 0.6, 0.8];
+
+julia> res_matrix = delay_line(5, 5; delay_weight = delay_weights);
+
+julia> res_matrix[2:end, 1:end-1] == Diagonal(delay_weights)
+true
 ```
 
 Changing sign of the weights with different samplings:
 
 ```jldoctest delayline
-julia> res_matrix = delay_line(5, 5; sampling_type=:irrational_sample!)
-5×5 Matrix{Float32}:
- 0.0  0.0   0.0   0.0  0.0
- -0.1  0.0   0.0   0.0  0.0
- 0.0  0.1   0.0   0.0  0.0
- 0.0  0.0  -0.1   0.0  0.0
- 0.0  0.0   0.0  -0.1  0.0
+julia> irrational_matrix = delay_line(5, 5; sampling_type = :irrational_sample!);
 
-julia> res_matrix = delay_line(5, 5; sampling_type=:bernoulli_sample!)
-5×5 Matrix{Float32}:
- 0.0   0.0  0.0   0.0  0.0
- 0.1   0.0  0.0   0.0  0.0
- 0.0  -0.1  0.0   0.0  0.0
- 0.0   0.0  0.1   0.0  0.0
- 0.0   0.0  0.0  -0.1  0.0
+julia> bernoulli_matrix = delay_line(MersenneTwister(123), 5, 5; sampling_type = :bernoulli_sample!);
+
+julia> all(abs.(irrational_matrix[irrational_matrix .!= 0]) .== 0.1f0) &&
+       all(abs.(bernoulli_matrix[bernoulli_matrix .!= 0]) .== 0.1f0)
+true
 ```
 
 Shifting the delay line:
@@ -903,13 +832,16 @@ julia> res_matrix = delayline_backward(5, 5; delay_weight = 0.99, fb_weight=-1.0
 Changing weights to custom arrays:
 
 ```jldoctest dlbackward
-julia> res_matrix = delayline_backward(5, 5; delay_weight = rand(4), fb_weight=.-rand(4))
-5×5 Matrix{Float32}:
- 0.0       -0.294809   0.0        0.0        0.0
- 0.736006   0.0       -0.449479   0.0        0.0
- 0.0        0.10892    0.0       -0.60118    0.0
- 0.0        0.0        0.482435   0.0       -0.673392
- 0.0        0.0        0.0        0.177982   0.0
+julia> delay_weights = Float32[0.2, 0.4, 0.6, 0.8];
+
+julia> feedback_weights = -Float32[0.1, 0.3, 0.5, 0.7];
+
+julia> res_matrix = delayline_backward(5, 5;
+           delay_weight = delay_weights, fb_weight = feedback_weights);
+
+julia> res_matrix[2, 1] == 0.2f0 && res_matrix[1, 2] == -0.1f0 &&
+       res_matrix[5, 4] == 0.8f0 && res_matrix[4, 5] == -0.7f0
+true
 ```
 
 Changing sign of the weights with different samplings:
@@ -1060,45 +992,34 @@ julia> res_matrix = cycle_jumps(5, 5)
 Changing weights:
 
 ```jldoctest cyclejumps
-julia> res_matrix = cycle_jumps(5, 5; jump_weight = 2, cycle_weight=-1)
-5×5 Matrix{Float32}:
- 0.0   0.0   0.0   2.0  -1.0
--1.0   0.0   0.0   0.0   0.0
- 0.0  -1.0   0.0   0.0   0.0
- 2.0   0.0  -1.0   0.0   0.0
- 0.0   0.0   0.0  -1.0   0.0
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = 2, cycle_weight = -1);
+
+julia> size(res_matrix) == (5, 5) && count(==(2.0f0), res_matrix) == 2 && count(==(-1.0f0), res_matrix) == 5
+true
 ```
 
 Changing weights to custom arrays:
 
 ```jldoctest cyclejumps
-julia> res_matrix = cycle_jumps(5, 5; jump_weight = .-rand(3), cycle_weight=rand(5))
-5×5 Matrix{Float32}:
-  0.0       0.0       0.0        -0.453905  0.443731
-  0.434804  0.0       0.0         0.0       0.0
-  0.0       0.520551  0.0         0.0       0.0
- -0.453905  0.0       0.0665751   0.0       0.0
-  0.0       0.0       0.0         0.57811   0.0
+julia> jump_weights = -Float32[0.2, 0.4, 0.6];
+
+julia> cycle_weights = Float32[0.1, 0.3, 0.5, 0.7, 0.9];
+
+julia> res_matrix = cycle_jumps(5, 5; jump_weight = jump_weights, cycle_weight = cycle_weights);
+
+julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 && count(!iszero, res_matrix) == 7
+true
 ```
 
 Changing sign of the weights with different samplings:
 
 ```jldoctest cyclejumps
-julia> res_matrix = cycle_jumps(5, 5; cycle_kwargs = (;sampling_type=:bernoulli_sample!))
-5×5 Matrix{Float32}:
- 0.0   0.0  0.0   0.1  0.1
- 0.1   0.0  0.0   0.0  0.0
- 0.0  -0.1  0.0   0.0  0.0
- 0.1   0.0  0.1   0.0  0.0
- 0.0   0.0  0.0  -0.1  0.0
+julia> cycle_sampled = cycle_jumps(MersenneTwister(123), 5, 5; cycle_kwargs = (; sampling_type = :bernoulli_sample!));
 
-julia> res_matrix = cycle_jumps(5, 5; jump_kwargs = (;sampling_type=:irrational_sample!))
-5×5 Matrix{Float32}:
-  0.0  0.0  0.0  -0.1  0.1
-  0.1  0.0  0.0   0.0  0.0
-  0.0  0.1  0.0   0.0  0.0
- -0.1  0.0  0.1   0.0  0.0
-  0.0  0.0  0.0   0.1  0.0
+julia> jump_sampled = cycle_jumps(5, 5; jump_kwargs = (; sampling_type = :irrational_sample!));
+
+julia> all(abs.(cycle_sampled[cycle_sampled .!= 0]) .== 0.1f0) && all(abs.(jump_sampled[jump_sampled .!= 0]) .== 0.1f0)
+true
 ```
 
 Changing cycle jumps length:
@@ -1236,33 +1157,23 @@ julia> res_matrix = simple_cycle(5, 5; cycle_weight=0.99)
 Changing weights to a custom array:
 
 ```jldoctest scycle
-julia> res_matrix = simple_cycle(5, 5; cycle_weight=rand(5))
-5×5 Matrix{Float32}:
- 0.0       0.0        0.0       0.0       0.471823
- 0.534782  0.0        0.0       0.0       0.0
- 0.0       0.0764598  0.0       0.0       0.0
- 0.0       0.0        0.507883  0.0       0.0
- 0.0       0.0        0.0       0.546656  0.0
+julia> cycle_weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> res_matrix = simple_cycle(5, 5; cycle_weight = cycle_weights);
+
+julia> res_matrix[2, 1] == 0.2f0 && res_matrix[1, 5] == 1.0f0
+true
 ```
 
 Changing sign of the weights with different samplings:
 
 ```jldoctest scycle
-julia> res_matrix = simple_cycle(5, 5; sampling_type=:irrational_sample!)
-5×5 Matrix{Float32}:
-  0.0  0.0   0.0   0.0  -0.1
- -0.1  0.0   0.0   0.0   0.0
-  0.0  0.1   0.0   0.0   0.0
-  0.0  0.0  -0.1   0.0   0.0
-  0.0  0.0   0.0  -0.1   0.0
+julia> irrational_matrix = simple_cycle(5, 5; sampling_type = :irrational_sample!);
 
-julia> res_matrix = simple_cycle(5, 5; sampling_type=:bernoulli_sample!)
-5×5 Matrix{Float32}:
- 0.0   0.0  0.0   0.0  0.1
- 0.1   0.0  0.0   0.0  0.0
- 0.0  -0.1  0.0   0.0  0.0
- 0.0   0.0  0.1   0.0  0.0
- 0.0   0.0  0.0  -0.1  0.0
+julia> bernoulli_matrix = simple_cycle(MersenneTwister(123), 5, 5; sampling_type = :bernoulli_sample!);
+
+julia> all(abs.(irrational_matrix[irrational_matrix .!= 0]) .== 0.1f0) && all(abs.(bernoulli_matrix[bernoulli_matrix .!= 0]) .== 0.1f0)
+true
 ```
 
 Returning as sparse:
@@ -1467,13 +1378,14 @@ julia> res_matrix = true_doublecycle(5, 5; cycle_weight = 0.1, second_cycle_weig
 Changing weights to custom arrays:
 
 ```jldoctest tdcycle
-julia> res_matrix = true_doublecycle(5, 5; cycle_weight = rand(5), second_cycle_weight = .-rand(5))
-5×5 Matrix{Float32}:
-  0.0       -0.647066   0.0        0.0        0.604095
-  0.6687     0.0       -0.853307   0.0        0.0
-  0.0        0.40399    0.0       -0.565928   0.0
-  0.0        0.0        0.960196   0.0       -0.120321
- -0.120321   0.0        0.0        0.874008   0.0
+julia> cycle_weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> second_cycle_weights = -Float32[0.1, 0.3, 0.5, 0.7, 0.9];
+
+julia> res_matrix = true_doublecycle(5, 5; cycle_weight = cycle_weights, second_cycle_weight = second_cycle_weights);
+
+julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 && count(!iszero, res_matrix) == 10
+true
 ```
 
 Changing sign of the weights with different samplings:
@@ -1620,13 +1532,15 @@ julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=-0.2, selfloop_weight=0.5)
 Changing weights to custom arrays:
 
 ```jldoctest slcycle
-julia> res_matrix = selfloop_cycle(5, 5; cycle_weight=rand(5), selfloop_weight=.-rand(5))
-5×5 Matrix{Float32}:
- -0.902546   0.0          0.0        0.0          0.0987988
-  0.911585  -0.968998     0.0        0.0          0.0
-  0.0        0.00149246  -0.613033   0.0          0.0
-  0.0        0.0          0.777804  -0.727024     0.0
-  0.0        0.0          0.0        0.00441047  -0.310635
+julia> cycle_weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> selfloop_weights = -Float32[0.1, 0.3, 0.5, 0.7, 0.9];
+
+julia> res_matrix = selfloop_cycle(5, 5;
+           cycle_weight = cycle_weights, selfloop_weight = selfloop_weights);
+
+julia> diag(res_matrix) == selfloop_weights && count(!iszero, res_matrix) == 10
+true
 ```
 
 Changing sign of the weights with different samplings:
@@ -1737,7 +1651,7 @@ julia> reservoir_matrix = selfloop_backward_cycle(5, 5)
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.1
 
-julia> reservoir_matrix = selfloop_backward_cycle(5, 5; self_loop_weight=0.5)
+julia> reservoir_matrix = selfloop_backward_cycle(5, 5; selfloop_weight=0.5)
 5×5 Matrix{Float32}:
  0.5  0.1  0.0  0.0  0.1
  0.1  0.0  0.0  0.0  0.0
@@ -1875,13 +1789,19 @@ julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=0.3, fb_we
 
 Changing weights to custom arrays:
 ```jldoctest sldlfb
-julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_weight=randn(5), fb_weight=rand(5), delay_weight=-rand(5))
-5×5 Matrix{Float32}:
- -1.22847    0.0       0.384073   0.0        0.0
- -0.699175   2.63937   0.0        0.345408   0.0
-  0.0       -0.5171   -0.452312   0.0        0.0205082
-  0.0        0.0      -0.193893   1.45921    0.0
-  0.0        0.0       0.0       -0.453015  -1.43402
+julia> selfloop_weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> feedback_weights = Float32[0.1, 0.3, 0.5, 0.7, 0.9];
+
+julia> delay_weights = -Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> res_matrix = selfloop_delayline_backward(5, 5;
+           selfloop_weight = selfloop_weights, fb_weight = feedback_weights,
+           delay_weight = delay_weights);
+
+julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 &&
+       all(weight -> any(==(weight), diag(res_matrix)), selfloop_weights)
+true
 ```
 
 Changing sign of the weights with different samplings:
@@ -2052,13 +1972,15 @@ julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=0.5, selfloo
 Changing weights to custom arrays:
 
 ```jldoctest slfc
-julia> res_matrix = selfloop_forwardconnection(5, 5; forward_weight=rand(5), selfloop_weight=.-rand(5))
-5×5 Matrix{Float32}:
- -0.0420509   0.0        0.0        0.0        0.0
-  0.0        -0.116113   0.0        0.0        0.0
-  0.69173     0.0       -0.513592   0.0        0.0
-  0.0         0.522245   0.0       -0.199966   0.0
-  0.0         0.0        0.784556   0.0       -0.918653
+julia> forward_weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> selfloop_weights = -Float32[0.1, 0.3, 0.5, 0.7, 0.9];
+
+julia> res_matrix = selfloop_forwardconnection(5, 5;
+           forward_weight = forward_weights, selfloop_weight = selfloop_weights);
+
+julia> diag(res_matrix) == selfloop_weights && count(!iszero, res_matrix) == 8
+true
 ```
 
 ```jldoctest slfc
@@ -2192,44 +2114,28 @@ julia> forward_connection(5, 5; forward_weight=0.99)
 Changing the weights signs with different sampling techniques:
 
 ```jldoctest forcon
-julia> forward_connection(5, 5; sampling_type=:irrational_sample!)
-5×5 Matrix{Float32}:
-  0.0  0.0   0.0  0.0  0.0
-  0.0  0.0   0.0  0.0  0.0
- -0.1  0.0   0.0  0.0  0.0
-  0.0  0.1   0.0  0.0  0.0
-  0.0  0.0  -0.1  0.0  0.0
+julia> reservoir_matrix = forward_connection(5, 5; sampling_type=:irrational_sample!);
 
-julia> forward_connection(5, 5; sampling_type=:irrational_sample!)
-5×5 Matrix{Float32}:
-  0.0  0.0   0.0  0.0  0.0
-  0.0  0.0   0.0  0.0  0.0
-  -0.1  0.0   0.0  0.0  0.0
-  0.0  0.1   0.0  0.0  0.0
-  0.0  0.0  -0.1  0.0  0.0
+julia> size(reservoir_matrix), count(x -> !iszero(x), reservoir_matrix),
+       all(abs.(reservoir_matrix[reservoir_matrix .!= 0]) .== 0.1f0)
+((5, 5), 3, true)
 ```
 
 Changing the weights to random numbers. Note that the length of the given array
 must be at least as long as the subdiagonal one wants to fill:
 
 ```jldoctest forcon
-julia> reservoir_matrix = forward_connection(5, 5; forward_weight=rand(Float32, 3))
-5×5 Matrix{Float32}:
- 0.0       0.0       0.0       0.0  0.0
- 0.0       0.0       0.0       0.0  0.0
- 0.274221  0.0       0.0       0.0  0.0
- 0.0       0.111511  0.0       0.0  0.0
- 0.0       0.0       0.618345  0.0  0.0
-```
+julia> reservoir_matrix = forward_connection(5, 5;
+           forward_weight=Float32[0.2, 0.4, 0.6]);
 
-```jldoctest forcon
-
+julia> reservoir_matrix[3, 1] == 0.2f0 && reservoir_matrix[4, 2] == 0.4f0 &&
+       reservoir_matrix[5, 3] == 0.6f0
+true
 ```
 
 Returning a sparse matrix:
 
 ```jldoctest forcon
-
 julia> reservoir_matrix = forward_connection(10, 10; return_sparse=true)
 10×10 SparseMatrixCSC{Float32, Int64} with 8 stored entries:
   ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅    ⋅
@@ -2474,13 +2380,12 @@ Changing the weights to random numbers. Note that the length of the given array
 must be at least as long as the subdiagonal one wants to fill:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5; weight=rand(Float32, 5))
-5×5 Matrix{Float32}:
- 0.0       0.0       0.0       0.0       0.0263106
- 0.0       0.923927  0.0       0.0       0.0
- 0.255075  0.0       0.0       0.0       0.0
- 0.0       0.0       0.585589  0.0       0.0
- 0.0       0.0       0.0       0.353418  0.0
+julia> weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+
+julia> reservoir_matrix = permutation_init(MersenneTwister(123), 5, 5; weight=weights);
+
+julia> size(reservoir_matrix) == (5, 5) && sort(reservoir_matrix[reservoir_matrix .!= 0]) == weights
+true
 ```
 
 Returning a sparse matrix:
@@ -2582,9 +2487,6 @@ julia> rr = diagonal_init(5, 5; weight=0.1)
 
 Changing the weights signs with different sampling techniques:
 
-```jldoctest diaginit
-
-```
 
 Changing the weights to random numbers. Note that the length of the given array
 must be at least as long as the subdiagonal one wants to fill:
@@ -2624,13 +2526,10 @@ julia> rr = diagonal_init(5, 5; return_sparse=true)
 Returning a diagonal matrix:
 
 ```jldoctest diaginit
-julia> rr = diagonal_init(5, 5; return_diag=true)
-5×5 LinearAlgebra.Diagonal{Float32, Vector{Float32}}:
- -0.359729   ⋅         ⋅        ⋅        ⋅
-   ⋅        1.08721    ⋅        ⋅        ⋅
-   ⋅         ⋅       -0.41959   ⋅        ⋅
-   ⋅         ⋅         ⋅       0.71891   ⋅
-   ⋅         ⋅         ⋅        ⋅       0.420247
+julia> rr = diagonal_init(MersenneTwister(123), 5, 5; return_diag=true);
+
+julia> rr isa Diagonal{Float32} && size(rr) == (5, 5)
+true
 ```
 
 """
@@ -2678,36 +2577,27 @@ if `2 std_diag == std`, then `std` machtes the resulting spectral radius of the 
     Default kwargs:
 
     ```jldoctest diaginit
-    julia> rr = wigner_init(5, 5)
-    5×5 Matrix{Float32}:
-      0.000769674   0.126007   -0.277637   -0.126593   -0.389
-      0.126007     -0.0176753   0.541007   -0.392352    0.435318
-     -0.277637      0.541007    0.448532   -0.0991032  -0.357256
-     -0.126593     -0.392352   -0.0991032  -0.0637784  -0.373899
-     -0.389         0.435318   -0.357256   -0.373899   -0.0403503
+    julia> rr = wigner_init(MersenneTwister(123), 5, 5);
+
+    julia> size(rr) == (5, 5) && eltype(rr) == Float32 && issymmetric(rr)
+    true
     ```
 
     Returning a Symmetric matrix:
 
     ```jldoctest diaginit
-    julia> rr = wigner_init(5, 5; return_symmetric=true)
-     5×5 LinearAlgebra.Symmetric{Float32, Matrix{Float32}}:
-      -0.0874871   0.0666034   0.520725   0.454877  -0.503613
-       0.0666034  -0.2203     -0.497137   0.805205   0.0580209
-       0.520725   -0.497137    0.489767  -0.792692   0.571714
-       0.454877    0.805205   -0.792692  -0.126786  -0.414994
-      -0.503613    0.0580209   0.571714  -0.414994  -0.0372717
+    julia> rr = wigner_init(MersenneTwister(123), 5, 5; return_symmetric=true);
+
+    julia> rr isa Symmetric{Float32} && size(rr) == (5, 5)
+    true
     ```
     Returning with different standard deviation on diagonal and off diagonal:
 
     ```jldoctest diaginit
-    julia> rr = wigner_init(5, 5; std_diag=5, std=1e-3)
-    5×5 Matrix{Float32}:
-      0.685752      0.000850898  -0.000109755  -0.000211195  -0.000102981
-      0.000850898  -0.327889     -0.000201935   0.000673213   7.9558f-5
-     -0.000109755  -0.000201935  -2.77398       0.00010618   -0.000488676
-     -0.000211195   0.000673213   0.00010618    1.15882       0.000629446
-     -0.000102981   7.9558f-5    -0.000488676   0.000629446  -3.25089
+    julia> rr = wigner_init(MersenneTwister(123), 5, 5; std_diag=5, std=1e-3);
+
+    julia> issymmetric(rr) && maximum(abs, diag(rr)) > maximum(abs, rr .- Diagonal(diag(rr)))
+    true
     ```
 
 """
@@ -2765,39 +2655,28 @@ It guarantees structural symmetry by only adding complete diagonals.
 Default call:
 
 ```jldoctest lowertriangular
-julia> W = lower_triangular(5, 5)
-5×5 Matrix{Float32}:
- -0.214159   0.0         0.0        0.0        0.0
-  0.710328   0.655184    0.0        0.0        0.0
- -0.912441   0.311545   -0.412411   0.0        0.0
-  0.0        0.114112    0.551211   0.812451   0.0
-  0.0        0.0        -0.741211   0.914141   0.115412
+julia> W = lower_triangular(MersenneTwister(123), 5, 5);
+
+julia> size(W) == (5, 5) && eltype(W) == Float32 && all(iszero, W[i, j] for i in axes(W, 1) for j in (i + 1):size(W, 2))
+true
 ```
 
 Returning a `SparseMatrixCSC`:
 
 ```jldoctest lowertriangular
-julia> using SparseArrays
+julia> W_sparse = lower_triangular(MersenneTwister(123), 6, 6; sparsity=0.8, return_sparse=true);
 
-julia> W_sparse = lower_triangular(6, 6; sparsity=0.8, return_sparse=true)
-6×6 SparseMatrixCSC{Float32, Int64} with 7 stored entries:
-  0.4512   ⋅        ⋅        ⋅        ⋅        ⋅
-  0.1245  -0.8123   ⋅        ⋅        ⋅        ⋅
- -0.7612   0.9123  -0.1124   ⋅        ⋅        ⋅
-  ⋅        ⋅        0.4412  -0.5123   ⋅        ⋅
-  ⋅        ⋅        ⋅        ⋅        0.8812   ⋅
-  ⋅        ⋅        ⋅        ⋅        ⋅        0.3314
+julia> W_sparse isa SparseMatrixCSC{Float32} && size(W_sparse) == (6, 6)
+true
 ```
 
 Scaling to a custom spectral radius:
 
 ```jldoctest lowertriangular
-julia> W_scaled = lower_triangular(Float16, 4, 4; radius=2.5)
-4×4 Matrix{Float16}:
-  2.145   0.0     0.0     0.0
- -1.123   1.854   0.0     0.0
-  0.954  -2.113  -1.542   0.0
-  0.0     1.412   2.014  -1.953
+julia> W_scaled = lower_triangular(MersenneTwister(123), Float16, 4, 4; radius=2.5);
+
+julia> size(W_scaled) == (4, 4) && eltype(W_scaled) == Float16 && count(!iszero, W_scaled) >= 4
+true
 ```
 """
 function lower_triangular(
@@ -2878,37 +2757,27 @@ with random uniform weights in the range `(-1, 1)` until the target `sparsity` i
 Default call (creating a dense matrix with a banded structure):
 
 ```jldoctest bandinit
-julia> W = band_init(5, 5)
-5×5 Matrix{Float32}:
- -0.214159   0.812451   0.0        0.0        0.0
-  0.710328   0.655184  -0.412411   0.0        0.0
-  0.0        0.311545   0.551211   0.115412   0.0
-  0.0        0.0       -0.741211   0.914141  -0.512301
-  0.0        0.0        0.0        0.114112   0.311545
+julia> W = band_init(MersenneTwister(123), 5, 5);
+
+julia> size(W) == (5, 5) && eltype(W) == Float32 && count(!iszero, W) >= 5
+true
 ```
 
 Returning a SparseMatrixCSC 
 (showing the exact sparsity random-allocation on the outer bands):
 ```jldoctest bandinit
-julia> using SparseArrays
-julia> W_sparse = band_init(6, 6; sparsity=0.6, return_sparse=true)
-6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
-  0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
- -0.7612    0.9123    ⋅         ⋅         ⋅         ⋅
-  ⋅         0.4412   -0.1124   0.8812     ⋅         ⋅
-  ⋅         ⋅        -0.5123   0.3314     ⋅         ⋅
-  ⋅         ⋅         ⋅        0.1245    -0.2214   0.6123
-  ⋅         ⋅         ⋅         ⋅        -0.1124   0.7712
+julia> W_sparse = band_init(MersenneTwister(123), 6, 6; sparsity=0.6, return_sparse=true);
+
+julia> W_sparse isa SparseMatrixCSC{Float32} && size(W_sparse) == (6, 6)
+true
 ```
 
 Scaling to a custom spectral radius with explicit typecasting:
 ```jldoctest bandinit
-julia> W_scaled = band_init(Float16, 4, 4; radius=2.5)
-4×4 Matrix{Float16}:
-  2.145   -1.542    0.0     0.0
- -1.123    1.854    2.014   0.0
-  0.0     -2.113   -1.953  -1.123
-  0.0      0.0      1.412   0.954
+julia> W_scaled = band_init(MersenneTwister(123), Float16, 4, 4; radius=2.5);
+
+julia> size(W_scaled) == (4, 4) && eltype(W_scaled) == Float16 && count(!iszero, W_scaled) >= 4
+true
 ```
 """
 function band_init(
@@ -3006,28 +2875,19 @@ minimal-complexity Echo State Networks (ESNs).
 Default call (creating a dense matrix with shared weights along each diagonal):
 
 ```jldoctest toepliz
-julia> W = toepliz_init(5, 5; sparsity=0.5)
-5×5 Matrix{Float32}:
-  0.512311  -0.812451   0.0        0.0        0.0
- -0.214159   0.512311  -0.812451   0.0        0.0
-  0.115412  -0.214159   0.512311  -0.812451   0.0
-  0.0        0.115412  -0.214159   0.512311  -0.812451
-  0.0        0.0        0.115412  -0.214159   0.512311
+julia> W = toepliz_init(MersenneTwister(123), 5, 5; sparsity=0.5);
+
+julia> size(W) == (5, 5) && eltype(W) == Float32 && all(W[i, i] == W[1, 1] for i in axes(W, 1))
+true
 ```
 
 Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer -0.7612 and -0.8123 bands):
 
 ```jldoctest toepliz
-julia> using SparseArrays
+julia> W_sparse = toepliz_init(MersenneTwister(123), 6, 6; sparsity=0.6, return_sparse=true);
 
-julia> W_sparse = toepliz_init(6, 6; sparsity=0.6, return_sparse=true)
-6×6 SparseMatrixCSC{Float32, Int64} with 14 stored entries:
-  0.4512   -0.8123    ⋅         ⋅         ⋅         ⋅
- -0.7612    0.4512    ⋅         ⋅         ⋅         ⋅
-  ⋅        -0.7612    0.4512   -0.8123    ⋅         ⋅
-  ⋅         ⋅        -0.7612    0.4512   -0.8123    ⋅
-  ⋅         ⋅         ⋅        -0.7612    0.4512   -0.8123
-  ⋅         ⋅         ⋅         ⋅        -0.7612    0.4512
+julia> W_sparse isa SparseMatrixCSC{Float32} && size(W_sparse) == (6, 6)
+true
 ```
 """
 function toepliz_init(

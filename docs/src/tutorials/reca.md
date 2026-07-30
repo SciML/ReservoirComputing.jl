@@ -12,7 +12,7 @@ The data can be read as follows:
 ```@example reca
 using DelimitedFiles
 
-input = readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64)
+input = Int.(readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64))
 output = readdlm(joinpath(@__DIR__, "5bitoutput.txt"), ',', Float64)
 ```
 
