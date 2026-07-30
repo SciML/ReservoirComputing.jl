@@ -4,6 +4,7 @@ begin
     using SparseArrays
     using MLJLinearModels
     using ReservoirComputing
+    using LuxCore: initialparameters
 
     @testset "SparseArrays extension returns sparse initializer output" begin
         @eval Main using SparseArrays

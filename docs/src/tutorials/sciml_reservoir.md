@@ -18,6 +18,7 @@ closed-form analytic solution.
 
 ```julia
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5    # or `OrdinaryDiffEq`, or whichever solver pkg you need
@@ -82,6 +83,7 @@ that curve to within ~1e-6:
 
 ```julia
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
@@ -152,6 +154,7 @@ collected continuous states.
 
 ```@example ctesn-lorenz
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
@@ -239,6 +242,7 @@ been a reservoir-computing benchmark for two decades.
 
 ```@example ctesn-mg
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5

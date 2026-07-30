@@ -1,6 +1,7 @@
 using Test
 using Random
 using ReservoirComputing
+using LuxCore: setup
 using LinearSolve
 
 # Delete with src/deprecated.jl at v1.0.

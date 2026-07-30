@@ -5,6 +5,7 @@ begin
     using LinearAlgebra
     using Statistics
     using ReservoirComputing
+    using LuxCore: setup
     using OrdinaryDiffEq
     # Euler lives in OrdinaryDiffEqLowOrderRK under OrdinaryDiffEq v7+
     if !isdefined(@__MODULE__, :Euler)

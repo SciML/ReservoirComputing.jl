@@ -4,6 +4,8 @@ begin
     using ReservoirComputing
     using Static
     using LuxCore
+    import LuxCore: initialparameters, initialstates, setup
+    using WeightInitializers: zeros32
     using LinearAlgebra
 
     @testset "LinearReadout" begin

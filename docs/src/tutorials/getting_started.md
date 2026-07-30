@@ -25,6 +25,7 @@ using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
+using LuxCore: setup
 
 Random.seed!(42)
 rng = MersenneTwister(17)
@@ -113,6 +114,8 @@ from [Pathak2017](@cite) are loosely followed as general guidelines.
 
 ```@example lorenz
 using ReservoirComputing
+using LuxCore: setup
+using WeightInitializers: randn32, zeros32
 
 #define ESN parameters
 res_size = 300

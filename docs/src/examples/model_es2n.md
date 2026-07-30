@@ -13,12 +13,14 @@ approach.
 
 ```@example es2n_scratch
 using ReservoirComputing
+using LuxCore: setup
 using ConcreteStructs
 using Static
 using Random
 
 using ReservoirComputing: IntegerType, BoolType, InputType, has_bias, _wrap_layers
-import ReservoirComputing: initialparameters
+import LuxCore: initialparameters
+using WeightInitializers: orthogonal, randn32, zeros32
 
 @concrete struct CustomES2NCell <: ReservoirComputing.AbstractEchoStateNetworkCell
     activation

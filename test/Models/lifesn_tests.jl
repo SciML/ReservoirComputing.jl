@@ -3,6 +3,7 @@ begin
     using Test
     using Random
     using ReservoirComputing
+    using LuxCore: setup
     using LinearAlgebra
     using Static
 

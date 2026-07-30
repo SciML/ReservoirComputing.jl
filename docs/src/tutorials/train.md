@@ -7,6 +7,7 @@ regression; other linear and SVM objectives are available through extensions.
 
 ```@example training
 using ReservoirComputing
+using LuxCore: setup
 using Random
 Random.seed!(42)
 rng = MersenneTwister(42)

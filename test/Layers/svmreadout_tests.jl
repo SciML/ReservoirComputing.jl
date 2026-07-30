@@ -5,6 +5,7 @@ begin
     using ReservoirComputing
     using Static
     using LuxCore
+    import LuxCore: initialparameters
     using LinearAlgebra
     using LIBSVM
 

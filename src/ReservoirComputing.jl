@@ -12,11 +12,8 @@ import LuxCore: initialparameters, initialstates, statelength, outputsize
 using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
 using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
-using Reexport: Reexport, @reexport
 using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, Utils,
     orthogonal, rand32, randn32, sparse_init, zeros32
-@reexport using WeightInitializers
-@reexport using LuxCore: setup, apply, initialparameters, initialstates
 
 #@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
 

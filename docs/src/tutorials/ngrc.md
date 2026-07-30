@@ -25,6 +25,7 @@ First we need to load the necessary packages. We are going to use the following:
 using OrdinaryDiffEqAdamsBashforthMoulton
 using Random
 using ReservoirComputing
+using LuxCore: setup
 using Plots
 using Statistics
 ```

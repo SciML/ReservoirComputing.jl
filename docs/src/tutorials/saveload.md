@@ -15,6 +15,7 @@ using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
+using LuxCore: setup
 
 Random.seed!(42)
 rng = MersenneTwister(17)

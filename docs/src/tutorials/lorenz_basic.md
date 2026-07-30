@@ -55,6 +55,7 @@ from [Pathak2017](@cite) are loosely followed as general guidelines.
 
 ```@example lorenz
 using ReservoirComputing
+using LuxCore: setup
 
 #define ESN parameters
 res_size = 300

@@ -43,6 +43,7 @@ can be fed as an array.
 
 ```@example deep_lorenz
 using ReservoirComputing
+using LuxCore: setup
 input_size = 3
 res_size = 300
 desn = DeepESN(input_size, [res_size, res_size], input_size;
