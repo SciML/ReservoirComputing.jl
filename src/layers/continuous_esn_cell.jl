@@ -84,12 +84,8 @@ function ContinuousESNCell(
     )
 end
 
-# Sparsity of J(x) for the continuous-ESN RHS in `_continuous_esn_rhs!` is
-# `pattern(W_r) ∪ diag`. The extension `RCODEReservoirSparseArraysExt`
-# adds a specialised method for `AbstractSparseMatrixCSC` reservoir
-# matrices that returns `W_r + I`; the generic fallback here returns
-# `nothing`, so `use_jac_prototype = true` is a silent no-op when the
-# reservoir matrix is dense or the RHS is user-supplied.
+# Generic fallback for `use_jac_prototype = true`; the sparse-`W_r`
+# specialisation lives in `ext/RCODEReservoirSparseArraysExt.jl`.
 _reservoir_jac_prototype(_equations, _reservoir_matrix) = nothing
 
 function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
