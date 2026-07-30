@@ -1,11 +1,11 @@
 module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
-using LinearAlgebra: I, mul!
+using LinearAlgebra: mul!
 using LuxCore: apply
 using Random: AbstractRNG
 using SciMLBase: ODEFunction, ODEProblem, remake, solve, NullParameters
-using SparseArrays: AbstractSparseMatrixCSC
+using Static: known
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
@@ -15,6 +15,7 @@ using ReservoirComputing: ReservoirComputing,
     ContinuousESNCell,
     LinearReadout,
     TerminalStateSampling,
+    _reservoir_jac_prototype,
     _wrap_layers,
     collectstates,
     rand_sparse,
@@ -112,21 +113,6 @@ end
 
 function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
-end
-
-# Sparsity of J(x) = -I + diag(1 - tanh²(z))·Wr is exactly Wr's pattern
-# unioned with the diagonal — but only for the built-in leaky-integrator
-# ESN RHS. Custom `equations` may touch entries outside pattern(Wr),
-# whose Jacobian entries an implicit solver would silently skip if we
-# forced this prototype on them. Restrict the prototype to the built-in
-# RHS; custom RHS falls back to the default dense FD Jacobian.
-_reservoir_jac_prototype(_equations, ::AbstractMatrix) = nothing
-_reservoir_jac_prototype(_equations, ::AbstractSparseMatrixCSC) = nothing
-function _reservoir_jac_prototype(
-        ::typeof(ReservoirComputing._continuous_esn_rhs!),
-        reservoir_matrix::AbstractSparseMatrixCSC,
-    )
-    return reservoir_matrix + I
 end
 
 function _sample(::TerminalStateSampling, sol)
@@ -324,6 +310,7 @@ function ReservoirComputing.ContinuousESN(
         equations = ReservoirComputing._continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
+        use_jac_prototype::Bool = false,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -348,7 +335,8 @@ function ReservoirComputing.ContinuousESN(
         activation, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
         ReservoirComputing.static(use_bias),
-        equations, tspan, args, kwargs
+        equations, tspan, args, kwargs,
+        ReservoirComputing.static(use_jac_prototype)
     )
 
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
@@ -399,12 +387,10 @@ function _collectstates(
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    ode_fn = ODEFunction(
-        cell.equations;
-        jac_prototype = _reservoir_jac_prototype(
-            cell.equations, ps.reservoir.reservoir_matrix
-        ),
-    )
+    jac_prototype = known(cell.use_jac_prototype) ?
+        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        nothing
+    ode_fn = ODEFunction(cell.equations; jac_prototype = jac_prototype)
     prob = ODEProblem(ode_fn, u0, cell.tspan, solve_p)
 
     sol = solve(
@@ -455,12 +441,10 @@ function _predict(
     st_mods = st.states_modifiers
     st_ro = st.readout
 
-    ode_fn = ODEFunction(
-        cell.equations;
-        jac_prototype = _reservoir_jac_prototype(
-            cell.equations, ps.reservoir.reservoir_matrix
-        ),
-    )
+    jac_prototype = known(cell.use_jac_prototype) ?
+        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        nothing
+    ode_fn = ODEFunction(cell.equations; jac_prototype = jac_prototype)
 
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
