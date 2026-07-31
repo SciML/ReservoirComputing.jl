@@ -1,5 +1,6 @@
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"

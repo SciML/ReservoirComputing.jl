@@ -4,7 +4,8 @@ using DataInterpolations: ConstantInterpolation
 using LinearAlgebra: mul!
 using LuxCore: apply
 using Random: AbstractRNG
-using SciMLBase: ODEProblem, remake, solve, NullParameters
+using SciMLBase: FullSpecialize, ODEProblem, init, reinit!, remake, solve, solve!,
+    NullParameters
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
@@ -112,6 +113,12 @@ end
 function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
+
+mutable struct ConstantInputWindow{T <: AbstractVector}
+    u_vec::T
+end
+
+(input::ConstantInputWindow)(t) = input.u_vec
 
 function _sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
@@ -249,6 +256,21 @@ function _predict(
     st_mods = st.states_modifiers
     st_ro = st.readout
 
+    input_fn = ConstantInputWindow(current_input)
+    solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_fn)
+    sub_prob = remake(
+        res.prob;
+        tspan = (window_starts[1], window_ends[1]),
+        p = solve_p,
+        u0 = current_state,
+    )
+    integrator = init(
+        sub_prob, res.args...;
+        save_everystep = false, dense = false,
+        save_start = false, save_end = true,
+        res.kwargs...,
+    )
+
     # `outputs` is allocated *after* the first readout call so its element
     # type and row count come from `apply(rc.readout, …)` rather than
     # `initialdata`. Otherwise a readout returning a different eltype
@@ -256,22 +278,16 @@ function _predict(
     # conversion at the column assignment.
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
-        solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_fn)
-        sub_prob = remake(
-            res.prob;
-            tspan = (t_lo, t_hi),
-            p = solve_p,
-            u0 = current_state
+        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
+        reinit!(
+            integrator, current_state;
+            t0 = t_lo,
+            tf = t_hi,
+            erase_sol = true,
+            reset_dt = true,
         )
-        sol = solve(
-            sub_prob, res.args...;
-            saveat = [t_hi],
-            save_everystep = false,
-            dense = false,
-            res.kwargs...
-        )
-        current_state = sol.u[end]
+        solve!(integrator)
+        current_state = integrator.u
 
         if !isempty(rc.states_modifiers)
             state_after_mods, st_mods = ReservoirComputing._apply_seq(
@@ -383,7 +399,7 @@ function _collectstates(
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    prob = ODEProblem(cell.equations, u0, cell.tspan, solve_p)
+    prob = ODEProblem{true, FullSpecialize}(cell.equations, u0, cell.tspan, solve_p)
 
     sol = solve(
         prob, cell.args...;
@@ -433,19 +449,30 @@ function _predict(
     st_mods = st.states_modifiers
     st_ro = st.readout
 
+    input_fn = ConstantInputWindow(current_input)
+    solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
+    sub_prob = ODEProblem{true, FullSpecialize}(
+        cell.equations, current_state, (window_starts[1], window_ends[1]), solve_p
+    )
+    integrator = init(
+        sub_prob, cell.args...;
+        save_everystep = false, dense = false,
+        save_start = false, save_end = true,
+        cell.kwargs...,
+    )
+
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn = _make_const_input_fn(current_input, t_lo, t_hi)
-        solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
-        sub_prob = ODEProblem(cell.equations, current_state, (t_lo, t_hi), solve_p)
-        sol = solve(
-            sub_prob, cell.args...;
-            saveat = [t_hi],
-            save_everystep = false,
-            dense = false,
-            cell.kwargs...
+        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
+        reinit!(
+            integrator, current_state;
+            t0 = t_lo,
+            tf = t_hi,
+            erase_sol = true,
+            reset_dt = true,
         )
-        current_state = sol.u[end]
+        solve!(integrator)
+        current_state = integrator.u
 
         if !isempty(rc.states_modifiers)
             state_after_mods, st_mods = ReservoirComputing._apply_seq(
