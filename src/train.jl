@@ -48,17 +48,41 @@ end
 
 _set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
+"""
+    AbstractReservoirComputingSolver
+
+Developer marker for the package's legacy reservoir-training solver family.
+
+## Extension contract
+
+`QRSolver` is the only built-in subtype. The public [`train`](@ref) API also
+accepts `LinearSolve.jl` algorithms directly. There is currently no public
+generic extension point for arbitrary `AbstractReservoirComputingSolver`
+subtypes: a new subtype is rejected by ridge training unless ReservoirComputing
+adds a corresponding implementation itself.
+
+For a custom solver, implement the documented `LinearSolve.jl` algorithm
+interface and pass that algorithm to `train(...; solver=...)`. Do not extend
+private training helpers from another package.
+
+## Example
+
+```julia
+weights = train(RidgeRegression(1.0e-3), states, targets;
+    solver = QRFactorization())
+```
+"""
 abstract type AbstractReservoirComputingSolver end
 
 @doc raw"""
     QRFactorization()
 
-Default solver for [`RidgeRegression`](@ref).
-
-From LinearSolve.jl; available via `using ReservoirComputing`. For other
-LinearSolve algorithms, load LinearSolve.jl and pass them as `solver`.
+Default solver for [`RidgeRegression`](@ref). This is ReservoirComputing's
+owned solver facade; it dispatches to LinearSolve's QR factorization
+implementation. For other algorithms, load LinearSolve.jl and pass a
+documented LinearSolve algorithm as `solver`.
 """
-const QRFactorization = LinearSolveQRFactorization
+struct QRFactorization <: AbstractReservoirComputingSolver end
 
 @doc raw"""
     QRSolver()
@@ -99,14 +123,17 @@ function _ridge_augmented_system(
 
     n_features = size(states, 1)
     n_outputs = size(targets, 1)
-    λ = convert(eltype(states), objective.reg)
+    T = promote_type(eltype(states), eltype(targets), typeof(objective.reg))
+    states = T.(states)
+    targets = T.(targets)
+    λ = convert(T, objective.reg)
     λ ≥ zero(λ) || throw(
         ArgumentError(
             "RidgeRegression regularization must be ≥ 0, got reg=$(objective.reg)"
         )
     )
     design = [states'; sqrt(λ) * I(n_features)]
-    rhs = [targets'; zeros(eltype(targets), n_features, n_outputs)]
+    rhs = [targets'; zeros(T, n_features, n_outputs)]
     return design, rhs
 end
 
@@ -119,35 +146,53 @@ function _train_ridge(
     return Matrix(weight_transpose')
 end
 
-_ridge_solver_supported(solver::SciMLLinearSolveAlgorithm) = !needs_square_A(solver)
-_ridge_solver_supported(::SVDFactorization) = true
-
 function _train_ridge(
-        solver::SciMLLinearSolveAlgorithm, objective::RidgeRegression,
+        ::QRFactorization, objective::RidgeRegression,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
-    design, rhs = _ridge_augmented_system(objective, states, targets)
-    _ridge_solver_supported(solver) || throw(
-        ArgumentError(
-            "solver $(typeof(solver)) requires a square matrix, but ridge regression's " *
-                "augmented system is always rectangular (more rows than features). " *
-                "Use QRFactorization(), SVDFactorization(), or NormalCholeskyFactorization() " *
-                "instead."
-        )
-    )
-    solution = solve(LinearProblem(design, rhs), solver; kwargs...)
-    return Matrix(solution.u')
+    return _train_ridge(LinearSolveQRFactorization(), objective, states, targets; kwargs...)
 end
 
 function _train_ridge(
-        solver, ::RidgeRegression, ::AbstractMatrix, ::AbstractMatrix; kwargs...
+        solver::AbstractReservoirComputingSolver, ::RidgeRegression,
+        ::AbstractMatrix, ::AbstractMatrix; kwargs...
     )
-    return throw(
+    throw(
         ArgumentError(
-            "Unsupported ridge solver of type $(typeof(solver)). " *
-                "Use QRFactorization(), QRSolver(), or another LinearSolve.jl algorithm."
+            "solver $(typeof(solver)) is not supported. Pass QRFactorization(), " *
+                "QRSolver(), or a documented LinearSolve.jl algorithm instead."
         )
     )
+end
+
+function _train_ridge(
+        solver, objective::RidgeRegression,
+        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+    )
+    solver isa AbstractLinearAlgorithm || throw(
+        ArgumentError(
+            "solver $(typeof(solver)) is not supported. Pass QRFactorization(), " *
+                "QRSolver(), or a documented LinearSolve.jl algorithm instead."
+        )
+    )
+    design, rhs = _ridge_augmented_system(objective, states, targets)
+    solution = try
+        solve(LinearProblem(design, rhs), solver; kwargs...)
+    catch err
+        err isa DimensionMismatch || rethrow()
+        throw(
+            ArgumentError(
+                "solver $(typeof(solver)) requires a square matrix, but ridge regression's " *
+                    "augmented system is always rectangular (more rows than features). " *
+                    "Use QRFactorization(), SVDFactorization(), or NormalCholeskyFactorization() " *
+                    "instead."
+            )
+        )
+    end
+    successful_retcode(solution) || throw(
+        ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
+    )
+    return Matrix(solution.u')
 end
 
 @doc raw"""

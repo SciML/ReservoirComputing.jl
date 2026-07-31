@@ -1,7 +1,15 @@
 # Remove this file and test/deprecated.jl at v1.0.
 # https://invenia.github.io/blog/2022/06/17/deprecating-in-julia/
 
-Base.@deprecate_binding StandardRidge RidgeRegression
+"""
+    StandardRidge([Type], [reg])
+
+Compatibility alias for [`RidgeRegression`](@ref).
+
+Use `RidgeRegression` in new code. `StandardRidge` has the same constructors and
+behavior and is retained for compatibility with existing ReservoirComputing code.
+"""
+const StandardRidge = RidgeRegression
 
 @doc raw"""
     train!(rc, train_data, target_data, ps, st,

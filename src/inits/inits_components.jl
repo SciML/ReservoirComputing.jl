@@ -28,7 +28,35 @@ function apply_scale!(
     return input_matrix
 end
 
-# dispatch over dense inits
+@doc raw"""
+    return_init_as(::Val{return_sparse}, initializer_output)
+
+Convert an initializer output according to its `return_sparse` request.
+
+!!! warning "Developer interface"
+    This dispatch hook is for ReservoirComputing extension authors. End users
+    should request sparse output through an initializer's `return_sparse`
+    keyword rather than calling this function directly.
+
+## Arguments
+
+  - `return_sparse`: `Val(false)` for the built-in dense path or `Val(true)` for
+    an extension-provided sparse representation.
+  - `initializer_output`: an initializer result to return or convert.
+
+## Extension contract
+
+An extension that provides a sparse representation must define
+`ReservoirComputing.return_init_as(::Val{true}, output)` for the output types it
+supports. The method must return a representation with the same shape and values.
+The built-in `Val(false)` method returns its input unchanged.
+
+## Example
+
+```julia
+ReservoirComputing.return_init_as(Val(false), ones(2, 2)) == ones(2, 2)
+```
+"""
 function return_init_as(::Val{false}, layer_matrix::AbstractVecOrMat)
     return layer_matrix
 end
@@ -231,29 +259,20 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 # Examples
 
 ```jldoctest
-julia> matrix = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
+julia> matrix = zeros(Float32, 5, 5);
 
-julia> delay_line!(matrix, 5.0, 2)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 5.0  0.0  0.0  0.0  0.0
- 0.0  5.0  0.0  0.0  0.0
- 0.0  0.0  5.0  0.0  0.0
+julia> delay_line!(matrix, 5.0, 2);
 
- julia> delay_line!(matrix, 5.0, 2; sampling_type=:bernoulli_sample!)
-5×5 Matrix{Float32}:
- 0.0   0.0  0.0  0.0  0.0
- 0.0   0.0  0.0  0.0  0.0
- 5.0   0.0  0.0  0.0  0.0
- 0.0  -5.0  0.0  0.0  0.0
- 0.0   0.0  5.0  0.0  0.0
+julia> matrix[3, 1] == matrix[4, 2] == matrix[5, 3] == 5.0f0
+true
+
+julia> sampled_matrix = zeros(Float32, 5, 5);
+
+julia> delay_line!(MersenneTwister(123), sampled_matrix, 5.0, 2;
+           sampling_type=:bernoulli_sample!);
+
+julia> all(abs.(sampled_matrix[3:5, 1:3][diagind(sampled_matrix[3:5, 1:3])]) .== 5.0f0)
+true
 ```
 """
 function delay_line!(
@@ -545,21 +564,12 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 # Examples
 
 ```jldoctest
-julia> matrix = zeros(Float32, 5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
+julia> matrix = zeros(Float32, 5, 5);
 
-julia> add_jumps!(matrix, 1.0)
-5×5 Matrix{Float32}:
-  0.0  0.0   1.0   0.0   0.0
-  0.0  0.0   0.0   0.0   0.0
-  1.0  0.0   0.0   0.0   0.0
-  0.0  0.0   0.0   0.0   1.0
-  0.0  0.0   1.0   0.0   0.0
+julia> add_jumps!(matrix, 1.0, 2);
+
+julia> matrix[1, 3] == matrix[3, 1] == matrix[3, 5] == matrix[5, 3] == 1.0f0
+true
 ```
 """
 function add_jumps!(
@@ -686,13 +696,10 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> self_loop!(matrix, 1.0)
-5×5 Matrix{Float32}:
-  1.0  0.0   0.0   0.0   0.0
-  0.0  1.0   0.0   0.0   0.0
-  0.0  0.0   1.0   0.0   0.0
-  0.0  0.0   0.0   1.0   0.0
-  0.0  0.0   0.0   0.0   1.0
+julia> self_loop!(matrix, 1.0);
+
+julia> diag(matrix) == fill(1.0f0, 5)
+true
 ```
 """
 function self_loop!(

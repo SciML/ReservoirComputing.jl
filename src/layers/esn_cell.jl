@@ -1,3 +1,48 @@
+"""
+    AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell
+
+Developer interface for an echo-state-network recurrent cell with the shared
+ESN parameter and state initialization implementation.
+
+## Required fields
+
+The generic methods require these fields:
+
+- `in_dims`: input feature dimension.
+- `out_dims`: reservoir-state dimension.
+- `init_input(rng, out_dims, in_dims)`: input-matrix initializer.
+- `init_reservoir(rng, out_dims, out_dims)`: recurrent-matrix initializer.
+- `init_state(rng, out_dims, batch_size)`: initial hidden-state initializer.
+- `use_bias`: `Static.True()` or `Static.False()`. When true,
+  `init_bias(rng, out_dims)` is also required.
+
+## Extension contract
+
+Subtypes inherit `LuxCore.initialparameters` and `LuxCore.initialstates` from
+this interface. Those methods create `input_matrix` and `reservoir_matrix`, an
+optional `bias`, and a replicated RNG state. Implement the recurrent call form
+from [`AbstractReservoirRecurrentCell`](@ref): given `(x, (carry,))`, return
+`((output, (next_carry,)), st_new)`. The generic one-input method initializes a
+hidden state with `init_state` and delegates to that form.
+
+`input_matrix` must have shape `(out_dims, in_dims)`, `reservoir_matrix` must
+have shape `(out_dims, out_dims)`, and every carry must be compatible with the
+chosen `out_dims` and batch dimension.
+
+## Example
+
+```julia
+struct MyESNCell <: AbstractEchoStateNetworkCell
+    in_dims
+    out_dims
+    init_input
+    init_reservoir
+    init_bias
+    init_state
+    use_bias
+end
+```
+"""
 abstract type AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell end
 
 @doc raw"""

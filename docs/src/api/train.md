@@ -6,6 +6,5 @@
     QRSolver
     QRFactorization
     RidgeRegression
+    StandardRidge
 ```
-
-`StandardRidge` is a deprecated alias of [`RidgeRegression`](@ref).

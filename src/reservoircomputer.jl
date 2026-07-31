@@ -176,11 +176,10 @@ end
 
 Reset (or set) the hidden-state carry of a model in the echo state network family.
 
-If an existing carry is present in `st.cell.carry`, its leading dimension is used to
-infer the state size. Otherwise the reservoir output size is taken from
-`rc.reservoir.cell.out_dims`. When `init_carry=nothing`, the carry is cleared; the initializer
-from the struct construction will then be used. When a
-function is provided, it is called to create a new initial hidden state.
+When a function is supplied as `init_carry`, an existing carry provides its leading
+dimension; otherwise the reservoir output size is used. When `init_carry=nothing`,
+the carry is cleared and the cell's initializer is used on the next call. This does
+not require the cell to expose an output dimension.
 
 ## Arguments
 
@@ -209,16 +208,15 @@ function resetcarry!(
         rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing
     )
     carry = get(st.reservoir, :carry, nothing)
-    if carry === nothing
-        sz = _cell_out_dims(rc.reservoir.cell)
-    else
-        state = first(carry)
-        sz = size(state, 1)
-    end
-
     if init_carry === nothing
         new_state = nothing
     else
+        if carry === nothing
+            sz = _cell_out_dims(rc.reservoir.cell)
+        else
+            state = first(carry)
+            sz = size(state, 1)
+        end
         new_state = init_carry(rng, sz, 1)
         new_state = (new_state,)
     end
