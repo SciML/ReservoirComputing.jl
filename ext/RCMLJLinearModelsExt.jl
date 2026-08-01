@@ -1,6 +1,6 @@
 module RCMLJLinearModelsExt
-using ReservoirComputing
-using MLJLinearModels
+using ReservoirComputing: ReservoirComputing
+using MLJLinearModels: MLJLinearModels
 
 function ReservoirComputing._fit_readout(
         regressor::MLJLinearModels.GeneralizedLinearRegression,

@@ -1,15 +1,14 @@
 module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
-using LinearAlgebra: mul!
 using LuxCore: apply
-using Random: AbstractRNG
 using SciMLBase: FullSpecialize, ODEProblem, init, reinit!, remake, solve, solve!,
     NullParameters
+using Static: static
+using WeightInitializers: randn32, zeros32
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
-    AbstractSampler,
     AbstractSciMLProblemReservoir,
     ContinuousESN,
     ContinuousESNCell,
@@ -317,10 +316,10 @@ function ReservoirComputing.ContinuousESN(
         in_dims::Integer, res_dims::Integer, out_dims::Integer,
         activation, tspan, args...;
         use_bias::Bool = false,
-        init_bias = ReservoirComputing.zeros32,
+        init_bias = zeros32,
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
-        init_state = ReservoirComputing.randn32,
+        init_state = randn32,
         equations = ReservoirComputing._continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
@@ -347,7 +346,7 @@ function ReservoirComputing.ContinuousESN(
     cell = ContinuousESNCell(
         activation, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
-        ReservoirComputing.static(use_bias),
+        static(use_bias),
         equations, tspan, args, kwargs
     )
 
