@@ -1,8 +1,7 @@
 module RCLIBSVMExt
 
-using LIBSVM
-using ReservoirComputing:
-    SVMReadout, ReservoirChain, AbstractReservoirComputer
+using LIBSVM: LIBSVM
+using ReservoirComputing: SVMReadout, AbstractReservoirComputer
 import ReservoirComputing: _fit_readout, addreadout!
 
 function _fit_readout(
