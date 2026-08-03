@@ -2,7 +2,7 @@ module RCODEReservoirSparseArraysExt
 
 using LinearAlgebra: I
 using ReservoirComputing: ReservoirComputing
-using SparseArrays: AbstractSparseMatrixCSC
+using SparseArrays: SparseMatrixCSC
 
 # `pattern(W_r) ∪ diag` is the exact Jacobian sparsity of the built-in
 # leaky-integrator ESN RHS. Custom `equations` fall through to the
@@ -10,7 +10,7 @@ using SparseArrays: AbstractSparseMatrixCSC
 # too-narrow prototype.
 function ReservoirComputing._reservoir_jac_prototype(
         ::typeof(ReservoirComputing._continuous_esn_rhs!),
-        reservoir_matrix::AbstractSparseMatrixCSC,
+        reservoir_matrix::SparseMatrixCSC,
     )
     return reservoir_matrix + I
 end
