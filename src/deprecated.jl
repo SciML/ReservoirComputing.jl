@@ -1,6 +1,8 @@
 # Remove this file and test/deprecated.jl at v1.0.
 # https://invenia.github.io/blog/2022/06/17/deprecating-in-julia/
 
+Base.@deprecate_binding StandardRidge RidgeRegression
+Base.@deprecate_binding toepliz_init toeplitz_init
 """
     StandardRidge([Type], [reg])
 

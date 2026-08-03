@@ -64,7 +64,7 @@ where full details and examples are provided.
     onto a forward-connection reservoir (stride-2).
 - [`simple_cycle`](inits/simple_cycle.md): Builds a basic directed ring
     reservoir with uniform weights.
-- [`toepliz_init`](inits/toepliz_init.md): Creates toepliz sparse reservoir topology 
+- [`toeplitz_init`](inits/toeplitz_init.md): Creates Toeplitz sparse reservoir topology 
     with a single weight for each diagonal (special case of band_init).
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.

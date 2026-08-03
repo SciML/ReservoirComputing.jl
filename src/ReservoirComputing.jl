@@ -41,11 +41,11 @@ include("layers/lif_wrapper.jl")
 include("states.jl")
 include("predict.jl")
 include("train.jl")
-include("deprecated.jl")
 #initializers
 include("inits/inits_components.jl")
 include("inits/inits_input.jl")
 include("inits/inits_reservoir.jl")
+include("deprecated.jl")
 #full models
 include("models/esn_generics.jl")
 include("models/esn.jl")
@@ -83,7 +83,7 @@ export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
 export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
     diagonal_init, double_cycle, forward_connection, low_connectivity, lower_triangular, permutation_init,
     pseudo_svd, rand_hyper, rand_sparse, selfloop_backward_cycle, selfloop_cycle, selfloop_delayline_backward,
-    selfloop_forwardconnection, simple_cycle, toepliz_init, true_doublecycle, wigner_init
+    selfloop_forwardconnection, simple_cycle, toeplitz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,

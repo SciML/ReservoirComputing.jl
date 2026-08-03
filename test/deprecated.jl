@@ -48,6 +48,11 @@ end
     @test result ≈ weights_new
 end
 
+@testset "toepliz_init is deprecated alias of toeplitz_init" begin
+    @test toepliz_init === toeplitz_init
+    @test toepliz_init(MersenneTwister(7), 5, 5) == toeplitz_init(MersenneTwister(7), 5, 5)
+end
+
 @testset "train! still accepts solver kwarg" begin
     rng = MersenneTwister(37)
     in_dims, res_dims, out_dims = 3, 10, 2

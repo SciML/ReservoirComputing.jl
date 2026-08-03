@@ -2842,7 +2842,7 @@ function band_init(
 end
 
 @doc raw"""
-    toepliz_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
+    toeplitz_init([rng], [T], dims...; radius=1.0, sparsity=0.9, return_sparse=false)
 
 Create and return a sparse reservoir matrix with a Toeplitz-like topology [Cossu2025](@cite).
 This function builds outward from the main diagonal, generating a single random uniform weight 
@@ -2881,7 +2881,7 @@ julia> size(W) == (5, 5) && eltype(W) == Float32 && all(W[i, i] == W[1, 1] for i
 true
 ```
 
-Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer -0.7612 and -0.8123 bands):
+Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer bands):
 
 ```jldoctest toepliz
 julia> W_sparse = toepliz_init(MersenneTwister(123), 6, 6; sparsity=0.6, return_sparse=true);
@@ -2890,7 +2890,7 @@ julia> W_sparse isa SparseMatrixCSC{Float32} && size(W_sparse) == (6, 6)
 true
 ```
 """
-function toepliz_init(
+function toeplitz_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         radius = T(1.0), sparsity = 0.9, return_sparse = false
     ) where {T <: Number}
@@ -2965,7 +2965,7 @@ for initializer in (
         :logistic_mapping, :modified_lm, :low_connectivity, :lower_triangular, :double_cycle,
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
-        :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toepliz_init,
+        :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toeplitz_init,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
