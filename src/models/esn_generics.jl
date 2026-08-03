@@ -1,3 +1,40 @@
+"""
+    AbstractEchoStateNetwork{Fields} <: AbstractReservoirComputer{Fields}
+
+Developer interface for an echo-state-network model container.
+
+## Type parameters
+
+- `Fields`: the Lux container field tuple. Most ESN models use
+  `(:reservoir, :states_modifiers, :readout)`.
+
+## Required fields
+
+Subtypes follow the [`AbstractReservoirComputer`](@ref) field contract. Their
+`reservoir` must be a Lux-compatible reservoir layer, normally a
+[`StatefulLayer`](@ref) around an
+[`AbstractEchoStateNetworkCell`](@ref). `states_modifiers` is a tuple of
+feature transforms and `readout` is the final Lux-compatible mapping.
+
+## Extension contract
+
+This type adds ESN semantics to the generic reservoir-container contract; it
+does not introduce a separate dispatch hook. Subtypes inherit the generic
+`LuxCore.initialparameters`, `LuxCore.initialstates`, function-call, and
+[`collectstates`](@ref) behavior when their fields obey the container
+invariants. The reservoir must produce a consistent feature shape at every
+time step, and the readout must consume that shape after all modifiers.
+
+## Example
+
+```julia
+struct MyESN <: AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    reservoir
+    states_modifiers
+    readout
+end
+```
+"""
 abstract type AbstractEchoStateNetwork{Fields} <: AbstractReservoirComputer{Fields} end
 
 _wrap_layer(x) = x isa Function ? WrappedFunction(x) : x
@@ -20,7 +57,7 @@ end
     elseif len == 1
         return _fillvec(comp[1], n)
     else
-        error("Expected length $n or 1, got $len")
+        throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
@@ -31,7 +68,7 @@ end
     elseif len == 1
         return _fillvec(comp[1], n)
     else
-        error("Expected length $n or 1, got $len")
+        throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 

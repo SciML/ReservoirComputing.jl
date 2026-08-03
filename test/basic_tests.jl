@@ -4,6 +4,8 @@ begin
     using ReservoirComputing
     using Static
     using LuxCore
+    import LuxCore: initialparameters, initialstates, setup
+    using WeightInitializers: zeros32
     using LinearAlgebra
 
     @testset "LinearReadout" begin
@@ -248,7 +250,7 @@ begin
             st = initialstates(rng, dl)
 
             badx = rand(rng, Float32, 2)
-            @test_throws AssertionError dl(badx, ps, st)
+            @test_throws DimensionMismatch dl(badx, ps, st)
         end
     end
 

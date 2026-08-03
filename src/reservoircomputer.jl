@@ -62,6 +62,13 @@ function initialstates(rng::AbstractRNG, rc::AbstractReservoirComputer)
     return (reservoir = st_res, states_modifiers = st_mods, readout = st_ro)
 end
 
+function _require_nonempty_data(data::AbstractMatrix, context::AbstractString)
+    size(data, 2) ≥ 1 || throw(
+        ArgumentError("$context data must have at least one column, got $(size(data, 2)).")
+    )
+    return nothing
+end
+
 @inline function _apply_seq(layers::Tuple, inp, ps::Tuple, st::Tuple)
     new_st_parts = Vector{Any}(undef, length(layers))
     for idx in eachindex(layers)
@@ -106,10 +113,10 @@ end
 function _collectstates(
         _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
     )
+    _require_nonempty_data(data, "collectstates")
     newst = st
     nsteps = size(data, 2)
     cols = eachcol(data)
-    @assert !isempty(cols)
     x1 = first(cols)
     current_state, partial_st = _partial_apply(rc, x1, ps, newst)
     state_dims = size(current_state, 1)
@@ -169,11 +176,10 @@ end
 
 Reset (or set) the hidden-state carry of a model in the echo state network family.
 
-If an existing carry is present in `st.cell.carry`, its leading dimension is used to
-infer the state size. Otherwise the reservoir output size is taken from
-`rc.reservoir.cell.out_dims`. When `init_carry=nothing`, the carry is cleared; the initializer
-from the struct construction will then be used. When a
-function is provided, it is called to create a new initial hidden state.
+When a function is supplied as `init_carry`, an existing carry provides its leading
+dimension; otherwise the reservoir output size is used. When `init_carry=nothing`,
+the carry is cleared and the cell's initializer is used on the next call. This does
+not require the cell to expose an output dimension.
 
 ## Arguments
 
@@ -202,16 +208,15 @@ function resetcarry!(
         rng::AbstractRNG, rc::AbstractReservoirComputer, st; init_carry = nothing
     )
     carry = get(st.reservoir, :carry, nothing)
-    if carry === nothing
-        sz = _cell_out_dims(rc.reservoir.cell)
-    else
-        state = first(carry)
-        sz = size(state, 1)
-    end
-
     if init_carry === nothing
         new_state = nothing
     else
+        if carry === nothing
+            sz = _cell_out_dims(rc.reservoir.cell)
+        else
+            state = first(carry)
+            sz = size(state, 1)
+        end
         new_state = init_carry(rng, sz, 1)
         new_state = (new_state,)
     end

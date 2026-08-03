@@ -3,6 +3,7 @@ begin
     using Test
     using Random
     using ReservoirComputing
+    using LuxCore: setup
     using LinearAlgebra
     using LIBSVM
     using Static
@@ -60,7 +61,7 @@ begin
         @test occursin("SVMReadout", s)
     end
 
-    @testset "SVESM: train! with EpsilonSVR" begin
+    @testset "SVESM: train with EpsilonSVR" begin
         rng = MersenneTwister(99)
         in_dims, res_dims, out_dims = 1, 30, 1
         T = 200
@@ -72,7 +73,7 @@ begin
         ps, st = setup(rng, model)
 
         svr = LIBSVM.EpsilonSVR(cost = 10.0, epsilon = 0.01)
-        ps, st = train!(model, train_data, target_data, ps, st, svr)
+        ps, st = train(model, train_data, target_data, ps, st; objective = svr)
 
         @test haskey(ps.readout, :models)
 
@@ -80,7 +81,7 @@ begin
         @test length(pred) == out_dims
     end
 
-    @testset "SVESM: train! with NuSVR and state_modifiers" begin
+    @testset "SVESM: train with NuSVR and state_modifiers" begin
         rng = MersenneTwister(77)
         in_dims, res_dims, out_dims = 2, 20, 2
         T = 100
@@ -92,7 +93,7 @@ begin
         ps, st = setup(rng, model)
 
         svr = LIBSVM.NuSVR()
-        ps, st = train!(model, train_data, target_data, ps, st, svr)
+        ps, st = train(model, train_data, target_data, ps, st; objective = svr)
 
         @test haskey(ps.readout, :models)
         @test ps.readout.models isa AbstractVector

@@ -1,4 +1,56 @@
+"""
+    AbstractInputEncoding
+
+Developer marker interface for a cellular-automata input-encoding
+specification.
+
+## Extension contract
+
+This package currently provides no generic public function that consumes every
+`AbstractInputEncoding` subtype. An external encoding is therefore usable only
+with a concrete cellular-automata integration that documents how it consumes
+that type. Do not assume that merely subtyping this interface makes a value
+accepted by [`RECACell`](@ref) or [`RECA`](@ref); those constructors presently
+use the concrete [`RandomMapping`](@ref) / [`RandomMaps`](@ref) workflow.
+
+Use this marker to communicate an encoding specification in an extension API,
+and document the fields and conversion operation required by that extension.
+
+## Example
+
+```julia
+struct MyEncoding <: AbstractInputEncoding
+    width::Int
+end
+```
+"""
 abstract type AbstractInputEncoding end
+
+"""
+    AbstractEncodingData
+
+Developer marker interface for precomputed cellular-automata encoding data.
+
+## Extension contract
+
+This package currently has no public generic operation over all
+`AbstractEncodingData` subtypes. A concrete cellular-automata layer must state
+the fields it reads and implement its own conversion from an
+[`AbstractInputEncoding`](@ref). In particular, `RECACell` currently requires
+[`RandomMaps`](@ref), so arbitrary subtypes are not interchangeable with it.
+
+Use this marker only when defining a paired extension interface and document
+the feature size, lattice size, and mapping invariants required by that
+extension.
+
+## Example
+
+```julia
+struct MyEncodingData <: AbstractEncodingData
+    states_size::Int
+end
+```
+"""
 abstract type AbstractEncodingData end
 
 """

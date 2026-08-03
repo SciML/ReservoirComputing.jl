@@ -259,6 +259,7 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
 end
 
 function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
+    _require_nonempty_data(data, "collectstates")
     newst = st
     collected = Any[]
     n_layers = length(desn.cells)
@@ -284,7 +285,6 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
             readout = newst.readout,
         )
     end
-    @assert !isempty(collected)
     states = eltype(data).(reduce(hcat, collected))
 
     return states, newst

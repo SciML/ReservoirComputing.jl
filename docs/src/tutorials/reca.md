@@ -12,7 +12,7 @@ The data can be read as follows:
 ```@example reca
 using DelimitedFiles
 
-input = readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64)
+input = Int.(readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64))
 output = readdlm(joinpath(@__DIR__, "5bitoutput.txt"), ',', Float64)
 ```
 
@@ -23,6 +23,7 @@ that needs to be called as well to define the `RECA` struct:
 
 ```@example reca
 using ReservoirComputing, CellularAutomata, Random
+using LuxCore: setup
 Random.seed!(42)
 rng = MersenneTwister(17)
 
@@ -37,10 +38,11 @@ reca = RECA(4, 4, DCA(90);
            input_encoding=RandomMapping(16, 40))
 ps, st = setup(rng, reca)
 ```
-After this, the training can be performed with the chosen method.
+After this, train the readout:
 
 ```@example reca
-ps, st = train!(reca, input, output, ps, st, StandardRidge(0.00001))
+ps, st = train(reca, input, output, ps, st;
+    objective = RidgeRegression(0.00001))
 ```
 
 We are going to test the recall ability of the model, feeding the input data

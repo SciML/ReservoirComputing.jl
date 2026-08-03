@@ -1,5 +1,81 @@
+"""
+    AbstractReservoirCollectionLayer <: AbstractLuxLayer
+
+Developer marker interface for a layer whose output is recorded by
+[`collectstates`](@ref).
+
+## Extension contract
+
+Subtypes implement the ordinary Lux layer contract through
+`LuxCore.initialparameters`, `LuxCore.initialstates`, and a call returning
+`(output, updated_state)`. When a reservoir chain is collected, the output of
+each such layer is included in the feature vector. It must therefore be a
+vector or array that can be copied and concatenated with `vcat` with other
+collection-layer outputs at the same time step.
+
+Do not use this marker for an ordinary transform merely because it is located
+before a readout: it changes the training features. A collection layer should
+preserve stable feature dimensions across all time steps.
+
+## Example
+
+```julia
+struct MyCollect <: AbstractReservoirCollectionLayer end
+(layer::MyCollect)(x, ps, st) = (x, st)
+```
+"""
 abstract type AbstractReservoirCollectionLayer <: AbstractLuxLayer end
+
+"""
+    AbstractReservoirRecurrentCell <: AbstractLuxLayer
+
+Developer interface for a recurrent reservoir cell used by [`StatefulLayer`](@ref).
+
+## Extension contract
+
+Subtypes implement the Lux initialization functions and both recurrent call
+forms below:
+
+- `cell(x, ps, st) -> ((output, (carry,)), st_new)` initializes a carry when
+  none is supplied.
+- `cell((x, (carry,)), ps, st) -> ((output, (carry_new,)), st_new)` advances
+  an existing carry.
+
+`StatefulLayer` invokes these through `LuxCore.apply`. The returned carry must
+have the shape and element type accepted by the second form on the next call;
+the output may equal the carry but need not do so. The parameter and state
+objects are owned by the subtype's `LuxCore.initialparameters` and
+`LuxCore.initialstates` implementations.
+
+## Example
+
+```julia
+struct MyCell <: AbstractReservoirRecurrentCell end
+```
+"""
 abstract type AbstractReservoirRecurrentCell <: AbstractLuxLayer end
+
+"""
+    AbstractReservoirTrainableLayer <: AbstractLuxLayer
+
+Developer marker interface for the first trainable/readout layer in a
+reservoir chain.
+
+## Extension contract
+
+Subtypes implement the usual Lux initialization and call contracts. During
+[`collectstates`](@ref), this marker stops the reservoir-feature traversal: the
+marked layer and subsequent layers are not executed while generating training
+features. Mark only a layer that consumes the collected features, and ensure
+its input dimension matches the stable feature dimension produced before it.
+
+## Example
+
+```julia
+struct MyReadout <: AbstractReservoirTrainableLayer end
+(layer::MyReadout)(x, ps, st) = (x, st)
+```
+"""
 abstract type AbstractReservoirTrainableLayer <: AbstractLuxLayer end
 
 ### LinearReadout
@@ -43,8 +119,8 @@ before this layer (logically inserting a [`Collect`](@ref) right before it).
 ## Notes
 
 - In ESN workflows, readout weights are typically replaced via ridge regression in
-  [`train!`](@ref). Therefore, how `LinearReadout` gets initialized is of no consequence.
-  Additionally, the dimensions will also not be taken into account, as [`train!`](@ref)
+  [`train`](@ref). Therefore, how `LinearReadout` gets initialized is of no consequence.
+  Additionally, the dimensions will also not be taken into account, as [`train`](@ref)
   will replace the weights.
 - If you set `include_collect=false`, make sure a [`Collect`](@ref) appears earlier in the chain.
   Otherwise training may operate on the post-readout signal,
@@ -205,6 +281,7 @@ that time step.
 
 """
 function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
+    _require_nonempty_data(data, "collectstates")
     newst = st
     collected = Any[]
     for inp in eachcol(data)
@@ -222,7 +299,6 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
         end
         push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
     end
-    @assert !isempty(collected)
     firstcol = collected[1]
     states = similar(firstcol, eltype(data), length(firstcol), length(collected))
     for idx in eachindex(collected)
@@ -302,7 +378,12 @@ end
 
 function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
     if init_delay isa Tuple
-        @assert length(init_delay) == num_delays
+        length(init_delay) == num_delays || throw(
+            DimensionMismatch(
+                "init_delay tuple must have length num_delays=$num_delays, " *
+                    "got $(length(init_delay))."
+            )
+        )
     else
         init_delay = ntuple(_ -> init_delay, num_delays)
     end
@@ -335,7 +416,11 @@ function init_delay_history(history::AbstractMatrix, rng::AbstractRNG, dl::Delay
 end
 
 function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
-    @assert size(inp, 1) == dl.in_dims
+    size(inp, 1) == dl.in_dims || throw(
+        DimensionMismatch(
+            "DelayLayer expected input with $(dl.in_dims) rows, got $(size(inp, 1))."
+        )
+    )
     history = init_delay_history(st.history, st.rng, dl, inp)
     inp_with_delay = vcat(inp, vec(history))
     clock = st.clock + 1

@@ -4,7 +4,12 @@ begin
     using Random
     using LinearAlgebra
     using ReservoirComputing
+    using LuxCore: setup
     using OrdinaryDiffEq
+    # Euler lives in OrdinaryDiffEqLowOrderRK under OrdinaryDiffEq v7+
+    if !isdefined(@__MODULE__, :Euler)
+        using OrdinaryDiffEqLowOrderRK: Euler
+    end
     using SciMLBase
     using DataInterpolations
 

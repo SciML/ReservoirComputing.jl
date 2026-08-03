@@ -1,15 +1,28 @@
 module RCLIBSVMExt
 
-using LIBSVM
-using ReservoirComputing:
-    SVMReadout, ReservoirChain, AbstractReservoirComputer
-import ReservoirComputing: train, addreadout!
+using LIBSVM: LIBSVM
+using ReservoirComputing: SVMReadout, AbstractReservoirComputer
+import ReservoirComputing: _fit_readout, addreadout!
 
-function train(
+function _fit_readout(
         svr::LIBSVM.AbstractSVR,
-        states::AbstractMatrix, target::AbstractMatrix
+        states::AbstractMatrix, target::AbstractMatrix;
+        solver = nothing,
+        kwargs...,
     )
-    @assert size(states, 2) == size(target, 2) "states and target must share columns."
+    solver === nothing || throw(
+        ArgumentError(
+            "solver is not supported for LIBSVM objectives; omit the solver keyword."
+        )
+    )
+    isempty(kwargs) || throw(
+        ArgumentError(
+            "unsupported keyword arguments for LIBSVM train: $(Tuple(keys(kwargs)))"
+        )
+    )
+    size(states, 2) == size(target, 2) || throw(
+        DimensionMismatch("states and target must share the same number of columns.")
+    )
     perm_states = permutedims(states)
     size_target = size(target, 1)
 
@@ -87,7 +100,7 @@ function addreadout!(
 
     throw(
         ArgumentError(
-            "This training method produced a non-matrix readout (e.g. LIBSVM models), " *
+            "This objective produced a non-matrix readout (e.g. LIBSVM models), " *
                 "but the model readout is $(typeof(rc.readout)). Use SVMReadout as the readout layer."
         )
     )

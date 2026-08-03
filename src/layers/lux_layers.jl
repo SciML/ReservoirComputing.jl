@@ -145,7 +145,7 @@ function wrap_functions_in_chain_call(layers::Union{AbstractVector, Tuple})
         elseif f isa AbstractLuxLayer
             push!(new_layers, f)
         else
-            throw("Encountered a non-AbstractLuxLayer in ReservoirChain.")
+            throw(ArgumentError("Encountered a non-AbstractLuxLayer ($(typeof(f))) in ReservoirChain."))
         end
     end
     return layers isa AbstractVector ? new_layers : Tuple(new_layers)

@@ -7,6 +7,7 @@ begin
     using SparseArrays
     using StaticArrays
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates, setup
 
     rng = MersenneTwister(101)
 
@@ -107,7 +108,7 @@ begin
         )
     end
 
-    @testset "ReservoirChain train! updates readout and predict matches targets" begin
+    @testset "ReservoirChain train updates readout and predict matches targets" begin
         for T in (Float32, Float64)
             rng = MersenneTwister(202)
             rc = workflow_chain(T)
@@ -120,13 +121,13 @@ begin
             @test raw_states ≈ data
             @test eltype(raw_states) === T
 
-            (ps_trained, st_trained), states = train!(
+            (ps_trained, st_trained), states = train(
                 rc,
                 data_view,
                 target,
                 ps,
-                st,
-                StandardRidge(T, T(0));
+                st;
+                objective = RidgeRegression(T, T(0)),
                 return_states = true,
             )
             @test states ≈ data
@@ -161,13 +162,13 @@ begin
             data = reshape(T.(1:16), 2, 8) ./ T(10)
             target = copy(data)
 
-            (ps_trained, st_trained), states = train!(
+            (ps_trained, st_trained), states = train(
                 model,
                 data,
                 target,
                 ps,
-                st,
-                StandardRidge(T, T(1.0e-6));
+                st;
+                objective = RidgeRegression(T, T(1.0e-6)),
                 return_states = true,
             )
             @test size(states) == (4, 8)

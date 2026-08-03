@@ -3,17 +3,18 @@ module ReservoirComputing
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
 using LinearAlgebra: eigvals, I, qr, Diagonal, diag, mul!, Symmetric, norm
+using LinearSolve: LinearProblem, solve
+using LinearSolve: QRFactorization as LinearSolveQRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
 using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
-using Static: StaticBool, StaticSymbol, True, False, static, known, StaticInteger
-using Reexport: Reexport, @reexport
-using WeightInitializers: WeightInitializers, DeviceAgnostic, PartialFunction, Utils,
-    orthogonal, rand32, randn32, sparse_init, zeros32
-@reexport using WeightInitializers
-@reexport using LuxCore: setup, apply, initialparameters, initialstates
+using SciMLBase: AbstractLinearAlgorithm, successful_retcode
+using Static: StaticBool, StaticSymbol, StaticInt, True, False, static, known
+using WeightInitializers: orthogonal, rand32, randn32, sparse_init, zeros32
+
+include("initializer_utils.jl")
 
 #@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
 
@@ -40,6 +41,7 @@ include("layers/lif_wrapper.jl")
 include("states.jl")
 include("predict.jl")
 include("train.jl")
+include("deprecated.jl")
 #initializers
 include("inits/inits_components.jl")
 include("inits/inits_input.jl")
@@ -75,7 +77,7 @@ export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
 export SVMReadout
 export LocalInformationFlow
 export Extend, ExtendedSquare, NLAT1, NLAT2, NLAT3, Pad, PartialSquare
-export StandardRidge
+export RidgeRegression, StandardRidge
 export chebyshev_mapping, informed_init, logistic_mapping, minimal_init,
     modified_lm, scaled_rand, weighted_init, weighted_minimal
 export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayline_backward,
@@ -84,7 +86,8 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
     selfloop_forwardconnection, simple_cycle, toepliz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
-export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
+    resetcarry!, return_init_as, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
 export RMNESN, RMNResESN

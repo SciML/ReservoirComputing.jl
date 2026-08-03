@@ -40,8 +40,10 @@ using PrecompileTools: @compile_workload, @setup_workload
         # collectstates
         states, st_after = collectstates(esn, train_data, ps, st)
 
-        # train! function
-        ps_trained, st_trained = train!(esn, train_data, target_data, ps, st, StandardRidge(1.0e-6))
+        ps_trained, st_trained = train(
+            esn, train_data, target_data, ps, st;
+            objective = RidgeRegression(1.0e-6),
+        )
 
         # ES2NCell and ES2N (another common model)
         es2n_cell = ES2NCell(input_size => reservoir_size)
@@ -85,8 +87,7 @@ using PrecompileTools: @compile_workload, @setup_workload
         ps_sl, st_sl = setup(rng, sl)
         out_sl, st_sl2 = sl(x_single, ps_sl, st_sl)
 
-        # train (lower-level function)
-        output_matrix = train(StandardRidge(1.0e-6), states, target_data)
+        output_matrix = _fit_readout(RidgeRegression(1.0e-6), states, target_data)
 
         # resetcarry!
         st_reset = resetcarry!(rng, esn, st_trained)

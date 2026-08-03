@@ -4,6 +4,7 @@ begin
     using Random
     using Test
     using LuxCore
+    import LuxCore: initialparameters, initialstates
     using LinearAlgebra
 
     const res_size = 20

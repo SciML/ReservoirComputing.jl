@@ -25,6 +25,7 @@ First we need to load the necessary packages. We are going to use the following:
 using OrdinaryDiffEqAdamsBashforthMoulton
 using Random
 using ReservoirComputing
+using LuxCore: setup
 using Plots
 using Statistics
 ```
@@ -133,11 +134,9 @@ At this point, `ngrc` is a fully specified model with:
 We now train the linear readout using ridge regression on the increment `train_delta_y`:
 
 ```@example ngrc
-ps, st = train!(ngrc, train_norm_x, train_delta_y, ps, st;
-    train_method = StandardRidge(2.5e-6))
+ps, st = train(ngrc, train_norm_x, train_delta_y, ps, st;
+    objective = RidgeRegression(2.5e-6))
 ```
-
-where [`StandardRidge`](@ref) is the ridge regression provided natively by ReservoirComputing.jl.
 
 ## 6. Generative prediction
 

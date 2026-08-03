@@ -51,9 +51,7 @@
 ## Continuous-Time Reservoirs
 
 ```@docs
-    AbstractSciMLProblemReservoir
     SciMLProblemReservoir
-    AbstractSampler
     TerminalStateSampling
 ```
 

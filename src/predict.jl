@@ -60,8 +60,8 @@ function predict(
 end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
+    _require_nonempty_data(data, "predict")
     T = size(data, 2)
-    @assert T ≥ 1 "data must have at least one time step (columns)."
 
     y1, st = apply(rc, data[:, 1], ps, st)
     Y = similar(y1, size(y1, 1), T)
@@ -138,12 +138,8 @@ function _predict(
 end
 
 function _predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
+    _require_nonempty_data(data, "predict")
     n_samples = size(data, 2)
-    n_samples ≥ 1 || throw(
-        ArgumentError(
-            "predict input data must have at least one column, got $n_samples."
-        )
-    )
 
     input_cols = eachcol(data)
     first_output, st = apply(rc, first(input_cols), ps, st)
