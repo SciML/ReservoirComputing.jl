@@ -2,7 +2,7 @@ using Test
 using Random
 using LinearAlgebra
 using ReservoirComputing
-using LinearSolve
+using LuxCore: setup
 
 @testset "train model-level smoke" begin
     rng = MersenneTwister(42)

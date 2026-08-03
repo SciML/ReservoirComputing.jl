@@ -2,7 +2,7 @@ module GenericTestSetup
 
 using Random
 using Test
-using ReservoirComputing: setup
+using LuxCore: setup
 
 export dense_init, vector_init, typed_inputs
 export common_model_kwargs, res_model_kwargs, es2n_model_kwargs, run_model_smoke

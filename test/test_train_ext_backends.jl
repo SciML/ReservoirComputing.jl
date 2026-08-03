@@ -1,6 +1,7 @@
 using Test
 using Random
 using ReservoirComputing
+using LuxCore: setup
 using MLJLinearModels
 using LIBSVM
 

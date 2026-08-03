@@ -17,6 +17,7 @@ prediction pipeline is the same as for [`ESN`](@ref).
 
 ```@example continuous-esn-lorenz
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5

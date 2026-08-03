@@ -1,10 +1,31 @@
 include("../shared/generic_testsetup.jl")
 using .GenericTestSetup
 
+module InitializerOutputExtension
+    import ReservoirComputing
+
+    struct WrappedInitializerOutput{A}
+        data::A
+    end
+
+    function ReservoirComputing.return_init_as(::Val{true}, output::Vector{Float64})
+        return WrappedInitializerOutput(output)
+    end
+end
+
 begin
     using Random
     using Static
     using ReservoirComputing
+    using LuxCore: initialparameters, initialstates
+
+    @testset "initializer output extension contract" begin
+        output = [1.0, 2.0]
+        wrapped = ReservoirComputing.return_init_as(Val(true), output)
+        @test wrapped isa InitializerOutputExtension.WrappedInitializerOutput
+        @test wrapped.data == output
+        @test ReservoirComputing.return_init_as(Val(false), output) === output
+    end
 
     function has_anykey(nt::NamedTuple, names)
         return any(Base.Fix1(haskey, nt), names)
@@ -174,6 +195,114 @@ begin
         st = initialstates(rng, layer)
         @test eltype(first(layer(x, ps, st))) === T
         @test eltype(first(layer(x_view, ps, st))) === T
+    end
+end
+
+begin
+    using LinearAlgebra
+    using LuxCore
+    using Random
+    using ReservoirComputing
+    using Static: True
+    using Test
+
+    struct ExternalESNCell <: ReservoirComputing.AbstractEchoStateNetworkCell
+        in_dims::Int
+        out_dims::Int
+        init_input
+        init_reservoir
+        init_bias
+        init_state
+        use_bias
+    end
+
+    function (cell::ExternalESNCell)(
+            input_and_carry::Tuple{<:AbstractArray, Tuple{<:AbstractArray}}, ps,
+            st::NamedTuple
+        )
+        input, (carry,) = input_and_carry
+        output = ps.input_matrix * input + ps.reservoir_matrix * carry + ps.bias
+        return (output, (output,)), st
+    end
+
+    struct ExternalCollect <: ReservoirComputing.AbstractReservoirCollectionLayer end
+    (layer::ExternalCollect)(input, ps, st::NamedTuple) = (input, st)
+    LuxCore.initialparameters(::AbstractRNG, ::ExternalCollect) = NamedTuple()
+    LuxCore.initialstates(::AbstractRNG, ::ExternalCollect) = NamedTuple()
+
+    struct ExternalReadout <: ReservoirComputing.AbstractReservoirTrainableLayer end
+    (layer::ExternalReadout)(input, ps, st::NamedTuple) = (2 .* input, st)
+    LuxCore.initialparameters(::AbstractRNG, ::ExternalReadout) = NamedTuple()
+    LuxCore.initialstates(::AbstractRNG, ::ExternalReadout) = NamedTuple()
+
+    struct ExternalReservoirComputer <:
+        ReservoirComputing.AbstractReservoirComputer{
+            (:reservoir, :states_modifiers, :readout),
+        }
+        reservoir
+        states_modifiers
+        readout
+    end
+
+    struct ExternalEchoStateNetwork <:
+        ReservoirComputing.AbstractEchoStateNetwork{
+            (:reservoir, :states_modifiers, :readout),
+        }
+        reservoir
+        states_modifiers
+        readout
+    end
+
+    struct ExternalEncoding <: ReservoirComputing.AbstractInputEncoding end
+    struct ExternalEncodingData <: ReservoirComputing.AbstractEncodingData end
+    struct ExternalSolver <: ReservoirComputing.AbstractReservoirComputingSolver end
+
+    @testset "Developer interface contracts" begin
+        rng = MersenneTwister(44)
+        matrix_init = (rng, m, n) -> Matrix{Float32}(I, m, n)
+        vector_init = (rng, m) -> zeros(Float32, m)
+        state_init = (rng, m, batch_size) -> zeros(Float32, m, batch_size)
+        cell = ExternalESNCell(
+            2, 2, matrix_init, matrix_init, vector_init, state_init, True()
+        )
+
+        cell_ps = LuxCore.initialparameters(rng, cell)
+        cell_st = LuxCore.initialstates(rng, cell)
+        @test keys(cell_ps) == (:input_matrix, :reservoir_matrix, :bias)
+        @test size(cell_ps.input_matrix) == (2, 2)
+        @test size(cell_ps.reservoir_matrix) == (2, 2)
+
+        cell_output, cell_next_st = LuxCore.apply(cell, Float32[1, 2], cell_ps, cell_st)
+        @test size(first(cell_output)) == (2, 1)
+        @test vec(first(cell_output)) == Float32[1, 2]
+        @test size(first(last(cell_output))) == (2, 1)
+        @test vec(first(last(cell_output))) == Float32[1, 2]
+        @test haskey(cell_next_st, :rng)
+
+        reservoir = StatefulLayer(cell)
+        components = (reservoir, (ExternalCollect(),), ExternalReadout())
+        for Model in (ExternalReservoirComputer, ExternalEchoStateNetwork)
+            model = Model(components...)
+            model_ps, model_st = LuxCore.setup(rng, model)
+            model_output, model_next_st = LuxCore.apply(model, Float32[3, 4], model_ps, model_st)
+            @test size(model_output) == (2, 1)
+            @test vec(model_output) == Float32[6, 8]
+            @test keys(model_next_st) == (:reservoir, :states_modifiers, :readout)
+
+            states, collected_st = collectstates(
+                model, Float32[3 4; 4 5], model_ps, model_st
+            )
+            @test states == Float32[3 7; 4 9]
+            @test keys(collected_st) == (:reservoir, :states_modifiers, :readout)
+        end
+
+        @test ExternalEncoding() isa ReservoirComputing.AbstractInputEncoding
+        @test ExternalEncodingData() isa ReservoirComputing.AbstractEncodingData
+        @test ExternalSolver() isa ReservoirComputing.AbstractReservoirComputingSolver
+        @test_throws ArgumentError train(
+            RidgeRegression(), ones(Float32, 2, 2), ones(Float32, 1, 2);
+            solver = ExternalSolver()
+        )
     end
 end
 

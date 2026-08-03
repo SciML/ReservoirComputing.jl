@@ -2,7 +2,7 @@ module RCCellularAutomataExt
 using ReservoirComputing: RECA, AbstractInputEncoding, ReservoirComputer,
     IntegerType, LinearReadout, StatefulLayer
 import ReservoirComputing: RECACell, RECA, RandomMapping, RandomMaps
-using CellularAutomata
+using CellularAutomata: CellularAutomata, CellularAutomaton
 using Random: randperm
 
 function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::IntegerType)

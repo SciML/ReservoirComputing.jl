@@ -27,6 +27,7 @@ Putting it all together, we get:
 
 ```@example scratch
 using ReservoirComputing
+using LuxCore: setup
 
 esn_scratch = ReservoirChain(
     StatefulLayer(

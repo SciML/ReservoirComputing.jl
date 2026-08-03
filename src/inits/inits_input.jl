@@ -34,49 +34,35 @@ a range defined by `scaling`.
 Standard behavior with scaling given by a scalar:
 
 ```jldoctest scaledrand
-julia> res_input = scaled_rand(8, 3)
-8×3 Matrix{Float32}:
- -0.0669356  -0.0292692  -0.0188943
-  0.0159724   0.004071   -0.0737949
-  0.026355   -0.0191563   0.0714962
- -0.0177412   0.0279123   0.0892906
- -0.0184405   0.0567368   0.0190222
-  0.0944272   0.0679244   0.0148647
- -0.0799005  -0.0891089  -0.0444782
- -0.0970182   0.0934286   0.03553
+julia> using Random
+
+julia> using ReservoirComputing: scaled_rand
+
+julia> res_input = scaled_rand(MersenneTwister(1), Float32, 8, 3);
+
+julia> size(res_input) == (8, 3) && eltype(res_input) == Float32 && all(-0.1f0 .<= res_input .<= 0.1f0)
+true
 ```
 
 Scaling with a tuple, providing lower and upper bound of the uniform distribution
 from which the weights will be sampled:
 
 ```jldoctest scaledrand
-julia> res_input = scaled_rand(8, 3, scaling = (0.1, 0.15))
-8×3 Matrix{Float32}:
- 0.108266  0.117683  0.120276
- 0.128993  0.126018  0.106551
- 0.131589  0.120211  0.142874
- 0.120565  0.131978  0.147323
- 0.12039   0.139184  0.129756
- 0.148607  0.141981  0.128716
- 0.105025  0.102723  0.11388
- 0.100745  0.148357  0.133882
+julia> res_input = scaled_rand(MersenneTwister(2), Float32, 8, 3; scaling = (0.1, 0.15));
+
+julia> all(0.1f0 .<= res_input .<= 0.15f0)
+true
 ```
 
 Scaling with a vector of scalars, where each provides the upper bound and its
 negative provides the lower bound. Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
-```jldoctest
-julia> res_input = scaled_rand(8, 3, scaling = [0.1, 0.2, 0.3])
-8×3 Matrix{Float32}:
- -0.0669356  -0.0585384   -0.0566828
-  0.0159724   0.00814199  -0.221385
-  0.026355   -0.0383126    0.214489
- -0.0177412   0.0558246    0.267872
- -0.0184405   0.113474     0.0570667
-  0.0944272   0.135849     0.0445941
- -0.0799005  -0.178218    -0.133435
- -0.0970182   0.186857     0.10659
+```jldoctest scaledrand
+julia> res_input = scaled_rand(MersenneTwister(3), Float32, 8, 3; scaling = [0.1, 0.2, 0.3]);
+
+julia> all(all(-limit .<= column .<= limit) for (column, limit) in zip(eachcol(res_input), (0.1f0, 0.2f0, 0.3f0)))
+true
 ```
 
 Scaling with a vector of tuples, each providing both upper and lower bound.
@@ -84,16 +70,11 @@ Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
 ```jldoctest scaledrand
-julia> res_input = scaled_rand(8, 3, scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
-8×3 Matrix{Float32}:
- 0.116532  -0.164635  0.381106
- 0.157986  -0.147965  0.326205
- 0.163177  -0.159578  0.471496
- 0.141129  -0.136044  0.489291
- 0.14078   -0.121632  0.419022
- 0.197214  -0.116038  0.414865
- 0.11005   -0.194554  0.355522
- 0.101491  -0.103286  0.43553
+julia> res_input = scaled_rand(MersenneTwister(4), Float32, 8, 3;
+       scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)]);
+
+julia> all(all(lower .<= column .<= upper) for (column, (lower, upper)) in zip(eachcol(res_input), ((0.1f0, 0.2f0), (-0.2f0, -0.1f0), (0.3f0, 0.5f0))))
+true
 ```
 """
 function scaled_rand(
@@ -150,34 +131,24 @@ warning.
 Standard call with scaling provided by a scalar:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling = 0.1)
-9×3 Matrix{Float32}:
-  0.0452399   0.0         0.0
- -0.0348047   0.0         0.0
- -0.0386004   0.0         0.0
-  0.0         0.0577838   0.0
-  0.0        -0.0562827   0.0
-  0.0         0.0441522   0.0
-  0.0         0.0         0.00627948
-  0.0         0.0        -0.0293777
-  0.0         0.0        -0.0352914
+julia> using Random, Test
+
+julia> using ReservoirComputing: weighted_init
+
+julia> res_input = weighted_init(MersenneTwister(5), Float32, 9, 3; scaling = 0.1);
+
+julia> size(res_input) == (9, 3) && all(count(!iszero, column) == 3 for column in eachcol(res_input)) && all(abs.(res_input) .<= 0.1f0)
+true
 ```
 
 Scaling with a tuple, providing lower and upper bound of the uniform distribution
 from which the weights will be sampled:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling = (0.1, 0.5))
-9×3 Matrix{Float32}:
- 0.39048   0.0       0.0
- 0.230391  0.0       0.0
- 0.222799  0.0       0.0
- 0.0       0.415568  0.0
- 0.0       0.187435  0.0
- 0.0       0.388304  0.0
- 0.0       0.0       0.312559
- 0.0       0.0       0.241245
- 0.0       0.0       0.229417
+julia> res_input = weighted_init(MersenneTwister(6), Float32, 9, 3; scaling = (0.1, 0.5));
+
+julia> nonzero_weights = res_input[res_input .!= 0]; all(0.1f0 .<= nonzero_weights .<= 0.5f0)
+true
 ```
 
 Scaling with a vector of scalars, where each provides the upper bound and its
@@ -185,17 +156,10 @@ negative provides the lower bound. Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling = [0.1, 0.5, 0.9])
-9×3 Matrix{Float32}:
-  0.0452399   0.0        0.0
- -0.0348047   0.0        0.0
- -0.0386004   0.0        0.0
-  0.0         0.288919   0.0
-  0.0        -0.281413   0.0
-  0.0         0.220761   0.0
-  0.0         0.0        0.0565153
-  0.0         0.0       -0.264399
-  0.0         0.0       -0.317622
+julia> res_input = weighted_init(MersenneTwister(7), Float32, 9, 3; scaling = [0.1, 0.5, 0.9]);
+
+julia> all(all(abs.(column) .<= limit) for (column, limit) in zip(eachcol(res_input), (0.1f0, 0.5f0, 0.9f0)))
+true
 ```
 
 Scaling with a vector of tuples, each providing both upper and lower bound.
@@ -203,37 +167,20 @@ Each column is scaled in order: first element
 provides bounds for the first column, and so on:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(9, 3; scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)])
-9×3 Matrix{Float32}:
- 0.17262    0.0       0.0
- 0.132598   0.0       0.0
- 0.1307     0.0       0.0
- 0.0       -0.121108  0.0
- 0.0       -0.178141  0.0
- 0.0       -0.127924  0.0
- 0.0        0.0       0.40628
- 0.0        0.0       0.370622
- 0.0        0.0       0.364709
+julia> res_input = weighted_init(MersenneTwister(8), Float32, 9, 3;
+       scaling = [(0.1, 0.2), (-0.2, -0.1), (0.3, 0.5)]);
+
+julia> all(all(iszero(weight) || lower <= weight <= upper for weight in column) for (column, (lower, upper)) in zip(eachcol(res_input), ((0.1f0, 0.2f0), (-0.2f0, -0.1f0), (0.3f0, 0.5f0))))
+true
 ```
 
 Example of matrix size change:
 
 ```jldoctest weightedinit
-julia> res_input = weighted_init(8, 3)
-┌ Warning: Reservoir size has changed!
-│
-│     Computed reservoir size (6) does not equal the provided reservoir size (8).
-│
-│     Using computed value (6). Make sure to modify the reservoir initializer accordingly.
-│
-└ @ ReservoirComputing ~/.julia/dev/ReservoirComputing/src/inits/inits_components.jl:20
-6×3 Matrix{Float32}:
-  0.0452399   0.0          0.0
- -0.0348047   0.0          0.0
-  0.0        -0.0386004    0.0
-  0.0         0.00981022   0.0
-  0.0         0.0          0.0577838
-  0.0         0.0         -0.0562827
+julia> res_input = @test_logs (:warn, r"Reservoir size has changed") weighted_init(MersenneTwister(9), Float32, 8, 3);
+
+julia> size(res_input) == (6, 3) && all(count(!iszero, column) == 2 for column in eachcol(res_input))
+true
 ```
 
 Return sparse:
@@ -241,17 +188,10 @@ Return sparse:
 ```jldoctest weightedinit
 julia> using SparseArrays
 
-julia> res_input = weighted_init(9, 3; return_sparse = true)
-9×3 SparseMatrixCSC{Float32, Int64} with 9 stored entries:
-  0.0452399    ⋅           ⋅
- -0.0348047    ⋅           ⋅
- -0.0386004    ⋅           ⋅
-   ⋅          0.0577838    ⋅
-   ⋅         -0.0562827    ⋅
-   ⋅          0.0441522    ⋅
-   ⋅           ⋅          0.00627948
-   ⋅           ⋅         -0.0293777
-   ⋅           ⋅         -0.0352914
+julia> res_input = weighted_init(MersenneTwister(10), Float32, 9, 3; return_sparse = true);
+
+julia> issparse(res_input) && size(res_input) == (9, 3) && nnz(res_input) == 9
+true
 ```
 """
 function weighted_init(
@@ -326,53 +266,33 @@ warning.
 Standard call, changing the init weight:
 
 ```jldoctest weightedminimal
-julia> res_input = weighted_minimal(9, 3; weight = 0.99)
-9×3 Matrix{Float32}:
- 0.99  0.0   0.0
- 0.99  0.0   0.0
- 0.99  0.0   0.0
- 0.0   0.99  0.0
- 0.0   0.99  0.0
- 0.0   0.99  0.0
- 0.0   0.0   0.99
- 0.0   0.0   0.99
- 0.0   0.0   0.99
+julia> using Random, Test
+
+julia> using ReservoirComputing: weighted_minimal
+
+julia> res_input = weighted_minimal(MersenneTwister(11), Float32, 9, 3; weight = 0.99);
+
+julia> size(res_input) == (9, 3) && all(count(!iszero, column) == 3 for column in eachcol(res_input)) && all(iszero(weight) || weight == 0.99f0 for weight in res_input)
+true
 ```
 
 Random sign for each weight, drawn from a bernoulli distribution:
 
 ```jldoctest weightedminimal
-julia> res_input = weighted_minimal(9, 3; sampling_type = :bernoulli_sample!)
-9×3 Matrix{Float32}:
- 0.1  -0.0  -0.0
--0.1  -0.0  -0.0
- 0.1  -0.0   0.0
--0.0   0.1   0.0
- 0.0   0.1  -0.0
- 0.0   0.1   0.0
--0.0  -0.0  -0.1
--0.0  -0.0   0.1
- 0.0  -0.0   0.1
+julia> res_input = weighted_minimal(MersenneTwister(12), Float32, 9, 3; sampling_type = :bernoulli_sample!);
+
+julia> all(count(!iszero, column) == 3 for column in eachcol(res_input)) &&
+       all(weight -> iszero(weight) || abs(weight) == 0.1f0, res_input)
+true
 ```
 
 Example of different reservoir size for the initializer:
 
 ```jldoctest weightedminimal
-julia> res_input = weighted_minimal(8, 3)
-┌ Warning: Reservoir size has changed!
-│
-│     Computed reservoir size (6) does not equal the provided reservoir size (8).
-│
-│     Using computed value (6). Make sure to modify the reservoir initializer accordingly.
-│
-└ @ ReservoirComputing ~/.julia/dev/ReservoirComputing/src/esn/esn_inits.jl:159
-6×3 Matrix{Float32}:
- 0.1  0.0  0.0
- 0.1  0.0  0.0
- 0.0  0.1  0.0
- 0.0  0.1  0.0
- 0.0  0.0  0.1
- 0.0  0.0  0.1
+julia> res_input = @test_logs (:warn, r"Reservoir size has changed") weighted_minimal(MersenneTwister(13), Float32, 8, 3);
+
+julia> size(res_input) == (6, 3) && all(count(!iszero, column) == 2 for column in eachcol(res_input))
+true
 ```
 """
 function weighted_minimal(
@@ -518,57 +438,34 @@ determined by the `sampling` chosen.
 Standard call:
 
 ```jldoctest minimalinit
-julia> res_input = minimal_init(8, 3)
-8×3 Matrix{Float32}:
-  0.1  -0.1   0.1
- -0.1   0.1   0.1
- -0.1  -0.1   0.1
- -0.1  -0.1  -0.1
-  0.1   0.1   0.1
- -0.1  -0.1  -0.1
- -0.1  -0.1   0.1
-  0.1  -0.1   0.1
+julia> using Random
+
+julia> using ReservoirComputing: minimal_init
+
+julia> res_input = minimal_init(MersenneTwister(14), Float32, 8, 3);
+
+julia> size(res_input) == (8, 3) && all(abs.(res_input) .== 0.1f0)
+true
 ```
 
 Sampling weight sign from an irrational number:
 
 ```jldoctest minimalinit
-julia> res_input = minimal_init(8, 3; sampling_type = :irrational)
-8×3 Matrix{Float32}:
- -0.1   0.1  -0.1
-  0.1  -0.1  -0.1
-  0.1   0.1  -0.1
-  0.1   0.1   0.1
- -0.1  -0.1  -0.1
-  0.1   0.1   0.1
-  0.1   0.1  -0.1
- -0.1   0.1  -0.1
+julia> res_input = minimal_init(MersenneTwister(15), Float32, 8, 3; sampling_type = :irrational_sample!);
+
+julia> size(res_input) == (8, 3) && all(abs.(res_input) .== 0.1f0)
+true
 ```
 
 Changing probability for the negative sign
 
 ```jldoctest minimalinit
-julia> res_input = minimal_init(8, 3; p = 0.1) # lower p -> more negative signs
-8×3 Matrix{Float32}:
--0.1  -0.1  -0.1
--0.1  -0.1  -0.1
--0.1  -0.1  -0.1
--0.1  -0.1  -0.1
- 0.1  -0.1  -0.1
--0.1  -0.1  -0.1
--0.1  -0.1  -0.1
--0.1  -0.1  -0.1
+julia> low_probability = minimal_init(MersenneTwister(16), Float32, 8, 3; positive_prob = 0.1);
 
-julia> res_input = minimal_init(8, 3; p = 0.8)# higher p -> more positive signs
-8×3 Matrix{Float32}:
- 0.1   0.1  0.1
--0.1   0.1  0.1
--0.1   0.1  0.1
- 0.1   0.1  0.1
- 0.1   0.1  0.1
- 0.1  -0.1  0.1
--0.1   0.1  0.1
- 0.1   0.1  0.1
+julia> high_probability = minimal_init(MersenneTwister(16), Float32, 8, 3; positive_prob = 0.8);
+
+julia> count(>(0), low_probability) < count(>(0), high_probability)
+true
 ```
 """
 function minimal_init(
@@ -630,18 +527,12 @@ applying:
 ## Examples
 
 ```jldoctest
-julia> input_matrix = chebyshev_mapping(10, 3)
-10×3 Matrix{Float32}:
- 0.866025  0.866025   1.22465f-16
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
- 0.866025  0.866025  -4.37114f-8
+julia> using ReservoirComputing: chebyshev_mapping
+
+julia> input_matrix = chebyshev_mapping(10, 3);
+
+julia> size(input_matrix) == (10, 3) && all(abs.(input_matrix) .<= 1)
+true
 ```
 """
 function chebyshev_mapping(
@@ -714,17 +605,12 @@ the logistic map recurrence:
 ## Examples
 
 ```jldoctest
-julia> logistic_mapping(8, 3)
-8×3 Matrix{Float32}:
- 0.0529682  0.104272  0.1523
- 0.185602   0.345578  0.477687
- 0.559268   0.836769  0.923158
- 0.912003   0.50537   0.262468
- 0.296938   0.924893  0.716241
- 0.772434   0.257023  0.751987
- 0.650385   0.70656   0.69006
- 0.841322   0.767132  0.791346
+julia> using ReservoirComputing: logistic_mapping
 
+julia> input_matrix = logistic_mapping(8, 3);
+
+julia> size(input_matrix) == (8, 3) && all(0 .<= input_matrix .<= 1)
+true
 ```
 """
 function logistic_mapping(
@@ -802,29 +688,19 @@ the number of rows is overridden.
 ## Examples
 
 ```jldoctest
-julia> modified_lm(20, 10; factor=2)
-20×10 SparseArrays.SparseMatrixCSC{Float32, Int64} with 18 stored entries:
-⎡⢠⠀⠀⠀⠀⎤
-⎢⠀⢣⠀⠀⠀⎥
-⎢⠀⠀⢣⠀⠀⎥
-⎢⠀⠀⠀⢣⠀⎥
-⎣⠀⠀⠀⠀⢣⎦
+julia> using SparseArrays
 
-julia> modified_lm(12, 4; factor=3)
-12×4 SparseArrays.SparseMatrixCSC{Float32, Int64} with 9 stored entries:
-  ⋅    ⋅          ⋅          ⋅
-  ⋅    ⋅          ⋅          ⋅
-  ⋅    ⋅          ⋅          ⋅
-  ⋅   0.0133075   ⋅          ⋅
-  ⋅   0.0308564   ⋅          ⋅
-  ⋅   0.070275    ⋅          ⋅
-  ⋅    ⋅         0.0265887   ⋅
-  ⋅    ⋅         0.0608222   ⋅
-  ⋅    ⋅         0.134239    ⋅
-  ⋅    ⋅          ⋅         0.0398177
-  ⋅    ⋅          ⋅         0.0898457
-  ⋅    ⋅          ⋅         0.192168
+julia> using ReservoirComputing: modified_lm
 
+julia> input_matrix = modified_lm(20, 10; factor = 2, return_sparse = true);
+
+julia> issparse(input_matrix) && size(input_matrix) == (20, 10) && nnz(input_matrix) == 18
+true
+
+julia> input_matrix = modified_lm(12, 4; factor = 3, return_sparse = true);
+
+julia> issparse(input_matrix) && size(input_matrix) == (12, 4) && nnz(input_matrix) == 9
+true
 ```
 """
 function modified_lm(

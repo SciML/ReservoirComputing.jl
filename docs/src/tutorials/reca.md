@@ -12,7 +12,7 @@ The data can be read as follows:
 ```@example reca
 using DelimitedFiles
 
-input = readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64)
+input = Int.(readdlm(joinpath(@__DIR__, "5bitinput.txt"), ',', Float64))
 output = readdlm(joinpath(@__DIR__, "5bitoutput.txt"), ',', Float64)
 ```
 
@@ -23,6 +23,7 @@ that needs to be called as well to define the `RECA` struct:
 
 ```@example reca
 using ReservoirComputing, CellularAutomata, Random
+using LuxCore: setup
 Random.seed!(42)
 rng = MersenneTwister(17)
 

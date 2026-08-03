@@ -3,6 +3,15 @@
 
 Base.@deprecate_binding StandardRidge RidgeRegression
 Base.@deprecate_binding toepliz_init toeplitz_init
+"""
+    StandardRidge([Type], [reg])
+
+Compatibility alias for [`RidgeRegression`](@ref).
+
+Use `RidgeRegression` in new code. `StandardRidge` has the same constructors and
+behavior and is retained for compatibility with existing ReservoirComputing code.
+"""
+const StandardRidge = RidgeRegression
 
 @doc raw"""
     train!(rc, train_data, target_data, ps, st,

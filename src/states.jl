@@ -43,35 +43,14 @@ layer output).
 ## Examples
 
 ```jldoctest pad
-julia> pad = Pad(1.0)
-(::Pad{Float64}) (generic function with 2 methods)
+julia> pad = Pad(1.0);
 
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
+julia> x_old = 0:9;
 
-julia> x_new = pad(x_old)
-11-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
- 1
+julia> x_new = pad(x_old);
+
+julia> length(x_new) == length(x_old) + 1 && x_new[end] == 1
+true
 ```
 
 ```jldoctest pad
@@ -81,27 +60,13 @@ julia> mat_old = [1  2  3;
                   10 11 12;
                   13 14 15;
                   16 17 18;
-                  19 20 21]
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
+                  19 20 21];
 
+julia> mat_new = pad(mat_old);
 
- julia> mat_new = pad(mat_old)
- 8×3 Matrix{Int64}:
-   1   2   3
-   4   5   6
-   7   8   9
-  10  11  12
-  13  14  15
-  16  17  18
-  19  20  21
-   1   1   1
+julia> size(mat_new) == (size(mat_old, 1) + 1, size(mat_old, 2)) &&
+       mat_new[1:end-1, :] == mat_old && all(mat_new[end, :] .== 1)
+true
 ```
 
 """
@@ -216,34 +181,10 @@ None
 ## Example
 
 ```jldoctest nlat1
-julia> nlat1 = NLAT1()
-NLAT1 (generic function with 3 methods)
+julia> nlat1 = NLAT1();
 
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> n_new = nlat1(x_old)
-10-element Vector{Int64}:
-  0
-  1
-  4
-  3
- 16
-  5
- 36
-  7
- 64
-  9
+julia> nlat1(collect(0:9)) == [0, 1, 4, 3, 16, 5, 36, 7, 64, 9]
+true
 ```
 
 ```jldoctest nlat1
@@ -253,25 +194,11 @@ julia> mat_old = [1  2  3;
                   10 11 12;
                   13 14 15;
                   16 17 18;
-                  19 20 21]
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
+                  19 20 21];
 
-julia> mat_new = nlat1(mat_old)
-7×3 Matrix{Int64}:
-   1    4    9
-   4    5    6
-  49   64   81
-  10   11   12
- 169  196  225
-  16   17   18
- 361  400  441
+julia> nlat1(mat_old) == [1 4 9; 4 5 6; 49 64 81; 10 11 12;
+                            169 196 225; 16 17 18; 361 400 441]
+true
 
 ```
 """
@@ -325,34 +252,10 @@ None
 ## Example
 
 ```jldoctest nlat2
-julia> nlat2 = NLAT2()
-NLAT2 (generic function with 3 methods)
+julia> nlat2 = NLAT2();
 
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> n_new = nlat2(x_old)
-10-element Vector{Int64}:
-  0
-  1
-  0
-  3
-  6
-  5
- 20
-  7
- 42
-  9
+julia> nlat2(collect(0:9)) == [0, 1, 0, 3, 6, 5, 20, 7, 42, 9]
+true
 
 ```
 
@@ -363,25 +266,11 @@ julia> mat_old = [1  2  3;
                   10 11 12;
                   13 14 15;
                   16 17 18;
-                  19 20 21]
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
+                  19 20 21];
 
-julia> mat_new = nlat2(mat_old)
-7×3 Matrix{Int64}:
-   1    2    3
-   4    5    6
-   4   10   18
-  10   11   12
-  70   88  108
-  16   17   18
- 208  238  270
+julia> nlat2(mat_old) == [1 2 3; 4 5 6; 4 10 18; 10 11 12;
+                            70 88 108; 16 17 18; 208 238 270]
+true
 
 ```
 """
@@ -435,34 +324,10 @@ None
 ## Example
 
 ```jldoctest nlat3
-julia> nlat3 = NLAT3()
-NLAT3 (generic function with 3 methods)
+julia> nlat3 = NLAT3();
 
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> n_new = nlat3(x_old)
-10-element Vector{Int64}:
-  0
-  1
-  3
-  3
- 15
-  5
- 35
-  7
- 63
-  9
+julia> nlat3(collect(0:9)) == [0, 1, 3, 3, 15, 5, 35, 7, 63, 9]
+true
 
 ```
 
@@ -473,25 +338,11 @@ julia> mat_old = [1  2  3;
                   10 11 12;
                   13 14 15;
                   16 17 18;
-                  19 20 21]
-7×3 Matrix{Int64}:
-  1   2   3
-  4   5   6
-  7   8   9
- 10  11  12
- 13  14  15
- 16  17  18
- 19  20  21
+                  19 20 21];
 
-julia> mat_new = nlat3(mat_old)
-7×3 Matrix{Int64}:
-   1    2    3
-   4    5    6
-  40   55   72
-  10   11   12
- 160  187  216
-  16   17   18
-  19   20   21
+julia> nlat3(mat_old) == [1 2 3; 4 5 6; 40 55 72; 10 11 12;
+                            160 187 216; 16 17 18; 19 20 21]
+true
 
 ```
 """
@@ -544,34 +395,10 @@ Implement a partial squaring of the states as described in [Barbosa2021](@cite).
 ## Example
 
 ```jldoctest partialsq
-julia> partialsq = PartialSquare(0.6)
-PartialSquare(0.6)
+julia> partialsq = PartialSquare(0.6);
 
-julia> x_old = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-10-element Vector{Int64}:
- 0
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> x_new = partialsq(x_old)
-10-element Vector{Int64}:
-  0
-  1
-  4
-  9
- 16
- 25
-  6
-  7
-  8
-  9
+julia> partialsq(collect(0:9)) == [0, 1, 4, 9, 16, 25, 6, 7, 8, 9]
+true
 ```
 """
 struct PartialSquare <: Function
@@ -628,41 +455,11 @@ None
 ## Example
 
 ```jldoctest extendedsq
-julia> extendedsq = ExtendedSquare()
-ExtendedSquare()
+julia> extendedsq = ExtendedSquare();
 
-julia> x_old = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-9-element Vector{Int64}:
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-
-julia> x_new = extendedsq(x_old)
-18-element Vector{Int64}:
-  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
-  1
-  4
-  9
- 16
- 25
- 36
- 49
- 64
- 81
+julia> extendedsq(1:9) == [1, 2, 3, 4, 5, 6, 7, 8, 9,
+                             1, 4, 9, 16, 25, 36, 49, 64, 81]
+true
 
 ```
 """

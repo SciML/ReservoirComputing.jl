@@ -6,6 +6,7 @@ begin
     using Serialization
     using Static
     using ReservoirComputing
+    using LuxCore: setup
 
     function roundtrip(x)
         io = IOBuffer()
