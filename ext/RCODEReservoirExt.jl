@@ -893,6 +893,12 @@ function _predict(
                 "FilteredVoltageReadout."
         )
     )
+    cell.encoder isa PoissonRateEncoder && throw(
+        ArgumentError(
+            "PoissonRateEncoder does not support autoregressive predict; " *
+                "use teacher-forced predict(data, ps, st) or CurrentInjection."
+        )
+    )
     steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
     t0, t1 = cell.tspan
     t1 > t0 || throw(

@@ -410,6 +410,7 @@ begin
         @test sum(c1) > 0
         c_hi, _ = collectstates(lsm, 4 .* data, ps, st)
         @test sum(c_hi) >= sum(c1)
+        @test_throws ArgumentError predict(lsm, 5, ps, st; initialdata = [1.0])
     end
 
     @testset "construction validation" begin

@@ -69,6 +69,7 @@ struct CurrentInjection <: AbstractInputEncoder end
 
 Poisson spikes at rate ``\lambda_k = \mathrm{scale}\,\max(u_k, 0)``.
 Times are drawn once per `collectstates` from `st.encoder.rng`.
+Teacher-forced `predict` only (no AR).
 """
 @concrete struct PoissonRateEncoder <: AbstractInputEncoder
     scale <: Number
