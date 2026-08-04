@@ -61,9 +61,9 @@ Next Generation Reservoir Computing [Gauthier2021](@cite).
   - Updated layer state (NamedTuple).
 """
 @concrete struct NGRC <:
-    AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 

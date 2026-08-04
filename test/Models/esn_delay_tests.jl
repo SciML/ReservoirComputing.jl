@@ -31,8 +31,8 @@ begin
             @test idesn.reservoir.cell isa ESNCell
             @test Int(idesn.reservoir.cell.in_dims) == in_dims * (num_delays + 1)
             @test Int(idesn.reservoir.cell.out_dims) == res_dims
-            @test idesn.states_modifiers isa Tuple
-            @test isempty(idesn.states_modifiers)
+            @test idesn.state_modifiers isa Tuple
+            @test isempty(idesn.state_modifiers)
             @test idesn.readout isa LinearReadout
             @test Int(idesn.readout.in_dims) == res_dims
         end
@@ -42,10 +42,10 @@ begin
             res_dims = 5
             out_dims = 2
 
-            idesn = InputDelayESN(in_dims, res_dims, out_dims; states_modifiers = (NLAT1,))
+            idesn = InputDelayESN(in_dims, res_dims, out_dims; state_modifiers = (NLAT1,))
 
-            @test !isempty(idesn.states_modifiers)
-            @test idesn.states_modifiers[1].func === NLAT1
+            @test !isempty(idesn.state_modifiers)
+            @test idesn.state_modifiers[1].func === NLAT1
         end
 
         @testset "num_delays changes reservoir input dim" begin
@@ -83,7 +83,7 @@ begin
             reservoir = desn.reservoir
             @test reservoir isa StatefulLayer
 
-            mods = desn.states_modifiers
+            mods = desn.state_modifiers
             @test mods isa Tuple
             @test !isempty(mods)
             @test first(mods) isa DelayLayer
@@ -146,10 +146,10 @@ begin
             @test Int(fesn.reservoir.cell.in_dims) == in_dims * (num_input_delays + 1)
             @test Int(fesn.reservoir.cell.out_dims) == res_dims
 
-            @test fesn.states_modifiers isa Tuple
-            @test !isempty(fesn.states_modifiers)
+            @test fesn.state_modifiers isa Tuple
+            @test !isempty(fesn.state_modifiers)
 
-            state_delay_layer = first(fesn.states_modifiers)
+            state_delay_layer = first(fesn.state_modifiers)
             @test state_delay_layer isa DelayLayer
             @test Int(state_delay_layer.in_dims) == res_dims
             @test Int(state_delay_layer.num_delays) == num_state_delays
@@ -164,11 +164,11 @@ begin
             res_dims = 5
             out_dims = 2
 
-            fesn = DelayESN(in_dims, res_dims, out_dims; states_modifiers = (NLAT1,))
+            fesn = DelayESN(in_dims, res_dims, out_dims; state_modifiers = (NLAT1,))
 
-            @test length(fesn.states_modifiers) == 2
-            @test fesn.states_modifiers[1] isa DelayLayer
-            @test fesn.states_modifiers[2].func === NLAT1
+            @test length(fesn.state_modifiers) == 2
+            @test fesn.state_modifiers[1] isa DelayLayer
+            @test fesn.state_modifiers[2].func === NLAT1
         end
 
         @testset "delays change dimensions independently" begin
@@ -336,7 +336,7 @@ begin
             @test size(states_s) == (res_dims * (num_state_delays + 1), n_steps)
             @test all(isfinite, states_s)
             @test st_states.input_delay.clock == n_steps
-            @test st_states.states_modifiers[1].clock == n_steps
+            @test st_states.state_modifiers[1].clock == n_steps
 
             ps_t, st_t = train(
                 strided, data, target, ps_s, st_s;
@@ -346,8 +346,8 @@ begin
             @test size(out_tf) == (out_dims, n_steps)
             @test all(isfinite, out_tf)
             @test st_pred.input_delay.clock == st_t.input_delay.clock + n_steps
-            @test st_pred.states_modifiers[1].clock ==
-                st_t.states_modifiers[1].clock + n_steps
+            @test st_pred.state_modifiers[1].clock ==
+                st_t.state_modifiers[1].clock + n_steps
         end
     end
 

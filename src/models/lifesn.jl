@@ -84,9 +84,9 @@ Composition:
   - `readout_activation`: Activation for the linear readout. Default: `identity`.
 """
 @concrete struct LIFESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -116,11 +116,11 @@ function Base.show(io::IO, lifesn::LIFESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(lifesn.states_modifiers)
+    if isempty(lifesn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(lifesn.states_modifiers)
+        for (i, m) in enumerate(lifesn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

@@ -103,6 +103,11 @@ begin
 
             ps, st = setup(rng, model)
 
+            if M === ESN
+                @test propertynames(model) == (:reservoir, :state_modifiers, :readout)
+                @test_deprecated model.states_modifiers === model.state_modifiers
+            end
+
             @test haskey(ps, :reservoir)
             for k in reservoir_param_keys(M)
                 @test haskey(ps.reservoir, k)
@@ -119,9 +124,9 @@ begin
             @test size(ps.readout.weight) == (out_dims, res_dims)
 
             @test haskey(st, :reservoir)
-            @test haskey(st, :states_modifiers)
+            @test haskey(st, :state_modifiers)
             @test haskey(st, :readout)
-            @test st.states_modifiers isa Tuple
+            @test st.state_modifiers isa Tuple
         end
 
         @testset "$(model_name(M)): forward (vector) with identity pipeline -> y == x (dimensions matched)" begin
@@ -153,7 +158,7 @@ begin
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                haskey(st2, :states_modifiers) &&
+                haskey(st2, :state_modifiers) &&
                 haskey(st2, :readout)
         end
 
@@ -265,7 +270,7 @@ begin
 
             @test y ≈ x
             @test haskey(st2, :reservoir)
-            @test haskey(st2, :states_modifiers)
+            @test haskey(st2, :state_modifiers)
             @test haskey(st2, :readout)
         end
 
@@ -394,9 +399,9 @@ begin
             @test size(ps.readout.weight) == (out_dims, res_dims)
 
             @test haskey(st, :reservoir)
-            @test haskey(st, :states_modifiers)
+            @test haskey(st, :state_modifiers)
             @test haskey(st, :readout)
-            @test st.states_modifiers isa Tuple
+            @test st.state_modifiers isa Tuple
             @test st.reservoir isa NamedTuple
         end
 
@@ -460,7 +465,7 @@ begin
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                haskey(st2, :states_modifiers) &&
+                haskey(st2, :state_modifiers) &&
                 haskey(st2, :readout)
         end
 
@@ -664,7 +669,7 @@ begin
 
             @test vec(y) ≈ x
             @test haskey(st2, :reservoir)
-            @test haskey(st2, :states_modifiers)
+            @test haskey(st2, :state_modifiers)
             @test haskey(st2, :readout)
         end
 
@@ -807,9 +812,9 @@ begin
             @test size(ps.readout.weight) == (out_dims, res_dims)
 
             @test haskey(st, :reservoir)
-            @test haskey(st, :states_modifiers)
+            @test haskey(st, :state_modifiers)
             @test haskey(st, :readout)
-            @test st.states_modifiers isa Tuple
+            @test st.state_modifiers isa Tuple
             @test st.reservoir isa NamedTuple
         end
 
@@ -873,7 +878,7 @@ begin
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :reservoir) &&
-                haskey(st2, :states_modifiers) &&
+                haskey(st2, :state_modifiers) &&
                 haskey(st2, :readout)
         end
 
@@ -1114,7 +1119,7 @@ begin
 
             @test vec(y) ≈ x
             @test haskey(st2, :reservoir)
-            @test haskey(st2, :states_modifiers)
+            @test haskey(st2, :state_modifiers)
             @test haskey(st2, :readout)
         end
 

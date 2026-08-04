@@ -6,14 +6,14 @@ Developer interface for an echo-state-network model container.
 ## Type parameters
 
 - `Fields`: the Lux container field tuple. Most ESN models use
-  `(:reservoir, :states_modifiers, :readout)`.
+  `(:reservoir, :state_modifiers, :readout)`.
 
 ## Required fields
 
 Subtypes follow the [`AbstractReservoirComputer`](@ref) field contract. Their
 `reservoir` must be a Lux-compatible reservoir layer, normally a
 [`StatefulLayer`](@ref) around an
-[`AbstractEchoStateNetworkCell`](@ref). `states_modifiers` is a tuple of
+[`AbstractEchoStateNetworkCell`](@ref). `state_modifiers` is a tuple of
 feature transforms and `readout` is the final Lux-compatible mapping.
 
 ## Extension contract
@@ -28,9 +28,9 @@ time step, and the readout must consume that shape after all modifiers.
 ## Example
 
 ```julia
-struct MyESN <: AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+struct MyESN <: AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 ```

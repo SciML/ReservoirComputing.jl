@@ -51,9 +51,9 @@ Composition:
     `Tuple`. Default: empty `()`.
 """
 @concrete struct SVESM <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -79,11 +79,11 @@ function Base.show(io::IO, svesm::SVESM)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(svesm.states_modifiers)
+    if isempty(svesm.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(svesm.states_modifiers)
+        for (i, m) in enumerate(svesm.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

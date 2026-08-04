@@ -79,7 +79,7 @@ Composition:
     + `input_matrix :: (res_dims[ℓ] × in_size[ℓ])` — `W_in^{(ℓ)}`
     + `reservoir_matrix :: (res_dims[ℓ] × res_dims[ℓ])` — `W_res^{(ℓ)}`
     + `bias :: (res_dims[ℓ],)` — present only if `use_bias[ℓ]=true`
-  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
+  - `state_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
     + `weight :: (out_dims × res_dims[L])` — `W_out`
     + `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
@@ -89,13 +89,13 @@ Composition:
 ## States
 
   - `cells :: NTuple{L,NamedTuple}` — states for each [`ESNCell`](@ref).
-  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
+  - `state_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
-@concrete struct DeepESN <: AbstractEchoStateNetwork{(:cells, :states_modifiers, :readout)}
+@concrete struct DeepESN <: AbstractEchoStateNetwork{(:cells, :state_modifiers, :readout)}
     cells
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -124,7 +124,7 @@ function DeepESN(
     mods0 = _asvec(state_modifiers, n_layers)
 
     cells = Vector{Any}(undef, n_layers)
-    states_modifiers = Vector{Any}(undef, n_layers)
+    state_modifiers = Vector{Any}(undef, n_layers)
 
     prev = in_dims
     for idx in firstindex(res_dims):lastindex(res_dims)
@@ -138,10 +138,10 @@ function DeepESN(
             leak_coefficient = leaks[idx]
         )
         cells[idx] = StatefulLayer(cell)
-        states_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])
+        state_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])
         prev = res_dims[idx]
     end
-    mods_per_layer = map(_coerce_layer_mods, states_modifiers) |> Tuple
+    mods_per_layer = map(_coerce_layer_mods, state_modifiers) |> Tuple
     ro = LinearReadout(prev => out_dims, readout_activation)
     return DeepESN(Tuple(cells), mods_per_layer, ro)
 end
@@ -155,8 +155,8 @@ end
 
 function initialparameters(rng::AbstractRNG, desn::DeepESN)
     ps_cells = map(l -> initialparameters(rng, l), desn.cells) |> Tuple
-    mods = desn.states_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
-        desn.states_modifiers
+    mods = desn.state_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
+        desn.state_modifiers
     ps_mods = map(
         layer_mods -> (
             layer_mods === nothing ? () :
@@ -166,14 +166,14 @@ function initialparameters(rng::AbstractRNG, desn::DeepESN)
     ) |> Tuple
 
     ps_ro = initialparameters(rng, desn.readout)
-    return (cells = ps_cells, states_modifiers = ps_mods, readout = ps_ro)
+    return (cells = ps_cells, state_modifiers = ps_mods, readout = ps_ro)
 end
 
 function initialstates(rng::AbstractRNG, desn::DeepESN)
     st_cells = map(l -> initialstates(rng, l), desn.cells) |> Tuple
 
-    mods = desn.states_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
-        desn.states_modifiers
+    mods = desn.state_modifiers === nothing ? ntuple(_ -> (), length(desn.cells)) :
+        desn.state_modifiers
 
     st_mods = map(
         layer_mods -> (
@@ -184,7 +184,7 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
     ) |> Tuple
 
     st_ro = initialstates(rng, desn.readout)
-    return (cells = st_cells, states_modifiers = st_mods, readout = st_ro)
+    return (cells = st_cells, state_modifiers = st_mods, readout = st_ro)
 end
 
 function _partial_apply(desn::DeepESN, inp, ps, st)
@@ -197,8 +197,8 @@ function _partial_apply(desn::DeepESN, inp, ps, st)
         new_cell_st[idx] = st_cell_i
         inp_t,
             st_mods_i = _apply_seq(
-            desn.states_modifiers[idx], inp_t,
-            ps.states_modifiers[idx], st.states_modifiers[idx]
+            desn.state_modifiers[idx], inp_t,
+            ps.state_modifiers[idx], st.state_modifiers[idx]
         )
         new_mods_st[idx] = st_mods_i
     end
@@ -206,7 +206,7 @@ function _partial_apply(desn::DeepESN, inp, ps, st)
     return inp_t,
         (;
             cells = tuple(new_cell_st...),
-            states_modifiers = tuple(new_mods_st...),
+            state_modifiers = tuple(new_mods_st...),
         )
 end
 
@@ -253,7 +253,7 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
 
     return (;
         cells = new_cells,
-        states_modifiers = st.states_modifiers,
+        state_modifiers = st.state_modifiers,
         readout = st.readout,
     )
 end
@@ -273,15 +273,15 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
             cell_st_parts[idx] = st_cell_i
             inp_t,
                 st_mods_i = _apply_seq(
-                desn.states_modifiers[idx], inp_t,
-                ps.states_modifiers[idx], newst.states_modifiers[idx]
+                desn.state_modifiers[idx], inp_t,
+                ps.state_modifiers[idx], newst.state_modifiers[idx]
             )
             mods_st_parts[idx] = st_mods_i
         end
         push!(collected, copy(inp_t))
         newst = (;
             cells = tuple(cell_st_parts...),
-            states_modifiers = tuple(mods_st_parts...),
+            state_modifiers = tuple(mods_st_parts...),
             readout = newst.readout,
         )
     end

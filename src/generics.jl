@@ -1,7 +1,7 @@
 const BoolType = Union{StaticBool, Bool, Val{true}, Val{false}}
 const InputType = Tuple{<:AbstractArray, Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer, StaticInt}
-const RCFields = (:cells, :states_modifiers, :readout)
+const RCFields = (:cells, :state_modifiers, :readout)
 
 """
     AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fields}
@@ -11,14 +11,14 @@ Developer interface for a Lux-compatible reservoir-computing container.
 ## Type parameters
 
 - `Fields`: the `Tuple` of container field names reported to Lux. Reservoir
-  containers use `(:reservoir, :states_modifiers, :readout)`.
+  containers use `(:reservoir, :state_modifiers, :readout)`.
 
 ## Required fields
 
 Subtypes using the generic ReservoirComputing implementation must provide:
 
 - `reservoir`: a Lux-compatible layer that produces reservoir features.
-- `states_modifiers`: a `Tuple` of Lux-compatible layers applied in order to
+- `state_modifiers`: a `Tuple` of Lux-compatible layers applied in order to
   those features. Use `()` when no modifiers are required.
 - `readout`: a Lux-compatible layer that maps features to model outputs.
 
@@ -30,17 +30,17 @@ and [`collectstates`](@ref) methods then compose the three components. Each
 component must accept its matching parameter and state entry and return
 `(output, updated_state)` through `LuxCore.apply`.
 
-`states_modifiers` must preserve the feature layout expected by `readout`.
+`state_modifiers` must preserve the feature layout expected by `readout`.
 Parameter and state containers returned by the Lux generic functions have the
-named fields `reservoir`, `states_modifiers`, and `readout` in that order.
+named fields `reservoir`, `state_modifiers`, and `readout` in that order.
 
 ## Example
 
 ```julia
 struct MyReservoirComputer <: AbstractReservoirComputer{
-        (:reservoir, :states_modifiers, :readout)}
+        (:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 ```
@@ -49,6 +49,17 @@ Use [`ReservoirComputer`](@ref) unless a new model type needs its own
 construction or presentation API.
 """
 abstract type AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fields} end
+
+function Base.getproperty(rc::AbstractReservoirComputer, name::Symbol)
+    if name === :states_modifiers
+        Base.depwarn(
+            "`states_modifiers` is deprecated; use `state_modifiers` instead.",
+            :states_modifiers,
+        )
+        return getfield(rc, :state_modifiers)
+    end
+    return getfield(rc, name)
+end
 
 ### from Lux's extended ops
 
