@@ -20,9 +20,12 @@ rc_internal_hooks = (
     :_check_protected_kwargs,
     :_collectstates,
     :_continuous_esn_rhs!,
+    :_feature_dim,
     :_fit_readout,
+    :_init_encoder_st,
     :_predict,
     :_reservoir_jac_prototype,
+    :_supports_ar,
     :_wrap_layers,
     :addreadout!,
 )

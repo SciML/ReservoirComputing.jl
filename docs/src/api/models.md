@@ -26,6 +26,12 @@
     ContinuousESN
 ```
 
+## Liquid State Machines
+
+```@docs
+    LSM
+```
+
 ## Next generation reservoir computing
 
 ```@docs
