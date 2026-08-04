@@ -28,6 +28,7 @@ RCCellularAutomataExt = "CellularAutomata"
 RCLIBSVMExt = "LIBSVM"
 RCMLJLinearModelsExt = "MLJLinearModels"
 RCODEReservoirExt = "DataInterpolations"
+RCODEReservoirSparseArraysExt = ["DataInterpolations", "SparseArrays"]
 RCSparseArraysExt = "SparseArrays"
 
 [compat]

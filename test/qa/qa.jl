@@ -22,6 +22,7 @@ rc_internal_hooks = (
     :_continuous_esn_rhs!,
     :_fit_readout,
     :_predict,
+    :_reservoir_jac_prototype,
     :_wrap_layers,
     :addreadout!,
 )

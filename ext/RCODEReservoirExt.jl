@@ -2,9 +2,9 @@ module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
 using LuxCore: apply
-using SciMLBase: FullSpecialize, ODEProblem, init, reinit!, remake, solve, solve!,
-    NullParameters
-using Static: static
+using SciMLBase: FullSpecialize, ODEFunction, ODEProblem, init, reinit!, remake, solve,
+    solve!, NullParameters
+using Static: known, static
 using WeightInitializers: randn32, zeros32
 
 using ReservoirComputing: ReservoirComputing,
@@ -14,6 +14,7 @@ using ReservoirComputing: ReservoirComputing,
     ContinuousESNCell,
     LinearReadout,
     TerminalStateSampling,
+    _reservoir_jac_prototype,
     _wrap_layers,
     collectstates,
     rand_sparse,
@@ -323,6 +324,7 @@ function ReservoirComputing.ContinuousESN(
         equations = ReservoirComputing._continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
+        use_jac_prototype::Bool = false,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -347,7 +349,8 @@ function ReservoirComputing.ContinuousESN(
         activation, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias),
-        equations, tspan, args, kwargs
+        equations, tspan, args, kwargs,
+        static(use_jac_prototype)
     )
 
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
@@ -398,7 +401,11 @@ function _collectstates(
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    prob = ODEProblem{true, FullSpecialize}(cell.equations, u0, cell.tspan, solve_p)
+    jac_prototype = known(cell.use_jac_prototype) ?
+        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        nothing
+    ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
+    prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
 
     sol = solve(
         prob, cell.args...;
@@ -448,10 +455,15 @@ function _predict(
     st_mods = st.states_modifiers
     st_ro = st.readout
 
+    jac_prototype = known(cell.use_jac_prototype) ?
+        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        nothing
+    ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
+
     input_fn = ConstantInputWindow(current_input)
     solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
     sub_prob = ODEProblem{true, FullSpecialize}(
-        cell.equations, current_state, (window_starts[1], window_ends[1]), solve_p
+        ode_fn, current_state, (window_starts[1], window_ends[1]), solve_p
     )
     integrator = init(
         sub_prob, cell.args...;
