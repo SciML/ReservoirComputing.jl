@@ -3,7 +3,7 @@
         use_bias = false,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_bias = zeros32, init_state = randn32,
-        equations = _continuous_esn_rhs!,
+        equations = __continuous_esn_rhs!,
         state_modifiers = (), readout_activation = identity,
         kwargs...)
 

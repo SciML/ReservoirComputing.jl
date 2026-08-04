@@ -84,11 +84,13 @@ end
     targets = randn(rng, Float64, n_outputs, n_samples)
     regularization = 1.0e-2
 
-    weights_default = ReservoirComputing._fit_readout(RidgeRegression(regularization), states, targets)
-    weights_nothing = ReservoirComputing._fit_readout(
+    weights_default = ReservoirComputing.__fit_readout(
+        RidgeRegression(regularization), states, targets
+    )
+    weights_nothing = ReservoirComputing.__fit_readout(
         RidgeRegression(regularization), states, targets; solver = nothing
     )
-    weights_ls = ReservoirComputing._fit_readout(
+    weights_ls = ReservoirComputing.__fit_readout(
         RidgeRegression(regularization), states, targets; solver = QRFactorization()
     )
 

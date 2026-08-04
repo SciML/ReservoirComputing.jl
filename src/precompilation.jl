@@ -87,7 +87,7 @@ using PrecompileTools: @compile_workload, @setup_workload
         ps_sl, st_sl = setup(rng, sl)
         out_sl, st_sl2 = sl(x_single, ps_sl, st_sl)
 
-        output_matrix = _fit_readout(RidgeRegression(1.0e-6), states, target_data)
+        output_matrix = __fit_readout(RidgeRegression(1.0e-6), states, target_data)
 
         # resetcarry!
         st_reset = resetcarry!(rng, esn, st_trained)

@@ -1,4 +1,4 @@
-@inline function _apply_tomatrix(
+@inline function __apply_tomatrix(
         states_mod::F, states::AbstractMatrix
     ) where {
         F <:
@@ -212,7 +212,7 @@ function NLAT1(x_old::AbstractVector)
     return x_new
 end
 
-NLAT1(x_old::AbstractMatrix) = _apply_tomatrix(NLAT1, x_old)
+NLAT1(x_old::AbstractMatrix) = __apply_tomatrix(NLAT1, x_old)
 
 NLAT1() = NLAT1
 
@@ -284,7 +284,7 @@ function NLAT2(x_old::AbstractVector)
     return x_new
 end
 
-NLAT2(x_old::AbstractMatrix) = _apply_tomatrix(NLAT2, x_old)
+NLAT2(x_old::AbstractMatrix) = __apply_tomatrix(NLAT2, x_old)
 
 NLAT2() = NLAT2
 
@@ -356,7 +356,7 @@ function NLAT3(x_old::AbstractVector)
     return x_new
 end
 
-NLAT3(x_old::AbstractMatrix) = _apply_tomatrix(NLAT3, x_old)
+NLAT3(x_old::AbstractMatrix) = __apply_tomatrix(NLAT3, x_old)
 
 NLAT3() = NLAT3
 
@@ -418,7 +418,7 @@ function (ps::PartialSquare)(x_old::AbstractVector)
     return x_new
 end
 
-(ps::PartialSquare)(x_old::AbstractMatrix) = _apply_tomatrix(ps, x_old)
+(ps::PartialSquare)(x_old::AbstractMatrix) = __apply_tomatrix(ps, x_old)
 
 @doc raw"""
 
@@ -468,6 +468,6 @@ function ExtendedSquare(x_old::AbstractVector)
     return vcat(x_new, x_new .^ 2)
 end
 
-ExtendedSquare(x_old::AbstractMatrix) = _apply_tomatrix(ExtendedSquare, x_old)
+ExtendedSquare(x_old::AbstractMatrix) = __apply_tomatrix(ExtendedSquare, x_old)
 
 ExtendedSquare() = ExtendedSquare

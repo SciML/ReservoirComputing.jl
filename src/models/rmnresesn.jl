@@ -173,7 +173,7 @@ function RMNResESN(
     cell = StatefulLayer(rmncell)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return RMNResESN(cell, mods, ro)
 end

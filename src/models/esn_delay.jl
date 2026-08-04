@@ -128,7 +128,7 @@ function InputDelayESN(
     cell = StatefulLayer(ESNCell(augmented_in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    st_mods = _wrap_layers(mods_tuple)
+    st_mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return InputDelayESN(input_mods, cell, st_mods, ro)
 end
@@ -289,7 +289,7 @@ function StateDelayESN(
     delay = DelayLayer(res_dims; num_delays = num_delays, stride = stride)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (delay, state_modifiers...) : (delay, state_modifiers)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro_in_dims = res_dims * (num_delays + 1)
     ro = LinearReadout(ro_in_dims => out_dims, readout_activation)
 
@@ -481,7 +481,7 @@ function DelayESN(
     state_delay = DelayLayer(res_dims; num_delays = num_state_delays, stride = state_stride)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (state_delay, state_modifiers...) : (state_delay, state_modifiers)
-    st_mods = _wrap_layers(mods_tuple)
+    st_mods = __wrap_layers(mods_tuple)
     augmented_res_dims = res_dims * (num_state_delays + 1)
     ro = LinearReadout(augmented_res_dims => out_dims, readout_activation)
     return DelayESN(input_delay, cell, st_mods, ro)
@@ -522,11 +522,11 @@ end
 # *before* the reservoir. The generic `AbstractReservoirComputer` machinery in
 # `reservoircomputer.jl` only knows about `(:reservoir, :state_modifiers,
 # :readout)`, so these models need their own parameter/state setup and their
-# own `_partial_apply`. The generic forward call and `collectstates` both route
-# through `_partial_apply`, so overriding it here is enough to make them work.
-const _InputDelayedESN = Union{InputDelayESN, DelayESN}
+# own `__partial_apply`. The generic forward call and `collectstates` both route
+# through `__partial_apply`, so overriding it here is enough to make them work.
+const __INPUT_DELAYED_ESN = Union{InputDelayESN, DelayESN}
 
-function initialparameters(rng::AbstractRNG, esn::_InputDelayedESN)
+function initialparameters(rng::AbstractRNG, esn::__INPUT_DELAYED_ESN)
     return (
         input_delay = initialparameters(rng, esn.input_delay),
         reservoir = initialparameters(rng, esn.reservoir),
@@ -536,7 +536,7 @@ function initialparameters(rng::AbstractRNG, esn::_InputDelayedESN)
     )
 end
 
-function initialstates(rng::AbstractRNG, esn::_InputDelayedESN)
+function initialstates(rng::AbstractRNG, esn::__INPUT_DELAYED_ESN)
     return (
         input_delay = initialstates(rng, esn.input_delay),
         reservoir = initialstates(rng, esn.reservoir),
@@ -545,12 +545,12 @@ function initialstates(rng::AbstractRNG, esn::_InputDelayedESN)
     )
 end
 
-function _partial_apply(esn::_InputDelayedESN, inp, ps, st)
+function __partial_apply(esn::__INPUT_DELAYED_ESN, inp, ps, st)
     inp_delayed, st_input_delay = apply(
         esn.input_delay, inp, ps.input_delay, st.input_delay
     )
     res_state, st_res = apply(esn.reservoir, inp_delayed, ps.reservoir, st.reservoir)
-    out, st_mods = _apply_seq(
+    out, st_mods = __apply_seq(
         esn.state_modifiers, res_state, ps.state_modifiers, st.state_modifiers
     )
     return out,

@@ -39,7 +39,7 @@ end
     targets = randn(rng, Float64, 2, 30)
     ridge = RidgeRegression(1.0e-3)
 
-    weights_new = ReservoirComputing._fit_readout(
+    weights_new = ReservoirComputing.__fit_readout(
         ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
     result = @test_deprecated train(

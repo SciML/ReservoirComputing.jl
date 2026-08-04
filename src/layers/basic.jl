@@ -281,7 +281,7 @@ that time step.
 
 """
 function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
-    _require_nonempty_data(data, "collectstates")
+    __require_nonempty_data(data, "collectstates")
     newst = st
     collected = Any[]
     for inp in eachcol(data)
@@ -533,7 +533,7 @@ function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
         nonlin_feat = func(inp)
         push!(feature_vector, nonlin_feat)
     end
-    out = vcat(feature_vector...)
+    out = reduce(vcat, feature_vector)
 
     return out, st
 end

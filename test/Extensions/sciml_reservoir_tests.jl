@@ -54,7 +54,7 @@ begin
         @test st == NamedTuple()
     end
 
-    @testset "Continuous _collectstates errors without extension" begin
+    @testset "Continuous __collectstates errors without extension" begin
         model, data, ps, st = sciml_reservoir_fixture()
         @test_throws SciMLReservoirError collectstates(model, data, ps, st)
     end
@@ -76,7 +76,7 @@ begin
         @test res_ok.kwargs[:reltol] == 1.0e-6
     end
 
-    @testset "Continuous _predict errors without extension" begin
+    @testset "Continuous __predict errors without extension" begin
         model, data, ps, st = sciml_reservoir_fixture()
         initialdata = randn(Float32, 1)
         @test_throws SciMLReservoirError predict(model, data, ps, st)

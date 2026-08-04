@@ -100,7 +100,11 @@ function check_inf_nan(weights::AbstractMatrix)
     has_nan = any(isnan, weights)
     has_inf = any(isinf, weights)
     if has_nan || has_inf
-        error("Created matrix contains invalid values (NaN=$has_nan, Inf=$has_inf)")
+        throw(
+            ArgumentError(
+                "Created matrix contains invalid values (NaN=$has_nan, Inf=$has_inf)"
+            )
+        )
     end
 
     return nothing
@@ -145,10 +149,10 @@ function regular_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat;
         strides::Union{Integer, AbstractVector{<:Integer}} = 2
     )
-    return _regular_sample!(rng, vecormat, strides)
+    return __regular_sample!(rng, vecormat, strides)
 end
 
-function _regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::Integer)
+function __regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::Integer)
     for idx in eachindex(vecormat)
         if idx % strides == 0
             vecormat[idx] = -vecormat[idx]
@@ -157,7 +161,7 @@ function _regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides:
     return
 end
 
-function _regular_sample!(
+function __regular_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::AbstractVector{<:Integer}
     )
     next_flip = strides[1]
@@ -204,7 +208,11 @@ function irrational_sample!(
 
         required_digits = start + total_elements
         if length(ir_array) < required_digits
-            error("Not enough digits available. Increase precision or adjust start.")
+            throw(
+                ArgumentError(
+                    "Not enough digits available. Increase precision or adjust start."
+                )
+            )
         end
 
         element_index = 0
