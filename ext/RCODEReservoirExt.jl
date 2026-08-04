@@ -192,12 +192,12 @@ function _collectstates(
 
     raw_states = _sample(res.sampler, sol)
     modified_states, st_mods = _apply_modifiers_continuous(
-        rc.states_modifiers, raw_states, ps.states_modifiers, st.states_modifiers
+        rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
     )
 
     newst = (
         reservoir = st.reservoir,
-        states_modifiers = st_mods,
+        state_modifiers = st_mods,
         readout = st.readout,
     )
     return modified_states, newst
@@ -253,7 +253,7 @@ function _predict(
     current_state = res.prob.u0
     current_input = initialdata
 
-    st_mods = st.states_modifiers
+    st_mods = st.state_modifiers
     st_ro = st.readout
 
     input_fn = ConstantInputWindow(current_input)
@@ -289,9 +289,9 @@ function _predict(
         solve!(integrator)
         current_state = integrator.u
 
-        if !isempty(rc.states_modifiers)
+        if !isempty(rc.state_modifiers)
             state_after_mods, st_mods = ReservoirComputing._apply_seq(
-                rc.states_modifiers, current_state, ps.states_modifiers, st_mods
+                rc.state_modifiers, current_state, ps.state_modifiers, st_mods
             )
         else
             state_after_mods = current_state
@@ -307,7 +307,7 @@ function _predict(
 
     newst = (
         reservoir = st.reservoir,
-        states_modifiers = st_mods,
+        state_modifiers = st_mods,
         readout = st_ro,
     )
     return outputs, newst
@@ -417,12 +417,12 @@ function _collectstates(
 
     raw_states = _sample(TerminalStateSampling(), sol)
     modified_states, st_mods = _apply_modifiers_continuous(
-        rc.states_modifiers, raw_states, ps.states_modifiers, st.states_modifiers
+        rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
     )
 
     newst = (
         reservoir = st.reservoir,
-        states_modifiers = st_mods,
+        state_modifiers = st_mods,
         readout = st.readout,
     )
     return modified_states, newst
@@ -452,7 +452,7 @@ function _predict(
     current_state = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
     current_input = initialdata
 
-    st_mods = st.states_modifiers
+    st_mods = st.state_modifiers
     st_ro = st.readout
 
     jac_prototype = known(cell.use_jac_prototype) ?
@@ -485,9 +485,9 @@ function _predict(
         solve!(integrator)
         current_state = integrator.u
 
-        if !isempty(rc.states_modifiers)
+        if !isempty(rc.state_modifiers)
             state_after_mods, st_mods = ReservoirComputing._apply_seq(
-                rc.states_modifiers, current_state, ps.states_modifiers, st_mods
+                rc.state_modifiers, current_state, ps.state_modifiers, st_mods
             )
         else
             state_after_mods = current_state
@@ -503,7 +503,7 @@ function _predict(
 
     newst = (
         reservoir = st.reservoir,
-        states_modifiers = st_mods,
+        state_modifiers = st_mods,
         readout = st_ro,
     )
     return outputs, newst
