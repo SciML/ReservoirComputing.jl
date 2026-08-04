@@ -237,19 +237,19 @@ begin
 
     struct ExternalReservoirComputer <:
         ReservoirComputing.AbstractReservoirComputer{
-            (:reservoir, :states_modifiers, :readout),
+            (:reservoir, :state_modifiers, :readout),
         }
         reservoir
-        states_modifiers
+        state_modifiers
         readout
     end
 
     struct ExternalEchoStateNetwork <:
         ReservoirComputing.AbstractEchoStateNetwork{
-            (:reservoir, :states_modifiers, :readout),
+            (:reservoir, :state_modifiers, :readout),
         }
         reservoir
-        states_modifiers
+        state_modifiers
         readout
     end
 
@@ -287,13 +287,13 @@ begin
             model_output, model_next_st = LuxCore.apply(model, Float32[3, 4], model_ps, model_st)
             @test size(model_output) == (2, 1)
             @test vec(model_output) == Float32[6, 8]
-            @test keys(model_next_st) == (:reservoir, :states_modifiers, :readout)
+            @test keys(model_next_st) == (:reservoir, :state_modifiers, :readout)
 
             states, collected_st = collectstates(
                 model, Float32[3 4; 4 5], model_ps, model_st
             )
             @test states == Float32[3 7; 4 9]
-            @test keys(collected_st) == (:reservoir, :states_modifiers, :readout)
+            @test keys(collected_st) == (:reservoir, :state_modifiers, :readout)
         end
 
         @test ExternalEncoding() isa ReservoirComputing.AbstractInputEncoding
@@ -382,7 +382,7 @@ begin
                 common_model_kwargs(T, use_bias)...,
                 num_delays = 1,
                 stride = 1,
-                states_modifiers = (),
+                state_modifiers = (),
             ),
             StateDelayESN(
                 3,
@@ -402,7 +402,7 @@ begin
                 num_state_delays = 1,
                 input_stride = 1,
                 state_stride = 1,
-                states_modifiers = (),
+                state_modifiers = (),
             ),
         )
         for model in models

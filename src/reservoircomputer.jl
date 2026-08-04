@@ -1,10 +1,10 @@
 @doc raw"""
-    ReservoirComputer(reservoir, states_modifiers, readout)
+    ReservoirComputer(reservoir, state_modifiers, readout)
     ReservoirComputer(reservoir, readout)
 
 Generic reservoir computing container that wires together:
   1) a `reservoir` (any Lux-compatible layer producing features),
-  2) (Optional) zero or more `states_modifiers` applied sequentially to the reservoir features,
+  2) (Optional) zero or more `state_modifiers` applied sequentially to the reservoir features,
   3) a `readout` layer (typically [`LinearReadout`](@ref)).
 
 The container exposes a standard `(x, ps, st) -> (y, st′)` interface and
@@ -14,7 +14,7 @@ features, and install trained readout weights.
 ## Arguments
 
 - `reservoir`: a layer that consumes inputs and produces feature vectors.
-- `states_modifiers`: a tuple (or vector converted to `Tuple`) of layers applied
+- `state_modifiers`: a tuple (or vector converted to `Tuple`) of layers applied
   after the reservoir (optional. May be empty).
 - `readout`: the final trainable layer mapping features to outputs.
 
@@ -30,9 +30,9 @@ features, and install trained readout weights.
   states of the reservoir, modifiers, and readout.
 """
 struct ReservoirComputer{R, S, L} <:
-    AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :state_modifiers, :readout)}
     reservoir::R
-    states_modifiers::S
+    state_modifiers::S
     readout::L
 
     function ReservoirComputer(reservoir::R, state_modifiers::S, readout::L) where {R, S, L}
@@ -50,16 +50,16 @@ end
 
 function initialparameters(rng::AbstractRNG, rc::AbstractReservoirComputer)
     ps_res = initialparameters(rng, rc.reservoir)
-    ps_mods = map(l -> initialparameters(rng, l), rc.states_modifiers) |> Tuple
+    ps_mods = map(l -> initialparameters(rng, l), rc.state_modifiers) |> Tuple
     ps_ro = initialparameters(rng, rc.readout)
-    return (reservoir = ps_res, states_modifiers = ps_mods, readout = ps_ro)
+    return (reservoir = ps_res, state_modifiers = ps_mods, readout = ps_ro)
 end
 
 function initialstates(rng::AbstractRNG, rc::AbstractReservoirComputer)
     st_res = initialstates(rng, rc.reservoir)
-    st_mods = map(l -> initialstates(rng, l), rc.states_modifiers) |> Tuple
+    st_mods = map(l -> initialstates(rng, l), rc.state_modifiers) |> Tuple
     st_ro = initialstates(rng, rc.readout)
-    return (reservoir = st_res, states_modifiers = st_mods, readout = st_ro)
+    return (reservoir = st_res, state_modifiers = st_mods, readout = st_ro)
 end
 
 function _require_nonempty_data(data::AbstractMatrix, context::AbstractString)
@@ -82,9 +82,9 @@ function _partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
     out,
         st_mods = _apply_seq(
-        rc.states_modifiers, out, ps.states_modifiers, st.states_modifiers
+        rc.state_modifiers, out, ps.state_modifiers, st.state_modifiers
     )
-    return out, (reservoir = st_res, states_modifiers = st_mods)
+    return out, (reservoir = st_res, state_modifiers = st_mods)
 end
 
 function (rc::AbstractReservoirComputer)(inp, ps, st)
@@ -151,11 +151,11 @@ function Base.show(io::IO, rc::ReservoirComputer)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(rc.states_modifiers)
+    if isempty(rc.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(rc.states_modifiers)
+        for (i, m) in enumerate(rc.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

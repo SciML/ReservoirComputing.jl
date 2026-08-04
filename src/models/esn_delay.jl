@@ -3,7 +3,7 @@
                   num_delays=1, stride=1, leak_coefficient=1.0,
                   init_reservoir=rand_sparse, init_input=scaled_rand,
                   init_bias=zeros32, init_state=randn32, use_bias=false,
-                  states_modifiers=(), readout_activation=identity)
+                  state_modifiers=(), readout_activation=identity)
 
 Echo State Network with input delays [Fleddermann2025](@cite).
 
@@ -11,7 +11,7 @@ Echo State Network with input delays [Fleddermann2025](@cite).
   1) an internal [`DelayLayer`](@ref) applied to the input signal to build
      tapped-delay features,
   2) a stateful [`ESNCell`](@ref) (reservoir) receiving the augmented input,
-  3) zero or more `states_modifiers` applied to the reservoir state, and
+  3) zero or more `state_modifiers` applied to the reservoir state, and
   4) a [`LinearReadout`](@ref) mapping the modified reservoir state to outputs.
 
 At each time step, the input `u(t)` is expanded into a delay-coordinate
@@ -67,7 +67,7 @@ Delay expansion (on input):
 
 Composition:
 
-  - `states_modifiers`: A layer or collection of layers applied to the
+  - `state_modifiers`: A layer or collection of layers applied to the
     reservoir state before the readout. These run **after** the internal
     `DelayLayer`. Accepts a single layer, an `AbstractVector`, or a `Tuple`.
     Default: empty `()`.
@@ -90,7 +90,7 @@ Composition:
       - `input_matrix :: (res_dims × ((num_delays + 1) * in_dims))` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
-  - `states_modifiers` — a `Tuple` with parameters for the user-provided
+  - `state_modifiers` — a `Tuple` with parameters for the user-provided
     modifier layers (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
       - `weight :: (out_dims × res_dims)` — `W_out`
@@ -101,19 +101,19 @@ Composition:
   - `input_delay` — state for the internal [`DelayLayer`](@ref) (its
     delay buffer and clock).
   - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng`).
-  - `states_modifiers` — states for the user-provided modifier layers.
+  - `state_modifiers` — states for the user-provided modifier layers.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
 @concrete struct InputDelayESN <:
     AbstractEchoStateNetwork{
         (
-            :input_delay, :reservoir, :states_modifiers,
+            :input_delay, :reservoir, :state_modifiers,
             :readout,
         ),
     }
     input_delay
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -121,13 +121,13 @@ function InputDelayESN(
         in_dims::IntegerType,
         res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
-        states_modifiers = (), kwargs...
+        state_modifiers = (), kwargs...
     )
     input_mods = DelayLayer(in_dims; num_delays = num_delays, stride = stride)
     augmented_in_dims = in_dims * (num_delays + 1)
     cell = StatefulLayer(ESNCell(augmented_in_dims => res_dims, activation; kwargs...))
-    mods_tuple = states_modifiers isa Tuple || states_modifiers isa AbstractVector ?
-        Tuple(states_modifiers) : (states_modifiers,)
+    mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+        Tuple(state_modifiers) : (state_modifiers,)
     st_mods = _wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return InputDelayESN(input_mods, cell, st_mods, ro)
@@ -144,12 +144,12 @@ function Base.show(io::IO, esn::InputDelayESN)
     show(io, esn.reservoir)
     print(io, ",\n")
 
-    print(io, "    states_modifiers = ")
-    if isempty(esn.states_modifiers)
+    print(io, "    state_modifiers = ")
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end
@@ -255,7 +255,7 @@ Composition:
       - `input_matrix :: (res_dims × in_dims)` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
-  - `states_modifiers` — a `Tuple` with parameters for:
+  - `state_modifiers` — a `Tuple` with parameters for:
       1. the internal [`DelayLayer`](@ref), and
       2. any user-provided modifier layers (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
@@ -269,14 +269,14 @@ Composition:
 
   - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng` used to
     sample initial hidden states).
-  - `states_modifiers` — a `Tuple` with states for the internal `DelayLayer`
+  - `state_modifiers` — a `Tuple` with states for the internal `DelayLayer`
     (its delay buffer and clock) and each additional modifier layer.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
 """
 @concrete struct StateDelayESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -304,11 +304,11 @@ function Base.show(io::IO, esn::StateDelayESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end
@@ -330,7 +330,7 @@ end
                  leak_coefficient=1.0, init_reservoir=rand_sparse,
                  init_input=scaled_rand, init_bias=zeros32,
                  init_state=randn32, use_bias=false,
-                 states_modifiers=(), readout_activation=identity)
+                 state_modifiers=(), readout_activation=identity)
 
 Echo State Network with both input and state delays [Fleddermann2025](@cite).
 
@@ -338,7 +338,7 @@ Echo State Network with both input and state delays [Fleddermann2025](@cite).
   1) an internal [`DelayLayer`](@ref) applied to the input signal,
   2) a stateful [`ESNCell`](@ref) (reservoir) receiving the augmented input,
   3) a second internal [`DelayLayer`](@ref) applied to the reservoir state,
-  4) zero or more additional `states_modifiers` applied after the state
+  4) zero or more additional `state_modifiers` applied after the state
      delay, and
   5) a [`LinearReadout`](@ref) mapping the final feature vector to outputs.
 
@@ -410,7 +410,7 @@ State delay expansion:
 
 Composition:
 
-  - `states_modifiers`: A layer or collection of layers applied to the
+  - `state_modifiers`: A layer or collection of layers applied to the
     delayed reservoir features before the readout. These run **after** the
     internal state [`DelayLayer`](@ref). Accepts a single layer, an
     `AbstractVector`, or a `Tuple`. Default: empty `()`.
@@ -434,7 +434,7 @@ Composition:
         — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
-  - `states_modifiers` — a `Tuple` with parameters for:
+  - `state_modifiers` — a `Tuple` with parameters for:
       1. the internal state [`DelayLayer`](@ref), and
       2. any user-provided modifier layers (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
@@ -448,7 +448,7 @@ Composition:
     clock).
   - `reservoir` — states for the internal [`ESNCell`](@ref) (e.g. `rng`
     used to sample initial hidden states).
-  - `states_modifiers` — a `Tuple` with states for the internal state
+  - `state_modifiers` — a `Tuple` with states for the internal state
     [`DelayLayer`](@ref) (its delay buffer and clock) and each additional
     modifier layer.
   - `readout` — states for [`LinearReadout`](@ref) (typically empty).
@@ -457,12 +457,12 @@ Composition:
     AbstractEchoStateNetwork{
         (
             :input_delay, :reservoir,
-            :states_modifiers, :readout,
+            :state_modifiers, :readout,
         ),
     }
     input_delay
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -470,7 +470,7 @@ function DelayESN(
         in_dims::IntegerType,
         res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_input_delays::Int = 1, input_stride::Int = 1, num_state_delays::Int = 1,
-        state_stride::Int = 1, readout_activation = identity, states_modifiers = (),
+        state_stride::Int = 1, readout_activation = identity, state_modifiers = (),
         kwargs...
     )
 
@@ -479,8 +479,8 @@ function DelayESN(
 
     cell = StatefulLayer(ESNCell(augmented_in_dims => res_dims, activation; kwargs...))
     state_delay = DelayLayer(res_dims; num_delays = num_state_delays, stride = state_stride)
-    mods_tuple = states_modifiers isa Tuple || states_modifiers isa AbstractVector ?
-        (state_delay, states_modifiers...) : (state_delay, states_modifiers)
+    mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
+        (state_delay, state_modifiers...) : (state_delay, state_modifiers)
     st_mods = _wrap_layers(mods_tuple)
     augmented_res_dims = res_dims * (num_state_delays + 1)
     ro = LinearReadout(augmented_res_dims => out_dims, readout_activation)
@@ -498,12 +498,12 @@ function Base.show(io::IO, esn::DelayESN)
     show(io, esn.reservoir)
     print(io, ",\n")
 
-    print(io, "    states_modifiers = ")
-    if isempty(esn.states_modifiers)
+    print(io, "    state_modifiers = ")
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end
@@ -520,7 +520,7 @@ end
 
 # `InputDelayESN`/`DelayESN` carry an extra `input_delay` field that must run
 # *before* the reservoir. The generic `AbstractReservoirComputer` machinery in
-# `reservoircomputer.jl` only knows about `(:reservoir, :states_modifiers,
+# `reservoircomputer.jl` only knows about `(:reservoir, :state_modifiers,
 # :readout)`, so these models need their own parameter/state setup and their
 # own `_partial_apply`. The generic forward call and `collectstates` both route
 # through `_partial_apply`, so overriding it here is enough to make them work.
@@ -530,7 +530,7 @@ function initialparameters(rng::AbstractRNG, esn::_InputDelayedESN)
     return (
         input_delay = initialparameters(rng, esn.input_delay),
         reservoir = initialparameters(rng, esn.reservoir),
-        states_modifiers = map(l -> initialparameters(rng, l), esn.states_modifiers) |>
+        state_modifiers = map(l -> initialparameters(rng, l), esn.state_modifiers) |>
             Tuple,
         readout = initialparameters(rng, esn.readout),
     )
@@ -540,7 +540,7 @@ function initialstates(rng::AbstractRNG, esn::_InputDelayedESN)
     return (
         input_delay = initialstates(rng, esn.input_delay),
         reservoir = initialstates(rng, esn.reservoir),
-        states_modifiers = map(l -> initialstates(rng, l), esn.states_modifiers) |> Tuple,
+        state_modifiers = map(l -> initialstates(rng, l), esn.state_modifiers) |> Tuple,
         readout = initialstates(rng, esn.readout),
     )
 end
@@ -551,8 +551,8 @@ function _partial_apply(esn::_InputDelayedESN, inp, ps, st)
     )
     res_state, st_res = apply(esn.reservoir, inp_delayed, ps.reservoir, st.reservoir)
     out, st_mods = _apply_seq(
-        esn.states_modifiers, res_state, ps.states_modifiers, st.states_modifiers
+        esn.state_modifiers, res_state, ps.state_modifiers, st.state_modifiers
     )
     return out,
-        (input_delay = st_input_delay, reservoir = st_res, states_modifiers = st_mods)
+        (input_delay = st_input_delay, reservoir = st_res, state_modifiers = st_mods)
 end

@@ -73,19 +73,19 @@ This model wraps [`EIESNCell`](@ref).
 ## Parameters
 
   - `reservoir` — parameters of the internal [`EIESNCell`](@ref).
-  - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
+  - `state_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref).
 
 ## States
 
   - `reservoir` — states for the internal [`EIESNCell`](@ref) (e.g. `rng`).
-  - `states_modifiers` — a `Tuple` with states for each modifier layer.
+  - `state_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 """
 @concrete struct EIESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -113,11 +113,11 @@ function Base.show(io::IO, esn::EIESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

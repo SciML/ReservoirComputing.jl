@@ -67,9 +67,9 @@ begin
         @test size(ps.readout.weight) == (out_dims, res_dims)
 
         @test haskey(st, :reservoir)
-        @test haskey(st, :states_modifiers)
+        @test haskey(st, :state_modifiers)
         @test haskey(st, :readout)
-        @test st.states_modifiers isa Tuple
+        @test st.state_modifiers isa Tuple
     end
 
     @testset "LIFESN: forward (vector) with identity pipeline" begin
@@ -100,7 +100,7 @@ begin
         @test size(Y) == (D, 1)
         @test vec(Y) ≈ x
         @test haskey(st2, :reservoir) &&
-            haskey(st2, :states_modifiers) &&
+            haskey(st2, :state_modifiers) &&
             haskey(st2, :readout)
     end
 
@@ -208,7 +208,7 @@ begin
 
         @test y ≈ x
         @test haskey(st2, :reservoir)
-        @test haskey(st2, :states_modifiers)
+        @test haskey(st2, :state_modifiers)
         @test haskey(st2, :readout)
     end
 

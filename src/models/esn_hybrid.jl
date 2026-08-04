@@ -57,7 +57,7 @@ Hybrid Echo State Network [Pathak2018](@cite).
     - `input_matrix :: (res_dims × (in_dims + km_dims))` — `W_in`
     - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
     - `bias :: (res_dims,)` — present only if `use_bias=true`
-- `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
+- `state_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
 - `readout` — parameters of [`LinearReadout`](@ref), typically:
     - `weight :: (out_dims × (res_dims + km_dims))` — `W_out`
     - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
@@ -71,17 +71,17 @@ Created by `initialstates(rng, hesn)`:
 
 - `knowledge_model` — states for the internal knowledge model.
 - `reservoir` — states for the internal [`ESNCell`](@ref).
-- `states_modifiers` — a `Tuple` with states for each modifier layer.
+- `state_modifiers` — a `Tuple` with states for each modifier layer.
 - `readout` — states for [`LinearReadout`](@ref).
 """
 @concrete struct HybridESN <: AbstractEchoStateNetwork{
         (
-            :reservoir, :states_modifiers, :readout, :knowledge_model,
+            :reservoir, :knowledge_model, :state_modifiers, :readout,
         ),
     }
     reservoir
     knowledge_model
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -111,22 +111,22 @@ end
 function initialparameters(rng::AbstractRNG, hesn::HybridESN)
     ps_reservoir = initialparameters(rng, hesn.reservoir)
     ps_km = initialparameters(rng, hesn.knowledge_model)
-    ps_mods = map(l -> initialparameters(rng, l), hesn.states_modifiers) |> Tuple
+    ps_mods = map(l -> initialparameters(rng, l), hesn.state_modifiers) |> Tuple
     ps_ro = initialparameters(rng, hesn.readout)
     return (
         reservoir = ps_reservoir, knowledge_model = ps_km,
-        states_modifiers = ps_mods, readout = ps_ro,
+        state_modifiers = ps_mods, readout = ps_ro,
     )
 end
 
 function initialstates(rng::AbstractRNG, hesn::HybridESN)
     st_reservoir = initialstates(rng, hesn.reservoir)
     st_km = initialstates(rng, hesn.knowledge_model)
-    st_mods = map(l -> initialstates(rng, l), hesn.states_modifiers) |> Tuple
+    st_mods = map(l -> initialstates(rng, l), hesn.state_modifiers) |> Tuple
     st_ro = initialstates(rng, hesn.readout)
     return (
         reservoir = st_reservoir, knowledge_model = st_km,
-        states_modifiers = st_mods, readout = st_ro,
+        state_modifiers = st_mods, readout = st_ro,
     )
 end
 
@@ -135,10 +135,10 @@ function _partial_apply(hesn::HybridESN, inp, ps, st)
     xin = vcat(k_t, inp)
     r, st_reservoir = apply(hesn.reservoir, xin, ps.reservoir, st.reservoir)
     rstar,
-        st_mods = _apply_seq(hesn.states_modifiers, r, ps.states_modifiers, st.states_modifiers)
+        st_mods = _apply_seq(hesn.state_modifiers, r, ps.state_modifiers, st.state_modifiers)
     feats = vcat(k_t, rstar)
     return feats,
-        (reservoir = st_reservoir, states_modifiers = st_mods, knowledge_model = st_km)
+        (reservoir = st_reservoir, state_modifiers = st_mods, knowledge_model = st_km)
 end
 
 function (hesn::HybridESN)(inp, ps, st)
@@ -159,11 +159,11 @@ function Base.show(io::IO, esn::HybridESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

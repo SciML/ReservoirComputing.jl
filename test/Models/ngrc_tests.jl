@@ -34,8 +34,8 @@ begin
             @test dl.num_delays == 1
             @test dl.stride == 2
 
-            @test !isempty(ngrc.states_modifiers)
-            first_mod = getfield(ngrc.states_modifiers, 1)
+            @test !isempty(ngrc.state_modifiers)
+            first_mod = getfield(ngrc.state_modifiers, 1)
             @test first_mod isa NonlinearFeaturesLayer
         end
 
@@ -52,11 +52,11 @@ begin
             st = initialstates(rng, ngrc)
 
             @test hasproperty(ps, :reservoir)
-            @test hasproperty(ps, :states_modifiers)
+            @test hasproperty(ps, :state_modifiers)
             @test hasproperty(ps, :readout)
 
             @test hasproperty(st, :reservoir)
-            @test hasproperty(st, :states_modifiers)
+            @test hasproperty(st, :state_modifiers)
             @test hasproperty(st, :readout)
 
             @test ps.readout.weight isa AbstractArray

@@ -49,13 +49,13 @@ begin
             ps, st = setup(rng, hesn)
             @test haskey(ps, :reservoir) &&
                 haskey(ps, :knowledge_model) &&
-                haskey(ps, :states_modifiers) &&
+                haskey(ps, :state_modifiers) &&
                 haskey(ps, :readout)
             @test size(ps.reservoir.input_matrix) == (res_dims, in_dims + km_dims)
             @test size(ps.readout.weight) == (out_dims, res_dims + km_dims)
             @test haskey(st, :reservoir) &&
                 haskey(st, :knowledge_model) &&
-                haskey(st, :states_modifiers) &&
+                haskey(st, :state_modifiers) &&
                 haskey(st, :readout)
         end
 

@@ -45,9 +45,9 @@ begin
         @test ps.readout == NamedTuple()
 
         @test haskey(st, :reservoir)
-        @test haskey(st, :states_modifiers)
+        @test haskey(st, :state_modifiers)
         @test haskey(st, :readout)
-        @test st.states_modifiers isa Tuple
+        @test st.state_modifiers isa Tuple
 
         @test model.readout isa SVMReadout
         @test model.readout.in_dims == res_dims

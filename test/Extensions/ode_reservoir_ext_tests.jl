@@ -215,7 +215,7 @@ begin
     # ---------------------------------------------------------------------------
     # 6. State modifiers compose with the continuous path
     #
-    # `states_modifiers` must compose with the continuous reservoir the same
+    # `state_modifiers` must compose with the continuous reservoir the same
     # way they do with the discrete one — apply per saved sample, threading
     # the modifier state across columns. NLAT2 doubles even-indexed columns
     # of its input, so the modified state must differ in those columns from

@@ -102,7 +102,7 @@ using a [`MemoryResESNCell`](@ref) as the nonlinear reservoir.
       - `memory_matrix :: (res_dims × mem_dims)`.
       - `orthogonal_matrix :: (res_dims × res_dims)`.
       - `bias :: (res_dims,)` — present only if `use_bias=true`.
-  - `states_modifiers` — a `Tuple` with parameters for each modifier layer;
+  - `state_modifiers` — a `Tuple` with parameters for each modifier layer;
     may be empty.
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
     - `weight :: (out_dims × res_dims)`.
@@ -115,7 +115,7 @@ using a [`MemoryResESNCell`](@ref) as the nonlinear reservoir.
     - `nonlinear_reservoir` — states for [`MemoryResESNCell`](@ref).
     - `rng` — random number generator state used to sample initial recurrent
       states.
-  - `states_modifiers` — a `Tuple` with states for each modifier layer.
+  - `state_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 
 # Reference
@@ -131,9 +131,9 @@ named `RMNResESN` to keep the RMN-family naming convention consistent with
 [`LinearReadout`](@ref)
 """
 @concrete struct RMNResESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -186,11 +186,11 @@ function Base.show(io::IO, esn::RMNResESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

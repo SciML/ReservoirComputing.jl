@@ -49,8 +49,8 @@ begin
             @test length(ps.cells) == length(res_dims)
             @test length(st.cells) == length(res_dims)
             @test size(ps.readout.weight) == (out_dims, last(res_dims))
-            @test length(ps.states_modifiers) == length(res_dims)
-            @test length(st.states_modifiers) == length(res_dims)
+            @test length(ps.state_modifiers) == length(res_dims)
+            @test length(st.state_modifiers) == length(res_dims)
         end
 
         @testset "forward: vector as batch=1, identity pipeline across layers" begin
@@ -79,7 +79,7 @@ begin
             @test size(Y) == (D, 1)
             @test vec(Y) ≈ x
             @test haskey(st2, :cells) &&
-                haskey(st2, :states_modifiers) &&
+                haskey(st2, :state_modifiers) &&
                 haskey(st2, :readout)
         end
 
