@@ -342,12 +342,12 @@ begin
             lsm, u, y, ps, st;
             washout = 20, objective = RidgeRegression(1.0e-3),
         )
-        yhat, _ = predict(lsm, u, ps_tr, st_tr)
-        nrmse = norm(yhat[:, 21:end] .- y[:, 21:end]) /
+        y_pred, _ = predict(lsm, u, ps_tr, st_tr)
+        nrmse = norm(y_pred[:, 21:end] .- y[:, 21:end]) /
             norm(y[:, 21:end] .- mean(y[:, 21:end]; dims = 2))
         @test nrmse < nrmse0
         @test nrmse < 1.0
-        @test all(isfinite, yhat)
+        @test all(isfinite, y_pred)
     end
 
     @testset "AR predict is deterministic and finite" begin
