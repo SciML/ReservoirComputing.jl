@@ -786,10 +786,11 @@ function _lsm_callbacks(cell::LSMCell, n::Int, data, input_ts, t1, st_enc)
         return CallbackSet(spike_cb), _make_input_fn(data, input_ts), st_enc, nothing
     elseif cell.encoder isa PoissonRateEncoder
         enc = cell.encoder
-        times, chans = _poisson_events(st_enc.rng, data, input_ts, t1, enc.scale)
+        rng = copy(st_enc.rng)
+        times, chans = _poisson_events(rng, data, input_ts, t1, enc.scale)
         zoh = _make_input_fn(zeros(eltype(data), size(data)), input_ts)
         pcb = _poisson_callback!(times, chans, enc.weight)
-        return CallbackSet(spike_cb, pcb), zoh, (rng = st_enc.rng,), times
+        return CallbackSet(spike_cb, pcb), zoh, (rng = rng,), times
     end
     return throw(ArgumentError("unsupported encoder $(typeof(cell.encoder))"))
 end
