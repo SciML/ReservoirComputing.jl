@@ -38,6 +38,9 @@ run_qa(
                 # only supertype covering all of its regression models -- `__fit_readout`
                 # has to dispatch on it.
                 :AbstractSVR,
+                # `Base.@deprecate_binding` is Base's own standard deprecation mechanism
+                # but isn't declared `public` in Base.
+                :var"@deprecate_binding",
             ),
         ),
     )
