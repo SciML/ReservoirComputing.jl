@@ -37,7 +37,7 @@ LinearSolve = "4.2, 5"
 LuxCore = "1.3"
 MLJLinearModels = "0.10"
 OrdinaryDiffEqAdamsBashforthMoulton = "2"
-OrdinaryDiffEqCore = "=4.8.0" # pin: DelayDiffEq 6.1.0 breaks on OrdinaryDiffEqCore >=4.8.1, unpin once fixed upstream
+OrdinaryDiffEqCore = ">=4.8.1, <5"
 OrdinaryDiffEqTsit5 = "1, 2"
 Plots = "1"
 ReservoirComputing = "0.12.0"
