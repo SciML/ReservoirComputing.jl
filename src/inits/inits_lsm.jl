@@ -4,10 +4,10 @@
         radius=1.0, ei_weight_ratio=1.0, return_sparse=false)
 
 Create a Dale-compliant sparse reservoir matrix. The first
-`round(excitatory_fraction * n)` units are excitatory (non-negative
-outgoing weights); the rest are inhibitory (non-positive). The spectral
-radius is scaled to `radius`. Inhibitory magnitudes are multiplied by
-`ei_weight_ratio` before that scaling.
+`round(excitatory_fraction * n)` columns are excitatory (non-negative
+outgoing weights); the rest are inhibitory (non-positive). Inhibitory
+magnitudes are scaled by `ei_weight_ratio` before the spectral radius is
+set to `radius`.
 
 ## Arguments
 
@@ -21,11 +21,11 @@ radius is scaled to `radius`. Inhibitory magnitudes are multiplied by
   - `excitatory_fraction`: Fraction of excitatory units in `(0, 1)`.
     Default: `0.8`.
   - `sparsity`: Fraction of zero entries. Default: `0.1`.
-  - `std`: Standard deviation passed to the sparse initializer.
+  - `std`: Standard deviation passed to the sparse initialiser.
     Default: `1.0`.
-  - `radius`: Target spectral radius. Must be positive. Default: `1.0`.
+  - `radius`: Target spectral radius. Default: `1.0`.
   - `ei_weight_ratio`: Multiplier on inhibitory magnitudes before spectral
-    scaling. Must be positive. Default: `1.0`.
+    scaling. Default: `1.0`.
   - `return_sparse`: Return a sparse matrix when `true` (`SparseArrays`
     required). Default: `false`.
 

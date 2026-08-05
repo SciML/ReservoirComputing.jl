@@ -12,7 +12,7 @@ optional `state_modifiers`, and a [`LinearReadout`](@ref).
 ## Arguments
 
   - `in_dims`: Input dimension.
-  - `res_dims`: Reservoir size (number of spiking units).
+  - `res_dims`: Reservoir (spiking unit) dimension.
   - `out_dims`: Output dimension.
   - `tspan`: Integration interval `(t0, t1)` for `collectstates`.
     Length-2, strictly increasing, finite.
@@ -32,8 +32,7 @@ Reservoir (passed to [`LSMCell`](@ref)):
   - `init_reservoir`: Initialiser for `W_r`. Default: [`dale_sparse`](@ref).
   - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initialiser for `b`. Default: `zeros32`.
-  - `init_state`: Initialiser for the membrane voltage.
-    Default: `zeros32`.
+  - `init_state`: Initialiser for the membrane voltage. Default: `zeros32`.
 
 Composition:
 
@@ -51,15 +50,20 @@ Solve metadata:
 
 ## Parameters
 
-  - `reservoir` — parameters of the internal [`LSMCell`](@ref)
-  - `state_modifiers` — parameters for each modifier layer (may be empty)
-  - `readout` — parameters of [`LinearReadout`](@ref)
+  - `reservoir` — parameters of the internal [`LSMCell`](@ref):
+      - `input_matrix :: (res_dims × in_dims)` — `W_in`
+      - `reservoir_matrix :: (res_dims × res_dims)` — `W_r`
+      - `bias :: (res_dims,)` — present only if `use_bias = true`
+  - `state_modifiers` — parameters for each modifier layer (may be empty).
+  - `readout` — parameters of [`LinearReadout`](@ref):
+      - `weight :: (out_dims × feature_dims)` — `W_out`
+      - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
 
 ## States
 
-  - `reservoir` — states for the internal [`LSMCell`](@ref)
-  - `state_modifiers` — states for each modifier layer (may be empty)
-  - `readout` — states for [`LinearReadout`](@ref)
+  - `reservoir` — states for the internal [`LSMCell`](@ref).
+  - `state_modifiers` — states for each modifier layer (may be empty).
+  - `readout` — states for [`LinearReadout`](@ref).
 
 !!! note
     The `RCODEReservoirExt` extension must be loaded for this constructor
@@ -83,9 +87,11 @@ end
 
 function Base.show(io::IO, lsm::LSM)
     print(io, "LSM(\n")
+
     print(io, "    reservoir = ")
     show(io, lsm.reservoir)
     print(io, ",\n")
+
     print(io, "    state_modifiers = ")
     if isempty(lsm.state_modifiers)
         print(io, "()")
@@ -98,8 +104,10 @@ function Base.show(io::IO, lsm::LSM)
         print(io, ")")
     end
     print(io, ",\n")
+
     print(io, "    readout = ")
     show(io, lsm.readout)
     print(io, "\n)")
+
     return
 end
