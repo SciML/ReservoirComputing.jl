@@ -14,17 +14,17 @@ using ReservoirComputing: ReservoirComputing,
     ContinuousESNCell,
     LinearReadout,
     TerminalStateSampling,
-    _reservoir_jac_prototype,
-    _wrap_layers,
+    __reservoir_jac_prototype,
+    __wrap_layers,
     collectstates,
     rand_sparse,
     scaled_rand
-import ReservoirComputing: _collectstates, _predict
+import ReservoirComputing: __collectstates, __predict
 
-_to_namedtuple(prob_p::NamedTuple) = prob_p
-_to_namedtuple(::NullParameters) = NamedTuple()
-_to_namedtuple(::Nothing) = NamedTuple()
-function _to_namedtuple(prob_p)
+__to_namedtuple(prob_p::NamedTuple) = prob_p
+__to_namedtuple(::NullParameters) = NamedTuple()
+__to_namedtuple(::Nothing) = NamedTuple()
+function __to_namedtuple(prob_p)
     return throw(
         ArgumentError(
             "SciMLProblemReservoir requires `prob.p` to be a NamedTuple, " *
@@ -35,8 +35,8 @@ function _to_namedtuple(prob_p)
     )
 end
 
-function _build_solve_params(prob_p, ps_reservoir, input_interp)
-    base = _to_namedtuple(prob_p)
+function __build_solve_params(prob_p, ps_reservoir, input_interp)
+    base = __to_namedtuple(prob_p)
     # `:input` is the reserved key the extension injects so the user's ODE
     # right-hand side can read `p.input(t)`. A pre-existing `:input` field
     # in either `prob.p` or `ps.reservoir` would be silently shadowed below,
@@ -106,11 +106,11 @@ function (interp::ZeroOrderHoldInterp)(t)
     return view(interp.data, :, clamp(window_idx, 1, n_samples))
 end
 
-function _make_input_fn(data::AbstractMatrix, ts::AbstractVector)
+function __make_input_fn(data::AbstractMatrix, ts::AbstractVector)
     return ZeroOrderHoldInterp(data, ts)
 end
 
-function _make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
+function __make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
 
@@ -120,18 +120,18 @@ end
 
 (input::ConstantInputWindow)(t) = input.u_vec
 
-function _sample(::TerminalStateSampling, sol)
+function __sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
 end
 
-function _apply_modifiers_continuous(
+function __apply_modifiers_continuous(
         modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
     )
     isempty(modifiers) && return states_matrix, st_mods
     n_samples = size(states_matrix, 2)
     src_cols = eachcol(states_matrix)
 
-    first_col, new_st = ReservoirComputing._apply_seq(
+    first_col, new_st = ReservoirComputing.__apply_seq(
         modifiers, first(src_cols), ps_mods, st_mods
     )
     # `similar(first_col, ...)` — not `similar(states_matrix, ...)` — so the
@@ -141,7 +141,7 @@ function _apply_modifiers_continuous(
     output = similar(first_col, length(first_col), n_samples)
     output[:, 1] .= first_col
     for (idx, src_col) in Iterators.drop(enumerate(src_cols), 1)
-        modified_col, new_st = ReservoirComputing._apply_seq(
+        modified_col, new_st = ReservoirComputing.__apply_seq(
             modifiers, src_col, ps_mods, new_st
         )
         output[:, idx] .= modified_col
@@ -149,7 +149,7 @@ function _apply_modifiers_continuous(
     return output, new_st
 end
 
-function _collectstates(
+function __collectstates(
         res::AbstractSciMLProblemReservoir,
         rc::AbstractReservoirComputer,
         data::AbstractMatrix,
@@ -177,8 +177,8 @@ function _collectstates(
     input_ts = collect(range(t0, t1 - Δt; length = n_samples))
     sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
-    input_interp = _make_input_fn(data, input_ts)
-    solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_interp)
+    input_interp = __make_input_fn(data, input_ts)
+    solve_p = __build_solve_params(res.prob.p, ps.reservoir, input_interp)
 
     prob_remade = remake(res.prob; tspan = res.tspan, p = solve_p)
 
@@ -190,8 +190,8 @@ function _collectstates(
         res.kwargs...
     )
 
-    raw_states = _sample(res.sampler, sol)
-    modified_states, st_mods = _apply_modifiers_continuous(
+    raw_states = __sample(res.sampler, sol)
+    modified_states, st_mods = __apply_modifiers_continuous(
         rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
     )
 
@@ -203,7 +203,7 @@ function _collectstates(
     return modified_states, newst
 end
 
-function _predict(
+function __predict(
         ::AbstractSciMLProblemReservoir,
         rc::AbstractReservoirComputer,
         data::AbstractMatrix,
@@ -224,7 +224,7 @@ function _predict(
     return outputs, merge(new_st, (readout = st_ro,))
 end
 
-function _predict(
+function __predict(
         res::AbstractSciMLProblemReservoir,
         rc::AbstractReservoirComputer,
         steps::Integer,
@@ -257,7 +257,7 @@ function _predict(
     st_ro = st.readout
 
     input_fn = ConstantInputWindow(current_input)
-    solve_p = _build_solve_params(res.prob.p, ps.reservoir, input_fn)
+    solve_p = __build_solve_params(res.prob.p, ps.reservoir, input_fn)
     sub_prob = remake(
         res.prob;
         tspan = (window_starts[1], window_ends[1]),
@@ -290,7 +290,7 @@ function _predict(
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
-            state_after_mods, st_mods = ReservoirComputing._apply_seq(
+            state_after_mods, st_mods = ReservoirComputing.__apply_seq(
                 rc.state_modifiers, current_state, ps.state_modifiers, st_mods
             )
         else
@@ -321,7 +321,7 @@ function ReservoirComputing.ContinuousESN(
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
         init_state = randn32,
-        equations = ReservoirComputing._continuous_esn_rhs!,
+        equations = ReservoirComputing.__continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
         use_jac_prototype::Bool = false,
@@ -343,7 +343,7 @@ function ReservoirComputing.ContinuousESN(
             "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = $tspan"
         )
     )
-    ReservoirComputing._check_protected_kwargs(kwargs)
+    ReservoirComputing.__check_protected_kwargs(kwargs)
 
     cell = ContinuousESNCell(
         activation, in_dims, res_dims,
@@ -355,7 +355,7 @@ function ReservoirComputing.ContinuousESN(
 
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
 
     readout = LinearReadout(res_dims => out_dims, readout_activation)
     return ContinuousESN(cell, mods, readout)
@@ -368,7 +368,7 @@ function ReservoirComputing.ContinuousESN(
     return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
 end
 
-function _collectstates(
+function __collectstates(
         cell::ContinuousESNCell,
         rc::AbstractReservoirComputer,
         data::AbstractMatrix,
@@ -394,15 +394,15 @@ function _collectstates(
     input_ts = collect(range(t0, t1 - Δt; length = n_samples))
     sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
-    input_interp = _make_input_fn(data, input_ts)
-    solve_p = _build_solve_params(nothing, ps.reservoir, input_interp)
+    input_interp = __make_input_fn(data, input_ts)
+    solve_p = __build_solve_params(nothing, ps.reservoir, input_interp)
 
     # `u0` element type follows `ps.reservoir.input_matrix` so the solver
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
     u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
     jac_prototype = known(cell.use_jac_prototype) ?
-        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
     ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
     prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
@@ -415,8 +415,8 @@ function _collectstates(
         cell.kwargs...
     )
 
-    raw_states = _sample(TerminalStateSampling(), sol)
-    modified_states, st_mods = _apply_modifiers_continuous(
+    raw_states = __sample(TerminalStateSampling(), sol)
+    modified_states, st_mods = __apply_modifiers_continuous(
         rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
     )
 
@@ -428,7 +428,7 @@ function _collectstates(
     return modified_states, newst
 end
 
-function _predict(
+function __predict(
         cell::ContinuousESNCell,
         rc::AbstractReservoirComputer,
         steps::Integer,
@@ -456,12 +456,12 @@ function _predict(
     st_ro = st.readout
 
     jac_prototype = known(cell.use_jac_prototype) ?
-        _reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
+        __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
     ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
 
     input_fn = ConstantInputWindow(current_input)
-    solve_p = _build_solve_params(nothing, ps.reservoir, input_fn)
+    solve_p = __build_solve_params(nothing, ps.reservoir, input_fn)
     sub_prob = ODEProblem{true, FullSpecialize}(
         ode_fn, current_state, (window_starts[1], window_ends[1]), solve_p
     )
@@ -486,7 +486,7 @@ function _predict(
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
-            state_after_mods, st_mods = ReservoirComputing._apply_seq(
+            state_after_mods, st_mods = ReservoirComputing.__apply_seq(
                 rc.state_modifiers, current_state, ps.state_modifiers, st_mods
             )
         else

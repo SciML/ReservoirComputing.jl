@@ -81,7 +81,7 @@ begin
         target = reshape(y, 1, :)
 
         svr = LIBSVM.NuSVR()
-        model = ReservoirComputing._fit_readout(svr, X, target)
+        model = ReservoirComputing.__fit_readout(svr, X, target)
 
         ro = SVMReadout(in_dims => out_dims)
         rc = ReservoirChain(ro)
@@ -118,7 +118,7 @@ begin
         T = vcat(reshape(y1, 1, :), reshape(y2, 1, :))  # 2 × N
 
         svr = LIBSVM.NuSVR()
-        models = ReservoirComputing._fit_readout(svr, X, T)
+        models = ReservoirComputing.__fit_readout(svr, X, T)
         @test models isa AbstractVector
         @test length(models) == out_dims
 
@@ -164,7 +164,7 @@ begin
         T = reshape(y, 1, :)
 
         svr = LIBSVM.NuSVR()
-        model = ReservoirComputing._fit_readout(svr, X, T)
+        model = ReservoirComputing.__fit_readout(svr, X, T)
 
         ro = SVMReadout(in_dims => out_dims)
         rc = ReservoirChain(ro)
@@ -194,7 +194,7 @@ begin
         T = reshape(y, 1, :)
 
         svr = LIBSVM.NuSVR()
-        model = ReservoirComputing._fit_readout(svr, X, T)
+        model = ReservoirComputing.__fit_readout(svr, X, T)
 
         ro = SVMReadout(in_dims => out_dims)
         rc = ReservoirChain(ro)

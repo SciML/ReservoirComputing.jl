@@ -33,13 +33,13 @@ begin
             1 0 -1 -2 -3
         ]
         regressor = MLJLinearModels.LinearRegression(fit_intercept = false)
-        W = ReservoirComputing._fit_readout(regressor, states, target)
+        W = ReservoirComputing.__fit_readout(regressor, states, target)
         @test size(W) == (2, 3)
         @test eltype(W) === Float64
         @test W * states ≈ target atol = 1.0e-5
 
         bad_regressor = MLJLinearModels.LinearRegression(fit_intercept = true)
-        @test_throws ArgumentError ReservoirComputing._fit_readout(
+        @test_throws ArgumentError ReservoirComputing.__fit_readout(
             bad_regressor, states, target
         )
     end

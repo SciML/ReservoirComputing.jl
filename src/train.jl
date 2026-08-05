@@ -33,7 +33,7 @@ function RidgeRegression()
     return RidgeRegression(0.0)
 end
 
-function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
+function __apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
     washout ≥ 0 || throw(ArgumentError("washout must be ≥ 0, got $washout"))
     n_samples = size(states, 2)
     washout < n_samples || throw(
@@ -46,7 +46,7 @@ function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout
     return states_wo, targets_wo
 end
 
-_set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
+__set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
 """
     AbstractReservoirComputingSolver
@@ -93,19 +93,19 @@ Prefer [`QRFactorization`](@ref) unless you need this path explicitly.
 """
 struct QRSolver <: AbstractReservoirComputingSolver end
 
-_default_ridge_solver() = QRFactorization()
-_resolve_ridge_solver(::Nothing) = _default_ridge_solver()
-_resolve_ridge_solver(solver) = solver
+__default_ridge_solver() = QRFactorization()
+__resolve_ridge_solver(::Nothing) = __default_ridge_solver()
+__resolve_ridge_solver(solver) = solver
 
-function _fit_readout(
+function __fit_readout(
         objective::RidgeRegression, states::AbstractMatrix, target_data::AbstractMatrix;
         solver = nothing, kwargs...
     )
-    ridge_solver = _resolve_ridge_solver(solver)
-    return _train_ridge(ridge_solver, objective, states, target_data; kwargs...)
+    ridge_solver = __resolve_ridge_solver(solver)
+    return __train_ridge(ridge_solver, objective, states, target_data; kwargs...)
 end
 
-function _ridge_augmented_system(
+function __ridge_augmented_system(
         objective::RidgeRegression,
         states::AbstractMatrix,
         targets::AbstractMatrix,
@@ -137,23 +137,25 @@ function _ridge_augmented_system(
     return design, rhs
 end
 
-function _train_ridge(
+function __train_ridge(
         ::QRSolver, objective::RidgeRegression,
         states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
     )
-    design, rhs = _ridge_augmented_system(objective, states, target_data)
+    design, rhs = __ridge_augmented_system(objective, states, target_data)
     weight_transpose = qr(design) \ rhs
     return Matrix(weight_transpose')
 end
 
-function _train_ridge(
+function __train_ridge(
         ::QRFactorization, objective::RidgeRegression,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
-    return _train_ridge(LinearSolveQRFactorization(), objective, states, targets; kwargs...)
+    return __train_ridge(
+        LinearSolveQRFactorization(), objective, states, targets; kwargs...
+    )
 end
 
-function _train_ridge(
+function __train_ridge(
         solver::AbstractReservoirComputingSolver, ::RidgeRegression,
         ::AbstractMatrix, ::AbstractMatrix; kwargs...
     )
@@ -165,7 +167,7 @@ function _train_ridge(
     )
 end
 
-function _train_ridge(
+function __train_ridge(
         solver, objective::RidgeRegression,
         states::AbstractMatrix, targets::AbstractMatrix; kwargs...
     )
@@ -175,7 +177,7 @@ function _train_ridge(
                 "QRSolver(), or a documented LinearSolve.jl algorithm instead."
         )
     )
-    design, rhs = _ridge_augmented_system(objective, states, targets)
+    design, rhs = __ridge_augmented_system(objective, states, targets)
     solution = try
         solve(LinearProblem(design, rhs), solver; kwargs...)
     catch err
@@ -237,22 +239,22 @@ function train(
     )
     raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        targets_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)
     output_matrix = if isnothing(solver)
-        _fit_readout(objective, states_wo, targets_wo; kwargs...)
+        __fit_readout(objective, states_wo, targets_wo; kwargs...)
     else
-        _fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
+        __fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
     end
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
-#_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+#__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 
-@generated function _setweight_rt(p::NamedTuple{K}, W) where {K}
+@generated function __setweight_rt(p::NamedTuple{K}, W) where {K}
     keys = K
-    Kq = _quote_keys(keys)
+    Kq = __quote_keys(keys)
     idx = findfirst(==(Symbol(:weight)), keys)
 
     terms = Any[]
@@ -261,29 +263,29 @@ end
     end
 
     if idx === nothing
-        newK = _quote_keys((keys..., :weight))
+        newK = __quote_keys((keys..., :weight))
         return :(NamedTuple{$newK}(($(terms...), W)))
     else
         return :(NamedTuple{$Kq}(($(terms...),)))
     end
 end
 
-@generated function _addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
+@generated function __addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
     if length(K) == 0
         return :(NamedTuple())
     end
     tailK = Base.tail(K)
-    Kq = _quote_keys(K)
-    tailKq = _quote_keys(tailK)
+    Kq = __quote_keys(K)
+    tailKq = __quote_keys(tailK)
 
     head_val = :(
         (getfield(layers, 1) isa LinearReadout)
-            ? _setweight_rt(getfield(ps, 1), W)
+            ? __setweight_rt(getfield(ps, 1), W)
             : getfield(ps, 1)
     )
 
     tail_call = :(
-        _addreadout(
+        __addreadout(
             NamedTuple{$tailKq}(Base.tail(layers)),
             NamedTuple{$tailKq}(Base.tail(ps)),
             W
@@ -300,6 +302,6 @@ function addreadout!(
         st::NamedTuple
     )
     @assert propertynames(rc.layers) == propertynames(ps)
-    new_ps = _addreadout(rc.layers, ps, W)
+    new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end

@@ -3,7 +3,7 @@
         tspan, args = (), activation = tanh, use_bias = false,
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
-        equations = _continuous_esn_rhs!,
+        equations = __continuous_esn_rhs!,
         use_jac_prototype = false, kwargs...)
 
 Continuous-time Echo State Network cell
@@ -72,7 +72,7 @@ function ContinuousESNCell(
         tspan, args = (), activation = tanh, use_bias::BoolType = False(),
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
-        equations = _continuous_esn_rhs!,
+        equations = __continuous_esn_rhs!,
         use_jac_prototype::BoolType = False(), kwargs...
     )
     return ContinuousESNCell(
@@ -86,7 +86,7 @@ end
 
 # Generic fallback for `use_jac_prototype = true`; the sparse-`W_r`
 # specialisation lives in `ext/RCODEReservoirSparseArraysExt.jl`.
-_reservoir_jac_prototype(_equations, _reservoir_matrix) = nothing
+__reservoir_jac_prototype(__equations, __reservoir_matrix) = nothing
 
 function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
     ps = (
@@ -103,7 +103,7 @@ function initialstates(::AbstractRNG, ::ContinuousESNCell)
     return NamedTuple()
 end
 
-function _continuous_esn_rhs!(dx, x, p, t)
+function __continuous_esn_rhs!(dx, x, p, t)
     input_t = p.input(t)
     mul!(dx, p.reservoir_matrix, x)
     mul!(dx, p.input_matrix, input_t, true, true)
