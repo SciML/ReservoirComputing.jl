@@ -190,7 +190,7 @@ end
     ]
     regressor = MLJLinearModels.LinearRegression(fit_intercept = false)
 
-    expected = ReservoirComputing._fit_readout(regressor, states, targets)
+    expected = ReservoirComputing.__fit_readout(regressor, states, targets)
     result = @test_deprecated train(regressor, states, targets)
     @test result ≈ expected
 end

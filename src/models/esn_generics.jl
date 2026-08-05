@@ -37,10 +37,10 @@ end
 """
 abstract type AbstractEchoStateNetwork{Fields} <: AbstractReservoirComputer{Fields} end
 
-_wrap_layer(x) = x isa Function ? WrappedFunction(x) : x
-_wrap_layers(xs::Tuple) = map(_wrap_layer, xs)
+__wrap_layer(x) = x isa Function ? WrappedFunction(x) : x
+__wrap_layers(xs::Tuple) = map(__wrap_layer, xs)
 
-@inline function _fillvec(x, n::Integer)
+@inline function __fillvec(x, n::Integer)
     v = Vector{typeof(x)}(undef, n)
     @inbounds @simd for i in 1:n
         v[i] = x
@@ -48,37 +48,37 @@ _wrap_layers(xs::Tuple) = map(_wrap_layer, xs)
     return v
 end
 
-@inline _asvec(::Tuple{}, n::Integer) = _fillvec(nothing, n)
+@inline __asvec(::Tuple{}, n::Integer) = __fillvec(nothing, n)
 
-@inline function _asvec(comp::Tuple, n::Integer)
+@inline function __asvec(comp::Tuple, n::Integer)
     len = length(comp)
     if len == n
         return collect(comp)
     elseif len == 1
-        return _fillvec(comp[1], n)
+        return __fillvec(comp[1], n)
     else
         throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
-@inline function _asvec(comp::AbstractVector, n::Integer)
+@inline function __asvec(comp::AbstractVector, n::Integer)
     len = length(comp)
     if len == n
         return collect(comp)
     elseif len == 1
-        return _fillvec(comp[1], n)
+        return __fillvec(comp[1], n)
     else
         throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
-@inline _asvec(::Nothing, n::Integer) = _fillvec(nothing, n)
+@inline __asvec(::Nothing, n::Integer) = __fillvec(nothing, n)
 
-@inline _asvec(comp, n::Integer) = _fillvec(comp, n)
+@inline __asvec(comp, n::Integer) = __fillvec(comp, n)
 
-@inline _asvec(x) = (ndims(x) == 2 ? vec(x) : x)
+@inline __asvec(x) = (ndims(x) == 2 ? vec(x) : x)
 
-function _coerce_layer_mods(x)
+function __coerce_layer_mods(x)
     return x === nothing ? () :
         x isa Tuple ? x :
         x isa AbstractVector ? Tuple(x) :

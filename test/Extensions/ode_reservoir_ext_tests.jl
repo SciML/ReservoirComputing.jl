@@ -373,7 +373,7 @@ begin
     # ---------------------------------------------------------------------------
     # 11. `prob.p` accepted forms: NamedTuple / nothing / NullParameters
     #
-    # `_to_namedtuple` advertises three valid inputs and rejects anything
+    # `__to_namedtuple` advertises three valid inputs and rejects anything
     # else. Exercise all three success paths end-to-end so a future refactor
     # can't quietly break two of them.
     # ---------------------------------------------------------------------------

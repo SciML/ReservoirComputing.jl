@@ -60,7 +60,7 @@ function train(
         :train
     )
     if isnothing(solver)
-        return _fit_readout(objective, states, target_data; kwargs...)
+        return __fit_readout(objective, states, target_data; kwargs...)
     end
-    return _fit_readout(objective, states, target_data; solver = solver, kwargs...)
+    return __fit_readout(objective, states, target_data; solver = solver, kwargs...)
 end

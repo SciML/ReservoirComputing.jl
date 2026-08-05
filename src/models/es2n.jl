@@ -93,7 +93,7 @@ function ES2N(
     cell = StatefulLayer(ES2NCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return ES2N(cell, mods, ro)
 end

@@ -229,7 +229,7 @@ function LSMCell(
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
     __check_lsm_tspan(tspan)
-    _check_protected_kwargs(kwargs)
+    __check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(
         ArgumentError("LSM owns the solve callback; drop `callback` from kwargs.")
     )

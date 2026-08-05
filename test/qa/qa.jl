@@ -16,18 +16,18 @@ rc_internal_hooks = (
     :AbstractInputEncoding,
     :AbstractReservoirComputer,
     :IntegerType,
-    :_apply_seq,
-    :_check_protected_kwargs,
-    :_collectstates,
-    :_continuous_esn_rhs!,
+    :__apply_seq,
     :__check_lsm_tspan,
+    :__check_protected_kwargs,
+    :__collectstates,
+    :__continuous_esn_rhs!,
     :__feature_dim,
+    :__fit_readout,
     :__init_encoder_st,
+    :__predict,
+    :__reservoir_jac_prototype,
     :__supports_ar,
-    :_fit_readout,
-    :_predict,
-    :_reservoir_jac_prototype,
-    :_wrap_layers,
+    :__wrap_layers,
     :addreadout!,
 )
 
@@ -39,9 +39,12 @@ run_qa(
             ignore = (
                 rc_internal_hooks...,
                 # LIBSVM neither exports nor declares `AbstractSVR` public, and it is the
-                # only supertype covering all of its regression models -- `_fit_readout`
+                # only supertype covering all of its regression models -- `__fit_readout`
                 # has to dispatch on it.
                 :AbstractSVR,
+                # `Base.@deprecate_binding` is Base's own standard deprecation mechanism
+                # but isn't declared `public` in Base.
+                :var"@deprecate_binding",
             ),
         ),
     )

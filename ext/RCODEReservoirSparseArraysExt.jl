@@ -8,8 +8,8 @@ using SparseArrays: SparseMatrixCSC
 # leaky-integrator ESN RHS. Custom `equations` fall through to the
 # generic `nothing` fallback so an off-`W_r` coupling isn't given a
 # too-narrow prototype.
-function ReservoirComputing._reservoir_jac_prototype(
-        ::typeof(ReservoirComputing._continuous_esn_rhs!),
+function ReservoirComputing.__reservoir_jac_prototype(
+        ::typeof(ReservoirComputing.__continuous_esn_rhs!),
         reservoir_matrix::SparseMatrixCSC,
     )
     return reservoir_matrix + I
