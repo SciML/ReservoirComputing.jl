@@ -13,9 +13,9 @@ begin
 
     function _lsm_f64(
             in_dim, res_dim, out_dim, tspan, args...;
-            neuron = LIFCell(),
+            neuron = LIFNeuron(),
             encoder = CurrentInjection(),
-            spike_readout = FilteredVoltageReadout(),
+            feature_map = MembraneVoltageFeature(),
             init_input = f64_ones,
             init_reservoir = f64_zeros,
             init_state = f64_zeros,
@@ -25,7 +25,7 @@ begin
             in_dim, res_dim, out_dim, tspan, args...;
             neuron = neuron,
             encoder = encoder,
-            spike_readout = spike_readout,
+            feature_map = feature_map,
             init_input = init_input,
             init_reservoir = init_reservoir,
             init_state = init_state,
@@ -40,8 +40,8 @@ begin
         )
     end
 
-    function _isi(τ_m, R_m, I, V_th = 1.0, V_rest = 0.0)
-        return τ_m * log((R_m * I - V_rest) / (R_m * I - V_th))
+    function _isi(tau_m, r_m, I, v_th = 1.0, v_rest = 0.0)
+        return tau_m * log((r_m * I - v_rest) / (r_m * I - v_th))
     end
 
     @testset "dale_sparse: Dale structure" begin
@@ -61,17 +61,17 @@ begin
     end
 
     @testset "LIF: analytical ISI through LSM" begin
-        τ_m, R_m, I = 0.02, 1.0, 1.5
-        T_isi = _isi(τ_m, R_m, I)
+        tau_m, r_m, I = 0.02, 1.0, 1.5
+        T_isi = _isi(tau_m, r_m, I)
         T_end = 20 * T_isi
         n_win = 200
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.0, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.0, tau_syn = 0.005,
             ),
-            spike_readout = SpikeCountReadout(),
+            feature_map = SpikeCountFeatures(),
             reltol = 1.0e-10, abstol = 1.0e-12, dtmax = T_isi / 20,
         )
         ps, st = setup(MersenneTwister(0), lsm)
@@ -85,19 +85,19 @@ begin
     end
 
     @testset "LIF: refractory through LSM" begin
-        τ_m, R_m, I, τ_ref = 0.02, 1.0, 1.5, 0.005
-        T_isi = _isi(τ_m, R_m, I)
-        T_period = T_isi + τ_ref
+        tau_m, r_m, I, tau_ref = 0.02, 1.0, 1.5, 0.005
+        T_isi = _isi(tau_m, r_m, I)
+        T_period = T_isi + tau_ref
         T_end = 15 * T_period
         n_win = 300
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = τ_ref, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = tau_ref, tau_syn = 0.005,
             ),
-            spike_readout = SpikeCountReadout(),
-            reltol = 1.0e-10, abstol = 1.0e-12, dtmax = τ_ref / 4,
+            feature_map = SpikeCountFeatures(),
+            reltol = 1.0e-10, abstol = 1.0e-12, dtmax = tau_ref / 4,
         )
         ps, st = setup(MersenneTwister(1), lsm)
         ps = _set_res!(ps; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
@@ -111,40 +111,40 @@ begin
     end
 
     @testset "LIF: subthreshold V matches closed form" begin
-        τ_m, R_m, I = 0.02, 1.0, 0.5
-        V_ss = R_m * I
+        tau_m, r_m, I = 0.02, 1.0, 0.5
+        V_ss = r_m * I
         @test V_ss < 1.0
         T_end = 0.2
         n_win = 40
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.002, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.002, tau_syn = 0.005,
             ),
-            spike_readout = FilteredVoltageReadout(),
+            feature_map = MembraneVoltageFeature(),
             reltol = 1.0e-10, abstol = 1.0e-12,
         )
         ps, st = setup(MersenneTwister(2), lsm)
         ps = _set_res!(ps; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
         V, _ = collectstates(lsm, ones(Float64, 1, n_win), ps, st)
         t_sample = collect(range(T_end / n_win, T_end; length = n_win))
-        V_exact = V_ss .* (1 .- exp.(-t_sample ./ τ_m))
+        V_exact = V_ss .* (1 .- exp.(-t_sample ./ tau_m))
         @test maximum(abs, vec(V) .- V_exact) < 1.0e-5
     end
 
     @testset "LIF: voltage stays below threshold after reset" begin
-        τ_m, R_m, I = 0.02, 1.0, 2.0
-        T_isi = _isi(τ_m, R_m, I)
+        tau_m, r_m, I = 0.02, 1.0, 2.0
+        T_isi = _isi(tau_m, r_m, I)
         T_end = 5 * T_isi
         n_win = 500
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.0, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.0, tau_syn = 0.005,
             ),
-            spike_readout = FilteredVoltageReadout(),
+            feature_map = MembraneVoltageFeature(),
             reltol = 1.0e-10, abstol = 1.0e-12, dtmax = T_isi / 50,
         )
         ps, st = setup(MersenneTwister(3), lsm)
@@ -156,17 +156,17 @@ begin
     end
 
     @testset "recurrent synapse: postsynaptic depolarization" begin
-        τ_m, R_m, I, w, τ_syn = 0.02, 1.0, 2.0, 0.8, 0.01
-        T_isi = _isi(τ_m, R_m, I)
-        T_end = T_isi + 0.5 * τ_syn
+        tau_m, r_m, I, w, tau_syn = 0.02, 1.0, 2.0, 0.8, 0.01
+        T_isi = _isi(tau_m, r_m, I)
+        T_end = T_isi + 0.5 * tau_syn
         n_win = 25
         lsm = _lsm_f64(
             1, 2, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.002, τ_syn = τ_syn,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.002, tau_syn = tau_syn,
             ),
-            spike_readout = FilteredVoltageReadout(),
+            feature_map = MembraneVoltageFeature(),
             reltol = 1.0e-10, abstol = 1.0e-12, dtmax = 1.0e-4,
         )
         ps, st = setup(MersenneTwister(4), lsm)
@@ -179,19 +179,19 @@ begin
         @test any(>(0.5), V[1, :])
     end
 
-    @testset "SpikeCountReadout: rate and AR guard" begin
-        τ_m, R_m, I = 0.02, 1.0, 2.0
-        T_isi = _isi(τ_m, R_m, I)
+    @testset "SpikeCountFeatures: rate and AR guard" begin
+        tau_m, r_m, I = 0.02, 1.0, 2.0
+        T_isi = _isi(tau_m, r_m, I)
         Δt = 3 * T_isi
         n_win = 8
         T_end = n_win * Δt
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.0, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.0, tau_syn = 0.005,
             ),
-            spike_readout = SpikeCountReadout(),
+            feature_map = SpikeCountFeatures(),
             reltol = 1.0e-10, abstol = 1.0e-12, dtmax = T_isi / 20,
         )
         ps, st = setup(MersenneTwister(5), lsm)
@@ -203,20 +203,20 @@ begin
         @test_throws ArgumentError predict(lsm, 3, ps, st; initialdata = [1.0])
     end
 
-    @testset "ExponentialFilterReadout: tracks spikes and decays" begin
-        τ_m, R_m, I, τ_f = 0.02, 1.0, 2.0, 0.03
-        T_isi = _isi(τ_m, R_m, I)
+    @testset "ExponentialSpikeFilter: tracks spikes and decays" begin
+        tau_m, r_m, I, filter_tau = 0.02, 1.0, 2.0, 0.03
+        T_isi = _isi(tau_m, r_m, I)
         n_on, n_off = 25, 25
         n_win = n_on + n_off
         Δt = T_isi
         T_end = n_win * Δt
         lsm = _lsm_f64(
             1, 1, 1, (0.0, T_end), Tsit5();
-            neuron = LIFCell(;
-                τ_m = τ_m, R_m = R_m, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.0, τ_syn = 0.005,
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.0, tau_syn = 0.005,
             ),
-            spike_readout = ExponentialFilterReadout(τ_f),
+            feature_map = ExponentialSpikeFilter(; filter_tau = filter_tau),
             reltol = 1.0e-10, abstol = 1.0e-12, dtmax = T_isi / 25,
         )
         ps, st = setup(MersenneTwister(6), lsm)
@@ -243,11 +243,11 @@ begin
         tspan = (0.0, Float64(T_steps))
         lsm = _lsm_f64(
             2, n, 2, tspan, Tsit5();
-            neuron = LIFCell(;
-                τ_m = 0.02, R_m = 1.0, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.002, τ_syn = 0.01,
+            neuron = LIFNeuron(;
+                tau_m = 0.02, r_m = 1.0, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.002, tau_syn = 0.01,
             ),
-            spike_readout = ExponentialFilterReadout(0.05),
+            feature_map = ExponentialSpikeFilter(; filter_tau = 0.05),
             init_input = (rng, d...) -> scaled_rand(rng, Float64, d...; scaling = 0.8),
             init_reservoir = (rng, d...) -> dale_sparse(
                 rng, Float64, d...; radius = 0.4, sparsity = 0.15,
@@ -262,14 +262,14 @@ begin
         lsm_a = _lsm_f64(
             2, n, 2, tspan, Tsit5();
             neuron = lsm.reservoir.neuron,
-            spike_readout = lsm.reservoir.spike_readout,
+            feature_map = lsm.reservoir.feature_map,
             init_input = f64_ones, init_reservoir = f64_zeros, init_state = init_a,
             reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4, maxiters = 2_000_000,
         )
         lsm_b = _lsm_f64(
             2, n, 2, tspan, Tsit5();
             neuron = lsm.reservoir.neuron,
-            spike_readout = lsm.reservoir.spike_readout,
+            feature_map = lsm.reservoir.feature_map,
             init_input = f64_ones, init_reservoir = f64_zeros, init_state = init_b,
             reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4, maxiters = 2_000_000,
         )
@@ -293,8 +293,8 @@ begin
         n_in, n_res, n_out, T_steps = 2, 30, 2, 40
         lsm = _lsm_f64(
             n_in, n_res, n_out, (0.0, Float64(T_steps)), Tsit5();
-            neuron = LIFCell(; τ_m = 0.02, τ_ref = 0.002, τ_syn = 0.008),
-            spike_readout = ExponentialFilterReadout(0.04),
+            neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
+            feature_map = ExponentialSpikeFilter(; filter_tau = 0.04),
             init_input = (rng, d...) -> scaled_rand(rng, Float64, d...; scaling = 1.0),
             init_reservoir = (rng, d...) -> dale_sparse(
                 rng, Float64, d...; radius = 0.45, sparsity = 0.2,
@@ -315,8 +315,8 @@ begin
         n_in, n_res, n_out, T_steps = 2, 60, 2, 120
         lsm = _lsm_f64(
             n_in, n_res, n_out, (0.0, Float64(T_steps)), Tsit5();
-            neuron = LIFCell(; τ_m = 0.02, τ_ref = 0.002, τ_syn = 0.008),
-            spike_readout = ExponentialFilterReadout(0.05),
+            neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
+            feature_map = ExponentialSpikeFilter(; filter_tau = 0.05),
             # dense positive Win so random drive is reliably suprathreshold
             init_input = (rng, d...) -> abs.(randn(rng, Float64, d...)) .+ 0.5,
             init_reservoir = (rng, d...) -> dale_sparse(
@@ -354,8 +354,8 @@ begin
         dim, n_res, steps = 2, 40, 15
         lsm = _lsm_f64(
             dim, n_res, dim, (0.0, Float64(steps)), Tsit5();
-            neuron = LIFCell(; τ_m = 0.02, τ_ref = 0.002, τ_syn = 0.008),
-            spike_readout = ExponentialFilterReadout(0.04),
+            neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
+            feature_map = ExponentialSpikeFilter(; filter_tau = 0.04),
             init_input = (rng, d...) -> scaled_rand(rng, Float64, d...; scaling = 1.0),
             init_reservoir = (rng, d...) -> dale_sparse(
                 rng, Float64, d...; radius = 0.4, sparsity = 0.2,
@@ -369,7 +369,7 @@ begin
         lsm_tr = _lsm_f64(
             dim, n_res, dim, (0.0, 40.0), Tsit5();
             neuron = lsm.reservoir.neuron,
-            spike_readout = lsm.reservoir.spike_readout,
+            feature_map = lsm.reservoir.feature_map,
             init_input = f64_ones, init_reservoir = f64_zeros, init_state = f64_zeros,
             reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4, maxiters = 2_000_000,
         )
@@ -392,12 +392,12 @@ begin
         T_end = 2.0
         lsm = _lsm_f64(
             1, 8, 1, (0.0, T_end), Tsit5();
-            encoder = PoissonRateEncoder(; scale = 60.0, weight = 3.0),
-            neuron = LIFCell(;
-                τ_m = 0.02, R_m = 1.0, V_rest = 0.0, V_th = 1.0,
-                V_reset = 0.0, τ_ref = 0.002, τ_syn = 0.02,
+            encoder = PoissonRateEncoder(; rate_scale = 60.0, synaptic_weight = 3.0),
+            neuron = LIFNeuron(;
+                tau_m = 0.02, r_m = 1.0, v_rest = 0.0, v_th = 1.0,
+                v_reset = 0.0, tau_ref = 0.002, tau_syn = 0.02,
             ),
-            spike_readout = SpikeCountReadout(),
+            feature_map = SpikeCountFeatures(),
             init_input = (rng, d...) -> ones(Float64, d...),
             init_reservoir = f64_zeros,
             reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4, maxiters = 2_000_000,
@@ -418,17 +418,58 @@ begin
         @test_throws ArgumentError LSM(2, 5, 1, (1.0, 0.0), Tsit5())
         @test_throws ArgumentError LSM(2, 5, 1, (0.0, 1.0), Tsit5(); saveat = 0.1)
         @test_throws ArgumentError LSM(2, 5, 1, (0.0, 1.0), Tsit5(); callback = nothing)
+        @test_throws ArgumentError LIFNeuron(; tau_m = 0.0)
+        @test_throws ArgumentError LIFNeuron(; tau_syn = -1.0)
+        @test_throws ArgumentError LIFNeuron(; tau_ref = -0.1)
+        @test_throws ArgumentError LIFNeuron(; r_m = 0.0)
+        @test_throws ArgumentError ExponentialSpikeFilter(; filter_tau = 0.0)
+        @test_throws ArgumentError PoissonRateEncoder(; rate_scale = -1.0)
+        @test_throws ArgumentError dale_sparse(
+            MersenneTwister(0), Float64, 8, 8; radius = -1.0,
+        )
+        @test_throws ArgumentError dale_sparse(
+            MersenneTwister(0), Float64, 8, 8; ei_weight_ratio = 0.0,
+        )
+        @test_throws ArgumentError dale_sparse(
+            MersenneTwister(0), Float64, 8, 8; excitatory_fraction = 1.0,
+        )
         lsm = LSM(2, 12, 1, (0.0, 1.0), Tsit5())
         ps, st = setup(MersenneTwister(0), lsm)
         @test size(ps.reservoir.input_matrix) == (12, 2)
         @test size(ps.reservoir.reservoir_matrix) == (12, 12)
+        @test lsm.reservoir isa LSMCell
+        @test lsm.reservoir.neuron isa LIFNeuron
+        @test lsm.reservoir.feature_map isa ExponentialSpikeFilter
+    end
+
+    @testset "init_state sets membrane IC" begin
+        n = 4
+        tau_m, V0, T_end, n_win = 0.02, 0.35, 0.05, 5
+        lsm = _lsm_f64(
+            1, n, 1, (0.0, T_end), Tsit5();
+            neuron = LIFNeuron(;
+                tau_m = tau_m, r_m = 1.0, v_rest = 0.0, v_th = 10.0,
+                v_reset = 0.0, tau_ref = 0.002, tau_syn = 0.005,
+            ),
+            feature_map = MembraneVoltageFeature(),
+            init_state = (rng, d...) -> fill(V0, d...),
+            reltol = 1.0e-10, abstol = 1.0e-12,
+        )
+        ps, st = setup(MersenneTwister(21), lsm)
+        ps = _set_res!(ps; Win = zeros(n, 1), W = zeros(n, n))
+        V, _ = collectstates(lsm, zeros(Float64, 1, n_win), ps, st)
+        # samples at window ends; free decay V(t) = V0 * exp(-t / tau_m)
+        t_sample = collect(range(T_end / n_win, T_end; length = n_win))
+        V_exact = V0 .* exp.(-t_sample ./ tau_m)
+        @test maximum(abs, V[1, :] .- V_exact) < 1.0e-6
+        @test all(v -> isapprox(v, V[1, 1]; atol = 1.0e-8), V[:, 1])
     end
 
     @testset "state modifiers compose" begin
         n_in, n_res, T_steps = 2, 16, 20
         kwargs = (
-            neuron = LIFCell(; τ_m = 0.02, τ_ref = 0.002, τ_syn = 0.008),
-            spike_readout = FilteredVoltageReadout(),
+            neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
+            feature_map = MembraneVoltageFeature(),
             init_input = (rng, d...) -> scaled_rand(rng, Float64, d...; scaling = 0.5),
             init_reservoir = (rng, d...) -> dale_sparse(
                 rng, Float64, d...; radius = 0.35, sparsity = 0.2,

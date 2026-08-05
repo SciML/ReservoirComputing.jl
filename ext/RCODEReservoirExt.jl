@@ -2,7 +2,7 @@ module RCODEReservoirExt
 
 using DataInterpolations: ConstantInterpolation
 using LinearAlgebra: mul!
-using LuxCore: apply
+using LuxCore: apply, replicate
 using Random: AbstractRNG, randexp
 using SciMLBase: FullSpecialize, ODEFunction, ODEProblem, init, reinit!, remake, solve,
     solve!, NullParameters, VectorContinuousCallback, DiscreteCallback, CallbackSet,
@@ -16,18 +16,18 @@ using ReservoirComputing: ReservoirComputing,
     ContinuousESN,
     ContinuousESNCell,
     CurrentInjection,
-    ExponentialFilterReadout,
-    FilteredVoltageReadout,
-    LIFCell,
+    ExponentialSpikeFilter,
+    LIFNeuron,
     LinearReadout,
     LSM,
     LSMCell,
+    MembraneVoltageFeature,
     PoissonRateEncoder,
-    SpikeCountReadout,
+    SpikeCountFeatures,
     TerminalStateSampling,
-    _feature_dim,
+    __feature_dim,
+    __supports_ar,
     _reservoir_jac_prototype,
-    _supports_ar,
     _wrap_layers,
     collectstates,
     dale_sparse,
@@ -526,9 +526,9 @@ end
 function ReservoirComputing.LSM(
         in_dims::Integer, res_dims::Integer, out_dims::Integer,
         tspan, args...;
-        neuron = LIFCell(),
+        neuron = LIFNeuron(),
         encoder = CurrentInjection(),
-        spike_readout = ExponentialFilterReadout(),
+        feature_map = ExponentialSpikeFilter(),
         use_bias::Bool = false,
         init_bias = zeros32,
         init_reservoir = dale_sparse,
@@ -541,217 +541,214 @@ function ReservoirComputing.LSM(
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     res_dims > 0 || throw(ArgumentError("res_dims must be positive, got $res_dims"))
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
-    length(tspan) == 2 || throw(
-        ArgumentError(
-            "tspan must be a length-2 tuple/pair (t0, t1), got length $(length(tspan))"
-        )
-    )
-    (isfinite(tspan[1]) && isfinite(tspan[2])) || throw(
-        ArgumentError("tspan endpoints must be finite, got $tspan")
-    )
-    tspan[2] > tspan[1] || throw(
-        ArgumentError("LSM requires `tspan[2] > tspan[1]`, got tspan = $tspan")
-    )
+    ReservoirComputing.__check_lsm_tspan(tspan)
     ReservoirComputing._check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(
         ArgumentError("LSM owns the solve callback; drop `callback` from kwargs.")
     )
 
     cell = LSMCell(
-        neuron, encoder, spike_readout, in_dims, res_dims,
+        neuron, encoder, feature_map, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias), tspan, args, kwargs
     )
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = _wrap_layers(mods_tuple)
-    readout = LinearReadout(_feature_dim(spike_readout, res_dims) => out_dims, readout_activation)
+    readout = LinearReadout(
+        __feature_dim(feature_map, res_dims) => out_dims, readout_activation
+    )
     return LSM(cell, mods, readout)
 end
 
-function _lsm_rhs!(du, u, p, t)
-    n = p.n
+function __lsm_rhs!(du, u, p, t)
+    n_units = p.n_units
     neuron = p.neuron
     T = eltype(u)
-    τm = T(neuron.τ_m)
-    τsyn = T(neuron.τ_syn)
-    Rm = T(neuron.R_m)
-    Vrest = T(neuron.V_rest)
+    tau_m = T(neuron.tau_m)
+    tau_syn = T(neuron.tau_syn)
+    r_m = T(neuron.r_m)
+    v_rest = T(neuron.v_rest)
     mul!(p.I_ext, p.input_matrix, p.input(t))
     haskey(p, :bias) && (p.I_ext .+= p.bias)
-    @inbounds for i in 1:n
-        du[n + i] = -u[n + i] / τsyn
-        du[i] = t < p.ref_until[i] ? zero(T) :
-            (-(u[i] - Vrest) + Rm * (u[n + i] + p.I_ext[i])) / τm
+    @inbounds for unit in 1:n_units
+        du[n_units + unit] = -u[n_units + unit] / tau_syn
+        du[unit] = t < p.ref_until[unit] ? zero(T) :
+            (-(u[unit] - v_rest) + r_m * (u[n_units + unit] + p.I_ext[unit])) / tau_m
     end
     return nothing
 end
 
-function _lsm_fire!(integrator, i::Integer)
+function __lsm_fire!(integrator, unit::Integer)
     p = integrator.p
-    (i < 1 || integrator.t <= p.ref_until[i]) && return nothing
-    n = p.n
+    (unit < 1 || integrator.t <= p.ref_until[unit]) && return nothing
+    n_units = p.n_units
     neuron = p.neuron
     T = eltype(integrator.u)
     t = integrator.t
-    integrator.u[i] = T(neuron.V_reset)
-    p.ref_until[i] = t + T(neuron.τ_ref)
+    integrator.u[unit] = T(neuron.v_reset)
+    p.ref_until[unit] = t + T(neuron.tau_ref)
     W = p.reservoir_matrix
-    @inbounds for r in 1:n
-        integrator.u[n + r] += W[r, i]
+    @inbounds for post in 1:n_units
+        integrator.u[n_units + post] += W[post, unit]
     end
     push!(p.spike_t, t)
-    push!(p.spike_i, i)
+    push!(p.spike_i, unit)
     return nothing
 end
 
-function _lsm_affect!(integrator, idx)
-    if idx isa Integer
-        _lsm_fire!(integrator, idx)
+function __lsm_affect!(integrator, event_idx)
+    if event_idx isa Integer
+        __lsm_fire!(integrator, event_idx)
     else
-        @inbounds for i in idx
-            _lsm_fire!(integrator, i)
+        @inbounds for unit in event_idx
+            __lsm_fire!(integrator, unit)
         end
     end
     return nothing
 end
 
-function _lsm_condition!(out, u, t, integrator)
-    n = integrator.p.n
-    Vth = eltype(u)(integrator.p.neuron.V_th)
-    @inbounds for i in 1:n
-        out[i] = u[i] - Vth
+function __lsm_condition!(out, u, t, integrator)
+    n_units = integrator.p.n_units
+    v_th = eltype(u)(integrator.p.neuron.v_th)
+    @inbounds for unit in 1:n_units
+        out[unit] = u[unit] - v_th
     end
     return nothing
 end
 
-_lsm_spike_cb(n::Int) = VectorContinuousCallback(
-    _lsm_condition!, _lsm_affect!, n; save_positions = (false, false)
+__lsm_spike_cb(n_units::Int) = VectorContinuousCallback(
+    __lsm_condition!, __lsm_affect!, n_units; save_positions = (false, false)
 )
 
-function _assemble_spike_counts!(F::AbstractMatrix, spike_t, spike_i, sample_ts)
-    fill!(F, 0)
-    j = 1
-    @inbounds for k in eachindex(sample_ts)
-        t_hi = sample_ts[k]
-        while j <= length(spike_t) && spike_t[j] <= t_hi
-            F[spike_i[j], k] += 1
-            j += 1
+function __assemble_spike_counts!(features, spike_t, spike_i, sample_ts)
+    fill!(features, 0)
+    event = 1
+    @inbounds for sample in eachindex(sample_ts)
+        t_hi = sample_ts[sample]
+        while event <= length(spike_t) && spike_t[event] <= t_hi
+            features[spike_i[event], sample] += 1
+            event += 1
         end
     end
-    return F
+    return features
 end
 
-function _advance_exp_filter!(
-        s::AbstractVector{T}, t_last::T, spike_t, spike_i, t_hi, τ
+function __advance_exp_filter!(
+        filter_state::AbstractVector{T}, t_last::T, spike_t, spike_i, t_hi, filter_tau
     ) where {T}
-    invτ = inv(T(τ))
-    @inbounds for j in eachindex(spike_t)
-        t = T(spike_t[j])
+    inv_tau = inv(T(filter_tau))
+    @inbounds for event in eachindex(spike_t)
+        t_spike = T(spike_t[event])
         if isfinite(t_last)
-            s .*= exp((t_last - t) * invτ)
+            filter_state .*= exp((t_last - t_spike) * inv_tau)
         end
-        s[spike_i[j]] += one(T)
-        t_last = t
+        filter_state[spike_i[event]] += one(T)
+        t_last = t_spike
     end
-    tk = T(t_hi)
+    t_sample = T(t_hi)
     if isfinite(t_last)
-        s .*= exp((t_last - tk) * invτ)
-        t_last = tk
+        filter_state .*= exp((t_last - t_sample) * inv_tau)
+        t_last = t_sample
     end
     return t_last
 end
 
-function _assemble_exp_filter!(F::AbstractMatrix{T}, spike_t, spike_i, sample_ts, τ) where {T}
-    s = zeros(T, size(F, 1))
+function __assemble_exp_filter!(
+        features::AbstractMatrix{T}, spike_t, spike_i, sample_ts, filter_tau
+    ) where {T}
+    filter_state = zeros(T, size(features, 1))
     t_last = typemin(T)
-    j = 1
-    invτ = inv(T(τ))
-    @inbounds for k in eachindex(sample_ts)
-        tk = T(sample_ts[k])
-        while j <= length(spike_t) && spike_t[j] <= tk
-            t = T(spike_t[j])
-            isfinite(t_last) && (s .*= exp((t_last - t) * invτ))
-            s[spike_i[j]] += one(T)
-            t_last = t
-            j += 1
+    event = 1
+    inv_tau = inv(T(filter_tau))
+    @inbounds for sample in eachindex(sample_ts)
+        t_sample = T(sample_ts[sample])
+        while event <= length(spike_t) && spike_t[event] <= t_sample
+            t_spike = T(spike_t[event])
+            isfinite(t_last) && (filter_state .*= exp((t_last - t_spike) * inv_tau))
+            filter_state[spike_i[event]] += one(T)
+            t_last = t_spike
+            event += 1
         end
         if isfinite(t_last)
-            s .*= exp((t_last - tk) * invτ)
-            t_last = tk
+            filter_state .*= exp((t_last - t_sample) * inv_tau)
+            t_last = t_sample
         end
-        F[:, k] .= s
+        features[:, sample] .= filter_state
     end
-    return F
+    return features
 end
 
-function _assemble_voltage!(F::AbstractMatrix, sol, n::Int)
-    @inbounds for k in eachindex(sol.u)
-        copyto!(view(F, :, k), view(sol.u[k], 1:n))
+function __assemble_voltage!(features, sol, n_units::Int)
+    @inbounds for sample in eachindex(sol.u)
+        copyto!(view(features, :, sample), view(sol.u[sample], 1:n_units))
     end
-    return F
+    return features
 end
 
-function _lsm_features!(
-        F, ro::SpikeCountReadout, spike_t, spike_i, sample_ts, sol, n
+function __lsm_features!(
+        features, ::SpikeCountFeatures, spike_t, spike_i, sample_ts, sol, n_units
     )
-    return _assemble_spike_counts!(F, spike_t, spike_i, sample_ts)
+    return __assemble_spike_counts!(features, spike_t, spike_i, sample_ts)
 end
-function _lsm_features!(
-        F, ro::ExponentialFilterReadout, spike_t, spike_i, sample_ts, sol, n
+function __lsm_features!(
+        features, fmap::ExponentialSpikeFilter, spike_t, spike_i, sample_ts, sol, n_units
     )
-    return _assemble_exp_filter!(F, spike_t, spike_i, sample_ts, ro.τ)
+    return __assemble_exp_filter!(
+        features, spike_t, spike_i, sample_ts, fmap.filter_tau
+    )
 end
-function _lsm_features!(
-        F, ::FilteredVoltageReadout, spike_t, spike_i, sample_ts, sol, n
+function __lsm_features!(
+        features, ::MembraneVoltageFeature, spike_t, spike_i, sample_ts, sol, n_units
     )
-    return _assemble_voltage!(F, sol, n)
+    return __assemble_voltage!(features, sol, n_units)
 end
 
-function _poisson_events(
-        rng::AbstractRNG, data::AbstractMatrix{T}, input_ts, t1, scale
+function __poisson_events(
+        rng::AbstractRNG, data::AbstractMatrix{T}, input_ts, t1, rate_scale
     ) where {T}
     in_dims, n_samples = size(data)
     times = T[]
-    chans = Int[]
-    sc = T(scale)
-    for k in 1:n_samples
-        t0 = T(input_ts[k])
-        t_hi = k < n_samples ? T(input_ts[k + 1]) : T(t1)
-        for c in 1:in_dims
-            rate = sc * max(data[c, k], zero(T))
+    channels = Int[]
+    scale = T(rate_scale)
+    for sample in 1:n_samples
+        t0 = T(input_ts[sample])
+        t_hi = sample < n_samples ? T(input_ts[sample + 1]) : T(t1)
+        for channel in 1:in_dims
+            rate = scale * max(data[channel, sample], zero(T))
             rate <= 0 && continue
             t = t0
             while true
                 t += T(randexp(rng)) / rate
                 t >= t_hi && break
                 push!(times, t)
-                push!(chans, c)
+                push!(channels, channel)
             end
         end
     end
-    perm = sortperm(times)
-    return times[perm], chans[perm]
+    order = sortperm(times)
+    return times[order], channels[order]
 end
 
-function _poisson_callback!(times::Vector{T}, chans::Vector{Int}, weight) where {T}
-    idx = Ref(1)
-    cond = let times = times, idx = idx
+function __poisson_callback!(times::Vector{T}, channels::Vector{Int}, synaptic_weight) where {T}
+    next_event = Ref(1)
+    cond = let times = times, next_event = next_event
         function (u, t, integrator)
-            return idx[] <= length(times) && t >= times[idx[]]
+            return next_event[] <= length(times) && t >= times[next_event[]]
         end
     end
-    aff! = let times = times, chans = chans, idx = idx, weight = weight
+    aff! = let times = times, channels = channels, next_event = next_event,
+            synaptic_weight = synaptic_weight
         function (integrator)
             p = integrator.p
-            n = p.n
-            w = eltype(integrator.u)(weight)
-            while idx[] <= length(times) && integrator.t >= times[idx[]]
-                c = chans[idx[]]
-                @inbounds for r in 1:n
-                    integrator.u[n + r] += w * p.input_matrix[r, c]
+            n_units = p.n_units
+            weight = eltype(integrator.u)(synaptic_weight)
+            while next_event[] <= length(times) && integrator.t >= times[next_event[]]
+                channel = channels[next_event[]]
+                @inbounds for unit in 1:n_units
+                    integrator.u[n_units + unit] += weight * p.input_matrix[unit, channel]
                 end
-                idx[] += 1
+                next_event[] += 1
             end
             return nothing
         end
@@ -759,37 +756,40 @@ function _poisson_callback!(times::Vector{T}, chans::Vector{Int}, weight) where 
     return DiscreteCallback(cond, aff!; save_positions = (false, false))
 end
 
-function _lsm_pack(cell::LSMCell, ps_res, input_fn, n::Int, ::Type{T}) where {T}
+function __lsm_pack(cell::LSMCell, ps_res, input_fn, n_units::Int, ::Type{T}) where {T}
     base = (
-        n = n,
+        n_units = n_units,
         neuron = cell.neuron,
         input_matrix = ps_res.input_matrix,
         reservoir_matrix = ps_res.reservoir_matrix,
         input = input_fn,
-        I_ext = zeros(T, n),
-        ref_until = fill(typemin(T), n),
+        I_ext = zeros(T, n_units),
+        ref_until = fill(typemin(T), n_units),
         spike_t = T[],
         spike_i = Int[],
     )
     return haskey(ps_res, :bias) ? merge(base, (bias = ps_res.bias,)) : base
 end
 
-function _lsm_u0(cell::LSMCell, st_res, n::Int, ::Type{T}) where {T}
-    u0 = zeros(T, 2n)
-    copyto!(view(u0, 1:n), vec(cell.init_state(st_res.rng, n, 1)))
-    return u0
+function __lsm_u0(cell::LSMCell, st_res, n_units::Int, ::Type{T}) where {T}
+    rng = replicate(st_res.rng)
+    u0 = zeros(T, 2 * n_units)
+    copyto!(view(u0, 1:n_units), vec(cell.init_state(rng, n_units, 1)))
+    return u0, merge(st_res, (rng = rng,))
 end
 
-function _lsm_callbacks(cell::LSMCell, n::Int, data, input_ts, t1, st_enc)
-    spike_cb = _lsm_spike_cb(n)
+function __lsm_callbacks(cell::LSMCell, n_units::Int, data, input_ts, t1, st_enc)
+    spike_cb = __lsm_spike_cb(n_units)
     if cell.encoder isa CurrentInjection
         return CallbackSet(spike_cb), _make_input_fn(data, input_ts), st_enc, nothing
     elseif cell.encoder isa PoissonRateEncoder
         enc = cell.encoder
         rng = copy(st_enc.rng)
-        times, chans = _poisson_events(rng, data, input_ts, t1, enc.scale)
+        times, channels = __poisson_events(
+            rng, data, input_ts, t1, enc.rate_scale
+        )
         zoh = _make_input_fn(zeros(eltype(data), size(data)), input_ts)
-        pcb = _poisson_callback!(times, chans, enc.weight)
+        pcb = __poisson_callback!(times, channels, enc.synaptic_weight)
         return CallbackSet(spike_cb, pcb), zoh, (rng = rng,), times
     end
     return throw(ArgumentError("unsupported encoder $(typeof(cell.encoder))"))
@@ -811,21 +811,20 @@ function _collectstates(
         ArgumentError("LSM requires `tspan[2] > tspan[1]`, got tspan = ($t0, $t1).")
     )
 
-    n = cell.out_dims
+    n_units = cell.out_dims
     T = eltype(ps.reservoir.input_matrix)
     Δt = (t1 - t0) / n_samples
     input_ts = collect(range(t0, t1 - Δt; length = n_samples))
     sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
-    st_enc = st.reservoir.encoder
-    cbset, input_fn, st_enc_new, poisson_times = _lsm_callbacks(
-        cell, n, data, input_ts, t1, st_enc
+    cbset, input_fn, st_enc_new, poisson_times = __lsm_callbacks(
+        cell, n_units, data, input_ts, t1, st.reservoir.encoder
     )
-    solve_p = _lsm_pack(cell, ps.reservoir, input_fn, n, T)
-    u0 = _lsm_u0(cell, st.reservoir, n, T)
+    solve_p = __lsm_pack(cell, ps.reservoir, input_fn, n_units, T)
+    u0, st_res_new = __lsm_u0(cell, st.reservoir, n_units, T)
 
     tstops = poisson_times === nothing ? sample_ts : sort!(vcat(sample_ts, poisson_times))
-    ode_fn = ODEFunction{true, FullSpecialize}(_lsm_rhs!)
+    ode_fn = ODEFunction{true, FullSpecialize}(__lsm_rhs!)
     prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
     sol = solve(
         prob, cell.args...;
@@ -840,17 +839,17 @@ function _collectstates(
         ErrorException("LSM solve failed with retcode $(sol.retcode)")
     )
 
-    features = Matrix{T}(undef, _feature_dim(cell.spike_readout, n), n_samples)
-    _lsm_features!(
-        features, cell.spike_readout, solve_p.spike_t, solve_p.spike_i,
-        sample_ts, sol, n
+    features = Matrix{T}(undef, __feature_dim(cell.feature_map, n_units), n_samples)
+    __lsm_features!(
+        features, cell.feature_map, solve_p.spike_t, solve_p.spike_i,
+        sample_ts, sol, n_units
     )
 
     modified_states, st_mods = _apply_modifiers_continuous(
         rc.state_modifiers, features, ps.state_modifiers, st.state_modifiers
     )
     newst = (
-        reservoir = merge(st.reservoir, (encoder = st_enc_new,)),
+        reservoir = merge(st_res_new, (encoder = st_enc_new,)),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -886,11 +885,11 @@ function _predict(
         st::NamedTuple;
         initialdata::AbstractVector
     )
-    _supports_ar(cell.spike_readout) || throw(
+    __supports_ar(cell.feature_map) || throw(
         ArgumentError(
-            "$(typeof(cell.spike_readout)) does not support autoregressive predict; " *
-                "use teacher-forced predict or ExponentialFilterReadout / " *
-                "FilteredVoltageReadout."
+            "$(typeof(cell.feature_map)) does not support autoregressive predict; " *
+                "use teacher-forced predict or ExponentialSpikeFilter / " *
+                "MembraneVoltageFeature."
         )
     )
     cell.encoder isa PoissonRateEncoder && throw(
@@ -908,31 +907,31 @@ function _predict(
         )
     )
 
-    n = cell.out_dims
+    n_units = cell.out_dims
     T = eltype(ps.reservoir.input_matrix)
     ts = collect(range(t0, t1; length = steps + 1))
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
     input_fn = ConstantInputWindow(convert(Vector{T}, initialdata))
-    solve_p = _lsm_pack(cell, ps.reservoir, input_fn, n, T)
-    current_state = zeros(T, 2n)
+    solve_p = __lsm_pack(cell, ps.reservoir, input_fn, n_units, T)
+    current_state, st_res_new = __lsm_u0(cell, st.reservoir, n_units, T)
     current_input = convert(Vector{T}, initialdata)
     st_mods = st.state_modifiers
     st_ro = st.readout
-    features_col = zeros(T, _feature_dim(cell.spike_readout, n))
-    filt = zeros(T, n)
-    filt_t = typemin(T)
-    τ_filt = cell.spike_readout isa ExponentialFilterReadout ?
-        T(cell.spike_readout.τ) : zero(T)
+    features_col = zeros(T, __feature_dim(cell.feature_map, n_units))
+    filter_state = zeros(T, n_units)
+    filter_t = typemin(T)
+    filter_tau = cell.feature_map isa ExponentialSpikeFilter ?
+        T(cell.feature_map.filter_tau) : zero(T)
 
-    ode_fn = ODEFunction{true, FullSpecialize}(_lsm_rhs!)
+    ode_fn = ODEFunction{true, FullSpecialize}(__lsm_rhs!)
     sub_prob = ODEProblem{true, FullSpecialize}(
         ode_fn, current_state, (window_starts[1], window_ends[1]), solve_p
     )
     integrator = init(
         sub_prob, cell.args...;
-        callback = _lsm_spike_cb(n),
+        callback = __lsm_spike_cb(n_units),
         save_everystep = false, dense = false,
         save_start = false, save_end = true,
         cell.kwargs...,
@@ -953,13 +952,14 @@ function _predict(
         )
         current_state = integrator.u
 
-        if cell.spike_readout isa FilteredVoltageReadout
-            copyto!(features_col, view(current_state, 1:n))
+        if cell.feature_map isa MembraneVoltageFeature
+            copyto!(features_col, view(current_state, 1:n_units))
         else
-            filt_t = _advance_exp_filter!(
-                filt, filt_t, solve_p.spike_t, solve_p.spike_i, t_hi, τ_filt
+            filter_t = __advance_exp_filter!(
+                filter_state, filter_t, solve_p.spike_t, solve_p.spike_i,
+                t_hi, filter_tau
             )
-            copyto!(features_col, filt)
+            copyto!(features_col, filter_state)
         end
 
         if !isempty(rc.state_modifiers)
@@ -978,7 +978,7 @@ function _predict(
     end
 
     newst = (
-        reservoir = st.reservoir,
+        reservoir = st_res_new,
         state_modifiers = st_mods,
         readout = st_ro,
     )

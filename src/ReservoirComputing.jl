@@ -73,10 +73,10 @@ export ReservoirComputer
 export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN, LSM
 export AbstractSampler, TerminalStateSampling
 export ContinuousESNCell, LSMCell
-export AbstractSpikingNeuron, LIFCell
+export AbstractSpikingNeuron, LIFNeuron
 export AbstractInputEncoder, CurrentInjection, PoissonRateEncoder
-export AbstractSpikeReadout, SpikeCountReadout, ExponentialFilterReadout,
-    FilteredVoltageReadout
+export AbstractSpikeFeature, SpikeCountFeatures, ExponentialSpikeFilter,
+    MembraneVoltageFeature
 export AdditiveEIESNCell, EIESNCell, ES2NCell, ESNCell, EuSNCell, LIFESNCell,
     MemoryESNCell, MemoryResESNCell, ResESNCell, RMNCell
 export StatefulLayer, LinearReadout, ReservoirChain, Collect, collectstates,
