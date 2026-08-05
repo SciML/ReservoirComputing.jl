@@ -6,6 +6,7 @@ begin
     using Serialization
     using Static
     using ReservoirComputing
+    using LuxCore: setup
 
     function roundtrip(x)
         io = IOBuffer()
@@ -90,7 +91,10 @@ begin
             reshape(y1, 1, length(y1)),
             reshape(y2, 1, length(y2)),
         )
-        ps_trained, st_trained = train!(rc, data, target, ps, st, StandardRidge(Float32, 0.0f0))
+        ps_trained, st_trained = train(
+            rc, data, target, ps, st;
+            objective = RidgeRegression(Float32, 0.0f0),
+        )
         pred, _ = predict(rc, data, ps_trained, st_trained)
 
         ps_rt = roundtrip(ps_trained)

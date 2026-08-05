@@ -15,6 +15,7 @@ using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random
 using ReservoirComputing
+using LuxCore: setup
 
 Random.seed!(42)
 rng = MersenneTwister(17)
@@ -39,7 +40,7 @@ esn = ESN(3, 300, 3; init_reservoir=rand_sparse(; radius=1.2, sparsity=6/300),
     state_modifiers=NLAT2)
 
 ps, st = setup(rng, esn)
-ps, st = train!(esn, input_data, target_data, ps, st)
+ps, st = train(esn, input_data, target_data, ps, st)
 ```
 
 Now that we have a trained model we want to save both the parameters and states, as well as

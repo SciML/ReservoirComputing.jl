@@ -61,9 +61,9 @@ Next Generation Reservoir Computing [Gauthier2021](@cite).
   - Updated layer state (NamedTuple).
 """
 @concrete struct NGRC <:
-    AbstractReservoirComputer{(:reservoir, :states_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -77,7 +77,7 @@ function NGRC(
     nfl = NonlinearFeaturesLayer(feats_tuple...; include_input = include_input)
     mods_tuple_raw = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (nfl, state_modifiers...) : (nfl, state_modifiers)
-    mods = _wrap_layers(mods_tuple_raw)
+    mods = __wrap_layers(mods_tuple_raw)
     if ro_dims === nothing
         n_taps = in_dims * (num_delays + 1)
         inc = ReservoirComputing.known(include_input)
@@ -163,7 +163,7 @@ function polynomial_monomials(
     for degree in degrees
         degree < 1 && continue
         index_buffer = Vector{Int}(undef, degree)
-        _polynomial_monomials_recursive!(
+        __polynomial_monomials_recursive!(
             output_monomials, input_vector,
             index_buffer, 1, 1, num_variables
         )
@@ -172,7 +172,7 @@ function polynomial_monomials(
     return output_monomials
 end
 
-function _polynomial_monomials_recursive!(
+function __polynomial_monomials_recursive!(
         output_monomials, input_vector,
         index_buffer, position::Int, start_index::Int, num_variables::Int
     )
@@ -186,7 +186,7 @@ function _polynomial_monomials_recursive!(
     else
         @inbounds for variable_index in start_index:num_variables
             index_buffer[position] = variable_index
-            _polynomial_monomials_recursive!(
+            __polynomial_monomials_recursive!(
                 output_monomials, input_vector,
                 index_buffer, position + 1, variable_index, num_variables
             )
@@ -300,14 +300,14 @@ function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
     return output
 end
 
-function _comb_repetition!(f, current, start, n, k)
+function __comb_repetition!(f, current, start, n, k)
     if k == 0
         f(current)
         return
     end
     for i in start:n
         push!(current, i)
-        _comb_repetition!(f, current, i, n, k - 1)
+        __comb_repetition!(f, current, i, n, k - 1)
         pop!(current)
     end
     return

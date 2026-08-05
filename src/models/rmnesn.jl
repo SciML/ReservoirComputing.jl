@@ -78,7 +78,7 @@ Construct a Reservoir Memory Network Echo State Network [Gallicchio2024b](@cite)
       - `reservoir_matrix :: (res_dims × res_dims)`.
       - `memory_matrix :: (res_dims × mem_dims)`.
       - `bias :: (res_dims,)` — present only if `use_bias=true`.
-  - `states_modifiers` — a `Tuple` with parameters for each modifier layer;
+  - `state_modifiers` — a `Tuple` with parameters for each modifier layer;
     may be empty.
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
     - `weight :: (out_dims × res_dims)`.
@@ -91,7 +91,7 @@ Construct a Reservoir Memory Network Echo State Network [Gallicchio2024b](@cite)
     - `nonlinear_reservoir` — states for [`MemoryESNCell`](@ref).
     - `rng` — random number generator state used to sample initial recurrent
       states.
-  - `states_modifiers` — a `Tuple` with states for each modifier layer.
+  - `state_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 
 # See also
@@ -101,9 +101,9 @@ Construct a Reservoir Memory Network Echo State Network [Gallicchio2024b](@cite)
 
 """
 @concrete struct RMNESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -139,7 +139,7 @@ function RMNESN(
     cell = StatefulLayer(rmncell)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return RMNESN(cell, mods, ro)
 end

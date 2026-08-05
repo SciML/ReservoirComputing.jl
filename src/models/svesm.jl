@@ -10,7 +10,7 @@ Support Vector Echo-State Machine [ShiHan2007](@cite).
 [`SVMReadout`](@ref), performing support vector regression in the
 high-dimensional reservoir state space (the "reservoir trick").
 Training requires LIBSVM.jl to be loaded and a `LIBSVM.AbstractSVR`
-instance to be passed as the `train_method` argument to [`train!`](@ref).
+instance to be passed as the `objective` keyword to [`train`](@ref).
 
 ## Equations
 
@@ -51,9 +51,9 @@ Composition:
     `Tuple`. Default: empty `()`.
 """
 @concrete struct SVESM <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -66,7 +66,7 @@ function SVESM(
     cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = SVMReadout(res_dims => out_dims)
     return SVESM(cell, mods, ro)
 end
@@ -79,11 +79,11 @@ function Base.show(io::IO, svesm::SVESM)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(svesm.states_modifiers)
+    if isempty(svesm.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(svesm.states_modifiers)
+        for (i, m) in enumerate(svesm.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

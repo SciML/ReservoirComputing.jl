@@ -3,7 +3,8 @@
         tspan, args = (), activation = tanh, use_bias = false,
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
-        equations = _continuous_esn_rhs!, kwargs...)
+        equations = __continuous_esn_rhs!,
+        use_jac_prototype = false, kwargs...)
 
 Continuous-time Echo State Network cell
 ([Lukosevicius2012](@cite)). Integrates the ODE
@@ -36,6 +37,12 @@ Continuous-time Echo State Network cell
     Default: `zeros32`.
   - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`.
     Default: continuous-time leaky-integrator ESN ODE.
+  - `use_jac_prototype`: Attach a sparse `jac_prototype` to the underlying
+    `ODEFunction`, when a prototype is available for the current
+    `(equations, W_r)` pair. Silently no-op when the reservoir matrix is
+    dense or the RHS is user-supplied. Only benefits implicit solvers
+    (`Rodas5`, `TRBDF2`, …) — no effect on `Tsit5` and other explicit
+    methods. Default: `false`.
   - `kwargs...`: Forwarded to `solve` as keyword arguments.
 
 ## Parameters
@@ -57,6 +64,7 @@ Continuous-time Echo State Network cell
     tspan
     args
     kwargs
+    use_jac_prototype <: StaticBool
 end
 
 function ContinuousESNCell(
@@ -64,15 +72,21 @@ function ContinuousESNCell(
         tspan, args = (), activation = tanh, use_bias::BoolType = False(),
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
-        equations = _continuous_esn_rhs!, kwargs...
+        equations = __continuous_esn_rhs!,
+        use_jac_prototype::BoolType = False(), kwargs...
     )
     return ContinuousESNCell(
         activation, in_dims, out_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias),
-        equations, tspan, args, kwargs
+        equations, tspan, args, kwargs,
+        static(use_jac_prototype)
     )
 end
+
+# Generic fallback for `use_jac_prototype = true`; the sparse-`W_r`
+# specialisation lives in `ext/RCODEReservoirSparseArraysExt.jl`.
+__reservoir_jac_prototype(__equations, __reservoir_matrix) = nothing
 
 function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
     ps = (
@@ -89,7 +103,7 @@ function initialstates(::AbstractRNG, ::ContinuousESNCell)
     return NamedTuple()
 end
 
-function _continuous_esn_rhs!(dx, x, p, t)
+function __continuous_esn_rhs!(dx, x, p, t)
     input_t = p.input(t)
     mul!(dx, p.reservoir_matrix, x)
     mul!(dx, p.input_matrix, input_t, true, true)
@@ -106,5 +120,6 @@ function Base.show(io::IO, cell::ContinuousESNCell)
     print(io, ", tspan = ")
     show(io, cell.tspan)
     has_bias(cell) || print(io, ", use_bias = false")
+    known(cell.use_jac_prototype) && print(io, ", use_jac_prototype = true")
     return print(io, ")")
 end

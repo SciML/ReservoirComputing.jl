@@ -61,7 +61,7 @@ Edge of Stability Echo State Network (ES2N) [Ceni2025](@cite).
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `orthogonal_matrix :: (res_dims × res_dims)` — `O`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
-  - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
+  - `state_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
       - `weight :: (out_dims × res_dims)` — `W_out`
       - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
@@ -72,14 +72,14 @@ Edge of Stability Echo State Network (ES2N) [Ceni2025](@cite).
 ## States
 
   - `reservoir` — states for the internal [`ES2NCell`](@ref) (e.g. `rng` used to sample initial hidden states).
-  - `states_modifiers` — a `Tuple` with states for each modifier layer.
+  - `state_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 
 """
 @concrete struct ES2N <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -93,7 +93,7 @@ function ES2N(
     cell = StatefulLayer(ES2NCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return ES2N(cell, mods, ro)
 end
@@ -106,11 +106,11 @@ function Base.show(io::IO, esn::ES2N)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

@@ -3,6 +3,7 @@ begin
     using Random
     using Test
     using ReservoirComputing
+    using LuxCore: initialparameters, setup
 
     function cuda_tests_requested()
         raw = lowercase(strip(get(ENV, "RESERVOIRCOMPUTING_TEST_CUDA", "")))

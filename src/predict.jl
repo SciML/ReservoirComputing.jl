@@ -60,8 +60,8 @@ function predict(
 end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
+    __require_nonempty_data(data, "predict")
     T = size(data, 2)
-    @assert T ≥ 1 "data must have at least one time step (columns)."
 
     y1, st = apply(rc, data[:, 1], ps, st)
     Y = similar(y1, size(y1, 1), T)
@@ -74,8 +74,8 @@ function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
     return Y, st
 end
 
-# Two-level dispatch on the reservoir field, mirroring `collectstates` / `_collectstates`.
-# Continuous reservoirs (`AbstractSciMLProblemReservoir`) plug in their own `_predict`
+# Two-level dispatch on the reservoir field, mirroring `collectstates` / `__collectstates`.
+# Continuous reservoirs (`AbstractSciMLProblemReservoir`) plug in their own `__predict`
 # methods from `RCODEReservoirExt`; everything else hits the fallbacks below, which
 # replicate the discrete `predict(::AbstractLuxLayer, …)` bodies above.
 #
@@ -92,15 +92,15 @@ function predict(
         initialdata::AbstractVector
     )
     res = hasfield(typeof(rc), :reservoir) ? rc.reservoir : nothing
-    return _predict(res, rc, steps, ps, st; initialdata = initialdata)
+    return __predict(res, rc, steps, ps, st; initialdata = initialdata)
 end
 
 function predict(rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
     res = hasfield(typeof(rc), :reservoir) ? rc.reservoir : nothing
-    return _predict(res, rc, data, ps, st)
+    return __predict(res, rc, data, ps, st)
 end
 
-function _predict(
+function __predict(
         ::AbstractSciMLProblemReservoir,
         ::AbstractReservoirComputer, ::Integer, ::Any, ::Any;
         initialdata::AbstractVector
@@ -113,7 +113,7 @@ function _predict(
     )
 end
 
-function _predict(
+function __predict(
         ::AbstractSciMLProblemReservoir,
         ::AbstractReservoirComputer, ::AbstractMatrix, ::Any, ::Any
     )
@@ -125,7 +125,7 @@ function _predict(
     )
 end
 
-function _predict(
+function __predict(
         ::Any, rc::AbstractReservoirComputer, steps::Integer, ps, st;
         initialdata::AbstractVector
     )
@@ -137,13 +137,9 @@ function _predict(
     return output, st
 end
 
-function _predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
+function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
+    __require_nonempty_data(data, "predict")
     n_samples = size(data, 2)
-    n_samples ≥ 1 || throw(
-        ArgumentError(
-            "predict input data must have at least one column, got $n_samples."
-        )
-    )
 
     input_cols = eachcol(data)
     first_output, st = apply(rc, first(input_cols), ps, st)

@@ -5,6 +5,7 @@ begin
     using LinearAlgebra
     using ReservoirComputing
     using LuxCore
+    import LuxCore: initialparameters, initialstates
 
     const _W_I = (rng, m, n) -> Matrix{Float32}(I, m, n)
     const _W_Z = (rng, m, n) -> zeros(Float32, m, n)

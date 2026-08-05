@@ -3,6 +3,8 @@ begin
     using Random
     using ReservoirComputing
     using LuxCore
+    import LuxCore: initialparameters, initialstates, setup
+    using WeightInitializers: zeros32
     using Static
 
     @testset "NGRC" begin
@@ -32,8 +34,8 @@ begin
             @test dl.num_delays == 1
             @test dl.stride == 2
 
-            @test !isempty(ngrc.states_modifiers)
-            first_mod = getfield(ngrc.states_modifiers, 1)
+            @test !isempty(ngrc.state_modifiers)
+            first_mod = getfield(ngrc.state_modifiers, 1)
             @test first_mod isa NonlinearFeaturesLayer
         end
 
@@ -50,11 +52,11 @@ begin
             st = initialstates(rng, ngrc)
 
             @test hasproperty(ps, :reservoir)
-            @test hasproperty(ps, :states_modifiers)
+            @test hasproperty(ps, :state_modifiers)
             @test hasproperty(ps, :readout)
 
             @test hasproperty(st, :reservoir)
-            @test hasproperty(st, :states_modifiers)
+            @test hasproperty(st, :state_modifiers)
             @test hasproperty(st, :readout)
 
             @test ps.readout.weight isa AbstractArray
@@ -123,8 +125,10 @@ begin
 
             ps, st = setup(rng, ngrc)
 
-            ps_tr, st_tr =
-                train!(ngrc, X_in, Y_out, ps, st; train_method = StandardRidge(1.0e-6))
+            ps_tr, st_tr = train(
+                ngrc, X_in, Y_out, ps, st;
+                objective = RidgeRegression(1.0e-6),
+            )
 
             @test hasproperty(ps_tr, :readout)
             w = ps_tr.readout.weight

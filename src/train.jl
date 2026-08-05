@@ -1,170 +1,260 @@
 @doc raw"""
+    RidgeRegression([Type], [reg])
 
-    StandardRidge([Type], [reg])
+Ridge regression objective for readout training.
 
-Ridge regression method.
-
-## Equations
+Fits weights ``\mathbf{W}`` so that ``\mathbf{Y} \approx \mathbf{W}\mathbf{X}``
+with Tikhonov regularization ``\lambda``:
 
 ```math
-\mathbf{w} = (\mathbf{X}^\top \mathbf{X} +
-\lambda \mathbf{I})^{-1} \mathbf{X}^\top \mathbf{y}
+\mathbf{W}^{\top}
+=
+(\mathbf{X}\mathbf{X}^{\top} + \lambda \mathbf{I})^{-1}
+\mathbf{X}\mathbf{Y}^{\top}
 ```
 
 ## Arguments
 
- - `Type`: type of the regularization argument. Default is inferred internally,
-   there's usually no need to tweak this
- - `reg`: regularization coefficient. Default is set to 0.0 (linear regression).
+  - `Type`: element type of ``\lambda`` (optional).
+  - `reg`: regularization ``\lambda``. Default `0.0` (ordinary least squares).
+
+Feature and target layouts are `(n_features, T)` and `(n_outputs, T)`; the
+fitted weight matrix is `(n_outputs, n_features)`.
 """
-struct StandardRidge
+struct RidgeRegression
     reg::Number
 end
 
-function StandardRidge(::Type{T}, reg) where {T <: Number}
-    return StandardRidge(T.(reg))
+function RidgeRegression(::Type{T}, reg) where {T <: Number}
+    return RidgeRegression(T.(reg))
 end
 
-function StandardRidge()
-    return StandardRidge(0.0)
+function RidgeRegression()
+    return RidgeRegression(0.0)
 end
 
-function _apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
-    @assert washout ≥ 0 "washout must be ≥ 0"
-    len_states = size(states, 2)
-    @assert washout < len_states "washout=$washout is ≥ number of time steps=$len_states"
-    first_idx = washout + 1
+function __apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washout::Integer)
+    washout ≥ 0 || throw(ArgumentError("washout must be ≥ 0, got $washout"))
+    n_samples = size(states, 2)
+    washout < n_samples || throw(
+        ArgumentError(
+            "washout=$washout is ≥ number of time steps=$n_samples"
+        )
+    )
     states_wo = states[:, (washout + 1):end]
     targets_wo = targets[:, (washout + 1):end]
     return states_wo, targets_wo
 end
 
-_set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
-
-abstract type AbstractReservoirComputingSolver end
+__set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
 
 """
+    AbstractReservoirComputingSolver
+
+Developer marker for the package's legacy reservoir-training solver family.
+
+## Extension contract
+
+`QRSolver` is the only built-in subtype. The public [`train`](@ref) API also
+accepts `LinearSolve.jl` algorithms directly. There is currently no public
+generic extension point for arbitrary `AbstractReservoirComputingSolver`
+subtypes: a new subtype is rejected by ridge training unless ReservoirComputing
+adds a corresponding implementation itself.
+
+For a custom solver, implement the documented `LinearSolve.jl` algorithm
+interface and pass that algorithm to `train(...; solver=...)`. Do not extend
+private training helpers from another package.
+
+## Example
+
+```julia
+weights = train(RidgeRegression(1.0e-3), states, targets;
+    solver = QRFactorization())
+```
+"""
+abstract type AbstractReservoirComputingSolver end
+
+@doc raw"""
+    QRFactorization()
+
+Default solver for [`RidgeRegression`](@ref). This is ReservoirComputing's
+owned solver facade; it dispatches to LinearSolve's QR factorization
+implementation. For other algorithms, load LinearSolve.jl and pass a
+documented LinearSolve algorithm as `solver`.
+"""
+struct QRFactorization <: AbstractReservoirComputingSolver end
+
+@doc raw"""
     QRSolver()
 
-Use a QR factorization to solve the linear least-squares system in [`train`](@ref)
-for [`StandardRidge`](@ref).
+Legacy built-in QR solver for [`RidgeRegression`](@ref).
+
+Prefer [`QRFactorization`](@ref) unless you need this path explicitly.
 """
 struct QRSolver <: AbstractReservoirComputingSolver end
 
-@doc raw"""
-    train(train_method, states, target_data; kwargs...)
+__default_ridge_solver() = QRFactorization()
+__resolve_ridge_solver(::Nothing) = __default_ridge_solver()
+__resolve_ridge_solver(solver) = solver
 
-Lower level training hook to fit a readout from precomputed
-reservoir features and given targets.
-
-Dispatching on this method with different training methods
-allows one to hook directly into [`train!`](@ref) without
-additional changes.
-
-## Arguments
-
-- `train_method`: An object describing the training algorithm and its hyperparameters
-  (e.g. regularization strength, solver choice, constraints).
-- `states`: Feature matrix with reservoir states (ie. obtained with [`collectstates`](@ref)).
-  Shape `(n_features, T)`, where `T` is the number of samples (e.g. time steps).
-- `target_data`: Target matrix aligned with `states`. Shape `(n_outputs, T)`.
-
-## Returns
-
-- `output_weights`: Trained readout. Should be a forward method to be hooked into a
-  layer. For instance, in case of linear regression `output_weights` is a matrix
-  consumable by [`LinearReadout`](@ref).
-
-## Notes
-
-- Any sequence pre-processing (e.g. washout) should be handled by the caller before
-  invoking `train`. See [`train!`](@ref) for an end-to-end workflow.
-- For very long `T`, consider chunked or iterative solvers to reduce memory usage.
-- If your approach returns additional artifacts (e.g. diagnostics), prefer storing
-  them inside `train_method` or exposing a separate API; keep `train`’s return
-  value as the forward method only.
-"""
-function train(
-        sr::StandardRidge, states::AbstractMatrix, target_data::AbstractMatrix;
-        solver = QRSolver(), kwargs...
+function __fit_readout(
+        objective::RidgeRegression, states::AbstractMatrix, target_data::AbstractMatrix;
+        solver = nothing, kwargs...
     )
-    return _train_ridge(solver, sr, states, target_data; kwargs...)
+    ridge_solver = __resolve_ridge_solver(solver)
+    return __train_ridge(ridge_solver, objective, states, target_data; kwargs...)
 end
 
-function _train_ridge(
-        ::QRSolver, sr::StandardRidge,
+function __ridge_augmented_system(
+        objective::RidgeRegression,
+        states::AbstractMatrix,
+        targets::AbstractMatrix,
+    )
+    n_samples = size(states, 2)
+    n_target_samples = size(targets, 2)
+    n_samples == n_target_samples || throw(
+        DimensionMismatch(
+            "states has $n_samples samples, targets has $n_target_samples"
+        )
+    )
+    n_samples > 0 || throw(
+        ArgumentError("ridge regression requires at least one training sample")
+    )
+
+    n_features = size(states, 1)
+    n_outputs = size(targets, 1)
+    T = promote_type(eltype(states), eltype(targets), typeof(objective.reg))
+    states = T.(states)
+    targets = T.(targets)
+    λ = convert(T, objective.reg)
+    λ ≥ zero(λ) || throw(
+        ArgumentError(
+            "RidgeRegression regularization must be ≥ 0, got reg=$(objective.reg)"
+        )
+    )
+    design = [states'; sqrt(λ) * I(n_features)]
+    rhs = [targets'; zeros(T, n_features, n_outputs)]
+    return design, rhs
+end
+
+function __train_ridge(
+        ::QRSolver, objective::RidgeRegression,
         states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
     )
-    n_states = size(states, 1)
-    A = [states'; sqrt(sr.reg) * I(n_states)]
-    b = [target_data'; zeros(eltype(target_data), n_states, size(target_data, 1))]
-    F = qr(A)
-    Wt = F \ b
-    output_layer = Matrix(Wt')
-    return output_layer
+    design, rhs = __ridge_augmented_system(objective, states, target_data)
+    weight_transpose = qr(design) \ rhs
+    return Matrix(weight_transpose')
+end
+
+function __train_ridge(
+        ::QRFactorization, objective::RidgeRegression,
+        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+    )
+    return __train_ridge(
+        LinearSolveQRFactorization(), objective, states, targets; kwargs...
+    )
+end
+
+function __train_ridge(
+        solver::AbstractReservoirComputingSolver, ::RidgeRegression,
+        ::AbstractMatrix, ::AbstractMatrix; kwargs...
+    )
+    throw(
+        ArgumentError(
+            "solver $(typeof(solver)) is not supported. Pass QRFactorization(), " *
+                "QRSolver(), or a documented LinearSolve.jl algorithm instead."
+        )
+    )
+end
+
+function __train_ridge(
+        solver, objective::RidgeRegression,
+        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
+    )
+    solver isa AbstractLinearAlgorithm || throw(
+        ArgumentError(
+            "solver $(typeof(solver)) is not supported. Pass QRFactorization(), " *
+                "QRSolver(), or a documented LinearSolve.jl algorithm instead."
+        )
+    )
+    design, rhs = __ridge_augmented_system(objective, states, targets)
+    solution = try
+        solve(LinearProblem(design, rhs), solver; kwargs...)
+    catch err
+        err isa DimensionMismatch || rethrow()
+        throw(
+            ArgumentError(
+                "solver $(typeof(solver)) requires a square matrix, but ridge regression's " *
+                    "augmented system is always rectangular (more rows than features). " *
+                    "Use QRFactorization(), SVDFactorization(), or NormalCholeskyFactorization() " *
+                    "instead."
+            )
+        )
+    end
+    successful_retcode(solution) || throw(
+        ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
+    )
+    return Matrix(solution.u')
 end
 
 @doc raw"""
-    train!(rc, train_data, target_data, ps, st,
-           train_method=StandardRidge(0.0);
-           washout=0, return_states=false)
+    train(rc, train_data, target_data, ps, st;
+          objective=RidgeRegression(0.0), solver=nothing,
+          washout=0, return_states=false)
 
-Trains a given reservoir computing by creating the reservoir states from `train_data`,
-and then fitting the readout layer using `target_data` as target.
-The learned weights/layer are written into `ps`. Use `return_states=true` to also
-obtain the feature matrix used for the fit, or call [`collectstates`](@ref) directly.
+Train the readout of a reservoir computer.
+
+Builds features from `train_data`, fits them to `target_data` with `objective`,
+and returns new parameters and states (inputs `ps` / `st` are not mutated).
 
 ## Arguments
 
-- `rc`: A reservoir computing model, either provided by ReservoirComputing.jl
-  or built with [`ReservoirChain`](@ref). Must contain a trainable layer
-  (for example [`LinearReadout`](@ref)), and a collection point [`Collect`](@ref).
-- `train_data`: input sequence where columns are time steps.
-- `target_data`: targets aligned with `train_data`.
-- `ps`: model parameters.
-- `st`: model states.
-- `train_method`: training algorithm. Default is [`StandardRidge`](@ref).
+  - `rc`: model with a trainable readout (e.g. [`ESN`](@ref),
+    [`ReservoirChain`](@ref)).
+  - `train_data`: inputs; columns are time steps.
+  - `target_data`: targets aligned with `train_data`.
+  - `ps`: model parameters.
+  - `st`: model states.
 
 ## Keyword arguments
 
-- `washout`: number of initial time steps to discard (applied equally to features
-  and targets). Default `0`.
-- `return_states`: if `true`, also returns the feature matrix used
-  for the fit.
-- `kwargs...`: additional keyword arguments for the training algorithm, if needed.
-  Defaults vary according to the different training method.
+  - `objective`: what to fit. Default [`RidgeRegression`](@ref).
+  - `solver`: how to solve when needed. For ridge, `nothing` uses
+    [`QRFactorization`](@ref).
+  - `washout`: initial time steps to drop from features and targets. Default `0`.
+  - `return_states`: if `true`, also return the feature matrix used for the fit.
+  - `kwargs...`: passed to the objective's backend when applicable.
 
 ## Returns
 
-- `(ps, st)`: updated model parameters and states.
-- `(ps, st), states`: If `return_states=true`.
-
-## Notes
-
-- Features are produced by `collectstates(rc, train_data, ps, st)`. If you rely on
-  the implicit collection of a [`LinearReadout`](@ref), make sure that readout was created with
-  `include_collect=true`, or insert an explicit [`Collect()`](@ref) earlier in the
-  [`ReservoirChain`](@ref).
+  - `(ps, st)`, or `((ps, st), states)` if `return_states=true`.
 """
-function train!(
-        rc, train_data, target_data, ps, st,
-        train_method = StandardRidge(0.0);
-        washout::Int = 0, return_states::Bool = false, kwargs...
+function train(
+        rc, train_data, target_data, ps, st;
+        objective = RidgeRegression(0.0),
+        solver = nothing,
+        washout::Integer = 0,
+        return_states::Bool = false,
+        kwargs...
     )
     raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        traindata_wo = washout > 0 ? _apply_washout(raw_states, target_data, washout) :
+        targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)
-    output_matrix = train(train_method, states_wo, traindata_wo; kwargs...)
+    output_matrix = if isnothing(solver)
+        __fit_readout(objective, states_wo, targets_wo; kwargs...)
+    else
+        __fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
+    end
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
-#_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+#__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 
-@generated function _setweight_rt(p::NamedTuple{K}, W) where {K}
+@generated function __setweight_rt(p::NamedTuple{K}, W) where {K}
     keys = K
-    Kq = _quote_keys(keys)
+    Kq = __quote_keys(keys)
     idx = findfirst(==(Symbol(:weight)), keys)
 
     terms = Any[]
@@ -173,29 +263,29 @@ end
     end
 
     if idx === nothing
-        newK = _quote_keys((keys..., :weight))
+        newK = __quote_keys((keys..., :weight))
         return :(NamedTuple{$newK}(($(terms...), W)))
     else
         return :(NamedTuple{$Kq}(($(terms...),)))
     end
 end
 
-@generated function _addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
+@generated function __addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
     if length(K) == 0
         return :(NamedTuple())
     end
     tailK = Base.tail(K)
-    Kq = _quote_keys(K)
-    tailKq = _quote_keys(tailK)
+    Kq = __quote_keys(K)
+    tailKq = __quote_keys(tailK)
 
     head_val = :(
         (getfield(layers, 1) isa LinearReadout)
-            ? _setweight_rt(getfield(ps, 1), W)
+            ? __setweight_rt(getfield(ps, 1), W)
             : getfield(ps, 1)
     )
 
     tail_call = :(
-        _addreadout(
+        __addreadout(
             NamedTuple{$tailKq}(Base.tail(layers)),
             NamedTuple{$tailKq}(Base.tail(ps)),
             W
@@ -212,6 +302,6 @@ function addreadout!(
         st::NamedTuple
     )
     @assert propertynames(rc.layers) == propertynames(ps)
-    new_ps = _addreadout(rc.layers, ps, W)
+    new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end

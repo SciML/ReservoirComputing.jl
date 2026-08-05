@@ -3,7 +3,7 @@
         use_bias = false,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_bias = zeros32, init_state = randn32,
-        equations = _continuous_esn_rhs!,
+        equations = __continuous_esn_rhs!,
         state_modifiers = (), readout_activation = identity,
         kwargs...)
 
@@ -68,7 +68,7 @@ Solve metadata:
       - `input_matrix :: (res_dims × in_dims)` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_r`
       - `bias :: (res_dims,)` — present only if `use_bias = true`
-  - `states_modifiers` — parameters for each modifier layer (may be empty).
+  - `state_modifiers` — parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref):
       - `weight :: (out_dims × res_dims)` — `W_out`
       - `bias :: (out_dims,)` — `b_out` (if the readout uses bias)
@@ -76,7 +76,7 @@ Solve metadata:
 ## States
 
   - `reservoir` — states for the internal [`ContinuousESNCell`](@ref).
-  - `states_modifiers` — states for each modifier layer (may be empty).
+  - `state_modifiers` — states for each modifier layer (may be empty).
   - `readout` — states for [`LinearReadout`](@ref).
 
 !!! note
@@ -85,9 +85,9 @@ Solve metadata:
     alongside `SciMLBase` and `DataInterpolations`.
 """
 @concrete struct ContinuousESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -107,11 +107,11 @@ function Base.show(io::IO, esn::ContinuousESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (idx, mod) in enumerate(esn.states_modifiers)
+        for (idx, mod) in enumerate(esn.state_modifiers)
             idx > 1 && print(io, ", ")
             show(io, mod)
         end

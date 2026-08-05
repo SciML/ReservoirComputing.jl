@@ -24,6 +24,7 @@ pages = [
         "Predict" => "api/predict.md",
         "States" => "api/states.md",
         "Initializers" => "api/inits.md",
+        "Developer Interfaces" => "api/developer.md",
     ],
     "References" => "references.md",
 ]

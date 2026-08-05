@@ -4,7 +4,12 @@ begin
     using Random
     using LinearAlgebra
     using ReservoirComputing
+    using LuxCore: setup
     using OrdinaryDiffEq
+    # Euler lives in OrdinaryDiffEqLowOrderRK under OrdinaryDiffEq v7+
+    if !isdefined(@__MODULE__, :Euler)
+        using OrdinaryDiffEqLowOrderRK: Euler
+    end
     using SciMLBase
     using DataInterpolations
 
@@ -210,7 +215,7 @@ begin
     # ---------------------------------------------------------------------------
     # 6. State modifiers compose with the continuous path
     #
-    # `states_modifiers` must compose with the continuous reservoir the same
+    # `state_modifiers` must compose with the continuous reservoir the same
     # way they do with the discrete one — apply per saved sample, threading
     # the modifier state across columns. NLAT2 doubles even-indexed columns
     # of its input, so the modified state must differ in those columns from
@@ -368,7 +373,7 @@ begin
     # ---------------------------------------------------------------------------
     # 11. `prob.p` accepted forms: NamedTuple / nothing / NullParameters
     #
-    # `_to_namedtuple` advertises three valid inputs and rejects anything
+    # `__to_namedtuple` advertises three valid inputs and rejects anything
     # else. Exercise all three success paths end-to-end so a future refactor
     # can't quietly break two of them.
     # ---------------------------------------------------------------------------

@@ -74,19 +74,19 @@ outside the non-linearity with optional bias terms.
 ## Parameters
 
   - `reservoir` — parameters of the internal [`AdditiveEIESNCell`](@ref).
-  - `states_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
+  - `state_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref).
 
 ## States
 
   - `reservoir` — states for the internal [`AdditiveEIESNCell`](@ref) (e.g. `rng`).
-  - `states_modifiers` — a `Tuple` with states for each modifier layer.
+  - `state_modifiers` — a `Tuple` with states for each modifier layer.
   - `readout` — states for [`LinearReadout`](@ref).
 """
 @concrete struct AdditiveEIESN <:
-    AbstractEchoStateNetwork{(:reservoir, :states_modifiers, :readout)}
+    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
     reservoir
-    states_modifiers
+    state_modifiers
     readout
 end
 
@@ -101,7 +101,7 @@ function AdditiveEIESN(
     cell = StatefulLayer(AdditiveEIESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(res_dims => out_dims, readout_activation)
     return AdditiveEIESN(cell, mods, ro)
 end
@@ -116,11 +116,11 @@ function Base.show(io::IO, esn::AdditiveEIESN)
     print(io, ",\n")
 
     print(io, "    state_modifiers = ")
-    if isempty(esn.states_modifiers)
+    if isempty(esn.state_modifiers)
         print(io, "()")
     else
         print(io, "(")
-        for (i, m) in enumerate(esn.states_modifiers)
+        for (i, m) in enumerate(esn.state_modifiers)
             i > 1 && print(io, ", ")
             show(io, m)
         end

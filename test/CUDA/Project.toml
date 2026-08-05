@@ -6,9 +6,6 @@ ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[sources]
-ReservoirComputing = {path = "../.."}
-
 [extras]
 CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
 
