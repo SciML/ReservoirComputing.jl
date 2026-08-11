@@ -1,21 +1,21 @@
 """
     AbstractSpikingNeuron
 
-Abstract supertype for continuous-time spiking neurons used by [`LSMCell`](@ref).
+Supertype for continuous-time spiking neurons used by [`LSMCell`](@ref).
 """
 abstract type AbstractSpikingNeuron end
 
 """
     AbstractInputEncoder
 
-Abstract supertype for [`LSMCell`](@ref) input encodings.
+Supertype for [`LSMCell`](@ref) input encodings.
 """
 abstract type AbstractInputEncoder end
 
 """
     AbstractSpikeFeature
 
-Abstract supertype for spike-side feature maps of [`LSMCell`](@ref).
+Supertype for spike-side feature maps of [`LSMCell`](@ref).
 """
 abstract type AbstractSpikeFeature end
 
@@ -24,8 +24,7 @@ abstract type AbstractSpikeFeature end
               tau_ref=0.002, r_m=1.0, tau_syn=0.005)
 
 Leaky integrate-and-fire neuron with exponential synaptic current
-([GerstnerKistler2002](@cite)). Distinct from [`LIFESN`](@ref)
-(Local Information Flow ESN).
+([GerstnerKistler2002](@cite)). Not [`LIFESN`](@ref) (Local Information Flow).
 
 ```math
 \begin{aligned}
@@ -80,13 +79,13 @@ struct CurrentInjection <: AbstractInputEncoder end
 @doc raw"""
     PoissonRateEncoder(; rate_scale=50.0, synaptic_weight=1.0)
 
-Poisson input spikes at rate ``\lambda_k = \mathrm{rate\_scale}\,\max(u_k, 0)``.
-Teacher-forced `predict` only.
+Poisson spikes at rate ``\lambda_k = \mathrm{rate\_scale}\,\max(u_k, 0)``.
+No autoregressive `predict`.
 
 ## Keyword arguments
 
   - `rate_scale`: Input-to-rate scale. Default: `50.0`.
-  - `synaptic_weight`: Spike weight into ``I_{\mathrm{syn}}``. Default: `1.0`.
+  - `synaptic_weight`: Weight into ``I_{\mathrm{syn}}``. Default: `1.0`.
 """
 @concrete struct PoissonRateEncoder <: AbstractInputEncoder
     rate_scale
@@ -103,18 +102,18 @@ end
 """
     SpikeCountFeatures()
 
-Per-window spike counts. Teacher-forced `predict` only.
+Per-window spike counts. No autoregressive `predict`.
 """
 struct SpikeCountFeatures <: AbstractSpikeFeature end
 
 @doc raw"""
     ExponentialSpikeFilter(; filter_tau=0.03)
 
-Exponential spike filter sampled at each window end:
-
 ```math
 \dot s = -s/\tau + \sum_f \delta(t - t_f)
 ```
+
+Sampled at each window end.
 
 ## Keyword arguments
 
@@ -149,41 +148,38 @@ __supports_ar(::SpikeCountFeatures) = false
         use_bias=false, init_bias=zeros32, init_reservoir=dale_sparse,
         init_input=scaled_rand, init_state=zeros32, kwargs...)
 
-Spiking reservoir cell for [`LSM`](@ref) ([Maass2002](@cite)). Continuous
-state is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
+Spiking reservoir cell for [`LSM`](@ref) ([Maass2002](@cite)).
+State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
 
 ## Arguments
 
   - `in_dims`: Input dimension.
-  - `out_dims`: Reservoir (spiking unit) dimension.
+  - `out_dims`: Reservoir dimension.
 
 ## Keyword arguments
 
   - `tspan`: Integration interval `(t0, t1)`. Length-2, strictly
     increasing, finite.
-  - `args`: Tuple of positional arguments forwarded to `solve`. The solver
-    algorithm (`Tsit5()`, `Euler()`, …) is the first element by convention.
+  - `args`: Positional `solve` arguments. Solver first by convention.
     Default: `()`.
   - `neuron`: [`AbstractSpikingNeuron`](@ref). Default: [`LIFNeuron`](@ref).
   - `encoder`: [`AbstractInputEncoder`](@ref). Default:
     [`CurrentInjection`](@ref).
   - `feature_map`: [`AbstractSpikeFeature`](@ref). Default:
     [`ExponentialSpikeFilter`](@ref).
-  - `use_bias`: Whether to include a bias term. Default: `false`.
-  - `init_reservoir`: Initialiser for `W_r`. Default: [`dale_sparse`](@ref).
-  - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
-  - `init_bias`: Initialiser for the bias. Only used if `use_bias=true`.
-    Default: `zeros32`.
-  - `init_state`: Initialiser for the membrane voltage. Default: `zeros32`.
-  - `kwargs...`: Forwarded to `solve`. The keys `saveat`, `save_everystep`,
-    `dense`, and `callback` are reserved and rejected at construction.
-    Prefer an explicit `dtmax ≈ tau_ref/4`.
+  - `use_bias`: Include bias. Default: `false`.
+  - `init_reservoir`: For `W_r`. Default: [`dale_sparse`](@ref).
+  - `init_input`: For `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: For bias when `use_bias=true`. Default: `zeros32`.
+  - `init_state`: For membrane voltage. Default: `zeros32`.
+  - `kwargs...`: Forwarded to `solve`. Rejected: `saveat`,
+    `save_everystep`, `dense`, `callback`. Use `dtmax ≈ tau_ref/4`.
 
 ## Parameters
 
   - `input_matrix :: (out_dims × in_dims)` — `W_in`
   - `reservoir_matrix :: (out_dims × out_dims)` — `W_r`
-  - `bias :: (out_dims,)` — present only if `use_bias = true`
+  - `bias :: (out_dims,)` — if `use_bias = true`
 """
 @concrete struct LSMCell <: AbstractSciMLProblemReservoir
     neuron

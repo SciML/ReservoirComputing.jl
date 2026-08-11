@@ -3,31 +3,28 @@
         excitatory_fraction=0.8, sparsity=0.1, std=1.0,
         radius=1.0, ei_weight_ratio=1.0, return_sparse=false)
 
-Create a Dale-compliant sparse reservoir matrix. The first
-`round(excitatory_fraction * n)` columns are excitatory (non-negative
-outgoing weights); the rest are inhibitory (non-positive). Inhibitory
-magnitudes are scaled by `ei_weight_ratio` before the spectral radius is
-set to `radius`.
+Dale-compliant sparse reservoir: first
+`round(excitatory_fraction * n)` columns excitatory (non-negative), rest
+inhibitory (non-positive). Inhibitory magnitudes scaled by
+`ei_weight_ratio`, then spectral radius to `radius`.
 
 ## Arguments
 
   - `rng`: Random number generator. Default is `Utils.default_rng()` from
     [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
-  - `T`: Element type of the matrix. Default is `Float32`.
-  - `dims`: Dimensions of the reservoir matrix. Must be square.
+  - `T`: Element type. Default is `Float32`.
+  - `dims`: Square matrix dimensions.
 
 ## Keyword arguments
 
   - `excitatory_fraction`: Fraction of excitatory units in `(0, 1)`.
     Default: `0.8`.
-  - `sparsity`: Fraction of zero entries. Default: `0.1`.
-  - `std`: Standard deviation passed to the sparse initialiser.
-    Default: `1.0`.
-  - `radius`: Target spectral radius. Default: `1.0`.
-  - `ei_weight_ratio`: Multiplier on inhibitory magnitudes before spectral
-    scaling. Default: `1.0`.
-  - `return_sparse`: Return a sparse matrix when `true` (`SparseArrays`
-    required). Default: `false`.
+  - `sparsity`: Fraction of zeros. Default: `0.1`.
+  - `std`: Sparse initialiser standard deviation. Default: `1.0`.
+  - `radius`: Spectral radius. Default: `1.0`.
+  - `ei_weight_ratio`: Inhibitory magnitude scale. Default: `1.0`.
+  - `return_sparse`: Sparse return (`SparseArrays` required).
+    Default: `false`.
 
 ## Examples
 
