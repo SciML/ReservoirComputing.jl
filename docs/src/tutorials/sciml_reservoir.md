@@ -347,7 +347,7 @@ cross-validation.
 The reservoir state sequence the readout sees is produced by an
 [`AbstractSampler`](@ref). To plug in a custom strategy (window mean,
 sub-sampling within a window, etc.), define a concrete subtype and a
-matching `_sample(::YourSampler, sol)` method inside an extension that
+matching `__sample(::YourSampler, sol)` method inside an extension that
 also loads `OrdinaryDiffEq` and `SciMLBase`. The method should return
 a `(state_dim, n_samples)` matrix; everything downstream (state
 modifiers, readout, predict) is sampler-agnostic.

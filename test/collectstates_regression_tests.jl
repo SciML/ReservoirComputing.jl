@@ -67,7 +67,7 @@ begin
     end
 
     # Byte-for-byte reproduction of the discrete `collectstates` body as it stood
-    # before the two-level `_collectstates` refactor. The refactor must produce
+    # before the two-level `__collectstates` refactor. The refactor must produce
     # the same output for every model that flows through the generic dispatch.
     function reference_collectstates(
             rc::ReservoirComputing.AbstractReservoirComputer,
@@ -80,14 +80,14 @@ begin
         cols = eachcol(data)
         @assert !isempty(cols)
         x1 = first(cols)
-        current_state, partial_st = ReservoirComputing._partial_apply(rc, x1, ps, newst)
+        current_state, partial_st = ReservoirComputing.__partial_apply(rc, x1, ps, newst)
         state_dims = size(current_state, 1)
         states = similar(data, state_dims, nsteps)
         states[:, 1] .= current_state
         newst = merge(partial_st, (readout = newst.readout,))
         for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
             current_state, partial_st =
-                ReservoirComputing._partial_apply(rc, inp, ps, newst)
+                ReservoirComputing.__partial_apply(rc, inp, ps, newst)
             states[:, idx] .= current_state
             newst = merge(partial_st, (readout = newst.readout,))
         end

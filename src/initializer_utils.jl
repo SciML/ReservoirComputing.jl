@@ -11,21 +11,21 @@ module InitializerArrays
     using Random: AbstractRNG, rand!
     using WeightInitializers: zeros32
 
-    function _array(rng::AbstractRNG, ::Type{T}, dims::Integer...) where {T}
+    function __array(rng::AbstractRNG, ::Type{T}, dims::Integer...) where {T}
         prototype = isempty(dims) ? zeros32(rng, 1) : zeros32(rng, dims...)
         return similar(prototype, T, dims)
     end
 
     function zeros(rng::AbstractRNG, ::Type{T}, dims::Integer...) where {T}
-        return fill!(_array(rng, T, dims...), zero(T))
+        return fill!(__array(rng, T, dims...), zero(T))
     end
 
     function ones(rng::AbstractRNG, ::Type{T}, dims::Integer...) where {T}
-        return fill!(_array(rng, T, dims...), one(T))
+        return fill!(__array(rng, T, dims...), one(T))
     end
 
     function rand(rng::AbstractRNG, ::Type{T}, dims::Integer...) where {T}
-        x = _array(rng, T, dims...)
+        x = __array(rng, T, dims...)
         if T <: Complex
             rand!(rng, reinterpret(real(T), x))
         else

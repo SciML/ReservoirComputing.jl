@@ -2874,8 +2874,8 @@ minimal-complexity Echo State Networks (ESNs).
 
 Default call (creating a dense matrix with shared weights along each diagonal):
 
-```jldoctest toepliz
-julia> W = toepliz_init(MersenneTwister(123), 5, 5; sparsity=0.5);
+```jldoctest toeplitz
+julia> W = toeplitz_init(MersenneTwister(123), 5, 5; sparsity=0.5);
 
 julia> size(W) == (5, 5) && eltype(W) == Float32 && all(W[i, i] == W[1, 1] for i in axes(W, 1))
 true
@@ -2883,8 +2883,8 @@ true
 
 Returning a SparseMatrixCSC (showing the exact sparsity gap on the outer bands):
 
-```jldoctest toepliz
-julia> W_sparse = toepliz_init(MersenneTwister(123), 6, 6; sparsity=0.6, return_sparse=true);
+```jldoctest toeplitz
+julia> W_sparse = toeplitz_init(MersenneTwister(123), 6, 6; sparsity=0.6, return_sparse=true);
 
 julia> W_sparse isa SparseMatrixCSC{Float32} && size(W_sparse) == (6, 6)
 true

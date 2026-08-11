@@ -114,14 +114,14 @@ function DeepESN(
         readout_activation = identity
     )
     n_layers = length(res_dims)
-    acts = _asvec(activation, n_layers)
-    leaks = _asvec(leak_coefficient, n_layers)
-    ires = _asvec(init_reservoir, n_layers)
-    iinp = _asvec(init_input, n_layers)
-    ibias = _asvec(init_bias, n_layers)
-    istate = _asvec(init_state, n_layers)
-    ub = _asvec(use_bias, n_layers)
-    mods0 = _asvec(state_modifiers, n_layers)
+    acts = __asvec(activation, n_layers)
+    leaks = __asvec(leak_coefficient, n_layers)
+    ires = __asvec(init_reservoir, n_layers)
+    iinp = __asvec(init_input, n_layers)
+    ibias = __asvec(init_bias, n_layers)
+    istate = __asvec(init_state, n_layers)
+    ub = __asvec(use_bias, n_layers)
+    mods0 = __asvec(state_modifiers, n_layers)
 
     cells = Vector{Any}(undef, n_layers)
     state_modifiers = Vector{Any}(undef, n_layers)
@@ -138,10 +138,10 @@ function DeepESN(
             leak_coefficient = leaks[idx]
         )
         cells[idx] = StatefulLayer(cell)
-        state_modifiers[idx] = mods0[idx] === nothing ? nothing : _wrap_layer(mods0[idx])
+        state_modifiers[idx] = mods0[idx] === nothing ? nothing : __wrap_layer(mods0[idx])
         prev = res_dims[idx]
     end
-    mods_per_layer = map(_coerce_layer_mods, state_modifiers) |> Tuple
+    mods_per_layer = map(__coerce_layer_mods, state_modifiers) |> Tuple
     ro = LinearReadout(prev => out_dims, readout_activation)
     return DeepESN(Tuple(cells), mods_per_layer, ro)
 end
@@ -187,7 +187,7 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
     return (cells = st_cells, state_modifiers = st_mods, readout = st_ro)
 end
 
-function _partial_apply(desn::DeepESN, inp, ps, st)
+function __partial_apply(desn::DeepESN, inp, ps, st)
     inp_t = inp
     n_layers = length(desn.cells)
     new_cell_st = Vector{Any}(undef, n_layers)
@@ -196,7 +196,7 @@ function _partial_apply(desn::DeepESN, inp, ps, st)
         inp_t, st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], st.cells[idx])
         new_cell_st[idx] = st_cell_i
         inp_t,
-            st_mods_i = _apply_seq(
+            st_mods_i = __apply_seq(
             desn.state_modifiers[idx], inp_t,
             ps.state_modifiers[idx], st.state_modifiers[idx]
         )
@@ -211,7 +211,7 @@ function _partial_apply(desn::DeepESN, inp, ps, st)
 end
 
 function (desn::DeepESN)(inp, ps, st)
-    out, new_st = _partial_apply(desn, inp, ps, st)
+    out, new_st = __partial_apply(desn, inp, ps, st)
     inp_t, st_ro = apply(desn.readout, out, ps.readout, st.readout)
     return inp_t, merge(new_st, (readout = st_ro,))
 end
@@ -219,7 +219,7 @@ end
 function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
     n_layers = length(desn.cells)
 
-    @inline function _layer_outdim(idx)
+    @inline function __layer_outdim(idx)
         st_i = st.cells[idx]
         if st_i.carry === nothing
             return desn.cells[idx].cell.out_dims
@@ -228,16 +228,16 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
         end
     end
 
-    @inline function _init_for(idx)
+    @inline function __init_for(idx)
         if init_carry === nothing
             return nothing
         elseif init_carry isa Function
-            sz = _layer_outdim(idx)
-            return (_asvec(init_carry(rng, sz)),)
+            sz = __layer_outdim(idx)
+            return (__asvec(init_carry(rng, sz)),)
         elseif init_carry isa Tuple || init_carry isa AbstractVector
             f = init_carry[idx]
-            sz = _layer_outdim(idx)
-            return f === nothing ? nothing : (_asvec(f(rng, sz)),)
+            sz = __layer_outdim(idx)
+            return f === nothing ? nothing : (__asvec(f(rng, sz)),)
         else
             throw(ArgumentError("init_carry must be nothing, a Function, or a Tuple/Vector of Functions"))
         end
@@ -246,7 +246,7 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
     new_cells = ntuple(
         idx -> begin
             st_i = st.cells[idx]
-            new_carry = _init_for(idx)
+            new_carry = __init_for(idx)
             merge(st_i, (; carry = new_carry))
         end, n_layers
     )
@@ -259,7 +259,7 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
 end
 
 function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
-    _require_nonempty_data(data, "collectstates")
+    __require_nonempty_data(data, "collectstates")
     newst = st
     collected = Any[]
     n_layers = length(desn.cells)
@@ -272,7 +272,7 @@ function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
                 st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], newst.cells[idx])
             cell_st_parts[idx] = st_cell_i
             inp_t,
-                st_mods_i = _apply_seq(
+                st_mods_i = __apply_seq(
                 desn.state_modifiers[idx], inp_t,
                 ps.state_modifiers[idx], newst.state_modifiers[idx]
             )

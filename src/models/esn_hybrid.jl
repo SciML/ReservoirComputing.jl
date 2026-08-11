@@ -99,7 +99,7 @@ function HybridESN(
     reservoir = StatefulLayer(ESNCell(esn_inp_size => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
-    mods = _wrap_layers(mods_tuple)
+    mods = __wrap_layers(mods_tuple)
     ro = LinearReadout(
         res_dims + km_dims => out_dims, readout_activation;
         include_collect = static(include_collect)
@@ -130,19 +130,20 @@ function initialstates(rng::AbstractRNG, hesn::HybridESN)
     )
 end
 
-function _partial_apply(hesn::HybridESN, inp, ps, st)
+function __partial_apply(hesn::HybridESN, inp, ps, st)
     k_t, st_km = hesn.knowledge_model(inp, ps.knowledge_model, st.knowledge_model)
     xin = vcat(k_t, inp)
     r, st_reservoir = apply(hesn.reservoir, xin, ps.reservoir, st.reservoir)
-    rstar,
-        st_mods = _apply_seq(hesn.state_modifiers, r, ps.state_modifiers, st.state_modifiers)
+    rstar, st_mods = __apply_seq(
+        hesn.state_modifiers, r, ps.state_modifiers, st.state_modifiers
+    )
     feats = vcat(k_t, rstar)
     return feats,
         (reservoir = st_reservoir, state_modifiers = st_mods, knowledge_model = st_km)
 end
 
 function (hesn::HybridESN)(inp, ps, st)
-    feats, new_st = _partial_apply(hesn, inp, ps, st)
+    feats, new_st = __partial_apply(hesn, inp, ps, st)
     y, st_ro = apply(hesn.readout, feats, ps.readout, st.readout)
     return y, merge(new_st, (readout = st_ro,))
 end

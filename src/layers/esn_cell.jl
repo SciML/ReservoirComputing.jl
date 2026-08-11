@@ -178,24 +178,24 @@ function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
-    lc = _format_leak(T, esn.leak_coefficient)
-    h_new = _one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
+    lc = __format_leak(T, esn.leak_coefficient)
+    h_new = __one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
     return (h_new, (h_new,)), st
 end
 
-function _format_leak(::Type{T}, leak::Number) where {T <: Number}
+function __format_leak(::Type{T}, leak::Number) where {T <: Number}
     return convert(T, leak)
 end
 
-function _format_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+function __format_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
     return reshape(convert.(T, leak), :, 1)
 end
 
-function _one_minus_leak(::Type{T}, leak::Number) where {T <: Number}
+function __one_minus_leak(::Type{T}, leak::Number) where {T <: Number}
     return one(T) - leak
 end
 
-function _one_minus_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+function __one_minus_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
     return one(T) .- leak
 end
 

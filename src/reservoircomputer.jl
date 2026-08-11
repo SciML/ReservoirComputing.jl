@@ -38,7 +38,7 @@ struct ReservoirComputer{R, S, L} <:
     function ReservoirComputer(reservoir::R, state_modifiers::S, readout::L) where {R, S, L}
         mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
             Tuple(state_modifiers) : (state_modifiers,)
-        mods = _wrap_layers(mods_tuple)
+        mods = __wrap_layers(mods_tuple)
 
         return new{R, typeof(mods), L}(reservoir, mods, readout)
     end
@@ -62,14 +62,14 @@ function initialstates(rng::AbstractRNG, rc::AbstractReservoirComputer)
     return (reservoir = st_res, state_modifiers = st_mods, readout = st_ro)
 end
 
-function _require_nonempty_data(data::AbstractMatrix, context::AbstractString)
+function __require_nonempty_data(data::AbstractMatrix, context::AbstractString)
     size(data, 2) ≥ 1 || throw(
         ArgumentError("$context data must have at least one column, got $(size(data, 2)).")
     )
     return nothing
 end
 
-@inline function _apply_seq(layers::Tuple, inp, ps::Tuple, st::Tuple)
+@inline function __apply_seq(layers::Tuple, inp, ps::Tuple, st::Tuple)
     new_st_parts = Vector{Any}(undef, length(layers))
     for idx in eachindex(layers)
         inp, sti = apply(layers[idx], inp, ps[idx], st[idx])
@@ -78,17 +78,17 @@ end
     return inp, tuple(new_st_parts...)
 end
 
-function _partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
+function __partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
     out,
-        st_mods = _apply_seq(
+        st_mods = __apply_seq(
         rc.state_modifiers, out, ps.state_modifiers, st.state_modifiers
     )
     return out, (reservoir = st_res, state_modifiers = st_mods)
 end
 
 function (rc::AbstractReservoirComputer)(inp, ps, st)
-    out, new_st = _partial_apply(rc, inp, ps, st)
+    out, new_st = __partial_apply(rc, inp, ps, st)
     out, st_ro = apply(rc.readout, out, ps.readout, st.readout)
     return out, merge(new_st, (readout = st_ro,))
 end
@@ -96,10 +96,10 @@ end
 function collectstates(
         rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
     )
-    return _collectstates(rc.reservoir, rc, data, ps, st)
+    return __collectstates(rc.reservoir, rc, data, ps, st)
 end
 
-function _collectstates(
+function __collectstates(
         ::AbstractSciMLProblemReservoir, ::AbstractReservoirComputer,
         ::AbstractMatrix, _, ::NamedTuple
     )
@@ -110,21 +110,21 @@ function _collectstates(
     )
 end
 
-function _collectstates(
+function __collectstates(
         _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
     )
-    _require_nonempty_data(data, "collectstates")
+    __require_nonempty_data(data, "collectstates")
     newst = st
     nsteps = size(data, 2)
     cols = eachcol(data)
     x1 = first(cols)
-    current_state, partial_st = _partial_apply(rc, x1, ps, newst)
+    current_state, partial_st = __partial_apply(rc, x1, ps, newst)
     state_dims = size(current_state, 1)
     states = similar(data, state_dims, nsteps)
     states[:, 1] .= current_state
     newst = merge(partial_st, (readout = newst.readout,))
     for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
-        current_state, partial_st = _partial_apply(rc, inp, ps, newst)
+        current_state, partial_st = __partial_apply(rc, inp, ps, newst)
         states[:, idx] .= current_state
         newst = merge(partial_st, (readout = newst.readout,))
     end
@@ -132,14 +132,14 @@ function _collectstates(
     return states, newst
 end
 
-_set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
+__set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
 
 function addreadout!(
         ::AbstractReservoirComputer, output_matrix::AbstractMatrix,
         ps::NamedTuple, st::NamedTuple
     )
     @assert hasproperty(ps, :readout)
-    new_readout = _set_readout_weight(ps.readout, output_matrix)
+    new_readout = __set_readout_weight(ps.readout, output_matrix)
     return merge(ps, (readout = new_readout,)), st
 end
 
@@ -212,7 +212,7 @@ function resetcarry!(
         new_state = nothing
     else
         if carry === nothing
-            sz = _cell_out_dims(rc.reservoir.cell)
+            sz = __cell_out_dims(rc.reservoir.cell)
         else
             state = first(carry)
             sz = size(state, 1)

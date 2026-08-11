@@ -86,7 +86,7 @@ are loaded.
 Package extensions can support another training objective by defining:
 
 ```julia
-ReservoirComputing._fit_readout(
+ReservoirComputing.__fit_readout(
     objective::MyObjective,
     states::AbstractMatrix,
     target_data::AbstractMatrix;
@@ -106,7 +106,7 @@ user supplies `solver=nothing`; otherwise it forwards the solver together with
 any additional keywords. Extension methods should reject unsupported solvers
 and keywords with an `ArgumentError`.
 
-`_fit_readout` is an internal extension interface and is not a user-facing
+`__fit_readout` is an internal extension interface and is not a user-facing
 training entry point. Its compatibility is not guaranteed before version 1.0.
 Users should always call the model-level `train` API.
 

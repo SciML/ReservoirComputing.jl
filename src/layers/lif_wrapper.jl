@@ -83,7 +83,7 @@ Created by `initialstates(rng, lif)`:
     init_buffer
 end
 
-_cell_out_dims(lif::LocalInformationFlow) = _cell_out_dims(lif.cell)
+__cell_out_dims(lif::LocalInformationFlow) = __cell_out_dims(lif.cell)
 
 function LocalInformationFlow(
         cell, (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
@@ -107,7 +107,9 @@ function initialstates(rng::AbstractRNG, lif::LocalInformationFlow)
 end
 
 
-function _init_input_buffer(rng::AbstractRNG, lif::LocalInformationFlow, inp::AbstractArray)
+function __init_input_buffer(
+        rng::AbstractRNG, lif::LocalInformationFlow, inp::AbstractArray
+    )
     n = max(lif.lookback_horizon - 1, 0)
     n == 0 && return ()
     buf = ntuple(_ -> similar(inp), n)
@@ -134,7 +136,7 @@ end
 function (lif::LocalInformationFlow)((inp, states)::Tuple, ps, st::NamedTuple)
     buf = st.input_buffer
     if buf === nothing
-        buf = _init_input_buffer(st.rng, lif, inp)
+        buf = __init_input_buffer(st.rng, lif, inp)
     end
     cell_ps = ps.cell
     cell_st = st.cell
