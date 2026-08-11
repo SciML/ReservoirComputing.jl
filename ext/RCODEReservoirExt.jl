@@ -581,7 +581,7 @@ end
 
 function __lsm_fire!(integrator, unit::Integer)
     p = integrator.p
-    (unit < 1 || integrator.t <= p.ref_until[unit]) && return nothing
+    (unit < 1 || unit > p.n_units || integrator.t <= p.ref_until[unit]) && return nothing
     n_units = p.n_units
     neuron = p.neuron
     T = eltype(integrator.u)
@@ -593,7 +593,7 @@ function __lsm_fire!(integrator, unit::Integer)
         integrator.u[n_units + post] += W[post, unit]
     end
     push!(p.spike_t, t)
-    push!(p.spike_i, unit)
+    push!(p.spike_i, Int(unit))
     return nothing
 end
 
@@ -601,7 +601,7 @@ function __lsm_affect!(integrator, event_idx)
     if event_idx isa Integer
         __lsm_fire!(integrator, event_idx)
     else
-        @inbounds for unit in event_idx
+        for unit in event_idx
             __lsm_fire!(integrator, unit)
         end
     end
@@ -621,7 +621,9 @@ __lsm_spike_cb(n_units::Int) = VectorContinuousCallback(
     __lsm_condition!, __lsm_affect!, n_units; save_positions = (false, false)
 )
 
-function __assemble_spike_counts!(features, spike_t, spike_i, sample_ts)
+function __lsm_features!(
+        features, ::SpikeCountFeatures, spike_t, spike_i, sample_ts, sol, n_units
+    )
     fill!(features, 0)
     event = 1
     @inbounds for sample in eachindex(sample_ts)
@@ -640,9 +642,7 @@ function __advance_exp_filter!(
     inv_tau = inv(T(filter_tau))
     @inbounds for event in eachindex(spike_t)
         t_spike = T(spike_t[event])
-        if isfinite(t_last)
-            filter_state .*= exp((t_last - t_spike) * inv_tau)
-        end
+        isfinite(t_last) && (filter_state .*= exp((t_last - t_spike) * inv_tau))
         filter_state[spike_i[event]] += one(T)
         t_last = t_spike
     end
@@ -654,13 +654,14 @@ function __advance_exp_filter!(
     return t_last
 end
 
-function __assemble_exp_filter!(
-        features::AbstractMatrix{T}, spike_t, spike_i, sample_ts, filter_tau
+function __lsm_features!(
+        features::AbstractMatrix{T}, fmap::ExponentialSpikeFilter,
+        spike_t, spike_i, sample_ts, sol, n_units
     ) where {T}
     filter_state = zeros(T, size(features, 1))
     t_last = typemin(T)
     event = 1
-    inv_tau = inv(T(filter_tau))
+    inv_tau = inv(T(fmap.filter_tau))
     @inbounds for sample in eachindex(sample_ts)
         t_sample = T(sample_ts[sample])
         while event <= length(spike_t) && spike_t[event] <= t_sample
@@ -679,29 +680,13 @@ function __assemble_exp_filter!(
     return features
 end
 
-function __assemble_voltage!(features, sol, n_units::Int)
+function __lsm_features!(
+        features, ::MembraneVoltageFeature, spike_t, spike_i, sample_ts, sol, n_units
+    )
     @inbounds for sample in eachindex(sol.u)
         copyto!(view(features, :, sample), view(sol.u[sample], 1:n_units))
     end
     return features
-end
-
-function __lsm_features!(
-        features, ::SpikeCountFeatures, spike_t, spike_i, sample_ts, sol, n_units
-    )
-    return __assemble_spike_counts!(features, spike_t, spike_i, sample_ts)
-end
-function __lsm_features!(
-        features, fmap::ExponentialSpikeFilter, spike_t, spike_i, sample_ts, sol, n_units
-    )
-    return __assemble_exp_filter!(
-        features, spike_t, spike_i, sample_ts, fmap.filter_tau
-    )
-end
-function __lsm_features!(
-        features, ::MembraneVoltageFeature, spike_t, spike_i, sample_ts, sol, n_units
-    )
-    return __assemble_voltage!(features, sol, n_units)
 end
 
 function __poisson_events(
@@ -857,27 +842,6 @@ function _collectstates(
 end
 
 function _predict(
-        ::LSMCell,
-        rc::AbstractReservoirComputer,
-        data::AbstractMatrix,
-        ps::NamedTuple,
-        st::NamedTuple
-    )
-    states, new_st = collectstates(rc, data, ps, st)
-    n_samples = size(states, 2)
-    st_ro = new_st.readout
-    state_cols = eachcol(states)
-    first_output, st_ro = apply(rc.readout, first(state_cols), ps.readout, st_ro)
-    outputs = similar(first_output, size(first_output, 1), n_samples)
-    outputs[:, 1] .= first_output
-    for (idx, state_col) in Iterators.drop(enumerate(state_cols), 1)
-        current_output, st_ro = apply(rc.readout, state_col, ps.readout, st_ro)
-        outputs[:, idx] .= current_output
-    end
-    return outputs, merge(new_st, (readout = st_ro,))
-end
-
-function _predict(
         cell::LSMCell,
         rc::AbstractReservoirComputer,
         steps::Integer,
@@ -887,16 +851,11 @@ function _predict(
     )
     __supports_ar(cell.feature_map) || throw(
         ArgumentError(
-            "$(typeof(cell.feature_map)) does not support autoregressive predict; " *
-                "use teacher-forced predict or ExponentialSpikeFilter / " *
-                "MembraneVoltageFeature."
+            "$(typeof(cell.feature_map)) does not support autoregressive predict"
         )
     )
     cell.encoder isa PoissonRateEncoder && throw(
-        ArgumentError(
-            "PoissonRateEncoder does not support autoregressive predict; " *
-                "use teacher-forced predict(data, ps, st) or CurrentInjection."
-        )
+        ArgumentError("PoissonRateEncoder does not support autoregressive predict")
     )
     steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
     t0, t1 = cell.tspan

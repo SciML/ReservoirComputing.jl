@@ -23,12 +23,7 @@ begin
         )
         return LSM(
             in_dim, res_dim, out_dim, tspan, args...;
-            neuron = neuron,
-            encoder = encoder,
-            feature_map = feature_map,
-            init_input = init_input,
-            init_reservoir = init_reservoir,
-            init_state = init_state,
+            neuron, encoder, feature_map, init_input, init_reservoir, init_state,
             kwargs...,
         )
     end
@@ -78,7 +73,6 @@ begin
         ps = _set_res!(ps; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
         counts, _ = collectstates(lsm, ones(Float64, 1, n_win), ps, st)
         n_spikes = sum(counts)
-        # endpoint / rootfind tolerance: allow ±1 spike vs ideal lattice
         expected = 1 + floor(Int, (T_end - T_isi) / T_isi + 1.0e-12)
         @test abs(n_spikes - expected) <= 1
         @test isapprox(T_end / n_spikes, T_isi; rtol = 0.08)
@@ -106,7 +100,6 @@ begin
         expected = 1 + floor(Int, (T_end - T_isi) / T_period + 1.0e-12)
         @test abs(n_spikes - expected) <= 1
         @test isapprox(T_end / n_spikes, T_period; rtol = 0.08)
-        # refractory lengthens period vs pure ISI
         @test T_end / n_spikes > T_isi * 1.1
     end
 
@@ -221,17 +214,14 @@ begin
         )
         ps, st = setup(MersenneTwister(6), lsm)
         ps = _set_res!(ps; Win = reshape([1.0], 1, 1), W = reshape([0.0], 1, 1))
-        # first half driven, second half silent
         data = hcat(fill(I, 1, n_on), zeros(1, n_off))
         S, _ = collectstates(lsm, data, ps, st)
         s = vec(S)
         @test maximum(s[1:n_on]) > 0.5
         @test mean(s[1:n_on]) > mean(s[(n_on + 1):end])
-        # decay over silent windows (not exact zero immediately)
         @test s[end] < s[n_on]
         @test s[end] < 0.5 * s[n_on]
 
-        # subthreshold → no spikes → filter stays near 0
         ps_sub = _set_res!(ps; Win = reshape([0.3], 1, 1), W = reshape([0.0], 1, 1))
         S0, _ = collectstates(lsm, ones(Float64, 1, n_win), ps_sub, st)
         @test maximum(abs, S0) < 1.0e-8
@@ -275,7 +265,6 @@ begin
         )
         ps_a, st_a = setup(MersenneTwister(7), lsm_a)
         ps_b, st_b = setup(MersenneTwister(7), lsm_b)
-        # shared W, Win
         ps_a = merge(ps_a, (reservoir = ps.reservoir,))
         ps_b = merge(ps_b, (reservoir = ps.reservoir,))
 
@@ -283,8 +272,7 @@ begin
         Fb, _ = collectstates(lsm_b, data, ps_b, st_b)
         early = mean(abs, Fa[:, 1:5] .- Fb[:, 1:5])
         late = mean(abs, Fa[:, (end - 4):end] .- Fb[:, (end - 4):end])
-        @test early > 0 || true  # may already be close
-        @test late < early + 1.0e-3 || late < 0.15
+        @test late <= early + 1.0e-3 || late < 0.15
         @test late < 0.25
         @test all(isfinite, Fa) && all(isfinite, Fb)
     end
@@ -306,7 +294,6 @@ begin
         states, st2 = collectstates(lsm, data, ps, st)
         @test sum(abs, states) > 0
         y_tf, _ = predict(lsm, data, ps, st)
-        # manual readout application
         y_man = ps.readout.weight * states
         @test y_tf ≈ y_man rtol = 1.0e-5
     end
@@ -317,7 +304,6 @@ begin
             n_in, n_res, n_out, (0.0, Float64(T_steps)), Tsit5();
             neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
             feature_map = ExponentialSpikeFilter(; filter_tau = 0.05),
-            # dense positive Win so random drive is reliably suprathreshold
             init_input = (rng, d...) -> abs.(randn(rng, Float64, d...)) .+ 0.5,
             init_reservoir = (rng, d...) -> dale_sparse(
                 rng, Float64, d...; radius = 0.5, sparsity = 0.15,
@@ -326,7 +312,6 @@ begin
         )
         ps, st = setup(MersenneTwister(11), lsm)
         rng = MersenneTwister(12)
-        # positive multichannel drive with delayed cross-coupling as target structure
         u = abs.(randn(rng, Float64, n_in, T_steps)) .+ 0.8
         y = similar(u)
         y[:, 1] .= u[:, 1]
@@ -363,7 +348,6 @@ begin
             reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4, maxiters = 2_000_000,
         )
         ps, st = setup(MersenneTwister(13), lsm)
-        # train briefly so readout is non-random
         u = 0.7 .* ones(Float64, dim, 40)
         y = circshift(u, (0, -1))
         lsm_tr = _lsm_f64(
@@ -458,7 +442,6 @@ begin
         ps, st = setup(MersenneTwister(21), lsm)
         ps = _set_res!(ps; Win = zeros(n, 1), W = zeros(n, n))
         V, _ = collectstates(lsm, zeros(Float64, 1, n_win), ps, st)
-        # samples at window ends; free decay V(t) = V0 * exp(-t / tau_m)
         t_sample = collect(range(T_end / n_win, T_end; length = n_win))
         V_exact = V0 .* exp.(-t_sample ./ tau_m)
         @test maximum(abs, V[1, :] .- V_exact) < 1.0e-6

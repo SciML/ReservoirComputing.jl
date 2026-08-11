@@ -1,21 +1,21 @@
 """
     AbstractSpikingNeuron
 
-Supertype for continuous-time spiking neuron models used by [`LSMCell`](@ref).
+Abstract supertype for continuous-time spiking neurons used by [`LSMCell`](@ref).
 """
 abstract type AbstractSpikingNeuron end
 
 """
     AbstractInputEncoder
 
-Supertype for [`LSMCell`](@ref) input encodings.
+Abstract supertype for [`LSMCell`](@ref) input encodings.
 """
 abstract type AbstractInputEncoder end
 
 """
     AbstractSpikeFeature
 
-Supertype for spike-side feature maps of [`LSMCell`](@ref).
+Abstract supertype for spike-side feature maps of [`LSMCell`](@ref).
 """
 abstract type AbstractSpikeFeature end
 
@@ -23,8 +23,9 @@ abstract type AbstractSpikeFeature end
     LIFNeuron(; tau_m=0.02, v_rest=0.0, v_reset=0.0, v_th=1.0,
               tau_ref=0.002, r_m=1.0, tau_syn=0.005)
 
-Leaky integrate-and-fire population with exponential synaptic current
-([GerstnerKistler2002](@cite)). Not related to [`LIFESN`](@ref).
+Leaky integrate-and-fire neuron with exponential synaptic current
+([GerstnerKistler2002](@cite)). Distinct from [`LIFESN`](@ref)
+(Local Information Flow ESN).
 
 ```math
 \begin{aligned}
@@ -40,13 +41,13 @@ Leaky integrate-and-fire population with exponential synaptic current
 
 ## Keyword arguments
 
-  - `tau_m`: Membrane time constant. Must be positive. Default: `0.02`.
+  - `tau_m`: Membrane time constant. Default: `0.02`.
   - `v_rest`: Resting potential. Default: `0.0`.
-  - `v_reset`: Reset potential after a spike. Default: `0.0`.
+  - `v_reset`: Reset potential. Default: `0.0`.
   - `v_th`: Spike threshold. Default: `1.0`.
-  - `tau_ref`: Absolute refractory period. Must be non-negative. Default: `0.002`.
-  - `r_m`: Membrane resistance. Must be positive. Default: `1.0`.
-  - `tau_syn`: Synaptic current decay time. Must be positive. Default: `0.005`.
+  - `tau_ref`: Absolute refractory period. Default: `0.002`.
+  - `r_m`: Membrane resistance. Default: `1.0`.
+  - `tau_syn`: Synaptic decay time. Default: `0.005`.
 """
 @concrete struct LIFNeuron <: AbstractSpikingNeuron
     tau_m
@@ -72,23 +73,20 @@ end
 """
     CurrentInjection()
 
-External drive ``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (+ optional bias).
+``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (+ optional bias).
 """
 struct CurrentInjection <: AbstractInputEncoder end
 
 @doc raw"""
     PoissonRateEncoder(; rate_scale=50.0, synaptic_weight=1.0)
 
-Poisson input spikes with rate ``\lambda_k = \mathrm{rate\_scale}\,\max(u_k, 0)``.
-Event times are drawn once per `collectstates` from `st.encoder.rng`.
-Supports teacher-forced `predict` only.
+Poisson input spikes at rate ``\lambda_k = \mathrm{rate\_scale}\,\max(u_k, 0)``.
+Teacher-forced `predict` only.
 
 ## Keyword arguments
 
-  - `rate_scale`: Multiplier from input amplitude to firing rate.
-    Must be non-negative. Default: `50.0`.
-  - `synaptic_weight`: Weight of each input spike into
-    ``I_{\mathrm{syn}}``. Default: `1.0`.
+  - `rate_scale`: Input-to-rate scale. Default: `50.0`.
+  - `synaptic_weight`: Spike weight into ``I_{\mathrm{syn}}``. Default: `1.0`.
 """
 @concrete struct PoissonRateEncoder <: AbstractInputEncoder
     rate_scale
@@ -105,14 +103,14 @@ end
 """
     SpikeCountFeatures()
 
-Per-window spike counts. Supports teacher-forced `predict` only.
+Per-window spike counts. Teacher-forced `predict` only.
 """
 struct SpikeCountFeatures <: AbstractSpikeFeature end
 
 @doc raw"""
     ExponentialSpikeFilter(; filter_tau=0.03)
 
-Leaky spike filter sampled at each input-window end:
+Exponential spike filter sampled at each window end:
 
 ```math
 \dot s = -s/\tau + \sum_f \delta(t - t_f)
@@ -120,7 +118,7 @@ Leaky spike filter sampled at each input-window end:
 
 ## Keyword arguments
 
-  - `filter_tau`: Filter time constant. Must be positive. Default: `0.03`.
+  - `filter_tau`: Filter time constant. Default: `0.03`.
 """
 @concrete struct ExponentialSpikeFilter <: AbstractSpikeFeature
     filter_tau
@@ -136,7 +134,7 @@ end
 """
     MembraneVoltageFeature()
 
-Membrane voltage at each input-window end.
+Membrane voltage at each window end.
 """
 struct MembraneVoltageFeature <: AbstractSpikeFeature end
 
@@ -176,22 +174,16 @@ state is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
   - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initialiser for the bias. Only used if `use_bias=true`.
     Default: `zeros32`.
-  - `init_state`: Initialiser for the membrane voltage.
-    Default: `zeros32`.
-  - `kwargs...`: Forwarded to `solve` as keyword arguments. Prefer an
-    explicit `dtmax ≈ tau_ref/4`. The keys `saveat`, `save_everystep`,
+  - `init_state`: Initialiser for the membrane voltage. Default: `zeros32`.
+  - `kwargs...`: Forwarded to `solve`. The keys `saveat`, `save_everystep`,
     `dense`, and `callback` are reserved and rejected at construction.
+    Prefer an explicit `dtmax ≈ tau_ref/4`.
 
 ## Parameters
 
   - `input_matrix :: (out_dims × in_dims)` — `W_in`
   - `reservoir_matrix :: (out_dims × out_dims)` — `W_r`
   - `bias :: (out_dims,)` — present only if `use_bias = true`
-
-## States
-
-  - `rng` — replicated RNG for `init_state`
-  - `encoder` — encoder state (Poisson RNG when applicable)
 """
 @concrete struct LSMCell <: AbstractSciMLProblemReservoir
     neuron
