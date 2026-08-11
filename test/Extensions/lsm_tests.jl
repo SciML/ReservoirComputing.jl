@@ -11,6 +11,10 @@ begin
     const f64_zeros = (rng, d...) -> zeros(Float64, d...)
     const f64_ones = (rng, d...) -> ones(Float64, d...)
 
+    struct _ClosedNeuron <: AbstractSpikingNeuron end
+    struct _ClosedEncoder <: AbstractInputEncoder end
+    struct _ClosedFeature <: AbstractSpikeFeature end
+
     function _lsm_f64(
             in_dim, res_dim, out_dim, tspan, args...;
             neuron = LIFNeuron(),
@@ -417,6 +421,22 @@ begin
         @test_throws ArgumentError dale_sparse(
             MersenneTwister(0), Float64, 8, 8; excitatory_fraction = 1.0,
         )
+        @test_throws ArgumentError LSM(
+            2, 5, 1, (0.0, 1.0), Tsit5(); neuron = _ClosedNeuron(),
+        )
+        @test_throws ArgumentError LSM(
+            2, 5, 1, (0.0, 1.0), Tsit5(); encoder = _ClosedEncoder(),
+        )
+        @test_throws ArgumentError LSM(
+            2, 5, 1, (0.0, 1.0), Tsit5(); feature_map = _ClosedFeature(),
+        )
+        @test_throws ArgumentError LSMCell(
+            2 => 5; tspan = (0.0, 1.0), neuron = _ClosedNeuron(),
+        )
+        @test !ReservoirComputing.__supports_ar(_ClosedFeature())
+        @test ReservoirComputing.__supports_ar(ExponentialSpikeFilter())
+        @test ReservoirComputing.__supports_ar(MembraneVoltageFeature())
+        @test !ReservoirComputing.__supports_ar(SpikeCountFeatures())
         lsm = LSM(2, 12, 1, (0.0, 1.0), Tsit5())
         ps, st = setup(MersenneTwister(0), lsm)
         @test size(ps.reservoir.input_matrix) == (12, 2)

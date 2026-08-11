@@ -2,6 +2,7 @@
     AbstractSpikingNeuron
 
 Supertype for continuous-time spiking neurons used by [`LSMCell`](@ref).
+v1 accepts only [`LIFNeuron`](@ref).
 """
 abstract type AbstractSpikingNeuron end
 
@@ -9,6 +10,7 @@ abstract type AbstractSpikingNeuron end
     AbstractInputEncoder
 
 Supertype for [`LSMCell`](@ref) input encodings.
+v1 accepts [`CurrentInjection`](@ref) and [`PoissonRateEncoder`](@ref).
 """
 abstract type AbstractInputEncoder end
 
@@ -16,6 +18,8 @@ abstract type AbstractInputEncoder end
     AbstractSpikeFeature
 
 Supertype for spike-side feature maps of [`LSMCell`](@ref).
+v1 accepts [`SpikeCountFeatures`](@ref), [`ExponentialSpikeFilter`](@ref),
+and [`MembraneVoltageFeature`](@ref).
 """
 abstract type AbstractSpikeFeature end
 
@@ -138,8 +142,35 @@ Membrane voltage at each window end.
 struct MembraneVoltageFeature <: AbstractSpikeFeature end
 
 __feature_dim(::AbstractSpikeFeature, n_units::Integer) = Int(n_units)
-__supports_ar(::AbstractSpikeFeature) = true
-__supports_ar(::SpikeCountFeatures) = false
+__supports_ar(::AbstractSpikeFeature) = false
+__supports_ar(::ExponentialSpikeFilter) = true
+__supports_ar(::MembraneVoltageFeature) = true
+
+const __LSM_ENCODERS = Union{CurrentInjection, PoissonRateEncoder}
+const __LSM_FEATURES = Union{
+    SpikeCountFeatures, ExponentialSpikeFilter, MembraneVoltageFeature,
+}
+
+function __check_lsm_components(neuron, encoder, feature_map)
+    neuron isa LIFNeuron || throw(
+        ArgumentError(
+            "LSM v1 supports only LIFNeuron; got $(typeof(neuron))"
+        )
+    )
+    encoder isa __LSM_ENCODERS || throw(
+        ArgumentError(
+            "LSM v1 supports only CurrentInjection and PoissonRateEncoder; " *
+                "got $(typeof(encoder))"
+        )
+    )
+    feature_map isa __LSM_FEATURES || throw(
+        ArgumentError(
+            "LSM v1 supports only SpikeCountFeatures, ExponentialSpikeFilter, " *
+                "and MembraneVoltageFeature; got $(typeof(feature_map))"
+        )
+    )
+    return nothing
+end
 
 @doc raw"""
     LSMCell(in_dims => out_dims; tspan, args=(),
@@ -162,11 +193,12 @@ State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
     increasing, finite.
   - `args`: Positional `solve` arguments. Solver first by convention.
     Default: `()`.
-  - `neuron`: [`AbstractSpikingNeuron`](@ref). Default: [`LIFNeuron`](@ref).
-  - `encoder`: [`AbstractInputEncoder`](@ref). Default:
-    [`CurrentInjection`](@ref).
-  - `feature_map`: [`AbstractSpikeFeature`](@ref). Default:
-    [`ExponentialSpikeFilter`](@ref).
+  - `neuron`: [`LIFNeuron`](@ref) only in v1. Default: [`LIFNeuron`](@ref).
+  - `encoder`: [`CurrentInjection`](@ref) or [`PoissonRateEncoder`](@ref).
+    Default: [`CurrentInjection`](@ref).
+  - `feature_map`: [`SpikeCountFeatures`](@ref),
+    [`ExponentialSpikeFilter`](@ref), or [`MembraneVoltageFeature`](@ref).
+    Default: [`ExponentialSpikeFilter`](@ref).
   - `use_bias`: Include bias. Default: `false`.
   - `init_reservoir`: For `W_r`. Default: [`dale_sparse`](@ref).
   - `init_input`: For `W_in`. Default: [`scaled_rand`](@ref).
@@ -224,6 +256,7 @@ function LSMCell(
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
+    __check_lsm_components(neuron, encoder, feature_map)
     __check_lsm_tspan(tspan)
     __check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(

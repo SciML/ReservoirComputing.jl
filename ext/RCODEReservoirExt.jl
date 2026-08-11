@@ -541,6 +541,7 @@ function ReservoirComputing.LSM(
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     res_dims > 0 || throw(ArgumentError("res_dims must be positive, got $res_dims"))
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
+    ReservoirComputing.__check_lsm_components(neuron, encoder, feature_map)
     ReservoirComputing.__check_lsm_tspan(tspan)
     ReservoirComputing.__check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(
@@ -913,12 +914,18 @@ function __predict(
 
         if cell.feature_map isa MembraneVoltageFeature
             copyto!(features_col, view(current_state, 1:n_units))
-        else
+        elseif cell.feature_map isa ExponentialSpikeFilter
             filter_t = __advance_exp_filter!(
                 filter_state, filter_t, solve_p.spike_t, solve_p.spike_i,
                 t_hi, filter_tau
             )
             copyto!(features_col, filter_state)
+        else
+            throw(
+                ArgumentError(
+                    "unsupported feature_map for AR predict: $(typeof(cell.feature_map))"
+                )
+            )
         end
 
         if !isempty(rc.state_modifiers)

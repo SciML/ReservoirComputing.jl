@@ -17,6 +17,7 @@ rc_internal_hooks = (
     :AbstractReservoirComputer,
     :IntegerType,
     :__apply_seq,
+    :__check_lsm_components,
     :__check_lsm_tspan,
     :__check_protected_kwargs,
     :__collectstates,
