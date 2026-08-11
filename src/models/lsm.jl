@@ -1,7 +1,7 @@
 @doc raw"""
     LSM(in_dims, res_dims, out_dims, tspan, args...;
-        neuron=LIFCell(), encoder=CurrentInjection(),
-        spike_readout=ExponentialFilterReadout(),
+        neuron=LIFNeuron(), encoder=CurrentInjection(),
+        feature_map=ExponentialSpikeFilter(),
         use_bias=false, init_reservoir=dale_sparse, init_input=scaled_rand,
         init_bias=zeros32, init_state=zeros32,
         state_modifiers=(), readout_activation=identity, kwargs...)
@@ -11,31 +11,63 @@ optional `state_modifiers`, and a [`LinearReadout`](@ref).
 
 ## Arguments
 
-  - `in_dims`, `res_dims`, `out_dims`: input / reservoir / output sizes.
-  - `tspan`: `(t0, t1)` for `collectstates`.
-  - `args...`: Forwarded to `solve` (solver first).
+  - `in_dims`: Input dimension.
+  - `res_dims`: Reservoir size (number of spiking units).
+  - `out_dims`: Output dimension.
+  - `tspan`: Integration interval `(t0, t1)` for `collectstates`.
+    Length-2, strictly increasing, finite.
+  - `args...`: Forwarded to `solve` positionally. The solver algorithm
+    (`Tsit5()`, `Euler()`, …) is the first element by convention.
 
 ## Keyword arguments
 
-  - Reservoir: `neuron`, `encoder`, `spike_readout`, `use_bias`,
-    `init_reservoir` (default [`dale_sparse`](@ref)), `init_input`,
-    `init_bias`, `init_state` — see [`LSMCell`](@ref).
-  - `state_modifiers`: Default `()`.
-  - `readout_activation`: Default `identity`.
-  - `kwargs...`: Forwarded to `solve`. Use `dtmax ≈ τ_ref/4`.
-    `saveat`, `save_everystep`, `dense`, and `callback` are rejected.
+Reservoir (passed to [`LSMCell`](@ref)):
 
-## Parameters / states
+  - `neuron`: [`AbstractSpikingNeuron`](@ref). Default: [`LIFNeuron`](@ref).
+  - `encoder`: [`AbstractInputEncoder`](@ref). Default:
+    [`CurrentInjection`](@ref).
+  - `feature_map`: [`AbstractSpikeFeature`](@ref). Default:
+    [`ExponentialSpikeFilter`](@ref).
+  - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
+  - `init_reservoir`: Initialiser for `W_r`. Default: [`dale_sparse`](@ref).
+  - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: Initialiser for `b`. Default: `zeros32`.
+  - `init_state`: Initialiser for the membrane voltage.
+    Default: `zeros32`.
 
-Same three-field layout as other models: `reservoir`, `state_modifiers`,
-`readout`.
+Composition:
+
+  - `state_modifiers`: Layers applied to features before the readout.
+    Accepts a single layer, an `AbstractVector`, or a `Tuple`.
+    Default: empty `()`.
+  - `readout_activation`: Activation for the linear readout.
+    Default: `identity`.
+
+Solve metadata:
+
+  - `kwargs...`: Forwarded to `solve`. Prefer an explicit
+    `dtmax ≈ tau_ref/4`. The keys `saveat`, `save_everystep`, `dense`,
+    and `callback` are reserved and rejected at construction.
+
+## Parameters
+
+  - `reservoir` — parameters of the internal [`LSMCell`](@ref)
+  - `state_modifiers` — parameters for each modifier layer (may be empty)
+  - `readout` — parameters of [`LinearReadout`](@ref)
+
+## States
+
+  - `reservoir` — states for the internal [`LSMCell`](@ref)
+  - `state_modifiers` — states for each modifier layer (may be empty)
+  - `readout` — states for [`LinearReadout`](@ref)
 
 !!! note
-    Requires `RCODEReservoirExt` (`SciMLBase`, `DataInterpolations`, and a
-    solver package such as `OrdinaryDiffEqTsit5`).
+    The `RCODEReservoirExt` extension must be loaded for this constructor
+    to succeed. Load a solver package such as `OrdinaryDiffEqTsit5`
+    alongside `SciMLBase` and `DataInterpolations`.
 """
 @concrete struct LSM <:
-    AbstractEchoStateNetwork{(:reservoir, :state_modifiers, :readout)}
+    AbstractReservoirComputer{(:reservoir, :state_modifiers, :readout)}
     reservoir
     state_modifiers
     readout
@@ -43,9 +75,9 @@ end
 
 function LSM(::Any, ::Any, ::Any, ::Any...; kwargs...)
     return error(
-        "LSM requires the RCODEReservoirExt extension and an OrdinaryDiffEq " *
-            "solver package. Load `SciMLBase`, `DataInterpolations`, and a solver " *
-            "package (e.g. `OrdinaryDiffEqTsit5`) to enable it."
+        "LSM requires the RCODEReservoirExt extension and an " *
+            "OrdinaryDiffEq solver package. Load `SciMLBase`, `DataInterpolations`, " *
+            "and a solver package (e.g. `OrdinaryDiffEqTsit5`) to enable it."
     )
 end
 

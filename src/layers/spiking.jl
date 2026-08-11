@@ -13,16 +13,15 @@ Supertype for [`LSMCell`](@ref) input encodings.
 abstract type AbstractInputEncoder end
 
 """
-    AbstractSpikeReadout
+    AbstractSpikeFeature
 
-Supertype for spike-side feature maps of [`LSMCell`](@ref) (before the
-linear ridge readout).
+Supertype for spike-side feature maps of [`LSMCell`](@ref).
 """
-abstract type AbstractSpikeReadout end
+abstract type AbstractSpikeFeature end
 
 @doc raw"""
-    LIFCell(; τ_m=0.02, V_rest=0.0, V_reset=0.0, V_th=1.0,
-            τ_ref=0.002, R_m=1.0, τ_syn=0.005)
+    LIFNeuron(; tau_m=0.02, v_rest=0.0, v_reset=0.0, v_th=1.0,
+              tau_ref=0.002, r_m=1.0, tau_syn=0.005)
 
 Leaky integrate-and-fire population with exponential synaptic current
 ([GerstnerKistler2002](@cite)). Not related to [`LIFESN`](@ref).
@@ -38,122 +37,166 @@ Leaky integrate-and-fire population with exponential synaptic current
         && V_i \ge V_{\mathrm{th}}
 \end{aligned}
 ```
+
+## Keyword arguments
+
+  - `tau_m`: Membrane time constant. Must be positive. Default: `0.02`.
+  - `v_rest`: Resting potential. Default: `0.0`.
+  - `v_reset`: Reset potential after a spike. Default: `0.0`.
+  - `v_th`: Spike threshold. Default: `1.0`.
+  - `tau_ref`: Absolute refractory period. Must be non-negative. Default: `0.002`.
+  - `r_m`: Membrane resistance. Must be positive. Default: `1.0`.
+  - `tau_syn`: Synaptic current decay time. Must be positive. Default: `0.005`.
 """
-@concrete struct LIFCell <: AbstractSpikingNeuron
-    τ_m <: Number
-    V_rest <: Number
-    V_reset <: Number
-    V_th <: Number
-    τ_ref <: Number
-    R_m <: Number
-    τ_syn <: Number
+@concrete struct LIFNeuron <: AbstractSpikingNeuron
+    tau_m
+    v_rest
+    v_reset
+    v_th
+    tau_ref
+    r_m
+    tau_syn
 end
 
-function LIFCell(;
-        τ_m::Number = 0.02, V_rest::Number = 0.0, V_reset::Number = 0.0,
-        V_th::Number = 1.0, τ_ref::Number = 0.002, R_m::Number = 1.0,
-        τ_syn::Number = 0.005
+function LIFNeuron(;
+        tau_m = 0.02, v_rest = 0.0, v_reset = 0.0, v_th = 1.0,
+        tau_ref = 0.002, r_m = 1.0, tau_syn = 0.005
     )
-    return LIFCell(τ_m, V_rest, V_reset, V_th, τ_ref, R_m, τ_syn)
+    tau_m > 0 || throw(ArgumentError("tau_m must be positive, got $tau_m"))
+    r_m > 0 || throw(ArgumentError("r_m must be positive, got $r_m"))
+    tau_syn > 0 || throw(ArgumentError("tau_syn must be positive, got $tau_syn"))
+    tau_ref >= 0 || throw(ArgumentError("tau_ref must be non-negative, got $tau_ref"))
+    return LIFNeuron(tau_m, v_rest, v_reset, v_th, tau_ref, r_m, tau_syn)
 end
 
 """
     CurrentInjection()
 
-``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (+ optional bias).
+External drive ``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (+ optional bias).
 """
 struct CurrentInjection <: AbstractInputEncoder end
 
 @doc raw"""
-    PoissonRateEncoder(; scale=50.0, weight=1.0)
+    PoissonRateEncoder(; rate_scale=50.0, synaptic_weight=1.0)
 
-Poisson spikes at rate ``\lambda_k = \mathrm{scale}\,\max(u_k, 0)``.
-Times are drawn once per `collectstates` from `st.encoder.rng`.
-Teacher-forced `predict` only (no AR).
+Poisson input spikes with rate ``\lambda_k = \mathrm{rate\_scale}\,\max(u_k, 0)``.
+Event times are drawn once per `collectstates` from `st.encoder.rng`.
+Supports teacher-forced `predict` only.
+
+## Keyword arguments
+
+  - `rate_scale`: Multiplier from input amplitude to firing rate.
+    Must be non-negative. Default: `50.0`.
+  - `synaptic_weight`: Weight of each input spike into
+    ``I_{\mathrm{syn}}``. Default: `1.0`.
 """
 @concrete struct PoissonRateEncoder <: AbstractInputEncoder
-    scale <: Number
-    weight <: Number
+    rate_scale
+    synaptic_weight
 end
 
-function PoissonRateEncoder(; scale::Number = 50.0, weight::Number = 1.0)
-    return PoissonRateEncoder(scale, weight)
+function PoissonRateEncoder(; rate_scale = 50.0, synaptic_weight = 1.0)
+    rate_scale >= 0 || throw(
+        ArgumentError("rate_scale must be non-negative, got $rate_scale")
+    )
+    return PoissonRateEncoder(rate_scale, synaptic_weight)
 end
 
 """
-    SpikeCountReadout()
+    SpikeCountFeatures()
 
-Per-window spike counts. Teacher-forced `predict` only.
+Per-window spike counts. Supports teacher-forced `predict` only.
 """
-struct SpikeCountReadout <: AbstractSpikeReadout end
+struct SpikeCountFeatures <: AbstractSpikeFeature end
 
 @doc raw"""
-    ExponentialFilterReadout(τ=0.03)
+    ExponentialSpikeFilter(; filter_tau=0.03)
 
-``\dot s = -s/\tau + \sum_f \delta(t-t_f)``, sampled at window ends.
+Leaky spike filter sampled at each input-window end:
+
+```math
+\dot s = -s/\tau + \sum_f \delta(t - t_f)
+```
+
+## Keyword arguments
+
+  - `filter_tau`: Filter time constant. Must be positive. Default: `0.03`.
 """
-@concrete struct ExponentialFilterReadout <: AbstractSpikeReadout
-    τ <: Number
+@concrete struct ExponentialSpikeFilter <: AbstractSpikeFeature
+    filter_tau
 end
 
-ExponentialFilterReadout() = ExponentialFilterReadout(0.03)
+function ExponentialSpikeFilter(; filter_tau = 0.03)
+    filter_tau > 0 || throw(
+        ArgumentError("filter_tau must be positive, got $filter_tau")
+    )
+    return ExponentialSpikeFilter(filter_tau)
+end
 
 """
-    FilteredVoltageReadout()
+    MembraneVoltageFeature()
 
-Membrane voltage at each window end.
+Membrane voltage at each input-window end.
 """
-struct FilteredVoltageReadout <: AbstractSpikeReadout end
+struct MembraneVoltageFeature <: AbstractSpikeFeature end
 
-_feature_dim(::AbstractSpikeReadout, n_units::Integer) = Int(n_units)
-_supports_ar(::AbstractSpikeReadout) = true
-_supports_ar(::SpikeCountReadout) = false
+__feature_dim(::AbstractSpikeFeature, n_units::Integer) = Int(n_units)
+__supports_ar(::AbstractSpikeFeature) = true
+__supports_ar(::SpikeCountFeatures) = false
 
 @doc raw"""
     LSMCell(in_dims => out_dims; tspan, args=(),
-        neuron=LIFCell(), encoder=CurrentInjection(),
-        spike_readout=ExponentialFilterReadout(),
+        neuron=LIFNeuron(), encoder=CurrentInjection(),
+        feature_map=ExponentialSpikeFilter(),
         use_bias=false, init_bias=zeros32, init_reservoir=dale_sparse,
         init_input=scaled_rand, init_state=zeros32, kwargs...)
 
-Spiking reservoir cell for [`LSM`](@ref) ([Maass2002](@cite)).
-State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
+Spiking reservoir cell for [`LSM`](@ref) ([Maass2002](@cite)). Continuous
+state is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
 
 ## Arguments
 
   - `in_dims`: Input dimension.
-  - `out_dims`: Number of units.
+  - `out_dims`: Reservoir (spiking unit) dimension.
 
 ## Keyword arguments
 
-  - `tspan`: `(t0, t1)`, strictly increasing and finite.
-  - `args`: Forwarded to `solve` (solver first).
-  - `neuron`: [`AbstractSpikingNeuron`](@ref). Default: [`LIFCell`](@ref).
+  - `tspan`: Integration interval `(t0, t1)`. Length-2, strictly
+    increasing, finite.
+  - `args`: Tuple of positional arguments forwarded to `solve`. The solver
+    algorithm (`Tsit5()`, `Euler()`, …) is the first element by convention.
+    Default: `()`.
+  - `neuron`: [`AbstractSpikingNeuron`](@ref). Default: [`LIFNeuron`](@ref).
   - `encoder`: [`AbstractInputEncoder`](@ref). Default:
     [`CurrentInjection`](@ref).
-  - `spike_readout`: [`AbstractSpikeReadout`](@ref). Default:
-    [`ExponentialFilterReadout`](@ref).
-  - `use_bias`: Default `false`.
-  - `init_reservoir`: Default [`dale_sparse`](@ref).
-  - `init_input`: Default [`scaled_rand`](@ref).
-  - `init_bias` / `init_state`: Default `zeros32`.
-  - `kwargs...`: Forwarded to `solve`. Use an explicit `dtmax ≈ τ_ref/4`.
-    `saveat`, `save_everystep`, `dense`, and `callback` are rejected.
+  - `feature_map`: [`AbstractSpikeFeature`](@ref). Default:
+    [`ExponentialSpikeFilter`](@ref).
+  - `use_bias`: Whether to include a bias term. Default: `false`.
+  - `init_reservoir`: Initialiser for `W_r`. Default: [`dale_sparse`](@ref).
+  - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
+  - `init_bias`: Initialiser for the bias. Only used if `use_bias=true`.
+    Default: `zeros32`.
+  - `init_state`: Initialiser for the membrane voltage.
+    Default: `zeros32`.
+  - `kwargs...`: Forwarded to `solve` as keyword arguments. Prefer an
+    explicit `dtmax ≈ tau_ref/4`. The keys `saveat`, `save_everystep`,
+    `dense`, and `callback` are reserved and rejected at construction.
 
 ## Parameters
 
-  - `input_matrix :: (out_dims × in_dims)`
-  - `reservoir_matrix :: (out_dims × out_dims)`
-  - `bias :: (out_dims,)` if `use_bias=true`
+  - `input_matrix :: (out_dims × in_dims)` — `W_in`
+  - `reservoir_matrix :: (out_dims × out_dims)` — `W_r`
+  - `bias :: (out_dims,)` — present only if `use_bias = true`
 
 ## States
 
-  - `rng`, `encoder`
+  - `rng` — replicated RNG for `init_state`
+  - `encoder` — encoder state (Poisson RNG when applicable)
 """
 @concrete struct LSMCell <: AbstractSciMLProblemReservoir
-    neuron <: AbstractSpikingNeuron
-    encoder <: AbstractInputEncoder
-    spike_readout <: AbstractSpikeReadout
+    neuron
+    encoder
+    feature_map
     in_dims <: IntegerType
     out_dims <: IntegerType
     init_bias
@@ -166,18 +209,40 @@ State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
     kwargs
 end
 
+function __check_lsm_tspan(tspan)
+    length(tspan) == 2 || throw(
+        ArgumentError(
+            "tspan must be a length-2 tuple/pair (t0, t1), got length $(length(tspan))"
+        )
+    )
+    (isfinite(tspan[1]) && isfinite(tspan[2])) || throw(
+        ArgumentError("tspan endpoints must be finite, got $tspan")
+    )
+    tspan[2] > tspan[1] || throw(
+        ArgumentError("LSM requires `tspan[2] > tspan[1]`, got tspan = $tspan")
+    )
+    return nothing
+end
+
 function LSMCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType};
         tspan, args = (),
-        neuron::AbstractSpikingNeuron = LIFCell(),
-        encoder::AbstractInputEncoder = CurrentInjection(),
-        spike_readout::AbstractSpikeReadout = ExponentialFilterReadout(),
+        neuron = LIFNeuron(),
+        encoder = CurrentInjection(),
+        feature_map = ExponentialSpikeFilter(),
         use_bias::BoolType = False(),
         init_bias = zeros32, init_reservoir = dale_sparse,
         init_input = scaled_rand, init_state = zeros32, kwargs...
     )
+    in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
+    out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
+    __check_lsm_tspan(tspan)
+    _check_protected_kwargs(kwargs)
+    haskey(kwargs, :callback) && throw(
+        ArgumentError("LSM owns the solve callback; drop `callback` from kwargs.")
+    )
     return LSMCell(
-        neuron, encoder, spike_readout, in_dims, out_dims,
+        neuron, encoder, feature_map, in_dims, out_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias), tspan, args, kwargs
     )
@@ -197,12 +262,12 @@ end
 function initialstates(rng::AbstractRNG, cell::LSMCell)
     return (
         rng = replicate(rng),
-        encoder = _init_encoder_st(rng, cell.encoder),
+        encoder = __init_encoder_st(rng, cell.encoder),
     )
 end
 
-_init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
-function _init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
+__init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
+function __init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
     return (rng = replicate(rng),)
 end
 

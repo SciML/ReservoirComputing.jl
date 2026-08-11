@@ -47,14 +47,14 @@
 
 ```@docs
     AbstractSpikingNeuron
-    LIFCell
+    LIFNeuron
     AbstractInputEncoder
     CurrentInjection
     PoissonRateEncoder
-    AbstractSpikeReadout
-    SpikeCountReadout
-    ExponentialFilterReadout
-    FilteredVoltageReadout
+    AbstractSpikeFeature
+    SpikeCountFeatures
+    ExponentialSpikeFilter
+    MembraneVoltageFeature
 ```
 
 ## Wrappers
