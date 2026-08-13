@@ -212,6 +212,33 @@ begin
         @test preds1 ≈ preds2
     end
 
+    @testset "Autoregressive predict uses carry" begin
+        rng = MersenneTwister(37)
+        res_dim, dim, T_steps, steps = 8, 2, 16, 4
+        tspan = (0.0, 2.0)
+        prob, _, _, _, _ = build_esn_problem(rng, dim, res_dim, tspan)
+        prob = remake(prob; u0 = 0.3 .* randn(rng, res_dim))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5();
+            reltol = 1.0e-8, abstol = 1.0e-10,
+        )
+        rc = ReservoirComputer(res, LinearReadout(res_dim => dim))
+        ps, st0 = setup(MersenneTwister(0), rc)
+        data = randn(rng, dim, T_steps)
+        init = data[:, end]
+
+        states, st1 = collectstates(rc, data, ps, st0)
+        @test first(st1.reservoir.carry) ≈ states[:, end]
+
+        cold, _ = predict(rc, steps, ps, st0; initialdata = init)
+        warm, _ = predict(rc, steps, ps, st1; initialdata = init)
+        @test cold ≉ warm
+
+        st_forced = merge(st0, (reservoir = (; carry = (copy(prob.u0),)),))
+        from_u0, _ = predict(rc, steps, ps, st_forced; initialdata = init)
+        @test from_u0 ≈ cold
+    end
+
     # ---------------------------------------------------------------------------
     # 6. State modifiers compose with the continuous path
     #

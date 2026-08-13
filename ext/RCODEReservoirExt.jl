@@ -138,6 +138,14 @@ function __sample(::TerminalStateSampling, sol)
     return reduce(hcat, sol.u)
 end
 
+# Copy so later `reinit!` / `solve` cannot mutate `st`.
+@inline function __seed_u(st_res, default)
+    c = get(st_res, :carry, nothing)
+    return c === nothing ? default() : copy(first(c))
+end
+
+@inline __with_carry(st_res, u) = merge(st_res, (; carry = (copy(u),)))
+
 function __apply_modifiers_continuous(
         modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
     )
@@ -194,7 +202,12 @@ function __collectstates(
     input_interp = __make_input_fn(data, input_ts)
     solve_p = __build_solve_params(res.prob.p, ps.reservoir, input_interp)
 
-    prob_remade = remake(res.prob; tspan = res.tspan, p = solve_p)
+    prob_remade = remake(
+        res.prob;
+        tspan = res.tspan,
+        p = solve_p,
+        u0 = __seed_u(st.reservoir, () -> res.prob.u0),
+    )
 
     sol = solve(
         prob_remade, res.args...;
@@ -210,7 +223,7 @@ function __collectstates(
     )
 
     newst = (
-        reservoir = st.reservoir,
+        reservoir = __with_carry(st.reservoir, sol.u[end]),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -259,12 +272,7 @@ function __predict(
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
-    # Preserve `u0`'s original type — `collect` would degrade `SVector` /
-    # `ComponentArray` / scalar states into a plain `Vector` and either
-    # error (no `collect(::Number)` method) or silently flatten the
-    # user's chosen representation. We only ever read `current_state`,
-    # never mutate it in place, so a direct reference is safe.
-    current_state = res.prob.u0
+    current_state = __seed_u(st.reservoir, () -> res.prob.u0)
     current_input = initialdata
 
     st_mods = st.state_modifiers
@@ -320,7 +328,7 @@ function __predict(
     end
 
     newst = (
-        reservoir = st.reservoir,
+        reservoir = __with_carry(st.reservoir, current_state),
         state_modifiers = st_mods,
         readout = st_ro,
     )
@@ -414,7 +422,9 @@ function __collectstates(
     # `u0` element type follows `ps.reservoir.input_matrix` so the solver
     # state, the parameter pack, and the input signal share a numeric
     # type. The user controls eltype through the `init_*` initialisers.
-    u0 = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    u0 = __seed_u(
+        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    )
     jac_prototype = known(cell.use_jac_prototype) ?
         __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
@@ -435,7 +445,7 @@ function __collectstates(
     )
 
     newst = (
-        reservoir = st.reservoir,
+        reservoir = __with_carry(st.reservoir, sol.u[end]),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -463,7 +473,9 @@ function __predict(
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
-    current_state = zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    current_state = __seed_u(
+        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
+    )
     current_input = initialdata
 
     st_mods = st.state_modifiers
@@ -516,7 +528,7 @@ function __predict(
     end
 
     newst = (
-        reservoir = st.reservoir,
+        reservoir = __with_carry(st.reservoir, current_state),
         state_modifiers = st_mods,
         readout = st_ro,
     )
@@ -758,6 +770,8 @@ function __lsm_pack(cell::LSMCell, ps_res, input_fn, n_units::Int, ::Type{T}) wh
 end
 
 function __lsm_u0(cell::LSMCell, st_res, n_units::Int, ::Type{T}) where {T}
+    c = get(st_res, :carry, nothing)
+    c === nothing || return copy(first(c)), st_res
     rng = replicate(st_res.rng)
     u0 = zeros(T, 2 * n_units)
     copyto!(view(u0, 1:n_units), vec(cell.init_state(rng, n_units, 1)))
@@ -835,7 +849,9 @@ function __collectstates(
         rc.state_modifiers, features, ps.state_modifiers, st.state_modifiers
     )
     newst = (
-        reservoir = merge(st_res_new, (encoder = st_enc_new,)),
+        reservoir = __with_carry(
+            merge(st_res_new, (encoder = st_enc_new,)), sol.u[end]
+        ),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -944,7 +960,7 @@ function __predict(
     end
 
     newst = (
-        reservoir = st_res_new,
+        reservoir = __with_carry(st_res_new, current_state),
         state_modifiers = st_mods,
         readout = st_ro,
     )

@@ -323,7 +323,7 @@ begin
             y[:, t] .= 0.6 .* u[:, t] .+ 0.4 .* reverse(u[:, t - 1])
         end
 
-        states, st = collectstates(lsm, u, ps, st)
+        states, _ = collectstates(lsm, u, ps, st)
         @test mean(abs, states) > 0.05
 
         nrmse0 = norm(zeros(n_out, T_steps) .- y) / norm(y .- mean(y; dims = 2))
@@ -373,6 +373,30 @@ begin
         @test size(a1) == (dim, steps)
         @test a1 ≈ a2
         @test all(isfinite, a1)
+    end
+
+    @testset "AR predict uses carry" begin
+        n, T_steps, steps = 8, 12, 4
+        lsm = _lsm_f64(
+            1, n, 1, (0.0, 0.03), Tsit5();
+            neuron = LIFNeuron(; tau_m = 0.02, tau_ref = 0.002, tau_syn = 0.008),
+            feature_map = MembraneVoltageFeature(),
+            reltol = 1.0e-7, abstol = 1.0e-9, dtmax = 5.0e-4,
+        )
+        ps, st0 = setup(MersenneTwister(3), lsm)
+        data = ones(Float64, 1, T_steps)
+        states, st1 = collectstates(lsm, data, ps, st0)
+        u_end = first(st1.reservoir.carry)
+        @test length(u_end) == 2n
+        @test u_end[1:n] ≈ states[:, end]
+
+        s_cont, _ = collectstates(lsm, data, ps, st1)
+        @test s_cont ≉ states
+
+        init = [1.0]
+        cold, _ = predict(lsm, steps, ps, st0; initialdata = init)
+        warm, _ = predict(lsm, steps, ps, st1; initialdata = init)
+        @test cold ≉ warm
     end
 
     @testset "PoissonRateEncoder: event drive produces spikes" begin
