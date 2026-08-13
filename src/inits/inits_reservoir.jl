@@ -2966,6 +2966,7 @@ for initializer in (
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
         :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toeplitz_init,
+        :dale_sparse,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)

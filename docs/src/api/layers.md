@@ -40,6 +40,21 @@
 
 ```@docs
     ContinuousESNCell
+    LSMCell
+```
+
+## Spiking
+
+```@docs
+    AbstractSpikingNeuron
+    LIFNeuron
+    AbstractInputEncoder
+    CurrentInjection
+    PoissonRateEncoder
+    AbstractSpikeFeature
+    SpikeCountFeatures
+    ExponentialSpikeFilter
+    MembraneVoltageFeature
 ```
 
 ## Wrappers
