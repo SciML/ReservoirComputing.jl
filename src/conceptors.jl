@@ -640,7 +640,7 @@ end
 
 # loading patterns
 
-function _drive_pattern(
+function __drive_pattern(
         rng::AbstractRNG,
         concept::Conceptor,
         signal::AbstractMatrix,
@@ -723,7 +723,7 @@ function loadpatterns(
         reg_recurrent::Real = 1.0e-4,
         reg_readout::Real = 1.0e-2,
     )
-    _check_conceptor_model(concept.model)
+    __check_conceptor_model(concept.model)
     rps = reservoir_params(ps)
     element_type = float(eltype(rps.reservoir_matrix))
     original_recurrent_weights = element_type.(rps.reservoir_matrix)
@@ -740,7 +740,7 @@ function loadpatterns(
         signal_matrix = signal isa AbstractMatrix ?
             element_type.(signal) : reshape(element_type.(signal), 1, :)
         current_states, lagged_states, aligned_signal, st_acc =
-            _drive_pattern(rng, concept, signal_matrix, ps, st_acc, washout)
+            __drive_pattern(rng, concept, signal_matrix, ps, st_acc, washout)
         pattern_aperture = aperture_for(aperture, name)
         st_acc = store_conceptor(
             st_acc, name, conceptor_from_states(current_states, pattern_aperture),
@@ -773,7 +773,7 @@ end
 # The conceptor formalism identifies the collected states with the hidden state of
 # a single recurrent cell, so the wrapped model must expose its reservoir as a
 # `StatefulLayer` around one cell and must not post-process states.
-function _check_conceptor_model(model)
+function __check_conceptor_model(model)
     modifiers = hasproperty(model, :state_modifiers) ? model.state_modifiers : ()
     isempty(modifiers) ||
         throw(
@@ -795,8 +795,8 @@ end
 # Everything needed to run the wrapped reservoir cell autonomously: with the input
 # drive internalized into the recurrent weights by `loadpatterns`, one update is the
 # cell applied to a zero input, using the model's own activation, leak, and bias.
-function _autonomous_setup(concept::Conceptor, ps::NamedTuple, st::NamedTuple)
-    cell = _check_conceptor_model(concept.model)
+function __autonomous_setup(concept::Conceptor, ps::NamedTuple, st::NamedTuple)
+    cell = __check_conceptor_model(concept.model)
     cell_ps = reservoir_params(ps)
     cell_st = st.model.reservoir.cell
     element_type = float(eltype(cell_ps.reservoir_matrix))
@@ -814,7 +814,7 @@ function _autonomous_setup(concept::Conceptor, ps::NamedTuple, st::NamedTuple)
 end
 
 # Unconstrained autonomous update z(n) from x(n-1): the cell stepped with zero input.
-function _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
+function __autonomous_step(cell, zero_input, cell_ps, cell_st, state)
     (unconstrained_state, _), _ = cell((zero_input, (state,)), cell_ps, cell_st)
     return unconstrained_state
 end
@@ -889,7 +889,7 @@ function generate(
         rng::AbstractRNG = Random.default_rng(),
     )
     cell, cell_ps, cell_st, zero_input, element_type, reservoir_dimension =
-        _autonomous_setup(concept, ps, st)
+        __autonomous_setup(concept, ps, st)
     conceptor_filter = element_type.(resolve_conceptor(st, conceptor))
     checksquare(conceptor_filter)
     size(conceptor_filter, 1) == reservoir_dimension ||
@@ -915,7 +915,7 @@ function generate(
 
     for step in 1:(washout + steps)
         state = conceptor_filter *
-            _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
+            __autonomous_step(cell, zero_input, cell_ps, cell_st, state)
         if step > washout
             output_index = step - washout
             output, _ = apply(readout, state, readout_ps, readout_st)
@@ -973,7 +973,7 @@ function attenuation(
         rng::AbstractRNG = Random.default_rng(),
     )
     cell, cell_ps, cell_st, zero_input, element_type, reservoir_dimension =
-        _autonomous_setup(concept, ps, st)
+        __autonomous_setup(concept, ps, st)
     conceptor_filter = element_type.(resolve_conceptor(st, conceptor))
     checksquare(conceptor_filter)
     size(conceptor_filter, 1) == reservoir_dimension ||
@@ -994,7 +994,7 @@ function attenuation(
     total_energy = zero(element_type)
     for step in 1:(washout + steps)
         unconstrained_state =
-            _autonomous_step(cell, zero_input, cell_ps, cell_st, state)
+            __autonomous_step(cell, zero_input, cell_ps, cell_st, state)
         state = conceptor_filter * unconstrained_state
         if step > washout
             suppressed_energy += sum(abs2, unconstrained_state .- state)
@@ -1091,8 +1091,8 @@ end
 # ======================================================================
 
 # Normalize a target into a row-major matrix (1 × T for a vector target).
-_as_matrix(target::AbstractMatrix) = target
-_as_matrix(target::AbstractVector) = reshape(target, 1, :)
+__as_matrix(target::AbstractMatrix) = target
+__as_matrix(target::AbstractVector) = reshape(target, 1, :)
 
 """
     store_conceptors(rng, concept, named_signals, ps, st;
@@ -1182,7 +1182,7 @@ function train!(
         kwargs...,
     )
     targets = Dict{Symbol, AbstractMatrix}(
-        Symbol(name) => _as_matrix(target) for (name, target) in named_targets
+        Symbol(name) => __as_matrix(target) for (name, target) in named_targets
     )
 
     all_states = AbstractMatrix[]
