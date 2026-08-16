@@ -54,6 +54,8 @@ where full details and examples are provided.
     in the Poincaré ball and constructing weights based on hyperbolic distances between them.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
     reservoir with controlled sparsity and spectral radius.
+- [`dale_sparse`](inits/dale_sparse.md): Dale-compliant sparse reservoir
+    (E/I column signs).
 - [`selfloop_cycle`](inits/selfloop_cycle.md): Builds a simple cycle
     reservoir enhanced with self-loops on all nodes.
 - [`selfloop_delayline_backward`](inits/selfloop_delayline_backward.md): Combines delay
@@ -64,7 +66,7 @@ where full details and examples are provided.
     onto a forward-connection reservoir (stride-2).
 - [`simple_cycle`](inits/simple_cycle.md): Builds a basic directed ring
     reservoir with uniform weights.
-- [`toepliz_init`](inits/toepliz_init.md): Creates toepliz sparse reservoir topology 
+- [`toeplitz_init`](inits/toeplitz_init.md): Creates Toeplitz sparse reservoir topology 
     with a single weight for each diagonal (special case of band_init).
 - [`true_doublecycle`](inits/true_doublecycle.md): Constructs two overlapping
     cycles (forward + backward) using Rodan-style cycle rules.

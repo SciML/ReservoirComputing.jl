@@ -1,13 +1,15 @@
 module RCMLJLinearModelsExt
-using ReservoirComputing
-using MLJLinearModels
+using ReservoirComputing: ReservoirComputing
+using MLJLinearModels: MLJLinearModels
 
-function ReservoirComputing.train(
+function ReservoirComputing.__fit_readout(
         regressor::MLJLinearModels.GeneralizedLinearRegression,
         states::AbstractMatrix{<:Real}, target::AbstractMatrix{<:Real};
         kwargs...
     )
-    @assert size(states, 2) == size(target, 2) "states and target must share the same number of columns."
+    size(states, 2) == size(target, 2) || throw(
+        DimensionMismatch("states and target must share the same number of columns.")
+    )
 
     if regressor.fit_intercept
         throw(ArgumentError("fit_intercept=true not supported here. \

@@ -47,20 +47,20 @@ outputsize(ro::SVMReadout, _, ::AbstractRNG) = (ro.out_dims,)
 # NOTE: forward for SVMReadout will be defined in the LIBSVM extension,
 # because it calls LIBSVM.predict.
 
-function _svmreadout_include_collect(ro::SVMReadout)
+function __svmreadout_include_collect(ro::SVMReadout)
     ic = known(getproperty(ro, Val(:include_collect)))
     return ic === nothing ? false : ic
 end
 
 function wrap_functions_in_chain_call(ro::SVMReadout)
-    return _svmreadout_include_collect(ro) ? (Collect(), ro) : ro
+    return __svmreadout_include_collect(ro) ? (Collect(), ro) : ro
 end
 
-_quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 
-function _setmodels_rt(p::NamedTuple{K}, M) where {K}
+function __setmodels_rt(p::NamedTuple{K}, M) where {K}
     keys = K
-    Kq = _quote_keys(keys)
+    Kq = __quote_keys(keys)
     idx = findfirst(==(Symbol(:models)), keys)
 
     terms = Any[]
@@ -69,29 +69,29 @@ function _setmodels_rt(p::NamedTuple{K}, M) where {K}
     end
 
     if idx === nothing
-        newK = _quote_keys((keys..., :models))
+        newK = __quote_keys((keys..., :models))
         return :(NamedTuple{$newK}(($(terms...), M)))
     else
         return :(NamedTuple{$Kq}(($(terms...),)))
     end
 end
 
-@generated function _addsvm(layers::NamedTuple{K}, ps::NamedTuple{K}, M) where {K}
+@generated function __addsvm(layers::NamedTuple{K}, ps::NamedTuple{K}, M) where {K}
     if length(K) == 0
         return :(NamedTuple())
     end
     tailK = Base.tail(K)
-    Kq = _quote_keys(K)
-    tailKq = _quote_keys(tailK)
+    Kq = __quote_keys(K)
+    tailKq = __quote_keys(tailK)
 
     head_val = :(
         (getfield(layers, 1) isa SVMReadout)
-            ? _setmodels_rt(getfield(ps, 1), M)
+            ? __setmodels_rt(getfield(ps, 1), M)
             : getfield(ps, 1)
     )
 
     tail_call = :(
-        _addsvm(
+        __addsvm(
             NamedTuple{$tailKq}(Base.tail(layers)),
             NamedTuple{$tailKq}(Base.tail(ps)), M
         )

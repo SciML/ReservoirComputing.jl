@@ -145,7 +145,7 @@ function wrap_functions_in_chain_call(layers::Union{AbstractVector, Tuple})
         elseif f isa AbstractLuxLayer
             push!(new_layers, f)
         else
-            throw("Encountered a non-AbstractLuxLayer in ReservoirChain.")
+            throw(ArgumentError("Encountered a non-AbstractLuxLayer ($(typeof(f))) in ReservoirChain."))
         end
     end
     return layers isa AbstractVector ? new_layers : Tuple(new_layers)
@@ -153,13 +153,13 @@ end
 
 wrap_functions_in_chain_call(x) = x
 
-function _readout_include_collect(ro::LinearReadout)
+function __readout_include_collect(ro::LinearReadout)
     res = known(getproperty(ro, Val(:include_collect)))
     return res === nothing ? false : res
 end
 
 function wrap_functions_in_chain_call(ro::LinearReadout)
-    return _readout_include_collect(ro) ? (Collect(), ro) : ro
+    return __readout_include_collect(ro) ? (Collect(), ro) : ro
 end
 
 (c::ReservoirChain)(x, ps, st::NamedTuple) = applychain(c.layers, x, ps, st)

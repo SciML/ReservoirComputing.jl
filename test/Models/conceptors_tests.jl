@@ -1,6 +1,7 @@
 begin
     using Test
     using LinearAlgebra
+    using LuxCore: initialparameters, initialstates
     using Random
     using Statistics
     using ReservoirComputing

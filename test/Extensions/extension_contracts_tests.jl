@@ -2,8 +2,10 @@
 begin
     using Random
     using SparseArrays
+    using CellularAutomata
     using MLJLinearModels
     using ReservoirComputing
+    using LuxCore: initialparameters, setup
 
     @testset "SparseArrays extension returns sparse initializer output" begin
         @eval Main using SparseArrays
@@ -31,12 +33,22 @@ begin
             1 0 -1 -2 -3
         ]
         regressor = MLJLinearModels.LinearRegression(fit_intercept = false)
-        W = train(regressor, states, target)
+        W = ReservoirComputing.__fit_readout(regressor, states, target)
         @test size(W) == (2, 3)
         @test eltype(W) === Float64
         @test W * states ≈ target atol = 1.0e-5
 
         bad_regressor = MLJLinearModels.LinearRegression(fit_intercept = true)
-        @test_throws ArgumentError train(bad_regressor, states, target)
+        @test_throws ArgumentError ReservoirComputing.__fit_readout(
+            bad_regressor, states, target
+        )
+    end
+
+    @testset "CellularAutomata extension clears a RECA carry" begin
+        rng = MersenneTwister(405)
+        reca = RECA(4, 4, DCA(90); input_encoding = RandomMapping(2, 8), generations = 2)
+        _, st = setup(rng, reca)
+        cleared = resetcarry!(rng, reca, st)
+        @test cleared.reservoir.carry === nothing
     end
 end

@@ -43,6 +43,7 @@ can be fed as an array.
 
 ```@example deep_lorenz
 using ReservoirComputing
+using LuxCore: setup
 input_size = 3
 res_size = 300
 desn = DeepESN(input_size, [res_size, res_size], input_size;
@@ -60,7 +61,7 @@ Random.seed!(42)
 rng = MersenneTwister(17)
 
 ps, st = setup(rng, desn)
-ps, st = train!(desn, input_data, target_data, ps, st)
+ps, st = train(desn, input_data, target_data, ps, st)
 
 output, st = predict(desn, 1250, ps, st; initialdata=test_data[:, 1])
 ```

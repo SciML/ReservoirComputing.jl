@@ -1,54 +1,57 @@
-using SciMLTesting, ReservoirComputing, Test
+using SciMLTesting, ReservoirComputing
 using JET
+
+# ExplicitImports only checks an extension module once it exists, and an extension only
+# exists once its trigger package is loaded. Loading the weakdeps here is what puts
+# RCCellularAutomataExt, RCODEReservoirExt, RCLIBSVMExt, RCMLJLinearModelsExt and
+# RCSparseArraysExt in scope for the QA checks.
+using CellularAutomata, DataInterpolations, LIBSVM, MLJLinearModels, SparseArrays
+
+# ReservoirComputing's own extension hook points. ExplicitImports' `allow_internal_imports`
+# / `allow_internal_accesses` defaults would cover these, but they key off
+# `Base.moduleroot`, and an extension is its own root module rather than a submodule of
+# the package it extends -- so a package reaching into its *own* internals from its *own*
+# extension reads as an external non-public access.
+rc_internal_hooks = (
+    :AbstractInputEncoding,
+    :AbstractReservoirComputer,
+    :IntegerType,
+    :__apply_seq,
+    :__check_lsm_components,
+    :__check_lsm_tspan,
+    :__check_protected_kwargs,
+    :__collectstates,
+    :__continuous_esn_rhs!,
+    :__feature_dim,
+    :__fit_readout,
+    :__init_encoder_st,
+    :__predict,
+    :__reservoir_jac_prototype,
+    :__supports_ar,
+    :__wrap_layers,
+    :addreadout!,
+)
 
 run_qa(
     ReservoirComputing;
-    explicit_imports = true,
-    jet_kwargs = (;
-        target_modules = (ReservoirComputing,),
-        mode = :typo,
-        toplevel_logger = nothing,
-    ),
-    api_docs_kwargs = (;
-        rendered = true,
-        rendered_ignore = (
-            :WeightInitializers, :apply, :glorot_normal, :glorot_uniform, :identity_init,
-            :initialparameters, :initialstates, :kaiming_normal, :kaiming_uniform,
-            :ones16, :ones32, :ones64, :onesC16, :onesC32, :onesC64, :orthogonal,
-            :rand16, :rand32, :rand64, :randC16, :randC32, :randC64,
-            :randn16, :randn32, :randn64, :randnC16, :randnC32, :randnC64,
-            :setup, :sparse_init, :truncated_normal, :zeros16, :zeros32, :zeros64,
-            :zerosC16, :zerosC32, :zerosC64,
-        ),
-    ),
     ei_kwargs = (;
-        all_qualified_accesses_are_public = (;
-            ignore = (
-                :OneTo,        # Base (non-public)
-                :tail,         # Base (non-public)
-                :aos_to_soa,   # ArrayInterface (non-public)
-                :Partial,      # WeightInitializers.PartialFunction (non-public)
-                :default_rng,  # WeightInitializers.Utils (non-public)
-                :ones,         # WeightInitializers.DeviceAgnostic (non-public)
-                :rand,         # WeightInitializers.DeviceAgnostic (non-public)
-                :zeros,        # WeightInitializers.DeviceAgnostic (non-public)
-            ),
-        ),
         all_explicit_imports_are_public = (;
             ignore = (
-                :return_init_as,     # ReservoirComputing (own non-public name)
-                :DeviceAgnostic,     # WeightInitializers (non-public)
-                :PartialFunction,    # WeightInitializers (non-public)
-                :Utils,              # WeightInitializers (non-public)
-                :StaticInteger,      # Static (non-public)
-                :QRIteration,        # LinearAlgebra (non-public algorithm selector)
-                :apply,              # LuxCore (non-public)
-                :initialparameters,  # LuxCore (non-public)
-                :initialstates,      # LuxCore (non-public)
-                :outputsize,         # LuxCore (non-public)
-                :replicate,          # LuxCore (non-public)
-                :setup,              # LuxCore (non-public)
-                :statelength,        # LuxCore (non-public)
+                rc_internal_hooks...,
+                # LinearAlgebra doesn't declare its SVD algorithm selectors public.
+                :QRIteration,
+            ),
+        ),
+        all_qualified_accesses_are_public = (;
+            ignore = (
+                rc_internal_hooks...,
+                # LIBSVM neither exports nor declares `AbstractSVR` public, and it is the
+                # only supertype covering all of its regression models -- `__fit_readout`
+                # has to dispatch on it.
+                :AbstractSVR,
+                # `Base.@deprecate_binding` is Base's own standard deprecation mechanism
+                # but isn't declared `public` in Base.
+                :var"@deprecate_binding",
             ),
         ),
     )

@@ -5,7 +5,12 @@ begin
     using LinearAlgebra
     using Statistics
     using ReservoirComputing
+    using LuxCore: setup
     using OrdinaryDiffEq
+    # Euler lives in OrdinaryDiffEqLowOrderRK under OrdinaryDiffEq v7+
+    if !isdefined(@__MODULE__, :Euler)
+        using OrdinaryDiffEqLowOrderRK: Euler
+    end
     using SciMLBase
     using DataInterpolations
 
@@ -15,10 +20,10 @@ begin
         esn = ContinuousESN(in_dim, res_dim, out_dim, (0.0, 5.0), Tsit5())
 
         @test esn isa ContinuousESN
-        @test propertynames(esn) == (:reservoir, :states_modifiers, :readout)
+        @test propertynames(esn) == (:reservoir, :state_modifiers, :readout)
         @test esn.reservoir isa ContinuousESNCell
         @test esn.readout isa LinearReadout
-        @test isempty(esn.states_modifiers)
+        @test isempty(esn.state_modifiers)
 
         ps, st = setup(rng, esn)
         @test size(ps.reservoir.input_matrix) == (res_dim, in_dim)

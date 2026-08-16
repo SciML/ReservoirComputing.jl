@@ -592,6 +592,18 @@ function addreadout!(
     return set_readout_weight(ps, weights), st
 end
 
+# `Conceptor <: AbstractReservoirComputer` makes it eligible for the generic
+# `addreadout!(rc::AbstractReservoirComputer, models, ps, st)` fallbacks (e.g. LIBSVM's),
+# which assume `rc.readout` is a direct field; `Conceptor` only has `.model`. Reject
+# non-matrix readouts explicitly instead of letting that fall through to a FieldError.
+function addreadout!(::Conceptor, weights, ::NamedTuple, ::NamedTuple)
+    throw(
+        ArgumentError(
+            "conceptors only support matrix readouts, got $(typeof(weights))"
+        )
+    )
+end
+
 reservoir_params(ps::NamedTuple) = ps.model.reservoir
 readout_params(ps::NamedTuple) = ps.model.readout
 
@@ -615,7 +627,7 @@ function ridge_map(
     element_type = float(promote_type(eltype(features), eltype(targets)))
     feature_matrix = element_type.(features)
     target_matrix = element_type.(targets)
-    return train(StandardRidge(element_type, reg), feature_matrix, target_matrix)
+    return __fit_readout(RidgeRegression(element_type, reg), feature_matrix, target_matrix)
 end
 
 # Per-pattern aperture lookup: a scalar applies to every pattern; a dictionary
@@ -762,7 +774,7 @@ end
 # a single recurrent cell, so the wrapped model must expose its reservoir as a
 # `StatefulLayer` around one cell and must not post-process states.
 function _check_conceptor_model(model)
-    modifiers = hasproperty(model, :states_modifiers) ? model.states_modifiers : ()
+    modifiers = hasproperty(model, :state_modifiers) ? model.state_modifiers : ()
     isempty(modifiers) ||
         throw(
         ArgumentError(

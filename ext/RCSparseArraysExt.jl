@@ -1,8 +1,8 @@
 module RCSparseArraysExt
-import ReservoirComputing: return_init_as
+import ReservoirComputing
 using SparseArrays: sparse
 
-function return_init_as(::Val{true}, layer_matrix::AbstractVecOrMat)
+function ReservoirComputing.return_init_as(::Val{true}, layer_matrix::AbstractVecOrMat)
     return sparse(layer_matrix)
 end
 

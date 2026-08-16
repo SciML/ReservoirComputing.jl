@@ -18,6 +18,7 @@ closed-form analytic solution.
 
 ```julia
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5    # or `OrdinaryDiffEq`, or whichever solver pkg you need
@@ -82,6 +83,7 @@ that curve to within ~1e-6:
 
 ```julia
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
@@ -152,6 +154,7 @@ collected continuous states.
 
 ```@example ctesn-lorenz
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
@@ -207,7 +210,7 @@ rc_predict = build_rc(predict_len)
 ps, st = setup(rng, rc_train)
 
 # 5. Fit the linear readout on the collected continuous states
-ps, st = train!(rc_train, input_data, target_data, ps, st)
+ps, st = train(rc_train, input_data, target_data, ps, st)
 
 # 6. Autoregressive rollout under the same continuous dynamics
 ps_pred, st_pred = setup(rng, rc_predict)
@@ -224,7 +227,7 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
 The two trajectories should agree on the early portion of the rollout
 before chaotic divergence — exactly the behaviour the discrete-ESN
 example produces. The point of the eye test is that nothing in the
-training loop changes: `train!` and `predict` still drive the
+training loop changes: `train` and `predict` still drive the
 `SciMLProblemReservoir` through the same pipeline they use for any
 discrete reservoir.
 
@@ -239,10 +242,10 @@ been a reservoir-computing benchmark for two decades.
 
 ```@example ctesn-mg
 using ReservoirComputing
+using LuxCore: setup
 using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
-using DelayDiffEq
 using LinearAlgebra
 using Plots
 using Random
@@ -262,8 +265,16 @@ mg_history(p, t) = [1.2]
 
 mg_data_prob = DDEProblem(mackey_glass!, [1.2], mg_history, (0.0, 1500.0);
     constant_lags = [τ_mg])
-mg_data = reduce(hcat,
-    solve(mg_data_prob, MethodOfSteps(Tsit5()); saveat = 1.0).u)
+
+# Use a fixed-step recurrence so this documentation example remains independent
+# of a particular delay-solver implementation.
+mg_data = zeros(1, 1501)
+mg_data[1, 1] = 1.2
+for step in 1:1500
+    x = mg_data[1, step]
+    x_delay = step > Int(τ_mg) ? mg_data[1, step - Int(τ_mg)] : 1.2
+    mg_data[1, step + 1] = x + β_mg * x_delay / (1 + x_delay^n_mg) - γ_mg * x
+end
 
 shift, train_len, predict_len = 200, 1000, 200
 input_data = mg_data[:, shift:(shift + train_len - 1)]
@@ -297,8 +308,8 @@ end
 rc_mg_train = build_mg_rc(train_len)
 rc_mg_predict = build_mg_rc(predict_len)
 ps_mg, st_mg = setup(rng, rc_mg_train)
-ps_mg, st_mg = train!(rc_mg_train, input_data, target_data, ps_mg, st_mg,
-    StandardRidge(1.0e-6); washout = 0)
+ps_mg, st_mg = train(rc_mg_train, input_data, target_data, ps_mg, st_mg;
+    objective = RidgeRegression(1.0e-6), washout = 0)
 
 ps_pred, st_pred = setup(rng, rc_mg_predict)
 ps_pred = merge(ps_pred, (readout = ps_mg.readout,))
@@ -314,10 +325,10 @@ plot([test_data[1, :], mg_output[1, :]];
 
 Two things to notice:
 
-* The **data path** uses a `DDEProblem` solved with
-  `MethodOfSteps(Tsit5())` — no special handling on
-  `SciMLProblemReservoir`'s side; the wrapper only cares about the
-  shape of the resulting matrix.
+* The **data path** constructs the corresponding `DDEProblem` and uses a
+  fixed-step recurrence to keep this documentation example deterministic. The
+  reservoir wrapper only cares about the resulting matrix shape, so production
+  code can instead solve `mg_data_prob` with a compatible delay solver.
 * The **reservoir** is kept as an `ODEProblem` for simplicity. Because
   `SciMLProblemReservoir`'s `prob` field is untyped, it would equally
   accept a `DDEProblem` of the form
@@ -336,7 +347,7 @@ cross-validation.
 The reservoir state sequence the readout sees is produced by an
 [`AbstractSampler`](@ref). To plug in a custom strategy (window mean,
 sub-sampling within a window, etc.), define a concrete subtype and a
-matching `_sample(::YourSampler, sol)` method inside an extension that
+matching `__sample(::YourSampler, sol)` method inside an extension that
 also loads `OrdinaryDiffEq` and `SciMLBase`. The method should return
 a `(state_dim, n_samples)` matrix; everything downstream (state
 modifiers, readout, predict) is sampler-agnostic.

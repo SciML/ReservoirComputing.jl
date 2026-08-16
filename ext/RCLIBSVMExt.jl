@@ -1,15 +1,28 @@
 module RCLIBSVMExt
 
-using LIBSVM
-using ReservoirComputing:
-    SVMReadout, ReservoirChain, AbstractReservoirComputer
-import ReservoirComputing: train, addreadout!
+using LIBSVM: LIBSVM
+using ReservoirComputing: SVMReadout, AbstractReservoirComputer
+import ReservoirComputing: __fit_readout, addreadout!
 
-function train(
+function __fit_readout(
         svr::LIBSVM.AbstractSVR,
-        states::AbstractMatrix, target::AbstractMatrix
+        states::AbstractMatrix, target::AbstractMatrix;
+        solver = nothing,
+        kwargs...,
     )
-    @assert size(states, 2) == size(target, 2) "states and target must share columns."
+    solver === nothing || throw(
+        ArgumentError(
+            "solver is not supported for LIBSVM objectives; omit the solver keyword."
+        )
+    )
+    isempty(kwargs) || throw(
+        ArgumentError(
+            "unsupported keyword arguments for LIBSVM train: $(Tuple(keys(kwargs)))"
+        )
+    )
+    size(states, 2) == size(target, 2) || throw(
+        DimensionMismatch("states and target must share the same number of columns.")
+    )
     perm_states = permutedims(states)
     size_target = size(target, 1)
 
@@ -26,10 +39,10 @@ function train(
     end
 end
 
-_has_models(ps) = (ps isa NamedTuple) && (:models in propertynames(ps))
+__has_models(ps) = (ps isa NamedTuple) && (:models in propertynames(ps))
 
 function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
-    if !_has_models(ps)
+    if !__has_models(ps)
         return inp, st
     end
     models = getfield(ps, :models)
@@ -70,7 +83,9 @@ function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
     end
 end
 
-_set_readout_models(ps_readout::NamedTuple, models) = merge(ps_readout, (; models = models))
+function __set_readout_models(ps_readout::NamedTuple, models)
+    return merge(ps_readout, (; models = models))
+end
 
 function addreadout!(
         rc::AbstractReservoirComputer,
@@ -81,13 +96,13 @@ function addreadout!(
     # Only valid if the model's readout is actually SVMReadout
     if rc.readout isa SVMReadout
         @assert hasproperty(ps, :readout)
-        new_readout = _set_readout_models(ps.readout, models)
+        new_readout = __set_readout_models(ps.readout, models)
         return merge(ps, (readout = new_readout,)), st
     end
 
     throw(
         ArgumentError(
-            "This training method produced a non-matrix readout (e.g. LIBSVM models), " *
+            "This objective produced a non-matrix readout (e.g. LIBSVM models), " *
                 "but the model readout is $(typeof(rc.readout)). Use SVMReadout as the readout layer."
         )
     )

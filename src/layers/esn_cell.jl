@@ -1,3 +1,48 @@
+"""
+    AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell
+
+Developer interface for an echo-state-network recurrent cell with the shared
+ESN parameter and state initialization implementation.
+
+## Required fields
+
+The generic methods require these fields:
+
+- `in_dims`: input feature dimension.
+- `out_dims`: reservoir-state dimension.
+- `init_input(rng, out_dims, in_dims)`: input-matrix initializer.
+- `init_reservoir(rng, out_dims, out_dims)`: recurrent-matrix initializer.
+- `init_state(rng, out_dims, batch_size)`: initial hidden-state initializer.
+- `use_bias`: `Static.True()` or `Static.False()`. When true,
+  `init_bias(rng, out_dims)` is also required.
+
+## Extension contract
+
+Subtypes inherit `LuxCore.initialparameters` and `LuxCore.initialstates` from
+this interface. Those methods create `input_matrix` and `reservoir_matrix`, an
+optional `bias`, and a replicated RNG state. Implement the recurrent call form
+from [`AbstractReservoirRecurrentCell`](@ref): given `(x, (carry,))`, return
+`((output, (next_carry,)), st_new)`. The generic one-input method initializes a
+hidden state with `init_state` and delegates to that form.
+
+`input_matrix` must have shape `(out_dims, in_dims)`, `reservoir_matrix` must
+have shape `(out_dims, out_dims)`, and every carry must be compatible with the
+chosen `out_dims` and batch dimension.
+
+## Example
+
+```julia
+struct MyESNCell <: AbstractEchoStateNetworkCell
+    in_dims
+    out_dims
+    init_input
+    init_reservoir
+    init_bias
+    init_state
+    use_bias
+end
+```
+"""
 abstract type AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell end
 
 @doc raw"""
@@ -88,7 +133,12 @@ function ESNCell(
     )
 
     if isa(leak_coefficient, AbstractVector)
-        @assert length(leak_coefficient) == out_dims "leak_coefficient must match reservoir size"
+        length(leak_coefficient) == out_dims || throw(
+            DimensionMismatch(
+                "leak_coefficient must have length out_dims=$out_dims, " *
+                    "got $(length(leak_coefficient))."
+            )
+        )
     end
 
     return ESNCell(
@@ -128,24 +178,24 @@ function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
-    lc = _format_leak(T, esn.leak_coefficient)
-    h_new = _one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
+    lc = __format_leak(T, esn.leak_coefficient)
+    h_new = __one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
     return (h_new, (h_new,)), st
 end
 
-function _format_leak(::Type{T}, leak::Number) where {T <: Number}
+function __format_leak(::Type{T}, leak::Number) where {T <: Number}
     return convert(T, leak)
 end
 
-function _format_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+function __format_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
     return reshape(convert.(T, leak), :, 1)
 end
 
-function _one_minus_leak(::Type{T}, leak::Number) where {T <: Number}
+function __one_minus_leak(::Type{T}, leak::Number) where {T <: Number}
     return one(T) - leak
 end
 
-function _one_minus_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
+function __one_minus_leak(::Type{T}, leak::AbstractArray) where {T <: Number}
     return one(T) .- leak
 end
 
