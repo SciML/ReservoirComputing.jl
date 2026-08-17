@@ -442,8 +442,8 @@ conceptor library to the model state. Parameters and states are nested under the
 
 ## Returns
 
-- A conceptor-enabled reservoir computer used with [`initialparameters`](@ref),
-  [`initialstates`](@ref), [`loadpatterns`](@ref), and [`generate`](@ref).
+- A conceptor-enabled reservoir computer used with `initialparameters`,
+  `initialstates`, [`loadpatterns`](@ref), and [`generate`](@ref).
 
 ## Example
 

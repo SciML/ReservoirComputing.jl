@@ -82,6 +82,7 @@ Lorenz system. You can find the same example fully explained in
 the [getting started page](https://docs.sciml.ai/ReservoirComputing/stable/getting_started/).
 
 ```julia
+using LuxCore: setup
 using OrdinaryDiffEqAdamsBashforthMoulton
 using Plots
 using Random

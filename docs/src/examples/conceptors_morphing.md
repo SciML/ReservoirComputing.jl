@@ -52,6 +52,8 @@ stores a conceptor for it, and recomputes the recurrent weights into an
 input-internalizing matrix so the reservoir can run autonomously.
 
 ```@example morphing
+using LuxCore: initialparameters, initialstates
+
 rng = Xoshiro(3)
 
 bias_init(r, dims...) = 0.2f0 .* randn(r, Float32, dims...)
