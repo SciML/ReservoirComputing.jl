@@ -32,6 +32,14 @@ ReservoirComputing.AbstractInputEncoding
 ReservoirComputing.AbstractEncodingData
 ```
 
+## Spiking Reservoirs
+
+```@docs
+ReservoirComputing.AbstractSpikingNeuron
+ReservoirComputing.AbstractInputEncoder
+ReservoirComputing.AbstractSpikeFeature
+```
+
 ## Training
 
 ```@docs

@@ -76,28 +76,12 @@ The detail of this implementation can be found in [Nichele2017](@cite).
 ## Usage
 
 This is a **configuration object**; it does not perform the mapping by itself.
-Create the concrete tables with `create_encoding` and pass them to
-[`RECACell`](@ref):
+For ordinary use, pass this configuration to [`RECA`](@ref), which lets the
+cellular-automata extension construct its internal mapping tables:
 
 ```julia
 using ReservoirComputing, CellularAutomata, Random
 
-in_dims = 4
-generations = 8
-mapping = RandomMapping(permutations = 8, expansion_size = 40)
-
-enc = ReservoirComputing.create_encoding(mapping, in_dims, generations)  # → RandomMaps
-cell = RECACell(DCA(90), enc)
-
-rc = ReservoirChain(
-    StatefulLayer(cell),
-    LinearReadout(enc.states_size => in_dims; include_collect = true)
-)
-```
-
-Or let [`RECA`](@ref) do this for you:
-
-```julia
 rc = RECA(in_dims = 4, out_dims = 4, DCA(90);
     input_encoding = RandomMapping(permutations = 8, expansion_size = 40),
     generations = 8)
@@ -119,8 +103,19 @@ end
 """
     RandomMaps
 
-Precomputed random input-mapping data used by [`RECACell`](@ref) and [`RECA`](@ref).
-Construct it from a [`RandomMapping`](@ref) with `create_encoding`.
+Precomputed random input-mapping data used internally by [`RECACell`](@ref)
+and [`RECA`](@ref). Ordinary users should pass a [`RandomMapping`](@ref) to
+`RECA`; the cellular-automata extension constructs this value from the input
+dimension and number of generations.
+
+## Fields
+
+- `permutations`: number of independent input maps.
+- `expansion_size`: width of each mapped cellular-automata lattice.
+- `generations`: number of cellular-automata generations.
+- `maps`: integer map table with one row per permutation.
+- `states_size`: number of features emitted by the cell.
+- `ca_size`: length of the carried cellular-automata state.
 """
 struct RandomMaps{T, E, G, M, S} <: AbstractEncodingData
     permutations::T

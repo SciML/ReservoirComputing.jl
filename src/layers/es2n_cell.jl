@@ -1,5 +1,3 @@
-abstract type AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell end
-
 @doc raw"""
     ES2NCell(in_dims => out_dims, [activation];
         use_bias=False(), init_bias=zeros32,

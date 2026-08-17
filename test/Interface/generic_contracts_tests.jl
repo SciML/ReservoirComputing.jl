@@ -256,6 +256,10 @@ begin
     struct ExternalEncoding <: ReservoirComputing.AbstractInputEncoding end
     struct ExternalEncodingData <: ReservoirComputing.AbstractEncodingData end
     struct ExternalSolver <: ReservoirComputing.AbstractReservoirComputingSolver end
+    struct ExternalSampler <: ReservoirComputing.AbstractSampler end
+    struct ExternalSpikingNeuron <: ReservoirComputing.AbstractSpikingNeuron end
+    struct ExternalInputEncoder <: ReservoirComputing.AbstractInputEncoder end
+    struct ExternalSpikeFeature <: ReservoirComputing.AbstractSpikeFeature end
 
     @testset "Developer interface contracts" begin
         rng = MersenneTwister(44)
@@ -299,6 +303,10 @@ begin
         @test ExternalEncoding() isa ReservoirComputing.AbstractInputEncoding
         @test ExternalEncodingData() isa ReservoirComputing.AbstractEncodingData
         @test ExternalSolver() isa ReservoirComputing.AbstractReservoirComputingSolver
+        @test ExternalSampler() isa ReservoirComputing.AbstractSampler
+        @test ExternalSpikingNeuron() isa ReservoirComputing.AbstractSpikingNeuron
+        @test ExternalInputEncoder() isa ReservoirComputing.AbstractInputEncoder
+        @test ExternalSpikeFeature() isa ReservoirComputing.AbstractSpikeFeature
         @test_throws ArgumentError train(
             RidgeRegression(), ones(Float32, 2, 2), ones(Float32, 1, 2);
             solver = ExternalSolver()
