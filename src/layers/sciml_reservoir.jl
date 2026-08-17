@@ -1,10 +1,36 @@
 """
     AbstractSampler
 
-Abstract supertype for samplers that extract a discrete state matrix from a
-continuous-time reservoir's trajectory. Concrete subtypes determine how the
-ODE/SDE/DDE solution is mapped onto the columns of the state matrix that the
-readout sees.
+Developer interface for a sampler that extracts a discrete state matrix from a
+continuous-time reservoir trajectory.
+
+## Fields
+
+The marker itself requires no fields. A sampler may carry configuration such as
+a window statistic or a within-window sampling rule.
+
+## Extension contract
+
+The continuous-reservoir extension calls
+`__sample(sampler, sol)` after solving with one saved endpoint per input
+column. A concrete method must return an `AbstractMatrix` with one column per
+saved sample and a stable row dimension for the readout. It may inspect the
+SciML solution object, but it must not change the solution or the input data.
+
+Subtyping `AbstractSampler` alone is not enough: the matching `__sample`
+method must be defined in the extension that owns the continuous-reservoir
+implementation. This is a developer hook; ordinary users should use
+[`TerminalStateSampling`](@ref).
+
+## Example
+
+```julia
+struct WindowMean <: AbstractSampler
+    width::Int
+end
+
+# Define `__sample(::WindowMean, sol)` in the continuous-reservoir extension.
+```
 """
 abstract type AbstractSampler end
 
@@ -14,21 +40,75 @@ abstract type AbstractSampler end
 Sampler that records the reservoir state at the *end* of each input window.
 With `T` input columns and `tspan = (t0, t1)`, `collectstates` splits
 `tspan` into `T` equal-width windows; input column `k` is applied at the
-start of window `k` (time `t0 + (k-1)Δt`) and the state at the end of that
-window (time `t0 + kΔt`) becomes the `k`-th column of the returned state
-matrix. This is the continuous analogue of the discrete update: one state
-per input column, with `states[:, k]` representing the reservoir's state
-after having processed input `k`.
+start of window `k` and the state at the end of that window becomes column
+`k` of the returned state matrix.
+
+## Fields
+
+None.
+
+## Returns
+
+The continuous-reservoir extension returns the saved solution values as an
+`(state_dimension, T)` matrix. `states[:, k]` is the reservoir state after
+processing input column `k`.
+
+## Example
+
+```julia
+sampler = TerminalStateSampling()
+reservoir = SciMLProblemReservoir(prob, sampler, (0.0, 1.0), Tsit5())
+```
 """
 struct TerminalStateSampling <: AbstractSampler end
 
 """
     AbstractSciMLProblemReservoir <: AbstractLuxLayer
 
-Abstract supertype for reservoirs whose dynamics are defined by an
+Developer interface for a Lux layer whose dynamics are defined by an
 `AbstractSciMLProblem` (typically `ODEProblem`, `SDEProblem`, or `DDEProblem`).
-Concrete subtypes provide `__collectstates` methods that run the solver and
-hand back a state matrix to the readout.
+
+## Required fields
+
+Concrete subtypes used with the built-in continuous-reservoir extension should
+provide:
+
+- `prob`: the SciML problem template;
+- `sampler`: an [`AbstractSampler`](@ref);
+- `tspan`: the integration interval used for each input sequence;
+- `args`: positional solver arguments; and
+- `kwargs`: keyword solver arguments that do not conflict with the sampling
+  machinery.
+
+## Extension contract
+
+Implement `LuxCore.initialparameters` and `LuxCore.initialstates` for any
+additional layer parameters or state. The continuous-reservoir extension then
+dispatches the following developer hooks:
+
+- `__collectstates(res, rc, data, ps, st) -> (states, st′)`, where `states` is
+  an `(state_dimension, n_samples)` matrix;
+- `__predict(res, rc, data, ps, st) -> (outputs, st′)` for teacher-forced
+  prediction; and
+- `__predict(res, rc, steps, ps, st; initialdata) -> (outputs, st′)` for
+  autoregressive prediction.
+
+The hooks must preserve the parameter/state layout expected by the enclosing
+[`AbstractReservoirComputer`](@ref). Subtyping this type without implementing
+the hooks only provides the default empty Lux parameter/state containers; it
+does not make a new reservoir solvable.
+
+## Example
+
+```julia
+struct MyContinuousReservoir <: AbstractSciMLProblemReservoir
+    prob
+    sampler
+    tspan
+    args
+    kwargs
+end
+```
 
 The continuous-time `__collectstates` implementation lives in the
 `RCODEReservoirExt` package extension and requires `SciMLBase` and

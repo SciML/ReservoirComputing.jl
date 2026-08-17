@@ -1,25 +1,92 @@
 """
     AbstractSpikingNeuron
 
-Supertype for continuous-time spiking neurons used by [`LSMCell`](@ref).
-v1 accepts only [`LIFNeuron`](@ref).
+Developer marker for a neuron model used by the spiking reservoir interface.
+
+## Fields
+
+The marker itself requires no fields. A concrete neuron type must document the
+state variables, parameter fields, and differential equations that its
+extension uses.
+
+## Extension contract
+
+The current LSM implementation accepts only [`LIFNeuron`](@ref). Subtyping
+`AbstractSpikingNeuron` does not by itself make a neuron valid for [`LSMCell`](@ref):
+an extension must add the solver right-hand side, event handling, and feature
+extraction methods for the new neuron. Those hooks are developer APIs, not
+generic end-user dispatches.
+
+## Example
+
+```julia
+struct MyNeuron <: AbstractSpikingNeuron
+    tau_m::Float64
+end
+```
+
+The example is only a type declaration; it is not accepted by `LSMCell` until
+the corresponding extension contract is implemented.
 """
 abstract type AbstractSpikingNeuron end
 
 """
     AbstractInputEncoder
 
-Supertype for [`LSMCell`](@ref) input encodings.
-v1 accepts [`CurrentInjection`](@ref) and [`PoissonRateEncoder`](@ref).
+Developer marker for an input-to-spike encoding used by [`LSMCell`](@ref).
+
+## Fields
+
+The marker itself requires no fields. A concrete encoder owns the parameters
+needed to turn an input vector into the external current or event process
+consumed by the neuron model.
+
+## Extension contract
+
+The current implementation accepts [`CurrentInjection`](@ref) and
+[`PoissonRateEncoder`](@ref) only. A custom subtype must be integrated by an
+extension that defines its encoder state initialization, input/event generation,
+and solver callback behavior. Subtyping this marker alone does not make the
+encoder accepted by `LSMCell`.
+
+## Example
+
+```julia
+struct MyEncoder <: AbstractInputEncoder
+    scale::Float64
+end
+```
 """
 abstract type AbstractInputEncoder end
 
 """
     AbstractSpikeFeature
 
-Supertype for spike-side feature maps of [`LSMCell`](@ref).
-v1 accepts [`SpikeCountFeatures`](@ref), [`ExponentialSpikeFilter`](@ref),
-and [`MembraneVoltageFeature`](@ref).
+Developer marker for a feature map that converts a spiking trajectory into
+reservoir features for [`LSMCell`](@ref).
+
+## Fields
+
+The marker itself requires no fields. A concrete feature map should document
+its state, output feature dimension, and how each sample window is computed.
+
+## Extension contract
+
+The current implementation accepts [`SpikeCountFeatures`](@ref),
+[`ExponentialSpikeFilter`](@ref), and [`MembraneVoltageFeature`](@ref). A
+custom feature map must provide extension methods for its feature dimension,
+autoregressive support, and sampled feature calculation. The extension passes
+the spike times and unit indices together with the requested sample times; the
+implementation must return one feature column per sample time. Subtyping this
+marker alone does not add a feature map to `LSMCell`.
+
+## Example
+
+```julia
+struct MySpikeFeature <: AbstractSpikeFeature
+    window::Float64
+end
+```
 """
 abstract type AbstractSpikeFeature end
 
@@ -76,7 +143,23 @@ end
 """
     CurrentInjection()
 
-``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (+ optional bias).
+Stateless input encoder that supplies the instantaneous external current
+``I^{\\mathrm{ext}}(t) = W_{\\mathrm{in}} u(t)`` (plus an optional bias).
+
+## Fields
+
+None.
+
+## Returns
+
+The LSM solver receives the current obtained by multiplying the input by the
+reservoir input matrix. The encoder has no additional state.
+
+## Example
+
+```julia
+LSMCell(3 => 20; tspan = (0.0, 1.0), encoder = CurrentInjection())
+```
 """
 struct CurrentInjection <: AbstractInputEncoder end
 
@@ -106,7 +189,24 @@ end
 """
     SpikeCountFeatures()
 
-Per-window spike counts. No autoregressive `predict`.
+Per-window spike counts, with one feature for each spiking unit. This feature
+map does not support autoregressive `predict` because it represents event
+counts over a sampled time window.
+
+## Fields
+
+None.
+
+## Returns
+
+For `n_units` neurons and `n_samples` sampling times, the extension returns an
+`(n_units, n_samples)` feature matrix.
+
+## Example
+
+```julia
+LSMCell(3 => 20; tspan = (0.0, 1.0), feature_map = SpikeCountFeatures())
+```
 """
 struct SpikeCountFeatures <: AbstractSpikeFeature end
 
@@ -137,7 +237,23 @@ end
 """
     MembraneVoltageFeature()
 
-Membrane voltage at each window end.
+Membrane voltage at each sampled window end. This feature map supports
+autoregressive `predict`.
+
+## Fields
+
+None.
+
+## Returns
+
+For `n_units` neurons and `n_samples` sampling times, the extension returns an
+`(n_units, n_samples)` matrix of sampled membrane voltages.
+
+## Example
+
+```julia
+LSMCell(3 => 20; tspan = (0.0, 1.0), feature_map = MembraneVoltageFeature())
+```
 """
 struct MembraneVoltageFeature <: AbstractSpikeFeature end
 
