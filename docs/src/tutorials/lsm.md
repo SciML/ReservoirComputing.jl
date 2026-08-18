@@ -31,7 +31,8 @@ data = vcat(reshape(sin.(theta), 1, :), reshape(cos.(theta), 1, :))
 
 input_data = data[:, 1:train_len]
 target_data = data[:, 2:(train_len + 1)]
-test = data[:, (train_len + 1):(train_len + predict_len)]
+seed = data[:, train_len + 1]
+test = data[:, (train_len + 2):(train_len + predict_len + 1)]
 ```
 
 ## Constructing the `LSM`
@@ -76,7 +77,7 @@ ps, st = train(lsm_train, input_data, target_data, ps, st;
 
 ```@example lsm-orbit
 output, _ = predict(
-    lsm_pred, predict_len, ps, st; initialdata = test[:, 1]
+    lsm_pred, predict_len, ps, st; initialdata = seed
 )
 
 p1 = plot(test[1, :], test[2, :]; label = "actual", linewidth = 2.5,
