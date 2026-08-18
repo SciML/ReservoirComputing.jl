@@ -35,7 +35,13 @@ rc_internal_hooks = (
 run_qa(
     ReservoirComputing;
     ei_kwargs = (;
-        all_explicit_imports_are_public = (; ignore = rc_internal_hooks),
+        all_explicit_imports_are_public = (;
+            ignore = (
+                rc_internal_hooks...,
+                # LinearAlgebra doesn't declare its SVD algorithm selectors public.
+                :QRIteration,
+            ),
+        ),
         all_qualified_accesses_are_public = (;
             ignore = (
                 rc_internal_hooks...,
