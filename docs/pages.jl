@@ -7,6 +7,7 @@ pages = [
         "Morphing patterns with conceptors" => "tutorials/conceptors_morphing.md",
         "Continuous-time reservoirs from a SciMLProblem" => "tutorials/sciml_reservoir.md",
         "Continuous ESN — forecasting Lorenz" => "tutorials/continuous_esn.md",
+        "Liquid State Machine — a periodic orbit" => "tutorials/lsm.md",
         "Fitting a Next Generation Reservoir Computer" => "tutorials/ngrc.md",
         "Deep Echo State Networks" => "tutorials/deep_esn.md",
         "Training Reservoir Computing Models" => "tutorials/train.md",
