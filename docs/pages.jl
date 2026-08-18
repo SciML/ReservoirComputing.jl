@@ -4,6 +4,7 @@ pages = [
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",
         "Chaos forecasting with an ESN" => "tutorials/lorenz_basic.md",
+        "Morphing patterns with conceptors" => "tutorials/conceptors_morphing.md",
         "Continuous-time reservoirs from a SciMLProblem" => "tutorials/sciml_reservoir.md",
         "Continuous ESN — forecasting Lorenz" => "tutorials/continuous_esn.md",
         "Fitting a Next Generation Reservoir Computer" => "tutorials/ngrc.md",
@@ -15,7 +16,6 @@ pages = [
     ],
     "Examples" => Any[
         "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
-        "Morphing patterns with conceptors" => "examples/conceptors_morphing.md",
     ],
     "API Documentation" => Any[
         "Layers" => "api/layers.md",
