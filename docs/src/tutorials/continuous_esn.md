@@ -46,30 +46,29 @@ test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 ## Constructing the `ContinuousESN`
 
 ```@example continuous-esn-lorenz
-N_res = 100
+N_res = 300
+res_radius = 0.9
+res_sparsity = 6 / N_res
 
 # Float64 initialisers so the reservoir, the solve, and the input all
 # share a numeric type. Without these the cell would default to
 # Float32 via `scaled_rand` / `rand_sparse` / `zeros32`.
-init_input_f64(rng, d...)     = scaled_rand(rng, Float64, d...)
-init_reservoir_f64(rng, d...) = rand_sparse(rng, Float64, d...)
-init_bias_f64(rng, d...)      = zeros(Float64, d...)
+init_input_f64(rng, d...) = scaled_rand(rng, Float64, d...)
+init_reservoir_f64(rng, d...) = rand_sparse(
+    rng, Float64, d...; radius = res_radius, sparsity = res_sparsity
+)
 
 esn_train = ContinuousESN(
     3, N_res, 3, (0.0, Float64(train_len)), Tsit5();
-    use_bias = true,
     init_input = init_input_f64,
     init_reservoir = init_reservoir_f64,
-    init_bias = init_bias_f64,
     state_modifiers = (NLAT2(),),
     reltol = 1.0e-6, abstol = 1.0e-8
 )
 esn_pred = ContinuousESN(
     3, N_res, 3, (0.0, Float64(predict_len)), Tsit5();
-    use_bias = true,
     init_input = init_input_f64,
     init_reservoir = init_reservoir_f64,
-    init_bias = init_bias_f64,
     state_modifiers = (NLAT2(),),
     reltol = 1.0e-6, abstol = 1.0e-8
 )
@@ -80,28 +79,36 @@ ps, st = setup(rng, esn_train)
 ## Training
 
 ```@example continuous-esn-lorenz
-ps, st = train(esn_train, input_data, target_data, ps, st)
+ps, st = train(esn_train, input_data, target_data, ps, st;
+    objective = RidgeRegression(1.0e-6))
 ```
 
 ## Autoregressive rollout
 
 ```@example continuous-esn-lorenz
-ps_pred, st_pred = setup(rng, esn_pred)
-ps_pred = merge(ps_pred, (readout = ps.readout,))
-st_pred = merge(st_pred, (readout = st.readout,))
-
 output, _ = predict(
-    esn_pred, predict_len, ps_pred, st_pred; initialdata = test[:, 1]
+    esn_pred, predict_len, ps, st; initialdata = test[:, 1]
 )
+```
 
-plot(
-    transpose(output)[:, 1], transpose(output)[:, 2],
-    transpose(output)[:, 3]; label = "predicted"
-)
-plot!(
-    transpose(test)[:, 1], transpose(test)[:, 2],
-    transpose(test)[:, 3]; label = "actual"
-)
+```@example continuous-esn-lorenz
+using Plots.PlotMeasures
+
+dt = 0.02
+lorenz_maxlyap = 0.9056
+lyap_time = (0:(predict_len - 1)) .* dt .* (1 / lorenz_maxlyap)
+
+p1 = plot(lyap_time, [test[1, :] output[1, :]]; label = ["actual" "predicted"],
+    ylabel = "x(t)", linewidth = 2.5, xticks = false, yticks = -15:15:15);
+p2 = plot(lyap_time, [test[2, :] output[2, :]]; label = ["actual" "predicted"],
+    ylabel = "y(t)", linewidth = 2.5, xticks = false, yticks = -20:20:20);
+p3 = plot(lyap_time, [test[3, :] output[3, :]]; label = ["actual" "predicted"],
+    ylabel = "z(t)", linewidth = 2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+
+plot(p1, p2, p3; plot_title = "Lorenz System Coordinates",
+    layout = (3, 1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize = 15,
+    yguidefontsize = 15,
+    legendfontsize = 12, titlefontsize = 20)
 ```
 
 The two trajectories agree on the early portion of the rollout before
