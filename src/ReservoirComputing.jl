@@ -18,8 +18,6 @@ using WeightInitializers: orthogonal, rand32, randn32, sparse_init, zeros32
 
 include("initializer_utils.jl")
 
-#@compat(public, (initialparameters)) #do I need to add intialstates/parameters in compat?
-
 #reservoir computers
 include("generics.jl")
 include("layers/sciml_reservoir.jl")

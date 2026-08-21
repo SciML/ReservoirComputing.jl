@@ -56,8 +56,6 @@ function wrap_functions_in_chain_call(ro::SVMReadout)
     return __svmreadout_include_collect(ro) ? (Collect(), ro) : ro
 end
 
-__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
-
 function __setmodels_rt(p::NamedTuple{K}, M) where {K}
     keys = K
     Kq = __quote_keys(keys)

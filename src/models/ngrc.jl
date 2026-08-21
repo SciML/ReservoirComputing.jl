@@ -83,7 +83,7 @@ function NGRC(
         inc = ReservoirComputing.known(include_input)
         n_blocks = (inc === true ? 1 : 0) + length(feats_tuple)
         ro_dims = n_taps * n_blocks
-        @warn """
+        !isempty(feats_tuple) && @warn """
             NGRC: inferring readout input dimension assuming each feature f in `features`
             returns a vector of the same length as the delayed input.
 
