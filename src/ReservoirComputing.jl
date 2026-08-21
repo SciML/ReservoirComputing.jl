@@ -63,6 +63,7 @@ include("models/svesm.jl")
 include("models/lifesn.jl")
 include("models/ngrc.jl")
 include("models/rmnesn.jl")
+include("models/deep_reservoir.jl")
 include("models/rmnresesn.jl")
 include("models/continuous_esn.jl")
 include("models/lsm.jl")
@@ -95,6 +96,8 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
     selfloop_forwardconnection, simple_cycle, toeplitz_init, true_doublecycle, wigner_init
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver, resetcarry!, train, train!
+export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM, DeepReservoir
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
     resetcarry!, return_init_as, train, train!
 export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
