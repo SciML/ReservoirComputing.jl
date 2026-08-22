@@ -42,14 +42,12 @@ Next Generation Reservoir Computing [Gauthier2021](@cite).
     `Tuple`. Default: empty `()`.
   - `readout_activation`: Activation for the linear readout. Default: `identity`.
   - `ro_dims`: Input dimension of the readout. If `nothing` (default), it is
-    *estimated* under the assumption that each feature function returns a
-    vector with the same length as the delayed input. In that case,
-    `ro_dims ≈ (num_delays + 1) * in_dims * n_blocks`, where `n_blocks` is the
-    number of concatenated vectors (original delayed input if
-    `include_input=true` plus one block per feature function).
-    If your feature functions change the length (e.g. constant features,
-    higher-order polynomial expansions with cross terms), you should pass
-    `ro_dims` explicitly.
+    determined exactly by probing `features` and `state_modifiers` with a zero
+    vector of the delayed-input length and measuring the resulting feature
+    length; this requires that block's output length not depend on the actual
+    input values. If probing fails (e.g. a feature function errors on an
+    all-zero input), an `ArgumentError` is thrown and `ro_dims` must be passed
+    explicitly.
 
 ## Inputs
 
@@ -80,27 +78,31 @@ function NGRC(
     mods = __wrap_layers(mods_tuple_raw)
     if ro_dims === nothing
         n_taps = in_dims * (num_delays + 1)
-        inc = ReservoirComputing.known(include_input)
-        n_blocks = (inc === true ? 1 : 0) + length(feats_tuple)
-        ro_dims = n_taps * n_blocks
-        !isempty(feats_tuple) && @warn """
-            NGRC: inferring readout input dimension assuming each feature f in `features`
-            returns a vector of the same length as the delayed input.
-
-            Delayed input length: n_taps = $(n_taps)
-            Blocks (input + features): $(n_blocks)
-            => ro_dims = n_taps * n_blocks = $(ro_dims)
-
-            If your feature functions change the length (e.g. constant features,
-            quadratic monomials with cross terms), please pass `ro_dims` explicitly.
-
-            Please note that, if dimensions are not correct, training will change them and
-            no error will occur.
-        """
+        ro_dims = __infer_ngrc_ro_dims(mods, n_taps)
     end
     readout = LinearReadout(ro_dims => out_dims, readout_activation)
 
     return NGRC(reservoir, mods, readout)
+end
+
+# Measure the exact feature length feeding the readout by running a zero probe
+# vector through the already-constructed `features`/`state_modifiers` chain,
+# instead of assuming every feature function preserves the delayed-input length.
+function __infer_ngrc_ro_dims(mods::Tuple, n_taps::Int)
+    rng = Random.default_rng()
+    ps_mods = Tuple(initialparameters(rng, layer) for layer in mods)
+    st_mods = Tuple(initialstates(rng, layer) for layer in mods)
+    probe = zeros(n_taps)
+    try
+        out, _ = __apply_seq(mods, probe, ps_mods, st_mods)
+        return length(out)
+    catch err
+        throw(ArgumentError(
+            "NGRC: could not infer the readout input dimension by probing " *
+                "`features`/`state_modifiers` with a zero vector of length " *
+                "$n_taps (got: $(sprint(showerror, err))). Pass `ro_dims` explicitly."
+        ))
+    end
 end
 
 function resetcarry!(
