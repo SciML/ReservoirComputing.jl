@@ -141,97 +141,190 @@ function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Nothing)
     return reservoir_matrix
 end
 
+"""
+    AbstractSignPattern
+
+Abstract type for policies that modify the signs of initializer weights.
+
+Implement `ReservoirComputing.__apply_signs!(rng, pattern, weights)` for custom
+sign patterns. The method must mutate and return `weights`.
+"""
+abstract type AbstractSignPattern end
+
+"""
+    RandomSigns([positive_probability = 0.5])
+
+Independently preserve each weight's sign with probability `positive_probability`
+and flip it otherwise.
+"""
+struct RandomSigns <: AbstractSignPattern
+    positive_probability::Float64
+
+    function RandomSigns(positive_probability::Real = 0.5)
+        0 <= positive_probability <= 1 || throw(
+            ArgumentError("positive_probability must be between 0 and 1")
+        )
+        return new(Float64(positive_probability))
+    end
+end
+
+"""
+    RegularSigns([strides = 2])
+
+Flip signs at positions determined by one stride or a repeating tuple of strides.
+An integer stride `n` flips every `n`th weight. A tuple advances cumulatively by
+each stride in a repeating cycle.
+"""
+struct RegularSigns{N} <: AbstractSignPattern
+    strides::NTuple{N, Int}
+
+    function RegularSigns(strides::NTuple{N, Int}) where {N}
+        isempty(strides) && throw(ArgumentError("strides must not be empty"))
+        all(>(0), strides) || throw(ArgumentError("all strides must be positive"))
+        return new{N}(strides)
+    end
+end
+
+RegularSigns() = RegularSigns(2)
+RegularSigns(stride::Integer) = RegularSigns((Int(stride),))
+RegularSigns(strides::Tuple{Vararg{Integer}}) = RegularSigns(Tuple(Int.(strides)))
+RegularSigns(strides::AbstractVector{<:Integer}) = RegularSigns(Tuple(strides))
+
+"""
+    IrrationalDigitSigns([irrational = pi]; start = 1)
+
+Flip weight signs where the corresponding decimal digit of `irrational` is odd,
+starting at decimal position `start`.
+"""
+struct IrrationalDigitSigns{I <: Irrational} <: AbstractSignPattern
+    irrational::I
+    start::Int
+
+    function IrrationalDigitSigns(
+            irrational::I = pi; start::Integer = 1
+        ) where {I <: Irrational}
+        start >= 1 || throw(ArgumentError("start must be positive"))
+        return new{I}(irrational, Int(start))
+    end
+end
+
+__apply_signs!(rng::AbstractRNG, ::Nothing, weights::AbstractVecOrMat) = weights
+
+function __apply_signs!(
+        rng::AbstractRNG, pattern::RandomSigns, weights::AbstractVecOrMat
+    )
+    for idx in eachindex(weights)
+        if rand(rng) > pattern.positive_probability
+            weights[idx] = -weights[idx]
+        end
+    end
+    return weights
+end
+
+function __apply_signs!(
+        rng::AbstractRNG, pattern::RegularSigns, weights::AbstractVecOrMat
+    )
+    next_flip = first(pattern.strides)
+    strides_idx = 1
+    for idx in eachindex(weights)
+        if idx == next_flip
+            weights[idx] = -weights[idx]
+            strides_idx = (strides_idx % length(pattern.strides)) + 1
+            next_flip += pattern.strides[strides_idx]
+        end
+    end
+    return weights
+end
+
+function __apply_signs!(
+        rng::AbstractRNG, pattern::IrrationalDigitSigns, weights::AbstractVecOrMat
+    )
+    total_elements = length(weights)
+    required_precision = Int(ceil(log2(10) * (total_elements + pattern.start + 1)))
+
+    setprecision(BigFloat, required_precision) do
+        irrational_string = string(BigFloat(pattern.irrational))
+        irrational_digits = Int[]
+        for character in irrational_string
+            character == '.' && continue
+            push!(irrational_digits, parse(Int, string(character)))
+        end
+
+        required_digits = pattern.start + total_elements
+        length(irrational_digits) >= required_digits || throw(
+            ArgumentError(
+                "Not enough digits available. Increase precision or adjust start."
+            )
+        )
+
+        for (element_index, storage_index) in enumerate(eachindex(weights))
+            digit_index = pattern.start + element_index
+            if isodd(irrational_digits[digit_index])
+                weights[storage_index] = -weights[storage_index]
+            end
+        end
+    end
+    return weights
+end
+
+function __apply_signs_compat!(
+        rng::AbstractRNG, signs::Union{Nothing, AbstractSignPattern},
+        weights::AbstractVecOrMat,
+        sampling_type::Nothing, kwargs
+    )
+    isempty(kwargs) || throw(
+        ArgumentError(
+            "sign-pattern keywords require a `signs` object; for example, use " *
+                "`signs = RandomSigns(positive_probability)`"
+        )
+    )
+    return __apply_signs!(rng, signs, weights)
+end
+
+function __apply_signs_compat!(
+        rng::AbstractRNG, signs::Union{Nothing, AbstractSignPattern},
+        weights::AbstractVecOrMat,
+        sampling_type::Symbol, kwargs
+    )
+    isnothing(signs) || throw(
+        ArgumentError("`signs` and deprecated `sampling_type` cannot be used together")
+    )
+    Base.depwarn(
+        "`sampling_type` and its forwarded keywords are deprecated; pass a " *
+            "`RandomSigns`, `RegularSigns`, or `IrrationalDigitSigns` object with " *
+            "the `signs` keyword instead.",
+        :sampling_type
+    )
+    sampler = getfield(@__MODULE__, sampling_type)
+    return sampler(rng, weights; kwargs...)
+end
+
 function no_sample(rng::AbstractRNG, vecormat::AbstractVecOrMat)
-    return vecormat
+    return __apply_signs!(rng, nothing, vecormat)
 end
 
 function regular_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat;
-        strides::Union{Integer, AbstractVector{<:Integer}} = 2
+        strides::Union{Integer, AbstractVector{<:Integer}, Tuple{Vararg{Integer}}} = 2
     )
-    return __regular_sample!(rng, vecormat, strides)
-end
-
-function __regular_sample!(rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::Integer)
-    for idx in eachindex(vecormat)
-        if idx % strides == 0
-            vecormat[idx] = -vecormat[idx]
-        end
-    end
-    return
-end
-
-function __regular_sample!(
-        rng::AbstractRNG, vecormat::AbstractVecOrMat, strides::AbstractVector{<:Integer}
-    )
-    next_flip = strides[1]
-    strides_idx = 1
-
-    for idx in eachindex(vecormat)
-        if idx == next_flip
-            vecormat[idx] = -vecormat[idx]
-            strides_idx = (strides_idx % length(strides)) + 1
-            next_flip += strides[strides_idx]
-        end
-    end
-    return
+    return __apply_signs!(rng, RegularSigns(strides), vecormat)
 end
 
 function bernoulli_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat; positive_prob::Number = 0.5
     )
-    for idx in eachindex(vecormat)
-        if rand(rng) > positive_prob
-            vecormat[idx] = -vecormat[idx]
-        end
-    end
-    return
+    return __apply_signs!(rng, RandomSigns(positive_prob), vecormat)
 end
 
 function irrational_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat;
         irrational::Irrational = pi, start::Int = 1
     )
-    total_elements = length(vecormat)
-    required_precision = Int(ceil(log2(10) * (total_elements + start + 1)))
-
-    setprecision(BigFloat, required_precision) do
-        ir_string = string(BigFloat(irrational))
-        ir_array = Int[]
-        for character in ir_string
-            if character == '.'
-                continue
-            end
-            push!(ir_array, parse(Int, string(character)))
-        end
-
-        required_digits = start + total_elements
-        if length(ir_array) < required_digits
-            throw(
-                ArgumentError(
-                    "Not enough digits available. Increase precision or adjust start."
-                )
-            )
-        end
-
-        element_index = 0
-        for storage_index in eachindex(vecormat)
-            element_index += 1
-            digit_index = start + element_index
-
-            if isodd(ir_array[digit_index])
-                vecormat[storage_index] = -vecormat[storage_index]
-            end
-        end
-    end
-
-    return vecormat
+    return __apply_signs!(rng, IrrationalDigitSigns(irrational; start), vecormat)
 end
 
 """
-    delay_line!([rng], reservoir_matrix, weight, shift;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        p=0.5)
+    delay_line!([rng], reservoir_matrix, weight, shift; signs = nothing)
 
 Adds a delay line in the `reservoir_matrix`, with given `shift` and
 `weight`. The `weight` can be a single number or an array.
@@ -247,21 +340,9 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -276,7 +357,7 @@ true
 julia> sampled_matrix = zeros(Float32, 5, 5);
 
 julia> delay_line!(MersenneTwister(123), sampled_matrix, 5.0, 2;
-           sampling_type=:bernoulli_sample!);
+           signs = RandomSigns());
 
 julia> all(abs.(sampled_matrix[3:5, 1:3][diagind(sampled_matrix[3:5, 1:3])]) .== 5.0f0)
 true
@@ -292,10 +373,12 @@ end
 
 function delay_line!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type = :no_sample, kwargs...
+        shift::Integer;
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
+        kwargs...
     )
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
+    __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
         reservoir_matrix[idx + shift, idx] = weight[idx]
     end
@@ -303,9 +386,7 @@ function delay_line!(
 end
 
 """
-    backward_connection!([rng], reservoir_matrix, weight, shift;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        p=0.5)
+    backward_connection!([rng], reservoir_matrix, weight, shift; signs = nothing)
 
 Adds a backward connection in the `reservoir_matrix`, with given `shift` and
 `weight`. The `weight` can be a single number or an array.
@@ -321,21 +402,9 @@ Adds a backward connection in the `reservoir_matrix`, with given `shift` and
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -356,7 +425,7 @@ julia> backward_connection!(matrix, 3.0, 1)
  0.0  0.0  0.0  0.0  3.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> backward_connection!(matrix, 3.0, 1; sampling_type = :bernoulli_sample!)
+julia> backward_connection!(matrix, 3.0, 1; signs = RandomSigns())
 5×5 Matrix{Float32}:
  0.0  3.0   0.0  0.0   0.0
  0.0  0.0  -3.0  0.0   0.0
@@ -375,10 +444,12 @@ end
 
 function backward_connection!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector,
-        shift::Integer; sampling_type = :no_sample, kwargs...
+        shift::Integer;
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
+        kwargs...
     )
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
+    __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - shift)
         reservoir_matrix[idx, idx + shift] = weight[idx]
     end
@@ -386,9 +457,7 @@ function backward_connection!(
 end
 
 """
-    simple_cycle!([rng], reservoir_matrix, weight;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        p=0.5)
+    simple_cycle!([rng], reservoir_matrix, weight; signs = nothing)
 
 Adds a simple cycle in the `reservoir_matrix`, with given
 `weight`. The `weight` can be a single number or an array.
@@ -403,21 +472,9 @@ Adds a simple cycle in the `reservoir_matrix`, with given
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -430,7 +487,7 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> simple_cycle!(matrix, 1.0; sampling_type = :irrational_sample!)
+julia> simple_cycle!(matrix, 1.0; signs = IrrationalDigitSigns())
 5×5 Matrix{Float32}:
   0.0  0.0   0.0   0.0  -1.0
  -1.0  0.0   0.0   0.0   0.0
@@ -448,10 +505,11 @@ end
 
 function simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type = :no_sample, kwargs...
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
+        kwargs...
     )
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
+    __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
         reservoir_matrix[idx + 1, idx] = weight[idx]
     end
@@ -460,9 +518,7 @@ function simple_cycle!(
 end
 
 """
-    reverse_simple_cycle!([rng], reservoir_matrix, weight;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        p=0.5)
+    reverse_simple_cycle!([rng], reservoir_matrix, weight; signs = nothing)
 
 Adds a reverse simple cycle in the `reservoir_matrix`, with given
 `weight`. The `weight` can be a single number or an array.
@@ -477,21 +533,9 @@ Adds a reverse simple cycle in the `reservoir_matrix`, with given
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -504,7 +548,7 @@ julia> matrix = zeros(Float32, 5, 5)
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0
 
-julia> reverse_simple_cycle!(matrix, 1.0; sampling_type = :regular_sample!)
+julia> reverse_simple_cycle!(matrix, 1.0; signs = RegularSigns())
 5×5 Matrix{Float32}:
  0.0  -1.0  0.0   0.0  0.0
  0.0   0.0  1.0   0.0  0.0
@@ -522,10 +566,11 @@ end
 
 function reverse_simple_cycle!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix, weight::AbstractVector;
-        sampling_type = :no_sample, kwargs...
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
+        kwargs...
     )
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
+    __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
         reservoir_matrix[idx - 1, idx] = weight[idx]
     end
@@ -535,8 +580,7 @@ end
 
 """
     add_jumps!([rng], reservoir_matrix, weight, jump_size;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        positive_prob=0.5)
+        signs = nothing, start = 1)
 
 Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `jump_size`.
 `weight` can be either a number or an array.
@@ -552,21 +596,9 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -584,7 +616,8 @@ function add_jumps!(
         reservoir_matrix::AbstractMatrix,
         weight::Number,
         jump_size::Integer;
-        sampling_type = :no_sample,
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
         start::Integer = 1,
         kwargs...
     )
@@ -594,7 +627,7 @@ function add_jumps!(
     weights = fill(weight, ring_len)
     return add_jumps!(
         rng, reservoir_matrix, weights, jump_size;
-        sampling_type = sampling_type, start = start, kwargs...
+        signs, sampling_type, start, kwargs...
     )
 end
 
@@ -603,7 +636,8 @@ function add_jumps!(
         reservoir_matrix::AbstractMatrix,
         weight::AbstractVector,
         jump_size::Integer;
-        sampling_type = :no_sample,
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
         start::Integer = 1,
         kwargs...
     )
@@ -638,14 +672,13 @@ function add_jumps!(
 
     num_edges = divisible ? length(seq) : (length(seq) - 1)
     @assert num_edges ≥ 0
-    f_sample = getfield(@__MODULE__, sampling_type)
     w = collect(weight)
     if length(w) < num_edges
         append!(w, fill(last(w), num_edges - length(w)))
     elseif length(w) > num_edges
         resize!(w, num_edges)
     end
-    f_sample(rng, w; kwargs...)
+    __apply_signs_compat!(rng, signs, w, sampling_type, kwargs)
 
     for k in 1:num_edges
         i = seq[k]
@@ -659,9 +692,7 @@ function add_jumps!(
 end
 
 """
-    self_loop!([rng], reservoir_matrix, weight, jump_size;
-        sampling_type=:no_sample, irrational=pi, start=1,
-        positive_prob=0.5)
+    self_loop!([rng], reservoir_matrix, weight; signs = nothing)
 
 Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `jump_size`.
 `weight` can be either a number or an array.
@@ -676,21 +707,9 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Keyword arguments
 
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 # Examples
 
@@ -719,10 +738,12 @@ end
 
 function self_loop!(
         rng::AbstractRNG, reservoir_matrix::AbstractMatrix,
-        weight::AbstractVector; sampling_type = :no_sample, kwargs...
+        weight::AbstractVector;
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing,
+        kwargs...
     )
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, weight; kwargs...)
+    __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in axes(reservoir_matrix, 1)
         reservoir_matrix[idx, idx] = weight[idx]
     end

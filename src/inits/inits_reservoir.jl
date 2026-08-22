@@ -630,21 +630,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -683,12 +671,12 @@ julia> res_matrix[2:end, 1:end-1] == Diagonal(delay_weights)
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest delayline
-julia> irrational_matrix = delay_line(5, 5; sampling_type = :irrational_sample!);
+julia> irrational_matrix = delay_line(5, 5; signs = IrrationalDigitSigns());
 
-julia> bernoulli_matrix = delay_line(MersenneTwister(123), 5, 5; sampling_type = :bernoulli_sample!);
+julia> bernoulli_matrix = delay_line(MersenneTwister(123), 5, 5; signs = RandomSigns());
 
 julia> all(abs.(irrational_matrix[irrational_matrix .!= 0]) .== 0.1f0) &&
        all(abs.(bernoulli_matrix[bernoulli_matrix .!= 0]) .== 0.1f0)
@@ -787,21 +775,9 @@ W_{i,j} =
   - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
     delay line weight and feedback weights respectively. The kwargs are as follows:
 
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -844,10 +820,10 @@ julia> res_matrix[2, 1] == 0.2f0 && res_matrix[1, 2] == -0.1f0 &&
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest dlbackward
-julia> res_matrix = delayline_backward(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+julia> res_matrix = delayline_backward(5, 5; delay_kwargs=(;signs = IrrationalDigitSigns()))
 5×5 Matrix{Float32}:
   0.0  0.1   0.0   0.0  0.0
  -0.1  0.0   0.1   0.0  0.0
@@ -855,7 +831,7 @@ julia> res_matrix = delayline_backward(5, 5; delay_kwargs=(;sampling_type=:irrat
   0.0  0.0  -0.1   0.0  0.1
   0.0  0.0   0.0  -0.1  0.0
 
-julia> res_matrix = delayline_backward(5, 5; fb_kwargs=(;sampling_type=:bernoulli_sample!))
+julia> res_matrix = delayline_backward(5, 5; fb_kwargs=(;signs = RandomSigns()))
 5×5 Matrix{Float32}:
  0.0  0.1   0.0  0.0   0.0
  0.1  0.0  -0.1  0.0   0.0
@@ -959,21 +935,9 @@ W_{i,j} =
   - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
 
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1011,12 +975,14 @@ julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 && count(!isz
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest cyclejumps
-julia> cycle_sampled = cycle_jumps(MersenneTwister(123), 5, 5; cycle_kwargs = (; sampling_type = :bernoulli_sample!));
+julia> cycle_sampled = cycle_jumps(
+           MersenneTwister(123), 5, 5;
+           cycle_kwargs = (; signs = RandomSigns()));
 
-julia> jump_sampled = cycle_jumps(5, 5; jump_kwargs = (; sampling_type = :irrational_sample!));
+julia> jump_sampled = cycle_jumps(5, 5; jump_kwargs = (; signs = IrrationalDigitSigns()));
 
 julia> all(abs.(cycle_sampled[cycle_sampled .!= 0]) .== 0.1f0) && all(abs.(jump_sampled[jump_sampled .!= 0]) .== 0.1f0)
 true
@@ -1112,21 +1078,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `cycle_weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `cycle_weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `cycle_weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `cycle_weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `cycle_weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1165,12 +1119,12 @@ julia> res_matrix[2, 1] == 0.2f0 && res_matrix[1, 5] == 1.0f0
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest scycle
-julia> irrational_matrix = simple_cycle(5, 5; sampling_type = :irrational_sample!);
+julia> irrational_matrix = simple_cycle(5, 5; signs = IrrationalDigitSigns());
 
-julia> bernoulli_matrix = simple_cycle(MersenneTwister(123), 5, 5; sampling_type = :bernoulli_sample!);
+julia> bernoulli_matrix = simple_cycle(MersenneTwister(123), 5, 5; signs = RandomSigns());
 
 julia> all(abs.(irrational_matrix[irrational_matrix .!= 0]) .== 0.1f0) && all(abs.(bernoulli_matrix[bernoulli_matrix .!= 0]) .== 0.1f0)
 true
@@ -1333,21 +1287,9 @@ W_{i,j} =
   - `cycle_kwargs`, and `second_cycle_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
 
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1388,10 +1330,10 @@ julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 && count(!isz
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest tdcycle
-julia> res_matrix = true_doublecycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+julia> res_matrix = true_doublecycle(5, 5; cycle_kwargs=(;signs = IrrationalDigitSigns()))
 5×5 Matrix{Float32}:
   0.0  0.1   0.0   0.0  -0.1
  -0.1  0.0   0.1   0.0   0.0
@@ -1399,7 +1341,7 @@ julia> res_matrix = true_doublecycle(5, 5; cycle_kwargs=(;sampling_type=:irratio
   0.0  0.0  -0.1   0.0   0.1
   0.1  0.0   0.0  -0.1   0.0
 
-julia> res_matrix = true_doublecycle(5, 5; second_cycle_kwargs=(;sampling_type=:bernoulli_sample!))
+julia> res_matrix = true_doublecycle(5, 5; second_cycle_kwargs=(;signs = RandomSigns()))
 5×5 Matrix{Float32}:
  0.0  -0.1  0.0   0.0  0.1
  0.1   0.0  0.1   0.0  0.0
@@ -1487,21 +1429,9 @@ W_{i,j} =
   - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
 
-      + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1543,10 +1473,10 @@ julia> diag(res_matrix) == selfloop_weights && count(!iszero, res_matrix) == 10
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest slcycle
-julia> res_matrix = selfloop_cycle(5, 5; cycle_kwargs=(;sampling_type=:irrational_sample!))
+julia> res_matrix = selfloop_cycle(5, 5; cycle_kwargs=(;signs = IrrationalDigitSigns()))
 5×5 Matrix{Float32}:
   0.1  0.0   0.0   0.0  -0.1
  -0.1  0.1   0.0   0.0   0.0
@@ -1554,7 +1484,7 @@ julia> res_matrix = selfloop_cycle(5, 5; cycle_kwargs=(;sampling_type=:irrationa
   0.0  0.0  -0.1   0.1   0.0
   0.0  0.0   0.0  -0.1   0.1
 
-julia> res_matrix = selfloop_cycle(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+julia> res_matrix = selfloop_cycle(5, 5; selfloop_kwargs=(;signs = RandomSigns()))
 5×5 Matrix{Float32}:
  0.1   0.0  0.0   0.0  0.1
  0.1  -0.1  0.0   0.0  0.0
@@ -1745,21 +1675,9 @@ W_{i,j} =
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
 
-    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+    + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1804,10 +1722,11 @@ julia> size(res_matrix) == (5, 5) && eltype(res_matrix) == Float32 &&
 true
 ```
 
-Changing sign of the weights with different samplings:
+Changing sign of the weights with different sign patterns:
 
 ```jldoctest sldlfb
-julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_kwargs=(;sampling_type=:irrational_sample!))
+julia> res_matrix = selfloop_delayline_backward(
+           5, 5; selfloop_kwargs = (; signs = IrrationalDigitSigns()))
 5×5 Matrix{Float32}:
  -0.1  0.0   0.1   0.0   0.0
   0.1  0.1   0.0   0.1   0.0
@@ -1815,7 +1734,7 @@ julia> res_matrix = selfloop_delayline_backward(5, 5; selfloop_kwargs=(;sampling
   0.0  0.0   0.1  -0.1   0.0
   0.0  0.0   0.0   0.1  -0.1
 
-julia> res_matrix = selfloop_delayline_backward(5, 5; delay_kwargs=(;sampling_type=:bernoulli_sample!))
+julia> res_matrix = selfloop_delayline_backward(5, 5; delay_kwargs=(;signs = RandomSigns()))
 5×5 Matrix{Float32}:
  0.1   0.0  0.1   0.0  0.0
  0.1   0.1  0.0   0.1  0.0
@@ -1823,7 +1742,7 @@ julia> res_matrix = selfloop_delayline_backward(5, 5; delay_kwargs=(;sampling_ty
  0.0   0.0  0.1   0.1  0.0
  0.0   0.0  0.0  -0.1  0.1
 
-julia> res_matrix = selfloop_delayline_backward(5, 5; fb_kwargs=(;sampling_type=:regular_sample!))
+julia> res_matrix = selfloop_delayline_backward(5, 5; fb_kwargs=(;signs = RegularSigns()))
 5×5 Matrix{Float32}:
  0.1  0.0  0.1   0.0  0.0
  0.1  0.1  0.0  -0.1  0.0
@@ -1927,21 +1846,9 @@ W_{i,j} =
   - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the
     delay line weight and self loop weights respectively. The kwargs are as follows:
 
-    + `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-        If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-        `weight` can be positive with a probability set by `positive_prob`. If set to
-        `:irrational_sample!` the `weight` is negative if the decimal number of the
-        irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-        assigned a negative sign after the chosen `strides`. `strides` can be a single
-        number or an array. Default is `:no_sample`.
-      + `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-        set to `:bernoulli_sample!`. Default is 0.5.
-      + `irrational`: Irrational number whose decimals decide the sign of `weight`.
-        Default is `pi`.
-      + `start`: Which place after the decimal point the counting starts for the `irrational`
-        sign counting. Default is 1.
-      + `strides`: number of strides for assigning negative value to a weight. It can be an
-        integer or an array. Default is 2.
+    + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -1984,7 +1891,8 @@ true
 ```
 
 ```jldoctest slfc
-julia> res_matrix = selfloop_forwardconnection(5, 5; delay_kwargs=(;sampling_type=:irrational_sample!))
+julia> res_matrix = selfloop_forwardconnection(
+           5, 5; delay_kwargs = (; signs = IrrationalDigitSigns()))
 5×5 Matrix{Float32}:
   0.1  0.0   0.0  0.0  0.0
   0.0  0.1   0.0  0.0  0.0
@@ -1992,7 +1900,8 @@ julia> res_matrix = selfloop_forwardconnection(5, 5; delay_kwargs=(;sampling_typ
   0.0  0.1   0.0  0.1  0.0
   0.0  0.0  -0.1  0.0  0.1
 
-julia> res_matrix = selfloop_forwardconnection(5, 5; selfloop_kwargs=(;sampling_type=:bernoulli_sample!))
+julia> res_matrix = selfloop_forwardconnection(
+           5, 5; selfloop_kwargs = (; signs = RandomSigns()))
 5×5 Matrix{Float32}:
  0.1   0.0  0.0   0.0  0.0
  0.0  -0.1  0.0   0.0  0.0
@@ -2069,21 +1978,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `forward_weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `forward_weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `forward_weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `forward_weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `forward_weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -2111,10 +2008,10 @@ julia> forward_connection(5, 5; forward_weight=0.99)
  0.0   0.0   0.99  0.0  0.0
 ```
 
-Changing the weights signs with different sampling techniques:
+Changing the weights signs with different sign patterns:
 
 ```jldoctest forcon
-julia> reservoir_matrix = forward_connection(5, 5; sampling_type=:irrational_sample!);
+julia> reservoir_matrix = forward_connection(5, 5; signs = IrrationalDigitSigns());
 
 julia> size(reservoir_matrix), count(x -> !iszero(x), reservoir_matrix),
        all(abs.(reservoir_matrix[reservoir_matrix .!= 0]) .== 0.1f0)
@@ -2322,21 +2219,9 @@ This construction yields:
   - `radius`: The desired spectral radius of the reservoir.
     If `nothing` is passed, no scaling takes place.
     Defaults to `nothing`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `forward_weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -2364,10 +2249,10 @@ julia> reservoir_matrix = permutation_init(5, 5; weight=0.99)
  0.0   0.0   0.0   0.99  0.0
 ```
 
-Changing the weights signs with different sampling techniques:
+Changing the weights signs with different sign patterns:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5; sampling_type=:bernoulli_sample!)
+julia> reservoir_matrix = permutation_init(5, 5; signs = RandomSigns())
 5×5 Matrix{Float32}:
  0.0  0.1   0.0  0.0   0.0
  0.0  0.0  -0.1  0.0   0.0
@@ -2443,21 +2328,9 @@ Creates a diagonal reservoir [Fette2005](@cite).
 - `radius`: The desired spectral radius of the reservoir.
   If `nothing` is passed, no scaling takes place.
   Defaults to `nothing`.
-- `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-  If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-  `forward_weight` can be positive with a probability set by `positive_prob`. If set to
-  `:irrational_sample!` the `weight` is negative if the decimal number of the
-  irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-  assigned a negative sign after the chosen `strides`. `strides` can be a single
-  number or an array. Default is `:no_sample`.
-- `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-  set to `:bernoulli_sample!`. Default is 0.5.
-- `irrational`: Irrational number whose decimals decide the sign of `weight`.
-  Default is `pi`.
-- `start`: Which place after the decimal point the counting starts for the `irrational`
-  sign counting. Default is 1.
-- `strides`: number of strides for assigning negative value to a weight. It can be an
-  integer or an array. Default is 2.
+- `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
+        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -2485,14 +2358,14 @@ julia> rr = diagonal_init(5, 5; weight=0.1)
  0.0  0.0  0.0  0.0  0.1
 ```
 
-Changing the weights signs with different sampling techniques:
+Changing the weights signs with different sign patterns:
 
 
 Changing the weights to random numbers. Note that the length of the given array
 must be at least as long as the subdiagonal one wants to fill:
 
 ```jldoctest diaginit
-julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:bernoulli_sample!)
+julia> rr = diagonal_init(5, 5; weight=0.1, signs = RandomSigns())
 5×5 Matrix{Float32}:
  0.1   0.0  0.0   0.0  0.0
  0.0  -0.1  0.0   0.0  0.0
@@ -2500,7 +2373,7 @@ julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:bernoulli_sample!)
  0.0   0.0  0.0  -0.1  0.0
  0.0   0.0  0.0   0.0  0.1
 
-julia> rr = diagonal_init(5, 5; weight=0.1, sampling_type=:irrational_sample!)
+julia> rr = diagonal_init(5, 5; weight=0.1, signs = IrrationalDigitSigns())
 5×5 Matrix{Float32}:
  -0.1  0.0   0.0   0.0   0.0
   0.0  0.1   0.0   0.0   0.0
