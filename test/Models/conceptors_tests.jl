@@ -310,7 +310,7 @@ begin
             st = initialstates(rng8, concept)
             samples = 1:100
             signals = [
-                :a => Float32.(sin.(0.3 .* samples)), :b => Float32.(cos.(0.5 .* samples))
+                :a => Float32.(sin.(0.3 .* samples)), :b => Float32.(cos.(0.5 .* samples)),
             ]
             st2 = store_conceptors(rng8, concept, signals, ps, st; aperture = 2.0)
             @test has_conceptor(st2, :a)
