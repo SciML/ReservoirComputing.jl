@@ -400,8 +400,10 @@ function conceptor_and(
         return zeros(element_type, size(first_matrix))
     end
     core = intersection_basis' *
-        (robust_pinv(first_matrix; rtol = tolerance) +
-         robust_pinv(second_matrix; rtol = tolerance) - I) *
+        (
+        robust_pinv(first_matrix; rtol = tolerance) +
+            robust_pinv(second_matrix; rtol = tolerance) - I
+    ) *
         intersection_basis
     result = intersection_basis *
         (core \ Matrix{element_type}(I, size(core))) *
