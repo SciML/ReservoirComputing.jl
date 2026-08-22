@@ -57,6 +57,13 @@ begin
             @test norm(aperture_adapt(conceptor, 0.0)) < 1.0e-8
             @test conceptor_matrix(correlation, 7.0) ≈
                 aperture_adapt(conceptor_matrix(correlation, 1.0), 7.0)
+
+            # reaperture re-expresses a conceptor at a new absolute aperture
+            @test reaperture(conceptor, 5.0, 5.0) ≈ conceptor
+            @test reaperture(conceptor, 5.0, 35.0) ≈ aperture_adapt(conceptor, 7.0)
+            @test reaperture(conceptor, 5.0, Inf) ≈ aperture_adapt(conceptor, Inf)
+            @test_throws ArgumentError reaperture(conceptor, -1.0, 5.0)
+            @test_throws ArgumentError reaperture(conceptor, 5.0, -1.0)
         end
 
         @testset "Boolean algebra" begin
@@ -111,6 +118,9 @@ begin
             second_singular_conceptor = Diagonal([0.5, 0.7, 0.0]) |> Matrix
             @test conceptor_and(first_singular_conceptor, second_singular_conceptor) ≈
                 Diagonal([1 / (1 / 0.8 + 1 / 0.5 - 1), 0, 0])
+            # explicit tolerance keyword agrees with the default on a well-conditioned pair
+            @test conceptor_and(first_conceptor, second_conceptor; tolerance = 1.0e-10) ≈
+                conceptor_and(first_conceptor, second_conceptor) atol = 1.0e-6
         end
 
         @testset "wrapper / library" begin
@@ -267,6 +277,77 @@ begin
             ) ≈ expected
             @test_throws KeyError morph_conceptor(st, (; missing_name = 1.0))
             @test_throws ArgumentError morph_conceptor(st, Pair{Symbol, Float64}[])
+        end
+
+        @testset "loadpatterns with multiple patterns" begin
+            rng7 = MersenneTwister(21)
+            esn = ESN(1, 40, 1; use_bias = true)
+            concept = Conceptor(esn)
+            ps = initialparameters(rng7, concept)
+            st = initialstates(rng7, concept)
+
+            sample_indices = 1:600
+            signal_a = reshape(Float32.(sin.(2pi .* sample_indices ./ 9.3)), 1, :)
+            signal_b = reshape(Float32.(sin.(2pi .* sample_indices ./ 15.7)), 1, :)
+            ps, st = loadpatterns(
+                rng7, concept, [:a => signal_a, :b => signal_b], ps, st;
+                aperture = Dict(:a => 100.0, :b => 500.0), washout = 200
+            )
+            @test has_conceptor(st, :a)
+            @test has_conceptor(st, :b)
+            @test !(get_conceptor(st, :a) ≈ get_conceptor(st, :b))
+            @test_throws ArgumentError loadpatterns(
+                rng7, concept, [:a => signal_a, :c => signal_b], ps, st;
+                aperture = Dict(:a => 100.0), washout = 200
+            )
+        end
+
+        @testset "store_conceptors (plural, classification-style)" begin
+            rng8 = MersenneTwister(33)
+            esn = ESN(1, 20, 1; use_bias = true)
+            concept = Conceptor(esn)
+            ps = initialparameters(rng8, concept)
+            st = initialstates(rng8, concept)
+            samples = 1:100
+            signals = [
+                :a => Float32.(sin.(0.3 .* samples)), :b => Float32.(cos.(0.5 .* samples))
+            ]
+            st2 = store_conceptors(rng8, concept, signals, ps, st; aperture = 2.0)
+            @test has_conceptor(st2, :a)
+            @test has_conceptor(st2, :b)
+            @test !(get_conceptor(st2, :a) ≈ get_conceptor(st2, :b))
+        end
+
+        @testset "train! on stored conceptors" begin
+            rng9 = MersenneTwister(44)
+            esn = ESN(1, 30, 1; use_bias = true)
+            concept = Conceptor(esn)
+            ps = initialparameters(rng9, concept)
+            st = initialstates(rng9, concept)
+            samples = 1:200
+            signal_a = reshape(Float32.(sin.(0.2 .* samples)), 1, :)
+            signal_b = reshape(Float32.(cos.(0.2 .* samples)), 1, :)
+            st = store_conceptors(
+                rng9, concept, [:a => signal_a, :b => signal_b], ps, st; aperture = 5.0
+            )
+
+            ps2, st2 = train!(
+                rng9, concept, [:a => signal_a, :b => signal_b],
+                [:a => signal_a, :b => signal_b], ps, st; washout = 20
+            )
+            @test size(ps2.model.readout.weight) == (1, 30)
+
+            (ps3, _), features = train!(
+                rng9, concept, [:a => signal_a, :b => signal_b],
+                [:a => signal_a, :b => signal_b], ps, st;
+                washout = 20, return_states = true
+            )
+            @test size(features, 1) == 30
+            @test size(features, 2) == 2 * (200 - 20)
+
+            @test_throws ArgumentError train!(
+                rng9, concept, [:a => signal_a], [:missing_name => signal_a], ps, st
+            )
         end
     end
 end
