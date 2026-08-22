@@ -142,6 +142,26 @@ begin
         end
     end
 
+    @testset "autoregressive predict follows output storage and dimensions" begin
+        rng = MersenneTwister(203)
+        readout = LinearReadout(
+            2 => 2;
+            include_collect = false,
+            init_weight = (rng, out, in) -> Matrix{Float64}(I, out, in),
+        )
+        ps, st = setup(rng, readout)
+        output, _ = predict(readout, 3, ps, st; initialdata = Float32[1, 2])
+        @test output == [1.0 1.0 1.0; 2.0 2.0 2.0]
+        @test eltype(output) === Float64
+
+        mismatched = LinearReadout(2 => 3; include_collect = false)
+        mismatched_ps, mismatched_st = setup(rng, mismatched)
+        @test_throws DimensionMismatch predict(
+            mismatched, 2, mismatched_ps, mismatched_st; initialdata = Float32[1, 2]
+        )
+        @test_throws ArgumentError predict(readout, 0, ps, st; initialdata = Float32[1, 2])
+    end
+
     @testset "ESN workflow trains and predicts across eltypes" begin
         for T in (Float32, Float64), use_bias in (False(), True())
             rng = MersenneTwister(303)
