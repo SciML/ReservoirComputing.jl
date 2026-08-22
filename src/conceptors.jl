@@ -48,28 +48,34 @@ function psd_eigen(matrix::Symmetric)
     end
 end
 
-# Mirrors stdlib `nullspace`'s default tolerance on the QR-iteration fallback.
-function robust_nullspace(matrix::AbstractMatrix)
+# Relative tolerance matching stdlib `nullspace`/`pinv` defaults.
+_default_rtol(matrix::AbstractMatrix) =
+    minimum(size(matrix)) * eps(real(float(oneunit(eltype(matrix)))))
+
+# Mirrors stdlib `nullspace`'s tolerance (default or user-supplied `rtol`) on the
+# QR-iteration fallback.
+function robust_nullspace(matrix::AbstractMatrix; rtol::Union{Real, Nothing} = nothing)
     try
-        return nullspace(matrix)
+        return rtol === nothing ? nullspace(matrix) : nullspace(matrix; rtol)
     catch err
         err isa LAPACKException || rethrow()
         decomposition = svd(matrix; full = true, alg = QRIteration())
-        tolerance = minimum(size(matrix)) * eps(real(float(oneunit(eltype(matrix))))) *
+        tolerance = (rtol === nothing ? _default_rtol(matrix) : rtol) *
             first(decomposition.S)
         rank = count(>(tolerance), decomposition.S)
         return copy(decomposition.Vt[(rank + 1):end, :]')
     end
 end
 
-# Mirrors stdlib `pinv`'s default tolerance on the QR-iteration fallback.
-function robust_pinv(matrix::AbstractMatrix)
+# Mirrors stdlib `pinv`'s tolerance (default or user-supplied `rtol`) on the
+# QR-iteration fallback.
+function robust_pinv(matrix::AbstractMatrix; rtol::Union{Real, Nothing} = nothing)
     try
-        return pinv(matrix)
+        return rtol === nothing ? pinv(matrix) : pinv(matrix; rtol)
     catch err
         err isa LAPACKException || rethrow()
         decomposition = svd(matrix; alg = QRIteration())
-        tolerance = minimum(size(matrix)) * eps(real(float(oneunit(eltype(matrix))))) *
+        tolerance = (rtol === nothing ? _default_rtol(matrix) : rtol) *
             first(decomposition.S)
         inverted = [s > tolerance ? inv(s) : zero(s) for s in decomposition.S]
         return decomposition.V * Diagonal(inverted) * decomposition.U'
@@ -351,6 +357,13 @@ robustly. The result admits exactly the reservoir directions admitted by *both*
 - `second_conceptor::AbstractMatrix{<:Real}`: Second symmetric conceptor of the
   same size.
 
+## Keywords
+
+- `tolerance::Union{Real, Nothing} = nothing`: Relative rank tolerance (`rtol`)
+  used for the internal nullspace/pseudoinverse computations. `nothing` uses the
+  stdlib default for each matrix; Jaeger notes this tolerance can matter for
+  near-singular conceptors (Jaeger 2014, p.53).
+
 ## Returns
 
 - The conjunction of the two conceptors, including when either input is
@@ -363,7 +376,8 @@ robustly. The result admits exactly the reservoir directions admitted by *both*
 """
 function conceptor_and(
         first_conceptor::AbstractMatrix{<:Real},
-        second_conceptor::AbstractMatrix{<:Real}
+        second_conceptor::AbstractMatrix{<:Real};
+        tolerance::Union{Real, Nothing} = nothing,
     )
     checksquare(first_conceptor)
     checksquare(second_conceptor)
@@ -376,17 +390,20 @@ function conceptor_and(
     issymmetric(second_matrix) || throw(ArgumentError("second_conceptor must be symmetric"))
 
     # Basis of R(C) ∩ R(B) = N(P_{N(C)} + P_{N(B)}), via the null-space projectors.
-    first_nullspace = robust_nullspace(first_matrix)
-    second_nullspace = robust_nullspace(second_matrix)
+    first_nullspace = robust_nullspace(first_matrix; rtol = tolerance)
+    second_nullspace = robust_nullspace(second_matrix; rtol = tolerance)
     nullspace_projector =
         first_nullspace * first_nullspace' + second_nullspace * second_nullspace'
-    intersection_basis = robust_nullspace(nullspace_projector)
+    intersection_basis = robust_nullspace(nullspace_projector; rtol = tolerance)
 
     if size(intersection_basis, 2) == 0
         return zeros(element_type, size(first_matrix))
     end
     core = intersection_basis' *
-        (robust_pinv(first_matrix) + robust_pinv(second_matrix) - I) *
+        (
+        robust_pinv(first_matrix; rtol = tolerance) +
+            robust_pinv(second_matrix; rtol = tolerance) - I
+    ) *
         intersection_basis
     result = intersection_basis *
         (core \ Matrix{element_type}(I, size(core))) *
