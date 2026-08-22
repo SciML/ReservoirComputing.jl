@@ -97,11 +97,13 @@ function __infer_ngrc_ro_dims(mods::Tuple, n_taps::Int)
         out, _ = __apply_seq(mods, probe, ps_mods, st_mods)
         return length(out)
     catch err
-        throw(ArgumentError(
-            "NGRC: could not infer the readout input dimension by probing " *
-                "`features`/`state_modifiers` with a zero vector of length " *
-                "$n_taps (got: $(sprint(showerror, err))). Pass `ro_dims` explicitly."
-        ))
+        throw(
+            ArgumentError(
+                "NGRC: could not infer the readout input dimension by probing " *
+                    "`features`/`state_modifiers` with a zero vector of length " *
+                    "$n_taps (got: $(sprint(showerror, err))). Pass `ro_dims` explicitly."
+            )
+        )
     end
 end
 
