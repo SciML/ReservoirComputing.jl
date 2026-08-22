@@ -1,0 +1,7 @@
+Manifest.toml
+# Latest-run convenience copies (tagged files are committed when useful)
+results/summary.json
+results/summary.md
+# Keep FINDINGS.md + summary_full.* for the investigation PR
+*.png
+*.jld2
