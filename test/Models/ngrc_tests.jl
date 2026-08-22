@@ -174,6 +174,22 @@ begin
         @test feats ≈ [T3_x1, T3_x1 * T3_x2, T3_x2]
     end
 
+    @testset "distinct-variable subset contract" begin
+        x = [0.2, 0.4, 0.6]
+        transformed = chebT.(2, x)
+        expected = [
+            transformed[1],
+            transformed[1] * transformed[2],
+            transformed[1] * transformed[3],
+            transformed[2],
+            transformed[2] * transformed[3],
+            transformed[3],
+        ]
+        @test chebyshev_monomials(x; degrees = 2:2) ≈ expected
+        @test chebyshev_monomials(x; degrees = (degree for degree in 1:2)) ≈
+            vcat(x, expected)
+    end
+
     @testset "type stability" begin
         x = Float32[1, 2]
         feats = chebyshev_monomials(x; degrees = 1:2)

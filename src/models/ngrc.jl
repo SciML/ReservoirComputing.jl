@@ -196,13 +196,14 @@ end
 
 @doc raw"""
     chebyshev_monomials(input_vector;
-        degrees = 1:2)
+        degrees = 1:2) -> Vector
 
 Generate all unordered Chebyshev-feature monomials of the entries in
 `input_vector` for the given set of degrees [Ratas2024](@cite).
 
-For each `d` in `degrees`, this function produces all degree-`d` feature
-products of the form
+For each `d` in `degrees`, this function evaluates `T_d` for every input
+variable and produces products over every nonempty subset containing at most
+`d` distinct variables. For example:
 
 - degree 1: `T₁(x₁), T₁(x₂), …`
 - degree 2: `T₂(x₁), T₂(x₁)T₂(x₂), T₂(x₂), …`
@@ -211,34 +212,33 @@ products of the form
 where `T_d(·)` denotes the Chebyshev polynomial of the first kind of
 degree `d`.
 
-Combinations are taken with repetition and in non-decreasing index order.
-This means that, for example, `T_d(x₁)T_d(x₂)` and `T_d(x₂)T_d(x₁)` are
-represented only once.
+Variable indices within a product are strictly increasing, so a variable is
+never repeated. This means that `T_d(x₁)T_d(x₂)` is represented once, while
+`T_d(x₁)^2` is not generated. Products are ordered deterministically by degree
+and then lexicographically by their variable indices.
 
-## Arguments
+# Arguments
 
-- `input_vector`
-  Input vector whose entries define the variables to which Chebyshev
-  polynomials are applied.
+- `input_vector::AbstractVector`: Input vector whose entries define the variables to which
+    Chebyshev polynomials are applied.
 
-## Keyword arguments
+# Keywords
 
-- `degrees`: An iterable of positive integers specifying which Chebyshev
-  polynomial degrees to generate. Each degree less than `1` is skipped.
-  Default: `1:2`.
+- `degrees = 1:2`: An iterable of positive integers specifying which Chebyshev polynomial
+    degrees to generate. Each degree less than `1` is skipped.
 
-## Returns
+# Returns
 
-- `output_features` a vector of the same element type as `input_vector`
-  containing all generated Chebyshev-feature products, concatenated across
-  the requested degrees, in a deterministic order.
+- `Vector`: All Chebyshev-feature products concatenated across the requested degrees in a
+    deterministic order, with the same element type as `input_vector`.
 """
 function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
     T = eltype(input_vector)
     n = length(input_vector)
+    requested_degrees = collect(degrees)
 
-    isempty(degrees) && return T[]
-    maxdeg = maximum(degrees)
+    isempty(requested_degrees) && return T[]
+    maxdeg = maximum(requested_degrees)
     maxdeg < 1 && return T[]
 
     tvals = Matrix{T}(undef, maxdeg, n)
@@ -255,60 +255,36 @@ function chebyshev_monomials(input_vector::AbstractVector; degrees = 1:2)
     end
 
     output = T[]
-
-    function emit_subsets_prefix!(f::Function, kmax::Int)
-        buf = Int[]
-        function rec(start::Int)
-            for i in start:n
-                push!(buf, i)
-                f(buf)
-                if length(buf) < kmax
-                    rec(i + 1)
-                end
-                pop!(buf)
-            end
-            return
-        end
-        rec(1)
-        return nothing
-    end
-
-    for d in degrees
+    for d in requested_degrees
         d < 1 && continue
-        kmax = min(d, n)
-
-        emit_subsets_prefix!(kmax) do inds
-        end
-    end
-
-    empty!(output)
-    for d in degrees
-        d < 1 && continue
-        kmax = min(d, n)
-
-        emit_subsets_prefix!(
-            inds -> begin
-                prod = one(T)
-                @inbounds for idx in inds
-                    prod *= tvals[d, idx]
-                end
-                push!(output, prod)
-            end, kmax
+        __chebyshev_subset_products!(
+            output, tvals, d, Int[], 1, min(d, n)
         )
     end
 
     return output
 end
 
-function __comb_repetition!(f, current, start, n, k)
-    if k == 0
-        f(current)
-        return
+function __chebyshev_subset_products!(
+        output, chebyshev_values, degree::Integer, index_buffer,
+        start_index::Integer, max_subset_size::Integer
+    )
+    num_variables = size(chebyshev_values, 2)
+    @inbounds for variable_index in start_index:num_variables
+        push!(index_buffer, variable_index)
+        product_value = one(eltype(chebyshev_values))
+        for selected_index in index_buffer
+            product_value *= chebyshev_values[degree, selected_index]
+        end
+        push!(output, product_value)
+
+        if length(index_buffer) < max_subset_size
+            __chebyshev_subset_products!(
+                output, chebyshev_values, degree, index_buffer,
+                variable_index + 1, max_subset_size
+            )
+        end
+        pop!(index_buffer)
     end
-    for i in start:n
-        push!(current, i)
-        __comb_repetition!(f, current, i, n, k - 1)
-        pop!(current)
-    end
-    return
+    return nothing
 end
