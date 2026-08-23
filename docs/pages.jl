@@ -28,6 +28,7 @@ pages = [
         "States" => "api/states.md",
         "Initializers" => "api/inits.md",
         "Developer Interfaces" => "api/developer.md",
+        "Reexported API" => "api/reexports.md",
     ],
     "References" => "references.md",
 ]
