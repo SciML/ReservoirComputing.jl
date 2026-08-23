@@ -1,13 +1,13 @@
-# Parallel reservoirs for spatiotemporal chaos (Kuramoto-Sivashinsky)
+# Parallel reservoirs for spatiotemporal signals
 
 [Pathak2018PRL](@cite) predicts the Kuramoto-Sivashinsky (KS) equation, a
 spatially extended chaotic PDE, by tiling the domain with many small,
 overlapping echo state networks instead of one huge one: each reservoir only
 ever sees a local patch of the domain (plus a little overlap from its
-neighbors), yet the ensemble tracks the full, high-dimensional chaotic field.
+neighbors).
 This example reproduces that architecture in ReservoirComputing.jl. To keep
 the build fast the reservoir/data sizes here are much smaller than the paper's
-(single machine, ~10s of seconds vs. their cluster run) — the architecture is
+(single machine, ~10s of seconds vs. their cluster run). The architecture is
 otherwise the same: local weighted input layers, sparse reservoirs, the
 quadratic readout trick from [Pathak2017](@cite) ([`NLAT1`](@ref)), and ridge
 regression.
@@ -59,7 +59,6 @@ function ks_etdrk4(u0::AbstractVector, d::Real, dt::Real, nstep::Integer)
     end
     return uu
 end
-nothing # hide
 ```
 
 Same domain and time step as the paper's own single-reservoir KS demo:
@@ -78,7 +77,7 @@ size(data)
 
 Split the `N` spatial points into `G` contiguous chunks. Each chunk gets its
 own reservoir, whose input window is its chunk plus `locality` points
-wrapped in from each neighbor — that overlap is what lets a purely local
+wrapped in from each neighbor. The overlap is what lets a purely local
 model still capture the (finite-speed) spatial coupling of the PDE.
 
 ```@example kspathak
@@ -93,14 +92,12 @@ function group_window(g)
     fwd = mod1.((chunk_end + 1):(chunk_end + locality), N)
     return vcat(rear, chunk_begin:chunk_end, fwd), chunk_begin:chunk_end
 end
-nothing # hide
 ```
 
 Each local model is a plain [`ESNCell`](@ref) with a [`weighted_init`](@ref)
 input layer (so each spatial input only feeds a private block of reservoir
 nodes, as in the paper) and the [`NLAT1`](@ref) quadratic state transform
-before the readout — squaring half the reservoir state breaks the KS
-$u \to -u$ symmetry that a purely linear readout struggles with.
+before the readout.
 
 ```@example kspathak
 function local_model(rng)
@@ -112,7 +109,6 @@ function local_model(rng)
         LinearReadout(res_size => chunk_size)
     )
 end
-nothing # hide
 ```
 
 ## Training
@@ -135,7 +131,6 @@ for g in 1:G
     pss[g], sts[g] = train(models[g], train_in, train_target, ps, st;
         objective = RidgeRegression(1.0f-4), washout = discard)
 end
-nothing # hide
 ```
 
 ## Synchronizing and predicting in parallel
@@ -143,7 +138,7 @@ nothing # hide
 To start an autonomous forecast, every local reservoir first needs to
 synchronize its internal state to the true, windowed trajectory
 (teacher forcing). After that, prediction runs in lock step: at each step
-every group calls `apply` (from `LuxCore`) on its own last prediction plus its
+every group calls `apply` on its own last prediction plus its
 neighbors' last predictions, exactly mirroring the overlap it was trained on.
 
 ```@example kspathak
@@ -169,7 +164,6 @@ for step in 1:predict_length
     predicted[:, step] .= reduce(vcat, new_out)
     global last_out = new_out
 end
-nothing # hide
 ```
 
 ## Results
@@ -197,7 +191,7 @@ plot(p1, p2, p3; layout = (3, 1), xlabel = "Lyapunov time", ylabel = "space",
 ```
 
 The dashed line marks where the space-averaged RMSE first crosses 40% of the
-field's standard deviation — a common "valid prediction time" cutoff in this
+field's standard deviation, a common "valid prediction time" cutoff in this
 literature. Up to that point the parallel reservoir tracks the true field
 closely; afterwards the chaotic dynamics amplify the small initial errors
 until prediction and truth fully decorrelate, the qualitative result reported
