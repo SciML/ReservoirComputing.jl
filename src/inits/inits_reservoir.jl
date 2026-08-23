@@ -630,8 +630,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -775,8 +776,9 @@ W_{i,j} =
   - `delay_kwargs` and `fb_kwargs`: named tuples that control the kwargs for the
     delay line weight and feedback weights respectively. The kwargs are as follows:
 
-      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+      + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -935,8 +937,9 @@ W_{i,j} =
   - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
 
-      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+      + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1078,8 +1081,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1287,8 +1291,9 @@ W_{i,j} =
   - `cycle_kwargs`, and `second_cycle_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
 
-      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+      + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1429,8 +1434,9 @@ W_{i,j} =
   - `cycle_kwargs` and `jump_kwargs`: named tuples that control the kwargs for the
     cycle and jump weights respectively. The kwargs are as follows:
 
-      + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+      + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1675,8 +1681,9 @@ W_{i,j} =
   - `delay_kwargs`, `selfloop_kwargs`, and `fb_kwargs`: named tuples that control the kwargs
     for the weights generation. The kwargs are as follows:
 
-    + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+    + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1846,8 +1853,9 @@ W_{i,j} =
   - `delay_kwargs` and `selfloop_kwargs`: named tuples that control the kwargs for the
     delay line weight and self loop weights respectively. The kwargs are as follows:
 
-    + `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+    + `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -1978,8 +1986,9 @@ W_{i,j} =
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -2219,8 +2228,9 @@ This construction yields:
   - `radius`: The desired spectral radius of the reservoir.
     If `nothing` is passed, no scaling takes place.
     Defaults to `nothing`.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -2328,8 +2338,8 @@ Creates a diagonal reservoir [Fette2005](@cite).
 - `radius`: The desired spectral radius of the reservoir.
   If `nothing` is passed, no scaling takes place.
   Defaults to `nothing`.
-- `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+- `signs`: Controls sign flips. Use [`RandomSigns`](@ref), [`RegularSigns`](@ref), or
+  [`IrrationalDigitSigns`](@ref). Pass `nothing` to leave signs
         unchanged. Default is `nothing`.
 
 ## Examples

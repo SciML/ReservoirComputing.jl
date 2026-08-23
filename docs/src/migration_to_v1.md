@@ -70,12 +70,6 @@ cycle_jumps(100, 100; jump_kwargs = (; signs = RegularSigns((2, 3))))
 minimal_init(100, 3; signs = RandomSigns())
 ```
 
-### Custom sign patterns
-
-Custom policies subtype `AbstractSignPattern` and implement the internal extension hook
-`ReservoirComputing.__apply_signs!(rng, pattern, weights)`. The method must mutate and
-return `weights`.
-
 ## Initializer behavior corrections
 
 `informed_init` now extracts scalar random values correctly when assigning informed

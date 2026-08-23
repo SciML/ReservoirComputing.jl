@@ -13,7 +13,6 @@ initializers. Passing `signs = nothing` leaves the generated signs unchanged.
     its former default Bernoulli sign flipping explicitly.
 
 ```@docs
-AbstractSignPattern
 RandomSigns
 RegularSigns
 IrrationalDigitSigns

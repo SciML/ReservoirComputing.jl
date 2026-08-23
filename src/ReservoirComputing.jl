@@ -74,7 +74,7 @@ include("extensions/reca.jl")
 export ReservoirComputer
 export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN, LSM
 export AbstractSampler, TerminalStateSampling
-export AbstractSignPattern, IrrationalDigitSigns, RandomSigns, RegularSigns
+export IrrationalDigitSigns, RandomSigns, RegularSigns
 export ContinuousESNCell, LSMCell
 export AbstractSpikingNeuron, LIFNeuron
 export AbstractInputEncoder, CurrentInjection, PoissonRateEncoder

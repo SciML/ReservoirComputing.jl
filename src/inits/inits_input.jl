@@ -245,8 +245,9 @@ warning.
     Defaults to `0.1`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples
@@ -403,8 +404,9 @@ An optional sign pattern controls which weights have their signs flipped.
 ## Keyword arguments
 
   - `weight`: The weight used to fill the layer matrix. Default is 0.1.
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 ## Examples

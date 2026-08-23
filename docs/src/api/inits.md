@@ -6,8 +6,6 @@ where full details and examples are provided.
 
 ## Sign patterns
 
-- [`AbstractSignPattern`](inits/sign_patterns.md): Interface for policies that modify
-    initializer weight signs.
 - [`RandomSigns`](inits/sign_patterns.md): Independently flips weight signs with a
     configurable probability.
 - [`RegularSigns`](inits/sign_patterns.md): Flips signs using a fixed or repeating stride.

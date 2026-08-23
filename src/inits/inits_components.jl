@@ -157,14 +157,14 @@ abstract type AbstractSignPattern end
 Independently preserve each weight's sign with probability `positive_probability`
 and flip it otherwise.
 """
-struct RandomSigns <: AbstractSignPattern
-    positive_probability::Float64
+@concrete struct RandomSigns <: AbstractSignPattern
+    positive_probability
 
     function RandomSigns(positive_probability::Real = 0.5)
         0 <= positive_probability <= 1 || throw(
             ArgumentError("positive_probability must be between 0 and 1")
         )
-        return new(Float64(positive_probability))
+        return new{typeof(positive_probability)}(positive_probability)
     end
 end
 
@@ -340,8 +340,9 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
@@ -402,8 +403,9 @@ Adds a backward connection in the `reservoir_matrix`, with given `shift` and
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
@@ -472,8 +474,9 @@ Adds a simple cycle in the `reservoir_matrix`, with given
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
@@ -533,8 +536,9 @@ Adds a reverse simple cycle in the `reservoir_matrix`, with given
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
@@ -596,8 +600,9 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
@@ -707,8 +712,9 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Keyword arguments
 
-  - `signs`: An `AbstractSignPattern` controlling sign flips. Use `RandomSigns`,
-        `RegularSigns`, or `IrrationalDigitSigns`. Pass `nothing` to leave signs
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
         unchanged. Default is `nothing`.
 
 # Examples
