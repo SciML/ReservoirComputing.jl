@@ -1,4 +1,4 @@
-using SciMLTesting, ReservoirComputing
+using SciMLTesting, ReservoirComputing, Test
 using JET
 
 # ExplicitImports only checks an extension module once it exists, and an extension only
@@ -32,8 +32,18 @@ rc_internal_hooks = (
     :addreadout!,
 )
 
+# The LuxCore and WeightInitializers API that ReservoirComputing deliberately reexports so
+# that `using ReservoirComputing` on its own is enough to follow the tutorials. Owned and
+# documented upstream; kept in sync with the reexport `export` block in
+# src/ReservoirComputing.jl.
+const REEXPORTS = (
+    :apply, :initialparameters, :initialstates, :setup,
+    :orthogonal, :rand32, :randn32, :sparse_init, :zeros32,
+)
+
 run_qa(
     ReservoirComputing;
+    reexports_allow = REEXPORTS,
     ei_kwargs = (;
         all_explicit_imports_are_public = (;
             ignore = (
@@ -56,3 +66,14 @@ run_qa(
         ),
     )
 )
+
+@testset "Reexport surface" begin
+    # Every approved reexport must actually be reachable from `using ReservoirComputing`,
+    # so the allow-list cannot drift into approving names the package no longer provides.
+    # `isdefined(@__MODULE__, ...)` tests the property directly: this file's `using
+    # ReservoirComputing` is what has to bring the name into scope.
+    @testset "$name" for name in REEXPORTS
+        @test name in names(ReservoirComputing)
+        @test isdefined(@__MODULE__, name)
+    end
+end
