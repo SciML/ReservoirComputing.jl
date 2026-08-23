@@ -1,5 +1,6 @@
 begin
     using ReservoirComputing, LinearAlgebra, Random, SparseArrays
+    using ReservoirComputing: AbstractSignPattern
 
     const res_size = 16
     const in_size = 4
