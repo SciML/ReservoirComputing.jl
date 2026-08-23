@@ -4,6 +4,14 @@ This page lists all initializers available in `ReservoirComputing.jl`.
 Clicking on any initializer name will take you to its dedicated documentation page,
 where full details and examples are provided.
 
+## Sign patterns
+
+- [`RandomSigns`](inits/sign_patterns.md): Independently flips weight signs with a
+    configurable probability.
+- [`RegularSigns`](inits/sign_patterns.md): Flips signs using a fixed or repeating stride.
+- [`IrrationalDigitSigns`](inits/sign_patterns.md): Derives sign flips from the decimal
+    digits of an irrational number.
+
 ## Input layers
 
 - [`chebyshev_mapping`](inits/chebyshev_mapping.md): Creates an input matrix
@@ -13,7 +21,7 @@ where full details and examples are provided.
 - [`logistic_mapping`](inits/logistic_mapping.md): Generates an input
     layer using sine initialization followed by logistic-map recursion.
 - [`minimal_init`](inits/minimal_init.md): Creates a uniform-weight input
-    layer with signs determined by a sampling scheme.
+    layer with an optional sign pattern.
 - [`modified_lm`](inits/modified_lm.md): Builds an input-expanding
     logistic-map chain for each input dimension.
 - [`scaled_rand`](inits/scaled_rand.md): Produces a uniformly scaled random
@@ -21,7 +29,7 @@ where full details and examples are provided.
 - [`weighted_init`](inits/weighted_init.md): Creates a block-structured
     weighted input layer with random weights per block.
 - [`weighted_minimal`](inits/weighted_minimal.md): Generates a deterministic
-    block-structured weighted input layer with optional sign sampling.
+    block-structured weighted input layer with an optional sign pattern.
 
 ## Reservoirs
 
