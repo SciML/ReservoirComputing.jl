@@ -250,8 +250,6 @@ function train(
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
-#__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
-
 @generated function __setweight_rt(p::NamedTuple{K}, W) where {K}
     keys = K
     Kq = __quote_keys(keys)

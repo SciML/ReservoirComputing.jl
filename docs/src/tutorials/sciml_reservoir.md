@@ -133,9 +133,9 @@ predict(rc, steps, ps, st; initialdata)    # autoregressive rollout
   the next sub-interval, and stitches the per-window readouts into
   the returned output matrix.
 
-In both cases the reservoir's initial state is `prob.u0`. To continue
-from a previously computed trajectory, `remake(prob; u0 = …)` before
-constructing the reservoir.
+After `train`, pass the same `st` into `predict` so the rollout
+continues from the trained reservoir state. A fresh `st` starts from
+`prob.u0`.
 
 ## Eye test: Lorenz chaos forecasting with a continuous ESN
 
@@ -159,6 +159,7 @@ using SciMLBase
 using DataInterpolations
 using OrdinaryDiffEqTsit5
 using Plots
+using Plots.PlotMeasures
 using Random
 
 Random.seed!(42)
@@ -179,10 +180,10 @@ target_data = data[:, (shift + 1):(shift + train_len)]
 test = data[:, (shift + train_len):(shift + train_len + predict_len - 1)]
 
 # 2. Continuous ESN reservoir parameters
-N_res = 100
-Wr = 0.3 .* randn(rng, N_res, N_res) ./ sqrt(N_res)
-Win = 0.5 .* randn(rng, N_res, 3)
-bias = 0.05 .* randn(rng, N_res)
+N_res = 300
+Wr = rand_sparse(rng, Float64, N_res, N_res; radius = 0.9, sparsity = 6 / N_res)
+Win = scaled_rand(rng, Float64, N_res, 3)
+bias = zeros(N_res)
 initial_state = zeros(N_res)
 
 # 3. Raw ODE equations — leaky-integrator continuous ESN
@@ -210,18 +211,27 @@ rc_predict = build_rc(predict_len)
 ps, st = setup(rng, rc_train)
 
 # 5. Fit the linear readout on the collected continuous states
-ps, st = train(rc_train, input_data, target_data, ps, st)
+ps, st = train(rc_train, input_data, target_data, ps, st;
+    objective = RidgeRegression(1.0e-6))
 
 # 6. Autoregressive rollout under the same continuous dynamics
-ps_pred, st_pred = setup(rng, rc_predict)
-ps_pred = merge(ps_pred, (readout = ps.readout,))
-st_pred = merge(st_pred, (readout = st.readout,))
-output, _ = predict(rc_predict, predict_len, ps_pred, st_pred; initialdata = test[:, 1])
+output, _ = predict(rc_predict, predict_len, ps, st; initialdata = test[:, 1])
 
-plot(transpose(output)[:, 1], transpose(output)[:, 2], transpose(output)[:, 3];
-    label = "predicted")
-plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
-    label = "actual")
+dt = 0.02
+lorenz_maxlyap = 0.9056
+lyap_time = (0:(predict_len - 1)) .* dt .* (1 / lorenz_maxlyap)
+
+p1 = plot(lyap_time, [test[1, :] output[1, :]]; label = ["actual" "predicted"],
+    ylabel = "x(t)", linewidth = 2.5, xticks = false, yticks = -15:15:15);
+p2 = plot(lyap_time, [test[2, :] output[2, :]]; label = ["actual" "predicted"],
+    ylabel = "y(t)", linewidth = 2.5, xticks = false, yticks = -20:20:20);
+p3 = plot(lyap_time, [test[3, :] output[3, :]]; label = ["actual" "predicted"],
+    ylabel = "z(t)", linewidth = 2.5, xlabel = "max(λ)*t", yticks = 10:15:40);
+
+plot(p1, p2, p3; plot_title = "Lorenz System Coordinates",
+    layout = (3, 1), xtickfontsize = 12, ytickfontsize = 12, xguidefontsize = 15,
+    yguidefontsize = 15,
+    legendfontsize = 12, titlefontsize = 20)
 ```
 
 The two trajectories should agree on the early portion of the rollout
@@ -311,10 +321,7 @@ ps_mg, st_mg = setup(rng, rc_mg_train)
 ps_mg, st_mg = train(rc_mg_train, input_data, target_data, ps_mg, st_mg;
     objective = RidgeRegression(1.0e-6), washout = 0)
 
-ps_pred, st_pred = setup(rng, rc_mg_predict)
-ps_pred = merge(ps_pred, (readout = ps_mg.readout,))
-st_pred = merge(st_pred, (readout = st_mg.readout,))
-mg_output, _ = predict(rc_mg_predict, predict_len, ps_pred, st_pred;
+mg_output, _ = predict(rc_mg_predict, predict_len, ps_mg, st_mg;
     initialdata = test_data[:, 1])
 
 plot([test_data[1, :], mg_output[1, :]];

@@ -29,6 +29,11 @@ sequence.
 - `output`: Generated outputs of shape `(out_dims, steps)`.
 - `st`: Final model state after `steps` steps.
 
+### Throws
+
+- `ArgumentError`: If `steps < 1`.
+- `DimensionMismatch`: If a model output cannot be fed back as the next input.
+
 
 ## 2) Teacher-forced / point-by-point
 
@@ -51,12 +56,35 @@ function predict(
         rc::AbstractLuxLayer,
         steps::Integer, ps, st; initialdata::AbstractVector
     )
-    output = zeros(eltype(initialdata), length(initialdata), steps)
-    for step in 1:steps
-        initialdata, st = apply(rc, initialdata, ps, st)
-        output[:, step] = initialdata
+    return __autoregressive_predict(rc, steps, ps, st, initialdata)
+end
+
+function __require_closed_loop_dimension(output, input_length::Integer, step::Integer)
+    output_length = length(output)
+    output_length == input_length || throw(
+        DimensionMismatch(
+            "autoregressive predict requires each output to have length $input_length " *
+                "so it can be used as the next input; step $step produced length " *
+                "$output_length"
+        )
+    )
+    return nothing
+end
+
+function __autoregressive_predict(rc, steps::Integer, ps, st, initialdata::AbstractVector)
+    steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
+    input_length = length(initialdata)
+    current_output, st = apply(rc, initialdata, ps, st)
+    __require_closed_loop_dimension(current_output, input_length, 1)
+
+    outputs = similar(current_output, length(current_output), steps)
+    outputs[:, 1] .= current_output
+    for step in 2:steps
+        current_output, st = apply(rc, current_output, ps, st)
+        __require_closed_loop_dimension(current_output, input_length, step)
+        outputs[:, step] .= current_output
     end
-    return output, st
+    return outputs, st
 end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
@@ -129,12 +157,7 @@ function __predict(
         ::Any, rc::AbstractReservoirComputer, steps::Integer, ps, st;
         initialdata::AbstractVector
     )
-    output = zeros(eltype(initialdata), length(initialdata), steps)
-    for step in 1:steps
-        initialdata, st = apply(rc, initialdata, ps, st)
-        output[:, step] = initialdata
-    end
-    return output, st
+    return __autoregressive_predict(rc, steps, ps, st, initialdata)
 end
 
 function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)

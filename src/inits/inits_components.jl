@@ -188,7 +188,6 @@ function bernoulli_sample!(
     return
 end
 
-#TODO: @MartinuzziFrancesco maybe change name here #wait, for sure change name here
 function irrational_sample!(
         rng::AbstractRNG, vecormat::AbstractVecOrMat;
         irrational::Irrational = pi, start::Int = 1

@@ -132,6 +132,29 @@ begin
                 @test pred_gpu isa CUDA.CuArray
                 @test Array(pred_gpu) ≈ pred_cpu
                 @test propertynames(st_pred) == propertynames(st)
+
+                autoregressive_rc = ReservoirChain(
+                    identity,
+                    LinearReadout(
+                        2 => 2,
+                        identity;
+                        include_collect = false,
+                        init_weight = dense_init(Float32; value = 0.5),
+                    ),
+                )
+                ar_ps_cpu, ar_st = setup(rng, autoregressive_rc)
+                ar_ps_gpu = to_device(ar_ps_cpu)
+                initial_cpu = Float32[0.2, 0.4]
+                initial_gpu = CUDA.cu(initial_cpu)
+                ar_gpu, ar_st_gpu = predict(
+                    autoregressive_rc, 3, ar_ps_gpu, ar_st; initialdata = initial_gpu
+                )
+                ar_cpu, _ = predict(
+                    autoregressive_rc, 3, ar_ps_cpu, ar_st; initialdata = initial_cpu
+                )
+                @test ar_gpu isa CUDA.CuArray
+                @test Array(ar_gpu) ≈ ar_cpu
+                @test propertynames(ar_st_gpu) == propertynames(ar_st)
             end
         end
     end

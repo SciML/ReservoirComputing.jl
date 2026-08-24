@@ -56,50 +56,6 @@ function wrap_functions_in_chain_call(ro::SVMReadout)
     return __svmreadout_include_collect(ro) ? (Collect(), ro) : ro
 end
 
-__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
-
-function __setmodels_rt(p::NamedTuple{K}, M) where {K}
-    keys = K
-    Kq = __quote_keys(keys)
-    idx = findfirst(==(Symbol(:models)), keys)
-
-    terms = Any[]
-    for i in 1:length(keys)
-        push!(terms, (idx === i) ? :(M) : :(getfield(p, $i)))
-    end
-
-    if idx === nothing
-        newK = __quote_keys((keys..., :models))
-        return :(NamedTuple{$newK}(($(terms...), M)))
-    else
-        return :(NamedTuple{$Kq}(($(terms...),)))
-    end
-end
-
-@generated function __addsvm(layers::NamedTuple{K}, ps::NamedTuple{K}, M) where {K}
-    if length(K) == 0
-        return :(NamedTuple())
-    end
-    tailK = Base.tail(K)
-    Kq = __quote_keys(K)
-    tailKq = __quote_keys(tailK)
-
-    head_val = :(
-        (getfield(layers, 1) isa SVMReadout)
-            ? __setmodels_rt(getfield(ps, 1), M)
-            : getfield(ps, 1)
-    )
-
-    tail_call = :(
-        __addsvm(
-            NamedTuple{$tailKq}(Base.tail(layers)),
-            NamedTuple{$tailKq}(Base.tail(ps)), M
-        )
-    )
-
-    return :(NamedTuple{$Kq}(($head_val, Base.values($tail_call)...)))
-end
-
 function addreadout!(rc::ReservoirChain, models, ps::NamedTuple, st::NamedTuple)
     @assert propertynames(rc.layers) == propertynames(ps)
     new_vals = map(Base.OneTo(length(propertynames(rc.layers)))) do i

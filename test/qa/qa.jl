@@ -17,12 +17,17 @@ rc_internal_hooks = (
     :AbstractReservoirComputer,
     :IntegerType,
     :__apply_seq,
+    :__check_lsm_components,
+    :__check_lsm_tspan,
     :__check_protected_kwargs,
     :__collectstates,
     :__continuous_esn_rhs!,
+    :__feature_dim,
     :__fit_readout,
+    :__init_encoder_st,
     :__predict,
     :__reservoir_jac_prototype,
+    :__supports_ar,
     :__wrap_layers,
     :addreadout!,
 )
@@ -30,7 +35,13 @@ rc_internal_hooks = (
 run_qa(
     ReservoirComputing;
     ei_kwargs = (;
-        all_explicit_imports_are_public = (; ignore = rc_internal_hooks),
+        all_explicit_imports_are_public = (;
+            ignore = (
+                rc_internal_hooks...,
+                # LinearAlgebra doesn't declare its SVD algorithm selectors public.
+                :QRIteration,
+            ),
+        ),
         all_qualified_accesses_are_public = (;
             ignore = (
                 rc_internal_hooks...,

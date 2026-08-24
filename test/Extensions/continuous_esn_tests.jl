@@ -261,4 +261,42 @@ begin
         @test eltype(ps.reservoir.reservoir_matrix) == Float64
     end
 
+    @testset "ContinuousESN: autoregressive predict uses carry" begin
+        rng = MersenneTwister(99)
+        dim, res_dim, T_steps, steps = 2, 16, 20, 5
+        esn = ContinuousESN(
+            dim, res_dim, dim, (0.0, 2.0), Tsit5();
+            reltol = 1.0e-8, abstol = 1.0e-10,
+        )
+        esn_mod = ContinuousESN(
+            dim, res_dim, dim, (0.0, 2.0), Tsit5();
+            reltol = 1.0e-8, abstol = 1.0e-10,
+            state_modifiers = (NLAT2(),),
+        )
+        ps, st0 = setup(rng, esn)
+        data = randn(Float32, dim, T_steps)
+        init = data[:, end]
+
+        states, st1 = collectstates(esn, data, ps, st0)
+        @test first(st1.reservoir.carry) ≈ states[:, end]
+
+        cold, _ = predict(esn, steps, ps, st0; initialdata = init)
+        warm, st2 = predict(esn, steps, ps, st1; initialdata = init)
+        @test cold ≉ warm
+        @test first(st2.reservoir.carry) ≉ first(st1.reservoir.carry)
+
+        st_clear = resetcarry!(MersenneTwister(0), esn, st1)
+        @test get(st_clear.reservoir, :carry, nothing) === nothing
+        cold2, _ = predict(esn, steps, ps, st_clear; initialdata = init)
+        @test cold2 ≈ cold
+
+        s_cont, _ = collectstates(esn, data, ps, st1)
+        @test s_cont ≉ states
+
+        ps_m, st_m = setup(MersenneTwister(0), esn_mod)
+        sm, stm = collectstates(esn_mod, data, ps_m, st_m)
+        @test first(stm.reservoir.carry) ≉ sm[:, end]
+        @test length(first(stm.reservoir.carry)) == res_dim
+    end
+
 end

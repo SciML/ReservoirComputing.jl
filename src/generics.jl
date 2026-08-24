@@ -3,6 +3,8 @@ const InputType = Tuple{<:AbstractArray, Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer, StaticInt}
 const RCFields = (:cells, :state_modifiers, :readout)
 
+__quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
+
 """
     AbstractReservoirComputer{Fields} <: AbstractLuxContainerLayer{Fields}
 
