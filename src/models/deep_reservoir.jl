@@ -1,31 +1,33 @@
 @doc raw"""
-    DeepReservoir(cells, readout; state_modifiers=nothing)
+    DeepReservoir(cells, readout; state_modifiers=nothing, make_stateful=true)
 
 Deep Reservoir Network wrapper, generalizing deep architectures [Gallicchio2017](@cite).
 
-`DeepReservoir` acts as a universal wrapper that composes, for `L = length(cells)` layers:
-  1) a sequence of arbitrary `Lux` layers (typically stateful `ESNCell`s or custom dynamical systems),
+`DeepReservoir` composes, for `L = length(cells)` layers:
+  1) a sequence of recurrent reservoir cells and ordinary Lux layers,
   2) zero or more per-layer `state_modifiers[ℓ]` applied to the layer's state, and
   3) a final `readout` layer from the last layer's features to the output.
 
 ## Arguments
 
-  - `cells`: A `Tuple` of pre-instantiated layers.
-             If a layer is not already a `StatefulLayer`, it will be wrapped automatically to maintain continuous reservoir memory.
+  - `cells`: A nonempty tuple or vector of pre-instantiated layers. Every
+    [`AbstractReservoirRecurrentCell`](@ref) is wrapped in [`StatefulLayer`](@ref)
+    by default. Ordinary Lux layers are left unchanged. Continuous-time
+    [`AbstractSciMLProblemReservoir`](@ref) cells are not supported because they
+    require sequence-level integration through their specialized `collectstates` path.
   - `readout`: Readout layer from the last layer's features to the output.
 
 ## Keyword arguments
 
-Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
-
-  - `make_stateful`: A boolean or collection of booleans indicating whether to wrap the provided cells in a `StatefulLayer`. 
-                     If `true`, all cells not already stateful are wrapped. 
-                     If `false`, cells are left as-is (useful for injecting standard feedforward layers). 
-                     Default: `true`.
-  - `state_modifiers`: Per-layer modifier(s) applied to each layer’s state before it feeds into the next layer (and the readout for the last layer). 
-                        Accepts `nothing`, a single layer, a vector/tuple of length `L`, or per-layer collections. 
-                        Defaults to no modifiers.
-
+  - `make_stateful`: A boolean or collection of one or `L` booleans. Scalar and
+    one-element inputs broadcast to every layer. When true, recurrent cells are
+    wrapped in [`StatefulLayer`](@ref); ordinary Lux layers remain unchanged.
+    Default: `true`.
+  - `state_modifiers`: Per-layer modifiers applied before the next layer. A
+    single modifier is broadcast to all layers. A length-`L` tuple/vector assigns
+    one entry per layer; each entry may itself be a tuple/vector of modifiers.
+    For a one-layer model, a tuple/vector of multiple modifiers is interpreted as
+    that layer's modifier sequence. Default: `nothing`.
 
 ## Inputs
 
@@ -51,53 +53,90 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
   - `readout` — states for the readout layer.
 
 """
-@concrete struct DeepReservoir <: AbstractReservoirComputer{(:cells, :state_modifiers, :readout)}
+@concrete struct DeepReservoir <:
+    AbstractReservoirComputer{(:cells, :state_modifiers, :readout)}
     cells
     state_modifiers
     readout
 end
 
 function DeepReservoir(
-        cells, # Removed ::Tuple here
+        cells,
         readout;
         state_modifiers = nothing,
         make_stateful = true
     )
-    n_layers = length(cells)
+    cells_tuple = cells isa Tuple ? cells :
+        cells isa AbstractVector ? Tuple(cells) :
+        throw(ArgumentError("cells must be a nonempty tuple or vector of Lux layers"))
+    n_layers = length(cells_tuple)
+    n_layers > 0 || throw(ArgumentError("cells must contain at least one layer"))
+    all(cell -> cell isa AbstractLuxLayer, cells_tuple) || throw(
+        ArgumentError("every entry in cells must be an AbstractLuxLayer")
+    )
+    any(cell -> cell isa AbstractSciMLProblemReservoir, cells_tuple) && throw(
+        ArgumentError(
+            "DeepReservoir does not support AbstractSciMLProblemReservoir cells; " *
+                "use their sequence-level collectstates interface instead"
+        )
+    )
 
-    is_stateful = make_stateful isa Bool ? ntuple(_ -> make_stateful, n_layers) : Tuple(make_stateful)
-
-    stateful_cells = ntuple(n_layers) do i
-        c = cells[i]
-        (is_stateful[i] && !(c isa StatefulLayer)) ? StatefulLayer(c) : c
+    make_stateful_per_layer = __asvec(make_stateful, n_layers)
+    all(flag -> flag isa Bool, make_stateful_per_layer) || throw(
+        ArgumentError("make_stateful must be a Bool or a collection of Bool values")
+    )
+    wrapped_cells = ntuple(n_layers) do idx
+        cell = cells_tuple[idx]
+        should_wrap = make_stateful_per_layer[idx]
+        should_wrap && cell isa AbstractReservoirRecurrentCell ? StatefulLayer(cell) : cell
     end
 
-    mods = state_modifiers === nothing ? ntuple(_ -> nothing, n_layers) : state_modifiers
-    mods_per_layer = map(__coerce_layer_mods, mods) |> Tuple
+    raw_modifiers = if state_modifiers === nothing
+        ntuple(Returns(nothing), n_layers)
+    elseif n_layers == 1 &&
+            (state_modifiers isa Tuple || state_modifiers isa AbstractVector) &&
+            length(state_modifiers) != 1
+        (state_modifiers,)
+    else
+        Tuple(__asvec(state_modifiers, n_layers))
+    end
+    modifiers_per_layer = map(__coerce_layer_mods, raw_modifiers)
 
-    return DeepReservoir(stateful_cells, mods_per_layer, readout)
+    return DeepReservoir(wrapped_cells, modifiers_per_layer, readout)
 end
 
-function __partial_apply(desn::DeepReservoir, inp, ps, st)
-    n_layers = length(desn.cells)
-    current_inp = inp
+@inline function __apply_deep_layers(
+        ::Tuple{}, ::Tuple{}, inp, ::Tuple{}, ::Tuple{}, ::Tuple{}, ::Tuple{}
+    )
+    return inp, (), ()
+end
 
-    new_states = ntuple(n_layers) do idx
-        cell_out, st_cell_i = apply(desn.cells[idx], current_inp, ps.cells[idx], st.cells[idx])
+@inline function __apply_deep_layers(
+        cells::Tuple, modifiers::Tuple, inp, ps_cells::Tuple,
+        ps_modifiers::Tuple, st_cells::Tuple, st_modifiers::Tuple
+    )
+    cell_output, cell_state = apply(
+        first(cells), inp, first(ps_cells), first(st_cells)
+    )
+    output, modifier_state = __apply_seq(
+        first(modifiers), cell_output, first(ps_modifiers), first(st_modifiers)
+    )
+    final_output, remaining_cell_states, remaining_modifier_states =
+        __apply_deep_layers(
+        Base.tail(cells), Base.tail(modifiers), output,
+        Base.tail(ps_cells), Base.tail(ps_modifiers),
+        Base.tail(st_cells), Base.tail(st_modifiers)
+    )
+    return final_output, (cell_state, remaining_cell_states...),
+        (modifier_state, remaining_modifier_states...)
+end
 
-        mod_out, st_mods_i = __apply_seq(
-            desn.state_modifiers[idx], cell_out,
-            ps.state_modifiers[idx], st.state_modifiers[idx]
-        )
-
-        current_inp = mod_out
-        return (cell = st_cell_i, mod = st_mods_i)
-    end
-
-    new_cell_st = map(x -> x.cell, new_states)
-    new_mods_st = map(x -> x.mod, new_states)
-
-    return current_inp, (; cells = new_cell_st, state_modifiers = new_mods_st)
+function __partial_apply(dres::DeepReservoir, inp, ps, st)
+    output, cell_states, modifier_states = __apply_deep_layers(
+        dres.cells, dres.state_modifiers, inp,
+        ps.cells, ps.state_modifiers, st.cells, st.state_modifiers
+    )
+    return output, (; cells = cell_states, state_modifiers = modifier_states)
 end
 
 function collectstates(dres::DeepReservoir, data::AbstractMatrix, ps, st::NamedTuple)
@@ -138,40 +177,44 @@ function initialstates(rng::AbstractRNG, dres::DeepReservoir)
     return (cells = st_cells, state_modifiers = st_mods, readout = st_ro)
 end
 
+__carry_dimensions(cell) = (__cell_out_dims(cell),)
+__carry_dimensions(cell::Union{MemoryESNCell, MemoryResESNCell}) =
+    (cell.out_dims, cell.out_dims)
+__carry_dimensions(cell::RMNCell) = (
+    __cell_out_dims(cell.nonlinear_reservoir),
+    __cell_out_dims(cell.linear_reservoir),
+)
+__carry_dimensions(cell::LocalInformationFlow) = __carry_dimensions(cell.cell)
+
+function __reset_deep_carry(
+        rng::AbstractRNG, layer::StatefulLayer, st, initializer
+    )
+    initializer === nothing && return merge(st, (; carry = nothing))
+    initializer isa Function || throw(
+        ArgumentError("each init_carry entry must be nothing or a function")
+    )
+    dimensions = st.carry === nothing ? __carry_dimensions(layer.cell) :
+        map(state -> size(state, 1), st.carry)
+    carry = map(dim -> __asvec(initializer(rng, dim)), dimensions)
+    return merge(st, (; carry))
+end
+
+__reset_deep_carry(::AbstractRNG, ::AbstractLuxLayer, st, ::Nothing) = st
+function __reset_deep_carry(::AbstractRNG, layer::AbstractLuxLayer, _, initializer)
+    throw(
+        ArgumentError(
+            "cannot initialize carry for non-stateful layer $(typeof(layer)); " *
+                "use nothing for that layer"
+        )
+    )
+end
+
 function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = nothing)
     n_layers = length(dres.cells)
-
-    @inline function _layer_outdim(idx)
-        st_i = st.cells[idx]
-        if st_i.carry === nothing
-            return dres.cells[idx].cell.out_dims
-        else
-            return size(first(st_i.carry), 1)
-        end
+    initializers = Tuple(__asvec(init_carry, n_layers))
+    new_cells = ntuple(n_layers) do idx
+        __reset_deep_carry(rng, dres.cells[idx], st.cells[idx], initializers[idx])
     end
-
-    @inline function _init_for(idx)
-        if init_carry === nothing
-            return nothing
-        elseif init_carry isa Function
-            sz = _layer_outdim(idx)
-            return (__asvec(init_carry(rng, sz)),)
-        elseif init_carry isa Tuple || init_carry isa AbstractVector
-            f = init_carry[idx]
-            sz = _layer_outdim(idx)
-            return f === nothing ? nothing : (__asvec(f(rng, sz)),)
-        else
-            throw(ArgumentError("init_carry must be nothing, a Function, or a Tuple/Vector of Functions"))
-        end
-    end
-
-    new_cells = ntuple(
-        idx -> begin
-            st_i = st.cells[idx]
-            new_carry = _init_for(idx)
-            merge(st_i, (; carry = new_carry))
-        end, n_layers
-    )
 
     return (;
         cells = new_cells,
