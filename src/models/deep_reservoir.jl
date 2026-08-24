@@ -1,11 +1,11 @@
 @doc raw"""
-    DeepReservoir(cells, readout; states_modifiers=nothing)
+    DeepReservoir(cells, readout; state_modifiers=nothing)
 
 Deep Reservoir Network wrapper, generalizing deep architectures [Gallicchio2017](@cite).
 
 `DeepReservoir` acts as a universal wrapper that composes, for `L = length(cells)` layers:
   1) a sequence of arbitrary `Lux` layers (typically stateful `ESNCell`s or custom dynamical systems),
-  2) zero or more per-layer `states_modifiers[ℓ]` applied to the layer's state, and
+  2) zero or more per-layer `state_modifiers[ℓ]` applied to the layer's state, and
   3) a final `readout` layer from the last layer's features to the output.
 
 ## Arguments
@@ -22,7 +22,7 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
                      If `true`, all cells not already stateful are wrapped. 
                      If `false`, cells are left as-is (useful for injecting standard feedforward layers). 
                      Default: `true`.
-  - `states_modifiers`: Per-layer modifier(s) applied to each layer’s state before it feeds into the next layer (and the readout for the last layer). 
+  - `state_modifiers`: Per-layer modifier(s) applied to each layer’s state before it feeds into the next layer (and the readout for the last layer). 
                         Accepts `nothing`, a single layer, a vector/tuple of length `L`, or per-layer collections. 
                         Defaults to no modifiers.
 
@@ -39,7 +39,7 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
 ## Parameters
 
   - `cells :: NTuple{L,NamedTuple}` — parameters for each cell in the sequence.
-  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
+  - `state_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier parameters (empty tuples if none).
   - `readout` — parameters for the readout layer.
 
   > Exact field names for modifiers/readout follow their respective layer definitions.
@@ -47,20 +47,20 @@ Per-layer reservoir options (passed to each [`ESNCell`](@ref)):
 ## States
 
   - `cells :: NTuple{L,NamedTuple}` — states for each cell in the sequence.
-  - `states_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
+  - `state_modifiers :: NTuple{L,Tuple}` — per-layer tuples of modifier states.
   - `readout` — states for the readout layer.
 
 """
-@concrete struct DeepReservoir <: AbstractReservoirComputer{(:cells, :states_modifiers, :readout)}
+@concrete struct DeepReservoir <: AbstractReservoirComputer{(:cells, :state_modifiers, :readout)}
     cells
-    states_modifiers
+    state_modifiers
     readout
 end
 
 function DeepReservoir(
         cells, # Removed ::Tuple here
         readout;
-        states_modifiers = nothing,
+        state_modifiers = nothing,
         make_stateful = true
     )
     n_layers = length(cells)
@@ -72,22 +72,22 @@ function DeepReservoir(
         (is_stateful[i] && !(c isa StatefulLayer)) ? StatefulLayer(c) : c
     end
 
-    mods = states_modifiers === nothing ? ntuple(_ -> nothing, n_layers) : states_modifiers
-    mods_per_layer = map(_coerce_layer_mods, mods) |> Tuple
+    mods = state_modifiers === nothing ? ntuple(_ -> nothing, n_layers) : state_modifiers
+    mods_per_layer = map(__coerce_layer_mods, mods) |> Tuple
 
     return DeepReservoir(stateful_cells, mods_per_layer, readout)
 end
 
-function _partial_apply(desn::DeepReservoir, inp, ps, st)
+function __partial_apply(desn::DeepReservoir, inp, ps, st)
     n_layers = length(desn.cells)
     current_inp = inp
 
     new_states = ntuple(n_layers) do idx
         cell_out, st_cell_i = apply(desn.cells[idx], current_inp, ps.cells[idx], st.cells[idx])
 
-        mod_out, st_mods_i = _apply_seq(
-            desn.states_modifiers[idx], cell_out,
-            ps.states_modifiers[idx], st.states_modifiers[idx]
+        mod_out, st_mods_i = __apply_seq(
+            desn.state_modifiers[idx], cell_out,
+            ps.state_modifiers[idx], st.state_modifiers[idx]
         )
 
         current_inp = mod_out
@@ -97,13 +97,17 @@ function _partial_apply(desn::DeepReservoir, inp, ps, st)
     new_cell_st = map(x -> x.cell, new_states)
     new_mods_st = map(x -> x.mod, new_states)
 
-    return current_inp, (; cells = new_cell_st, states_modifiers = new_mods_st)
+    return current_inp, (; cells = new_cell_st, state_modifiers = new_mods_st)
+end
+
+function collectstates(dres::DeepReservoir, data::AbstractMatrix, ps, st::NamedTuple)
+    return __collectstates(nothing, dres, data, ps, st)
 end
 
 function initialparameters(rng::AbstractRNG, dres::DeepReservoir)
     ps_cells = map(layer -> initialparameters(rng, layer), dres.cells) |> Tuple
-    mods = dres.states_modifiers === nothing ? ntuple(_ -> (), length(dres.cells)) :
-        dres.states_modifiers
+    mods = dres.state_modifiers === nothing ? ntuple(_ -> (), length(dres.cells)) :
+        dres.state_modifiers
     ps_mods = map(
         layer_mods -> (
             layer_mods === nothing ? () :
@@ -113,14 +117,14 @@ function initialparameters(rng::AbstractRNG, dres::DeepReservoir)
     ) |> Tuple
 
     ps_ro = initialparameters(rng, dres.readout)
-    return (cells = ps_cells, states_modifiers = ps_mods, readout = ps_ro)
+    return (cells = ps_cells, state_modifiers = ps_mods, readout = ps_ro)
 end
 
 function initialstates(rng::AbstractRNG, dres::DeepReservoir)
     st_cells = map(layer -> initialstates(rng, layer), dres.cells) |> Tuple
 
-    mods = dres.states_modifiers === nothing ? ntuple(_ -> (), length(dres.cells)) :
-        dres.states_modifiers
+    mods = dres.state_modifiers === nothing ? ntuple(_ -> (), length(dres.cells)) :
+        dres.state_modifiers
 
     st_mods = map(
         layer_mods -> (
@@ -131,7 +135,7 @@ function initialstates(rng::AbstractRNG, dres::DeepReservoir)
     ) |> Tuple
 
     st_ro = initialstates(rng, dres.readout)
-    return (cells = st_cells, states_modifiers = st_mods, readout = st_ro)
+    return (cells = st_cells, state_modifiers = st_mods, readout = st_ro)
 end
 
 function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = nothing)
@@ -151,11 +155,11 @@ function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = not
             return nothing
         elseif init_carry isa Function
             sz = _layer_outdim(idx)
-            return (_asvec(init_carry(rng, sz)),)
+            return (__asvec(init_carry(rng, sz)),)
         elseif init_carry isa Tuple || init_carry isa AbstractVector
             f = init_carry[idx]
             sz = _layer_outdim(idx)
-            return f === nothing ? nothing : (_asvec(f(rng, sz)),)
+            return f === nothing ? nothing : (__asvec(f(rng, sz)),)
         else
             throw(ArgumentError("init_carry must be nothing, a Function, or a Tuple/Vector of Functions"))
         end
@@ -171,7 +175,7 @@ function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = not
 
     return (;
         cells = new_cells,
-        states_modifiers = st.states_modifiers,
+        state_modifiers = st.state_modifiers,
         readout = st.readout,
     )
 end

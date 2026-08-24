@@ -2,6 +2,7 @@ begin
     using Test
     using Random
     using ReservoirComputing
+    using LuxCore: setup
 
     @testset "DeepReservoir wrapper" begin
         rng = MersenneTwister(777)
@@ -10,8 +11,7 @@ begin
         res_dims = 100
         out_dims = 10
 
-        # Use a native library cell instead of `identity` to bypass LuxCore parsing issues
-        dummy_readout = ESNCell(res_dims => out_dims)
+        dummy_readout = LinearReadout(res_dims => out_dims)
 
         @testset "make_stateful logic and per-layer granularity" begin
             cell1 = ESNCell(in_dims => res_dims)
@@ -33,7 +33,7 @@ begin
         @testset "Composability Loop (Maintainer Request)" begin
             cells_to_test = (
                 ESNCell(in_dims => res_dims),
-                MemoryESNCell((in_dims, in_dims) => res_dims),
+                MemoryESNCell((in_dims, res_dims) => res_dims),
                 ES2NCell(in_dims => res_dims),
             )
 
@@ -42,10 +42,10 @@ begin
                 desn = DeepReservoir((raw_cell,), dummy_readout)
                 ps, st = setup(rng, desn)
 
-                x = rand(Float32, in_dims)
+                x = rand(Float32, in_dims, 1)
                 y, st_new = desn(x, ps, st)
 
-                @test size(y) == (out_dims,)
+                @test size(y) == (out_dims, 1)
                 @test haskey(st_new, :cells)
                 @test length(st_new.cells) == 1
             end
@@ -53,9 +53,9 @@ begin
 
         @testset "collectstates with hybrid stack data flow" begin
             cell1 = ESNCell(in_dims => res_dims)
-            cell2 = ESNCell(res_dims => res_dims)
+            feedforward_layer = LinearReadout(res_dims => res_dims)
 
-            desn = DeepReservoir((cell1, cell2), dummy_readout; make_stateful = (true, false))
+            desn = DeepReservoir((cell1, feedforward_layer), dummy_readout; make_stateful = (true, false))
             ps, st = setup(rng, desn)
 
             seq_len = 10
