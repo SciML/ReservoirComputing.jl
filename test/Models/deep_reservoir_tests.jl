@@ -37,8 +37,10 @@ begin
             dres_broadcast = DeepReservoir(
                 (cell1, cell2), dummy_readout; make_stateful = (true,)
             )
-            @test all(layer -> layer isa ReservoirComputing.StatefulLayer,
-                dres_broadcast.cells)
+            @test all(
+                layer -> layer isa ReservoirComputing.StatefulLayer,
+                dres_broadcast.cells
+            )
             @test_throws DimensionMismatch DeepReservoir(
                 (cell1, cell2), dummy_readout;
                 make_stateful = (true, false, true)

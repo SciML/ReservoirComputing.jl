@@ -6,7 +6,6 @@
     AdditiveEIESN
     DeepESN
     DelayESN
-    DeepReservoir
     EIESN
     ES2N
     ESN
