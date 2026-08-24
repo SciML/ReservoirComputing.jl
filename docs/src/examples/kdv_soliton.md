@@ -40,10 +40,12 @@ a hand-rolled time-stepper.
 using ReservoirComputing
 using LuxCore: setup
 using SciMLBase
+using DataInterpolations
 using FFTW
 using OrdinaryDiffEqTsit5
 using LinearAlgebra
 using Plots
+using Random
 
 N, Lx = 512, 200.0
 x = collect(range(-50.0, 150.0; length = N + 1)[1:end - 1])
@@ -192,15 +194,22 @@ approaches from the left, passes through the encoding wave sitting near
 $x=0$, and the collision leaves a wake that the detector (dashed line)
 samples on its way past:
 
+Axes and ranges follow the paper's own spacetime figure: `x` horizontal,
+`t` vertical, spanning the same 100 (space) by 60 (time) window (KdV is
+translation-invariant in `x`, so only the *span* is meaningful — our
+soliton starting at $x=-17$ rather than their $x=0$ doesn't change the
+dynamics, only the labels):
+
 ```@example kdv
 u0_11 = build_u0(1.0, 1.0)
 sol_11 = solve(remake(base_prob; u0 = u0_11), Tsit5();
     reltol = 1.0e-8, abstol = 1.0e-10, saveat = 0:0.5:60)
 U = reduce(hcat, sol_11.u)
 
-hm = heatmap(sol_11.t, x, U; xlabel = "t", ylabel = "x", color = :viridis,
-    title = "KdV field u(x,t), inputs A=B=true", colorbar_title = "u")
-hline!(hm, [50.0]; color = :red, linestyle = :dash, label = "detector (x=50)")
+hm = heatmap(x, sol_11.t, U'; xlabel = "x", ylabel = "t", color = :viridis,
+    title = "KdV field u(x,t), inputs A=B=true", colorbar_title = "u",
+    xlims = (-20, 80), ylims = (0, 60))
+vline!(hm, [50.0]; color = :red, linestyle = :dash, label = "detector (x=50)")
 ```
 
 The takeaway isn't that a bucket of water is a practical logic gate — it's
