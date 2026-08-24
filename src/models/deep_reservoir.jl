@@ -189,7 +189,6 @@ __carry_dimensions(cell::LocalInformationFlow) = __carry_dimensions(cell.cell)
 function __reset_deep_carry(
         rng::AbstractRNG, layer::StatefulLayer, st, initializer
     )
-    initializer === nothing && return merge(st, (; carry = nothing))
     initializer isa Function || throw(
         ArgumentError("each init_carry entry must be nothing or a function")
     )
@@ -200,6 +199,11 @@ function __reset_deep_carry(
 end
 
 __reset_deep_carry(::AbstractRNG, ::AbstractLuxLayer, st, ::Nothing) = st
+function __reset_deep_carry(
+        ::AbstractRNG, ::StatefulLayer, st, ::Nothing
+    )
+    return merge(st, (; carry = nothing))
+end
 function __reset_deep_carry(::AbstractRNG, layer::AbstractLuxLayer, _, initializer)
     throw(
         ArgumentError(

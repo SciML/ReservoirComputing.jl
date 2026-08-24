@@ -149,6 +149,9 @@ begin
             )
             @test only(reset_st.cells[1].carry) == ones(Float32, res_dims)
             @test reset_st.cells[2] == st.cells[2]
+            cleared_st = resetcarry!(rng, dres, reset_st)
+            @test cleared_st.cells[1].carry === nothing
+            @test cleared_st.cells[2] == reset_st.cells[2]
             @test_throws ArgumentError resetcarry!(
                 rng, dres, st; init_carry = initializer
             )
