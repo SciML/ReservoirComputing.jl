@@ -72,9 +72,20 @@ include("conceptors.jl")
 #extensions
 include("extensions/reca.jl")
 
+# Reexported upstream API, approved via `reexports_allow` in test/qa/qa.jl. `setup` is
+# used in every tutorial to build a model's parameters and states, `initialparameters` /
+# `initialstates` are what custom cells implement, and `apply` is the other half of that
+# LuxCore layer interface. The WeightInitializers functions are the documented defaults
+# of the `init_bias` / `init_state` / `init_orthogonal` / `init_input` keywords on the
+# cells, so `using ReservoirComputing` alone is enough to name or override them.
+# Everything stays owned and documented upstream.
+export setup, apply, initialparameters, initialstates
+export orthogonal, rand32, randn32, sparse_init, zeros32
+
 export ReservoirComputer
 export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN, LSM
 export AbstractSampler, TerminalStateSampling
+export IrrationalDigitSigns, RandomSigns, RegularSigns
 export ContinuousESNCell, LSMCell
 export AbstractSpikingNeuron, LIFNeuron
 export AbstractInputEncoder, CurrentInjection, PoissonRateEncoder

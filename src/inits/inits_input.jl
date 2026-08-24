@@ -220,7 +220,7 @@ end
 """
     weighted_minimal([rng], [T], dims...;
         weight=0.1, return_sparse=false,
-        sampling_type=:no_sample)
+        signs = nothing)
 
 Create and return a minimal weighted input layer matrix.
 This initializer generates a weighted input matrix with equal, deterministic
@@ -245,21 +245,10 @@ warning.
     Defaults to `0.1`.
   - `return_sparse`: flag for returning a `sparse` matrix.
     Default is `false`.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -268,7 +257,7 @@ Standard call, changing the init weight:
 ```jldoctest weightedminimal
 julia> using Random, Test
 
-julia> using ReservoirComputing: weighted_minimal
+julia> using ReservoirComputing: RandomSigns, weighted_minimal
 
 julia> res_input = weighted_minimal(MersenneTwister(11), Float32, 9, 3; weight = 0.99);
 
@@ -276,10 +265,11 @@ julia> size(res_input) == (9, 3) && all(count(!iszero, column) == 3 for column i
 true
 ```
 
-Random sign for each weight, drawn from a bernoulli distribution:
+Random sign flips for each weight:
 
 ```jldoctest weightedminimal
-julia> res_input = weighted_minimal(MersenneTwister(12), Float32, 9, 3; sampling_type = :bernoulli_sample!);
+julia> res_input = weighted_minimal(
+           MersenneTwister(12), Float32, 9, 3; signs = RandomSigns());
 
 julia> all(count(!iszero, column) == 3 for column in eachcol(res_input)) &&
        all(weight -> iszero(weight) || abs(weight) == 0.1f0, res_input)
@@ -298,7 +288,8 @@ true
 function weighted_minimal(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight::Number = T(0.1), return_sparse::Bool = false,
-        sampling_type = :no_sample, kwargs...
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing, kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     approx_res_size, in_size = dims
@@ -310,8 +301,7 @@ function weighted_minimal(
     for idx in 1:in_size
         layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = T(weight) .* ones(T, q)
     end
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, layer_matrix; kwargs...)
+    __apply_signs_compat!(rng, signs, layer_matrix, sampling_type, kwargs)
     return return_init_as(Val(return_sparse), layer_matrix)
 end
 
@@ -376,7 +366,7 @@ function informed_init(
         random_clm_idx = rand(rng, 1:state_size)
 
         input_matrix[random_row_idx, random_clm_idx] = (
-            DeviceAgnostic.rand(rng, T) -
+            only(DeviceAgnostic.rand(rng, T)) -
                 T(0.5)
         ) * (T(2) * T(scaling))
     end
@@ -389,7 +379,7 @@ function informed_init(
         random_clm_idx = rand(rng, (state_size + 1):in_size)
 
         input_matrix[random_row_idx, random_clm_idx] = (
-            DeviceAgnostic.rand(rng, T) -
+            only(DeviceAgnostic.rand(rng, T)) -
                 T(0.5)
         ) * (T(2) * T(scaling))
     end
@@ -398,13 +388,10 @@ function informed_init(
 end
 
 """
-    minimal_init([rng], [T], dims...;
-        sampling_type=:bernoulli_sample!, weight=0.1, irrational=pi,
-        start=1, p=0.5)
+    minimal_init([rng], [T], dims...; weight = 0.1, signs = nothing)
 
-Create a dense matrix with same weights magnitudes determined by
-`weight` [Rodan2011](@cite). The sign difference is randomly
-determined by the `sampling` chosen.
+Create a dense matrix with magnitudes determined by `weight` [Rodan2011](@cite).
+An optional sign pattern controls which weights have their signs flipped.
 
 ## Arguments
 
@@ -417,21 +404,10 @@ determined by the `sampling` chosen.
 ## Keyword arguments
 
   - `weight`: The weight used to fill the layer matrix. Default is 0.1.
-  - `sampling_type`: Sampling that decides the distribution of `weight` negative numbers.
-    If set to `:no_sample` the sign is unchanged. If set to `:bernoulli_sample!` then each
-    `weight` can be positive with a probability set by `positive_prob`. If set to
-    `:irrational_sample!` the `weight` is negative if the decimal number of the
-    irrational number chosen is odd. If set to `:regular_sample!`, each weight will be
-    assigned a negative sign after the chosen `strides`. `strides` can be a single
-    number or an array. Default is `:no_sample`.
-  - `positive_prob`: probability of the `weight` being positive when `sampling_type` is
-    set to `:bernoulli_sample!`. Default is 0.5.
-  - `irrational`: Irrational number whose decimals decide the sign of `weight`.
-    Default is `pi`.
-  - `start`: Which place after the decimal point the counting starts for the `irrational`
-    sign counting. Default is 1.
-  - `strides`: number of strides for assigning negative value to a weight. It can be an
-    integer or an array. Default is 2.
+  - `signs`: Controls sign flips. Use [`RandomSigns`](@ref),
+        [`RegularSigns`](@ref), or [`IrrationalDigitSigns`](@ref). Pass `nothing` to
+        leave signs
+        unchanged. Default is `nothing`.
 
 ## Examples
 
@@ -440,7 +416,7 @@ Standard call:
 ```jldoctest minimalinit
 julia> using Random
 
-julia> using ReservoirComputing: minimal_init
+julia> using ReservoirComputing: IrrationalDigitSigns, RandomSigns, minimal_init
 
 julia> res_input = minimal_init(MersenneTwister(14), Float32, 8, 3);
 
@@ -448,21 +424,24 @@ julia> size(res_input) == (8, 3) && all(abs.(res_input) .== 0.1f0)
 true
 ```
 
-Sampling weight sign from an irrational number:
+Applying a sign pattern from an irrational number:
 
 ```jldoctest minimalinit
-julia> res_input = minimal_init(MersenneTwister(15), Float32, 8, 3; sampling_type = :irrational_sample!);
+julia> res_input = minimal_init(
+           MersenneTwister(15), Float32, 8, 3; signs = IrrationalDigitSigns());
 
 julia> size(res_input) == (8, 3) && all(abs.(res_input) .== 0.1f0)
 true
 ```
 
-Changing probability for the negative sign
+Changing the probability of preserving each sign
 
 ```jldoctest minimalinit
-julia> low_probability = minimal_init(MersenneTwister(16), Float32, 8, 3; positive_prob = 0.1);
+julia> low_probability = minimal_init(
+           MersenneTwister(16), Float32, 8, 3; signs = RandomSigns(0.1));
 
-julia> high_probability = minimal_init(MersenneTwister(16), Float32, 8, 3; positive_prob = 0.8);
+julia> high_probability = minimal_init(
+           MersenneTwister(16), Float32, 8, 3; signs = RandomSigns(0.8));
 
 julia> count(>(0), low_probability) < count(>(0), high_probability)
 true
@@ -470,14 +449,14 @@ true
 """
 function minimal_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        weight::Number = T(0.1), sampling_type::Symbol = :bernoulli_sample!,
-        kwargs...
+        weight::Number = T(0.1),
+        signs::Union{Nothing, AbstractSignPattern} = nothing,
+        sampling_type = nothing, kwargs...
     ) where {T <: Number}
     res_size, in_size = dims
     input_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
     input_matrix .+= T(weight)
-    f_sample = getfield(@__MODULE__, sampling_type)
-    f_sample(rng, input_matrix; kwargs...)
+    __apply_signs_compat!(rng, signs, input_matrix, sampling_type, kwargs)
     return input_matrix
 end
 

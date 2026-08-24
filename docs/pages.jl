@@ -17,6 +17,8 @@ pages = [
     ],
     "Examples" => Any[
         "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
+        "Parallel reservoirs for spatiotemporal chaos" => "examples/ks_pathak.md",
+        "A hydrodynamic reservoir: KdV solitons" => "examples/kdv_soliton.md",
     ],
     "API Documentation" => Any[
         "Layers" => "api/layers.md",
@@ -28,6 +30,7 @@ pages = [
         "States" => "api/states.md",
         "Initializers" => "api/inits.md",
         "Developer Interfaces" => "api/developer.md",
+        "Reexported API" => "api/reexports.md",
     ],
     "References" => "references.md",
 ]
