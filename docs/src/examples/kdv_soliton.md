@@ -195,20 +195,18 @@ $x=0$, and the collision leaves a wake that the detector (dashed line)
 samples on its way past:
 
 Axes and ranges follow the paper's own spacetime figure: `x` horizontal,
-`t` vertical, spanning the same 100 (space) by 60 (time) window (KdV is
-translation-invariant in `x`, so only the *span* is meaningful — our
-soliton starting at $x=-17$ rather than their $x=0$ doesn't change the
-dynamics, only the labels):
+`t` vertical, both spanning `0` to `100` (so the solve below runs past the
+last detection time, $t=60$, purely to fill out that window):
 
 ```@example kdv
 u0_11 = build_u0(1.0, 1.0)
-sol_11 = solve(remake(base_prob; u0 = u0_11), Tsit5();
-    reltol = 1.0e-8, abstol = 1.0e-10, saveat = 0:0.5:60)
+sol_11 = solve(remake(base_prob; u0 = u0_11, tspan = (0.0, 100.0)), Tsit5();
+    reltol = 1.0e-8, abstol = 1.0e-10, saveat = 0:0.5:100)
 U = reduce(hcat, sol_11.u)
 
 hm = heatmap(x, sol_11.t, U'; xlabel = "x", ylabel = "t", color = :viridis,
     title = "KdV field u(x,t), inputs A=B=true", colorbar_title = "u",
-    xlims = (-20, 80), ylims = (0, 60))
+    xlims = (0, 100), ylims = (0, 100))
 vline!(hm, [50.0]; color = :red, linestyle = :dash, label = "detector (x=50)")
 ```
 
