@@ -17,6 +17,7 @@ pages = [
     ],
     "Examples" => Any[
         "Building a model to add to ReservoirComputing.jl" => "examples/model_es2n.md",
+        "Parallel reservoirs for spatiotemporal chaos" => "examples/ks_pathak.md",
     ],
     "API Documentation" => Any[
         "Layers" => "api/layers.md",
