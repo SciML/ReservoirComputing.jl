@@ -10,11 +10,10 @@ Deep Reservoir Network wrapper, generalizing deep architectures [Gallicchio2017]
 
 ## Arguments
 
-  - `cells`: A nonempty tuple or vector of pre-instantiated layers. Every
-    [`AbstractReservoirRecurrentCell`](@ref) is wrapped in [`StatefulLayer`](@ref)
+  - `cells`: A nonempty tuple or vector of pre-instantiated layers. Cell
+    is wrapped in [`StatefulLayer`](@ref)
     by default. Ordinary Lux layers are left unchanged. Continuous-time
-    [`AbstractSciMLProblemReservoir`](@ref) cells are not supported because they
-    require sequence-level integration through their specialized `collectstates` path.
+    cells are currently not supported.
   - `readout`: Readout layer from the last layer's features to the output.
 
 ## Keyword arguments
