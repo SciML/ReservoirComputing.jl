@@ -37,6 +37,7 @@ include("layers/memoryresesn_cell.jl")
 include("layers/rmn_cell.jl")
 include("layers/svmreadout.jl")
 include("layers/lif_wrapper.jl")
+include("layers/deep_reservoir.jl")
 #general
 include("states.jl")
 include("predict.jl")
@@ -108,7 +109,7 @@ export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_s
     scale_radius!, self_loop!, simple_cycle!
 export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
     resetcarry!, return_init_as, train, train!
-export AdditiveEIESN, DeepESN, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
+export AdditiveEIESN, DeepESN, DeepReservoir, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
 export RMNESN, RMNResESN
 #conceptors

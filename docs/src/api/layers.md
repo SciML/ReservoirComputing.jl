@@ -58,6 +58,7 @@
 
 ```@docs
     LocalInformationFlow
+    DeepReservoir
 ```
 
 ## Continuous-Time Reservoirs
