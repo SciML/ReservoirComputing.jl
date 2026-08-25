@@ -103,9 +103,14 @@ begin
             ps, st = setup(rng, desn)
             ps = _pin_identity_readout(ps; out_dims = D, in_dims = D)
             X = reshape(Float32.(1:(D * B)), D, B)
-            Y, _ = desn(X, ps, st)
+            Y, updated_st = @inferred desn(X, ps, st)
             @test size(Y) == (D, B)
             @test Y ≈ X
+            collected, collected_st = @inferred ReservoirComputing.collectstates(
+                desn, X, ps, st
+            )
+            @test collected ≈ X
+            @test typeof(updated_st) === typeof(collected_st)
         end
 
         @testset "state_modifiers per layer are applied in order" begin

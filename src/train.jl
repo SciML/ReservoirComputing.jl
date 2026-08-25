@@ -21,8 +21,8 @@ with Tikhonov regularization ``\lambda``:
 Feature and target layouts are `(n_features, T)` and `(n_outputs, T)`; the
 fitted weight matrix is `(n_outputs, n_features)`.
 """
-struct RidgeRegression
-    reg::Number
+@concrete struct RidgeRegression
+    reg <: Number
 end
 
 function RidgeRegression(::Type{T}, reg) where {T <: Number}
