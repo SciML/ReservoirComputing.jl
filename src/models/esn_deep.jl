@@ -123,13 +123,10 @@ function DeepESN(
     ub = __asvec(use_bias, n_layers)
     mods0 = __asvec(state_modifiers, n_layers)
 
-    cells = Vector{Any}(undef, n_layers)
-    state_modifiers = Vector{Any}(undef, n_layers)
-
-    prev = in_dims
-    for idx in firstindex(res_dims):lastindex(res_dims)
+    cells = ntuple(n_layers) do idx
+        input_dims = idx == firstindex(res_dims) ? in_dims : res_dims[idx - 1]
         cell = ESNCell(
-            prev => res_dims[idx], acts[idx];
+            input_dims => res_dims[idx], acts[idx];
             use_bias = static(ub[idx]),
             init_bias = ibias[idx],
             init_reservoir = ires[idx],
@@ -137,13 +134,15 @@ function DeepESN(
             init_state = istate[idx],
             leak_coefficient = leaks[idx]
         )
-        cells[idx] = StatefulLayer(cell)
-        state_modifiers[idx] = mods0[idx] === nothing ? nothing : __wrap_layer(mods0[idx])
-        prev = res_dims[idx]
+        StatefulLayer(cell)
+    end
+    state_modifiers = ntuple(n_layers) do idx
+        mods = mods0[idx]
+        mods === nothing ? nothing : __wrap_layer(mods)
     end
     mods_per_layer = map(__coerce_layer_mods, state_modifiers) |> Tuple
-    ro = LinearReadout(prev => out_dims, readout_activation)
-    return DeepESN(Tuple(cells), mods_per_layer, ro)
+    ro = LinearReadout(last(res_dims) => out_dims, readout_activation)
+    return DeepESN(cells, mods_per_layer, ro)
 end
 
 function DeepESN(
@@ -188,26 +187,11 @@ function initialstates(rng::AbstractRNG, desn::DeepESN)
 end
 
 function __partial_apply(desn::DeepESN, inp, ps, st)
-    inp_t = inp
-    n_layers = length(desn.cells)
-    new_cell_st = Vector{Any}(undef, n_layers)
-    new_mods_st = Vector{Any}(undef, n_layers)
-    for idx in firstindex(desn.cells):lastindex(desn.cells)
-        inp_t, st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], st.cells[idx])
-        new_cell_st[idx] = st_cell_i
-        inp_t,
-            st_mods_i = __apply_seq(
-            desn.state_modifiers[idx], inp_t,
-            ps.state_modifiers[idx], st.state_modifiers[idx]
-        )
-        new_mods_st[idx] = st_mods_i
-    end
-
-    return inp_t,
-        (;
-            cells = tuple(new_cell_st...),
-            state_modifiers = tuple(new_mods_st...),
-        )
+    out, cells_st, modifiers_st = __apply_deep_layers(
+        desn.cells, desn.state_modifiers, inp,
+        ps.cells, ps.state_modifiers, st.cells, st.state_modifiers
+    )
+    return out, (; cells = cells_st, state_modifiers = modifiers_st)
 end
 
 function (desn::DeepESN)(inp, ps, st)
@@ -260,32 +244,16 @@ end
 
 function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
     __require_nonempty_data(data, "collectstates")
-    newst = st
-    collected = Any[]
-    n_layers = length(desn.cells)
-    for inp in eachcol(data)
-        inp_t = inp
-        cell_st_parts = Vector{Any}(undef, n_layers)
-        mods_st_parts = Vector{Any}(undef, n_layers)
-        for idx in firstindex(desn.cells):lastindex(desn.cells)
-            inp_t,
-                st_cell_i = apply(desn.cells[idx], inp_t, ps.cells[idx], newst.cells[idx])
-            cell_st_parts[idx] = st_cell_i
-            inp_t,
-                st_mods_i = __apply_seq(
-                desn.state_modifiers[idx], inp_t,
-                ps.state_modifiers[idx], newst.state_modifiers[idx]
-            )
-            mods_st_parts[idx] = st_mods_i
-        end
-        push!(collected, copy(inp_t))
-        newst = (;
-            cells = tuple(cell_st_parts...),
-            state_modifiers = tuple(mods_st_parts...),
-            readout = newst.readout,
-        )
+    cols = eachcol(data)
+    first_state, partial_st = __partial_apply(desn, first(cols), ps, st)
+    states = similar(first_state, eltype(first_state), length(first_state), size(data, 2))
+    states[:, 1] .= first_state
+    newst = merge(partial_st, (; readout = st.readout))
+    for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
+        current_state, partial_st = __partial_apply(desn, inp, ps, newst)
+        states[:, idx] .= current_state
+        newst = merge(partial_st, (; readout = newst.readout))
     end
-    states = eltype(data).(reduce(hcat, collected))
 
     return states, newst
 end

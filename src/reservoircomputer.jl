@@ -69,13 +69,12 @@ function __require_nonempty_data(data::AbstractMatrix, context::AbstractString)
     return nothing
 end
 
+@inline __apply_seq(::Tuple{}, inp, ::Tuple{}, ::Tuple{}) = inp, ()
+
 @inline function __apply_seq(layers::Tuple, inp, ps::Tuple, st::Tuple)
-    new_st_parts = Vector{Any}(undef, length(layers))
-    for idx in eachindex(layers)
-        inp, sti = apply(layers[idx], inp, ps[idx], st[idx])
-        new_st_parts[idx] = sti
-    end
-    return inp, tuple(new_st_parts...)
+    out, head_st = apply(first(layers), inp, first(ps), first(st))
+    out, tail_st = __apply_seq(Base.tail(layers), out, Base.tail(ps), Base.tail(st))
+    return out, (head_st, tail_st...)
 end
 
 function __partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
