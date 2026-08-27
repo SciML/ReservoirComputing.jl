@@ -137,7 +137,9 @@ function addreadout!(
         ::AbstractReservoirComputer, output_matrix::AbstractMatrix,
         ps::NamedTuple, st::NamedTuple
     )
-    @assert hasproperty(ps, :readout)
+    hasproperty(ps, :readout) || throw(
+        ArgumentError("model parameters must contain a `readout` entry")
+    )
     new_readout = __set_readout_weight(ps.readout, output_matrix)
     return merge(ps, (readout = new_readout,)), st
 end

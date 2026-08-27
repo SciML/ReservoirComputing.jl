@@ -79,6 +79,21 @@ begin
             @test check_radius(sp, radius)
         end
 
+        @testset "add_jumps! validates public arguments" begin
+            @test_throws DimensionMismatch add_jumps!(
+                Xoshiro(1), zeros(Float32, 3, 4), 0.1f0, 1
+            )
+            @test_throws ArgumentError add_jumps!(
+                Xoshiro(1), zeros(Float32, 4, 4), 0.1f0, 1; start = 0
+            )
+            @test_throws ArgumentError add_jumps!(
+                Xoshiro(1), zeros(Float32, 4, 4), 0.1f0, 0
+            )
+            @test_throws ArgumentError add_jumps!(
+                Xoshiro(1), zeros(Float32, 4, 4), 0.1f0, 4
+            )
+        end
+
         @testset "Minimum complexity: $init" for init in [
                 delay_line,
                 delayline_backward,

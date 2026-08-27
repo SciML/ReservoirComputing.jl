@@ -64,7 +64,7 @@ consider cloning the repository:
 
 ```julia
 using Pkg
-Pkg.clone("https://github.com/SciML/ReservoirComputing.jl.git")
+Pkg.add(url = "https://github.com/SciML/ReservoirComputing.jl.git")
 ```
 
 or `dev` the package.

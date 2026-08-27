@@ -13,7 +13,7 @@ Readout layer based on support vector machines. Requires LIBSVM.jl.
 
   - `include_collect`: If `true` (default), training collects features immediately
     before this layer (as if a [`Collect()`](@ref) were inserted right before it).
-  - `kwags`: specific keyword arguments for LIBSVM elements.
+  - `kwargs`: Specific keyword arguments for LIBSVM elements.
 """
 @concrete struct SVMReadout <: AbstractReservoirTrainableLayer
     in_dims <: IntegerType
@@ -57,7 +57,12 @@ function wrap_functions_in_chain_call(ro::SVMReadout)
 end
 
 function addreadout!(rc::ReservoirChain, models, ps::NamedTuple, st::NamedTuple)
-    @assert propertynames(rc.layers) == propertynames(ps)
+    propertynames(rc.layers) == propertynames(ps) || throw(
+        ArgumentError(
+            "parameter keys $(propertynames(ps)) must match ReservoirChain layer keys " *
+                "$(propertynames(rc.layers))"
+        )
+    )
     new_vals = map(Base.OneTo(length(propertynames(rc.layers)))) do i
         getfield(rc.layers, i) isa SVMReadout ? merge(getfield(ps, i), (models = models,)) :
             getfield(ps, i)

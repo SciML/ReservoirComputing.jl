@@ -16,6 +16,10 @@ jobs:
       matrix:
         group:
           - Core
+          - Extensions
+          - Interface
+          - Layers
+          - Models
         julia-version: ["lts"]
     uses: "SciML/.github/.github/workflows/downgrade.yml@v1"
     with:

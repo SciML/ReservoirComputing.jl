@@ -299,7 +299,12 @@ function addreadout!(
         ps::NamedTuple,
         st::NamedTuple
     )
-    @assert propertynames(rc.layers) == propertynames(ps)
+    propertynames(rc.layers) == propertynames(ps) || throw(
+        ArgumentError(
+            "parameter keys $(propertynames(ps)) must match ReservoirChain layer keys " *
+                "$(propertynames(rc.layers))"
+        )
+    )
     new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end
