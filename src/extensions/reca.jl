@@ -204,7 +204,7 @@ end
     RECA(in_dims, out_dims, automaton;
         input_encoding=RandomMapping(),
         generations=8, state_modifiers=(),
-        readout_activation=identity)
+        readout_activation=identity, readout_in_dims=nothing)
 
 Construct a cellular–automata reservoir model.
 

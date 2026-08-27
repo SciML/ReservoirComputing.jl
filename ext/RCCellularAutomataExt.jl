@@ -1,6 +1,6 @@
 module RCCellularAutomataExt
 using ReservoirComputing: RECA, AbstractInputEncoding, ReservoirComputer,
-    IntegerType, LinearReadout, StatefulLayer
+    IntegerType, LinearReadout, StatefulLayer, __resolve_readout_in_dims
 import ReservoirComputing: RECACell, RECA, RandomMapping, RandomMaps
 using CellularAutomata: CellularAutomata, CellularAutomaton
 using Random: randperm
@@ -90,7 +90,8 @@ function RECA(
         input_encoding::AbstractInputEncoding = RandomMapping(),
         generations::Integer = 8,
         state_modifiers = (),
-        readout_activation = identity
+        readout_activation = identity,
+        readout_in_dims = nothing
     )
     rm = create_encoding(input_encoding, in_dims, generations)
     cell = RECACell(automaton, rm)
@@ -98,7 +99,10 @@ function RECA(
     mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
 
-    ro = LinearReadout(rm.states_size => out_dims, readout_activation)
+    ro_dims = __resolve_readout_in_dims(
+        readout_in_dims, mods, rm.states_size, Int(in_dims)
+    )
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
 
     return ReservoirComputer(StatefulLayer(cell), mods, ro)
 end

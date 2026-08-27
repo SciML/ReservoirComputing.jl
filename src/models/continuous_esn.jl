@@ -5,6 +5,7 @@
         init_bias = zeros32, init_state = randn32,
         equations = __continuous_esn_rhs!,
         state_modifiers = (), readout_activation = identity,
+        readout_in_dims = nothing,
         kwargs...)
 
 Continuous-time Echo State Network

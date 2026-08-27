@@ -3,7 +3,8 @@
                   num_delays=1, stride=1, leak_coefficient=1.0,
                   init_reservoir=rand_sparse, init_input=scaled_rand,
                   init_bias=zeros32, init_state=randn32, use_bias=false,
-                  state_modifiers=(), readout_activation=identity)
+                  state_modifiers=(), readout_activation=identity,
+                  readout_in_dims=nothing)
 
 Echo State Network with input delays [Fleddermann2025](@cite).
 
@@ -121,7 +122,7 @@ function InputDelayESN(
         in_dims::IntegerType,
         res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
-        state_modifiers = (), kwargs...
+        state_modifiers = (), readout_in_dims = nothing, kwargs...
     )
     input_mods = DelayLayer(in_dims; num_delays = num_delays, stride = stride)
     augmented_in_dims = in_dims * (num_delays + 1)
@@ -129,7 +130,8 @@ function InputDelayESN(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     st_mods = __wrap_layers(mods_tuple)
-    ro = LinearReadout(res_dims => out_dims, readout_activation)
+    ro_dims = __resolve_readout_in_dims(readout_in_dims, st_mods, res_dims, Int(in_dims))
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return InputDelayESN(input_mods, cell, st_mods, ro)
 end
 
@@ -169,7 +171,8 @@ end
              num_delays=1, stride=1, leak_coefficient=1.0,
              init_reservoir=rand_sparse, init_input=scaled_rand,
              init_bias=zeros32, init_state=randn32, use_bias=false,
-             state_modifiers=(), readout_activation=identity)
+             state_modifiers=(), readout_activation=identity,
+             readout_in_dims=nothing)
 
 Echo State Network with state delays [Fleddermann2025](@cite).
 
@@ -283,14 +286,17 @@ end
 function StateDelayESN(
         in_dims::IntegerType, res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_delays::Int = 2, stride::Int = 1, readout_activation = identity,
-        state_modifiers = (), kwargs...
+        state_modifiers = (), readout_in_dims = nothing, kwargs...
     )
     cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
     delay = DelayLayer(res_dims; num_delays = num_delays, stride = stride)
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (delay, state_modifiers...) : (delay, state_modifiers)
     mods = __wrap_layers(mods_tuple)
-    ro_in_dims = res_dims * (num_delays + 1)
+    delayed_state_dims = res_dims * (num_delays + 1)
+    ro_in_dims = __resolve_readout_in_dims(
+        readout_in_dims, mods, delayed_state_dims, Int(in_dims)
+    )
     ro = LinearReadout(ro_in_dims => out_dims, readout_activation)
 
     return StateDelayESN(cell, mods, ro)
@@ -330,7 +336,8 @@ end
                  leak_coefficient=1.0, init_reservoir=rand_sparse,
                  init_input=scaled_rand, init_bias=zeros32,
                  init_state=randn32, use_bias=false,
-                 state_modifiers=(), readout_activation=identity)
+                 state_modifiers=(), readout_activation=identity,
+                 readout_in_dims=nothing)
 
 Echo State Network with both input and state delays [Fleddermann2025](@cite).
 
@@ -471,7 +478,7 @@ function DelayESN(
         res_dims::Int, out_dims::IntegerType, activation = tanh;
         num_input_delays::Int = 1, input_stride::Int = 1, num_state_delays::Int = 1,
         state_stride::Int = 1, readout_activation = identity, state_modifiers = (),
-        kwargs...
+        readout_in_dims = nothing, kwargs...
     )
 
     input_delay = DelayLayer(in_dims; num_delays = num_input_delays, stride = input_stride)
@@ -483,7 +490,10 @@ function DelayESN(
         (state_delay, state_modifiers...) : (state_delay, state_modifiers)
     st_mods = __wrap_layers(mods_tuple)
     augmented_res_dims = res_dims * (num_state_delays + 1)
-    ro = LinearReadout(augmented_res_dims => out_dims, readout_activation)
+    ro_dims = __resolve_readout_in_dims(
+        readout_in_dims, st_mods, augmented_res_dims, Int(in_dims)
+    )
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return DelayESN(input_delay, cell, st_mods, ro)
 end
 
@@ -550,8 +560,8 @@ function __partial_apply(esn::__INPUT_DELAYED_ESN, inp, ps, st)
         esn.input_delay, inp, ps.input_delay, st.input_delay
     )
     res_state, st_res = apply(esn.reservoir, inp_delayed, ps.reservoir, st.reservoir)
-    out, st_mods = __apply_seq(
-        esn.state_modifiers, res_state, ps.state_modifiers, st.state_modifiers
+    out, st_mods = __apply_state_modifiers(
+        esn.state_modifiers, res_state, inp, ps.state_modifiers, st.state_modifiers
     )
     return out,
         (input_delay = st_input_delay, reservoir = st_res, state_modifiers = st_mods)

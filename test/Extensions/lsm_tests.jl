@@ -509,13 +509,21 @@ begin
             n_in, n_res, 1, (0.0, Float64(T_steps)), Tsit5();
             state_modifiers = (NLAT2(),), kwargs...,
         )
+        extended = LSM(
+            n_in, n_res, 1, (0.0, Float64(T_steps)), Tsit5();
+            state_modifiers = (Extend(Collect()),), kwargs...,
+        )
         ps_p, st_p = setup(MersenneTwister(15), plain)
         ps_m, st_m = setup(MersenneTwister(15), modded)
+        ps_e, st_e = setup(MersenneTwister(15), extended)
         data = 0.5 .+ 0.3 .* rand(MersenneTwister(16), Float64, n_in, T_steps)
         sp, _ = collectstates(plain, data, ps_p, st_p)
         sm, _ = collectstates(modded, data, ps_m, st_m)
+        se, _ = collectstates(extended, data, ps_e, st_e)
         @test size(sm, 2) == size(sp, 2)
         @test sm != sp
         @test all(isfinite, sm)
+        @test se[1:n_in, :] == data
+        @test size(ps_e.readout.weight, 2) == size(se, 1)
     end
 end

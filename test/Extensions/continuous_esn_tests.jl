@@ -231,16 +231,30 @@ begin
             abstol = 1.0e-10,
             state_modifiers = (NLAT2(),),
         )
+        esn_extended = ContinuousESN(
+            in_dim,
+            res_dim,
+            out_dim,
+            (0.0, 1.0),
+            Tsit5();
+            reltol = 1.0e-8,
+            abstol = 1.0e-10,
+            state_modifiers = (Extend(Collect()),),
+        )
 
         ps_p, st_p = setup(MersenneTwister(0), esn_plain)
         ps_m, st_m = setup(MersenneTwister(0), esn_mod)
+        ps_e, st_e = setup(MersenneTwister(0), esn_extended)
         data = randn(Float32, in_dim, T_steps)
 
         sp, _ = collectstates(esn_plain, data, ps_p, st_p)
         sm, _ = collectstates(esn_mod, data, ps_m, st_m)
+        se, _ = collectstates(esn_extended, data, ps_e, st_e)
         @test size(sm) == size(sp)
         @test all(isfinite, sm)
         @test sm != sp
+        @test se[1:in_dim, :] == data
+        @test size(ps_e.readout.weight, 2) == size(se, 1)
     end
 
     @testset "ContinuousESN: custom init eltype propagates" begin

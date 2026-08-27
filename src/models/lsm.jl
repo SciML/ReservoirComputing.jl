@@ -4,7 +4,8 @@
         feature_map=ExponentialSpikeFilter(),
         use_bias=false, init_reservoir=dale_sparse, init_input=scaled_rand,
         init_bias=zeros32, init_state=zeros32,
-        state_modifiers=(), readout_activation=identity, kwargs...)
+        state_modifiers=(), readout_activation=identity,
+        readout_in_dims=nothing, kwargs...)
 
 Liquid State Machine ([Maass2002](@cite)): [`LSMCell`](@ref), optional
 `state_modifiers`, and [`LinearReadout`](@ref).
