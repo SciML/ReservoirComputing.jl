@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parallel reservoirs for spatiotemporal chaos · ReservoirComputing.jl</title><meta name="title" content="Parallel reservoirs for spatiotemporal chaos · ReservoirComputing.jl"/><meta property="og:title" content="Parallel reservoirs for spatiotemporal chaos · ReservoirComputing.jl"/><meta property="twitter:title" content="Parallel reservoirs for spatiotemporal chaos · ReservoirComputing.jl"/><meta name="description" content="Documentation for ReservoirComputing.jl."/><meta property="og:description" content="Documentation for ReservoirComputing.jl."/><meta property="twitter:description" content="Documentation for ReservoirComputing.jl."/><meta property="og:url" content="https://docs.sciml.ai/ReservoirComputing/stable/examples/ks_pathak/"/><meta property="twitter:url" content="https://docs.sciml.ai/ReservoirComputing/stable/examples/ks_pathak/"/><link rel="canonical" href="https://docs.sciml.ai/ReservoirComputing/stable/examples/ks_pathak/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/documentercitations/citations-hover.css" rel="stylesheet" type="text/css"/><link href="../../assets/documentercitations/citations.css" rel="stylesheet" type="text/css"/><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><script src="../../assets/documentercitations/citations-data.js"></script><script src="../../assets/documentercitations/citations-hover.js"></script><script src="../../assets/documentercitations/citations-backlinks.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ReservoirComputing.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ReservoirComputing.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><a class="tocitem" href="../../tutorials/getting_started/">Getting Started with ReservoirComputing.jl</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/scratch/">Building a model from scratch</a></li><li><a class="tocitem" href="../../tutorials/lorenz_basic/">Chaos forecasting with an ESN</a></li><li><a class="tocitem" href="../../tutorials/conceptors_morphing/">Morphing patterns with conceptors</a></li><li><a class="tocitem" href="../../tutorials/sciml_reservoir/">Continuous-time reservoirs from a SciMLProblem</a></li><li><a class="tocitem" href="../../tutorials/continuous_esn/">Continuous ESN — forecasting Lorenz</a></li><li><a class="tocitem" href="../../tutorials/lsm/">Liquid State Machine — a periodic orbit</a></li><li><a class="tocitem" href="../../tutorials/ngrc/">Fitting a Next Generation Reservoir Computer</a></li><li><a class="tocitem" href="../../tutorials/deep_esn/">Deep Echo State Networks</a></li><li><a class="tocitem" href="../../tutorials/train/">Training Reservoir Computing Models</a></li><li><a class="tocitem" href="../../tutorials/reca/">Reservoir Computing with Cellular Automata</a></li><li><a class="tocitem" href="../../tutorials/saveload/">Saving and loading models</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../model_es2n/">Building a model to add to ReservoirComputing.jl</a></li><li class="is-active"><a class="tocitem" href>Parallel reservoirs for spatiotemporal chaos</a><ul class="internal"><li><a class="tocitem" href="#Generating-the-data"><span>Generating the data</span></a></li><li><a class="tocitem" href="#Local,-overlapping-reservoirs"><span>Local, overlapping reservoirs</span></a></li><li><a class="tocitem" href="#Training"><span>Training</span></a></li><li><a class="tocitem" href="#Synchronizing-and-predicting-in-parallel"><span>Synchronizing and predicting in parallel</span></a></li><li><a class="tocitem" href="#Results"><span>Results</span></a></li></ul></li><li><a class="tocitem" href="../kdv_soliton/">A hydrodynamic reservoir: KdV solitons</a></li></ul></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="../../api/layers/">Layers</a></li><li><a class="tocitem" href="../../api/models/">Models</a></li><li><a class="tocitem" href="../../api/conceptors/">Conceptors</a></li><li><a class="tocitem" href="../../api/utils/">Utilities</a></li><li><a class="tocitem" href="../../api/train/">Train</a></li><li><a class="tocitem" href="../../api/predict/">Predict</a></li><li><a class="tocitem" href="../../api/states/">States</a></li><li><a class="tocitem" href="../../api/inits/">Initializers</a></li><li><a class="tocitem" href="../../api/developer/">Developer Interfaces</a></li><li><a class="tocitem" href="../../api/reexports/">Reexported API</a></li></ul></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Parallel reservoirs for spatiotemporal chaos</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Parallel reservoirs for spatiotemporal chaos</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/examples/ks_pathak.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Parallel-reservoirs-for-spatiotemporal-signals"><a class="docs-heading-anchor" href="#Parallel-reservoirs-for-spatiotemporal-signals">Parallel reservoirs for spatiotemporal signals</a><a id="Parallel-reservoirs-for-spatiotemporal-signals-1"></a><a class="docs-heading-anchor-permalink" href="#Parallel-reservoirs-for-spatiotemporal-signals" title="Permalink"></a></h1><p>(<a href="../../references/#Pathak2018PRL" id="Pathak2018PRL-cite-1">Pathak <em>et al.</em>, 2018</a>) predicts the Kuramoto-Sivashinsky (KS) equation, a spatially extended chaotic PDE, by tiling the domain with many small, overlapping echo state networks instead of one huge one: each reservoir only ever sees a local patch of the domain (plus a little overlap from its neighbors). This example reproduces that architecture in ReservoirComputing.jl. To keep the build fast the reservoir/data sizes here are much smaller than the paper&#39;s (single machine, ~10s of seconds vs. their cluster run). The architecture is otherwise the same: local weighted input layers, sparse reservoirs, the quadratic readout trick from (<a href="../../references/#Pathak2017" id="Pathak2017-cite-3">Pathak <em>et al.</em>, 2017</a>) (<a href="../../api/states/#ReservoirComputing.NLAT1"><code>NLAT1</code></a>), and ridge regression.</p><h2 id="Generating-the-data"><a class="docs-heading-anchor" href="#Generating-the-data">Generating the data</a><a id="Generating-the-data-1"></a><a class="docs-heading-anchor-permalink" href="#Generating-the-data" title="Permalink"></a></h2><p>The KS equation, <span>$u_t = -u u_x - u_{xx} - u_{xxxx}$</span> on a periodic domain, has no closed-form solution, so training data comes from simulating it. Pathak et al. integrate it with the ETDRK4 exponential time-differencing scheme of Kassam and Trefethen; we do the same:</p><pre><code class="language-julia hljs">using ReservoirComputing
+using LuxCore: setup, apply
+using FFTW, Random, Statistics, Plots
+
+function ks_etdrk4(u0::AbstractVector, d::Real, dt::Real, nstep::Integer)
+    n = length(u0)
+    k = (2π / d) .* vcat(0:(n ÷ 2 - 1), 0, (-n ÷ 2 + 1):-1)
+    L = k .^ 2 .- k .^ 4
+    E, E2 = exp.(dt .* L), exp.(dt .* L ./ 2)
+    M = 16
+    r = [exp(im * π * (j - 0.5) / M) for j in 1:M]
+    LR = dt .* L .* ones(1, M) .+ ones(n) * r&#39;
+    Q = dt .* real.(vec(mean((exp.(LR ./ 2) .- 1) ./ LR, dims = 2)))
+    f1 = dt .* real.(vec(mean((-4 .- LR .+ exp.(LR) .* (4 .- 3LR .+ LR .^ 2)) ./ LR .^ 3, dims = 2)))
+    f2 = dt .* real.(vec(mean((2 .+ LR .+ exp.(LR) .* (-2 .+ LR)) ./ LR .^ 3, dims = 2)))
+    f3 = dt .* real.(vec(mean((-4 .- 3LR .- LR .^ 2 .+ exp.(LR) .* (4 .- LR)) ./ LR .^ 3, dims = 2)))
+    g = -0.5im .* k
+    nonlinear(w) = g .* fft(real(ifft(w)) .^ 2)
+
+    v = fft(u0)
+    uu = zeros(n, nstep + 1)
+    uu[:, 1] .= u0
+    for step in 1:nstep
+        Nv = nonlinear(v)
+        a = E2 .* v .+ Q .* Nv
+        Na = nonlinear(a)
+        b = E2 .* v .+ Q .* Na
+        Nb = nonlinear(b)
+        c = E2 .* a .+ Q .* (2 .* Nb .- Nv)
+        Nc = nonlinear(c)
+        v = E .* v .+ Nv .* f1 .+ 2 .* (Na .+ Nb) .* f2 .+ Nc .* f3
+        v = fft(real.(ifft(v))) # re-project onto real-valued fields each step:
+        # FFT round-off slowly breaks the Hermitian symmetry that `ifft` assumes,
+        # which is otherwise amplified by the stiff high-wavenumber modes over
+        # tens of thousands of steps.
+        uu[:, step + 1] .= real.(ifft(v))
+    end
+    return uu
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">ks_etdrk4 (generic function with 1 method)</code></pre><p>Same domain and time step as the paper&#39;s own single-reservoir KS demo:</p><pre><code class="language-julia hljs">Random.seed!(42)
+N, d, dt = 64, 22.0, 0.25
+u0 = 0.6 .* (-1 .+ 2 .* rand(N))
+train_length, discard, sync_length, predict_length = 20_000, 500, 32, 800
+uu = ks_etdrk4(u0, d, dt, discard + train_length + sync_length + predict_length)
+data = Float32.(0.5 .* uu) # sigma = 0.5, matches the paper&#39;s input scaling
+size(data)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(64, 21333)</code></pre><h2 id="Local,-overlapping-reservoirs"><a class="docs-heading-anchor" href="#Local,-overlapping-reservoirs">Local, overlapping reservoirs</a><a id="Local,-overlapping-reservoirs-1"></a><a class="docs-heading-anchor-permalink" href="#Local,-overlapping-reservoirs" title="Permalink"></a></h2><p>Split the <code>N</code> spatial points into <code>G</code> contiguous chunks. Each chunk gets its own reservoir, whose input window is its chunk plus <code>locality</code> points wrapped in from each neighbor. The overlap is what lets a purely local model still capture the (finite-speed) spatial coupling of the PDE.</p><pre><code class="language-julia hljs">G, locality = 4, 4
+chunk_size = N ÷ G
+nin = chunk_size + 2locality
+res_size = 21 * nin # a whole multiple of nin, close to the paper&#39;s node count
+
+function group_window(g)
+    chunk_begin, chunk_end = (g - 1) * chunk_size + 1, g * chunk_size
+    rear = mod1.((chunk_begin - locality):(chunk_begin - 1), N)
+    fwd = mod1.((chunk_end + 1):(chunk_end + locality), N)
+    return vcat(rear, chunk_begin:chunk_end, fwd), chunk_begin:chunk_end
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">group_window (generic function with 1 method)</code></pre><p>Each local model is a plain <a href="../../api/layers/#ReservoirComputing.ESNCell"><code>ESNCell</code></a> with a <a href="../../api/inits/weighted_init/#weighted_init"><code>weighted_init</code></a> input layer (so each spatial input only feeds a private block of reservoir nodes, as in the paper) and the <a href="../../api/states/#ReservoirComputing.NLAT1"><code>NLAT1</code></a> quadratic state transform before the readout.</p><pre><code class="language-julia hljs">function local_model(rng)
+    return ReservoirChain(
+        StatefulLayer(ESNCell(nin =&gt; res_size;
+            init_reservoir = rand_sparse(; radius = 0.6, sparsity = 3 / res_size),
+            init_input = weighted_init(; scaling = 0.5))),
+        NLAT1(),
+        LinearReadout(res_size =&gt; chunk_size)
+    )
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">local_model (generic function with 1 method)</code></pre><h2 id="Training"><a class="docs-heading-anchor" href="#Training">Training</a><a id="Training-1"></a><a class="docs-heading-anchor-permalink" href="#Training" title="Permalink"></a></h2><p>Each reservoir is trained independently: its input is the windowed (own + overlap) data, its target is its own chunk one step ahead.</p><pre><code class="language-julia hljs">rng = MersenneTwister(17)
+models, pss, sts, own_idx = Vector{Any}(undef, G), Vector{Any}(undef, G),
+    Vector{Any}(undef, G), Vector{UnitRange{Int}}(undef, G)
+
+for g in 1:G
+    window_idx, own = group_window(g)
+    own_idx[g] = own
+    models[g] = local_model(rng)
+    ps, st = setup(rng, models[g])
+    train_in = data[window_idx, 1:(discard + train_length)]
+    train_target = data[own, 2:(discard + train_length + 1)]
+    pss[g], sts[g] = train(models[g], train_in, train_target, ps, st;
+        objective = RidgeRegression(1.0f-4), washout = discard)
+end</code></pre><h2 id="Synchronizing-and-predicting-in-parallel"><a class="docs-heading-anchor" href="#Synchronizing-and-predicting-in-parallel">Synchronizing and predicting in parallel</a><a id="Synchronizing-and-predicting-in-parallel-1"></a><a class="docs-heading-anchor-permalink" href="#Synchronizing-and-predicting-in-parallel" title="Permalink"></a></h2><p>To start an autonomous forecast, every local reservoir first needs to synchronize its internal state to the true, windowed trajectory (teacher forcing). After that, prediction runs in lock step: at each step every group calls <code>apply</code> on its own last prediction plus its neighbors&#39; last predictions, exactly mirroring the overlap it was trained on.</p><pre><code class="language-julia hljs">sync_start = discard + train_length
+for g in 1:G
+    window_idx, _ = group_window(g)
+    for i in 1:sync_length
+        _, sts[g] = apply(models[g], data[window_idx, sync_start + i], pss[g], sts[g])
+    end
+end
+
+pred_start = sync_start + sync_length
+last_out = [data[own_idx[g], pred_start] for g in 1:G]
+predicted = zeros(Float32, N, predict_length)
+for step in 1:predict_length
+    new_out = Vector{Vector{Float32}}(undef, G)
+    for g in 1:G
+        rear = last_out[mod1(g - 1, G)][(end - locality + 1):end]
+        fwd = last_out[mod1(g + 1, G)][1:locality]
+        y, sts[g] = apply(models[g], vcat(rear, last_out[g], fwd), pss[g], sts[g])
+        new_out[g] = vec(y)
+    end
+    predicted[:, step] .= reduce(vcat, new_out)
+    global last_out = new_out
+end</code></pre><h2 id="Results"><a class="docs-heading-anchor" href="#Results">Results</a><a id="Results-1"></a><a class="docs-heading-anchor-permalink" href="#Results" title="Permalink"></a></h2><p>The paper reports prediction horizons of a handful of Lyapunov times before the chaotic divergence takes over; <code>lambda_max = 0.05</code> below is their reported value for this domain size (<span>$d=22$</span>).</p><pre><code class="language-julia hljs">truth = data[:, (pred_start + 1):(pred_start + predict_length)]
+lambda_max = 0.05
+lyap_time = (1:predict_length) .* dt .* lambda_max
+
+rmse = vec(sqrt.(mean((predicted .- truth) .^ 2, dims = 1)))
+valid_time = lyap_time[findfirst(&gt;(0.4std(truth)), rmse)]
+
+hm(field, title) = heatmap(lyap_time, 1:N, field;
+    title, clims = (-3, 3), color = :balance, colorbar = false)
+p1, p2, p3 = hm(truth, &quot;Truth&quot;), hm(predicted, &quot;Prediction&quot;),
+    hm(predicted .- truth, &quot;Error&quot;)
+vline!.((p1, p2, p3), Ref([valid_time]); color = :black, linestyle = :dash, label = false)
+
+plot(p1, p2, p3; layout = (3, 1), xlabel = &quot;Lyapunov time&quot;, ylabel = &quot;space&quot;,
+    colorbar = true, size = (700, 850), left_margin = 3Plots.mm)</code></pre><img src="e6cf79d0.svg" alt="Example block output"/><p>The dashed line marks where the space-averaged RMSE first crosses 40% of the field&#39;s standard deviation, a common &quot;valid prediction time&quot; cutoff in this literature. Up to that point the parallel reservoir tracks the true field closely; afterwards the chaotic dynamics amplify the small initial errors until prediction and truth fully decorrelate, the qualitative result reported in the paper (they report about eight Lyapunov times at their full scale), achieved here with several small, purely local models instead of one reservoir that has to see the whole domain at once.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../model_es2n/">« Building a model to add to ReservoirComputing.jl</a><a class="docs-footer-nextpage" href="../kdv_soliton/">A hydrodynamic reservoir: KdV solitons »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 27 August 2026 16:48">Thursday 27 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
