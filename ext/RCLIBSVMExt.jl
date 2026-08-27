@@ -95,7 +95,9 @@ function addreadout!(
     )
     # Only valid if the model's readout is actually SVMReadout
     if rc.readout isa SVMReadout
-        @assert hasproperty(ps, :readout)
+        hasproperty(ps, :readout) || throw(
+            ArgumentError("model parameters must contain a `readout` entry")
+        )
         new_readout = __set_readout_models(ps.readout, models)
         return merge(ps, (readout = new_readout,)), st
     end

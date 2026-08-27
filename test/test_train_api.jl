@@ -4,6 +4,23 @@ using LinearAlgebra
 using ReservoirComputing
 using LuxCore: setup
 
+@testset "addreadout! validates parameter structure" begin
+    rng = MersenneTwister(901)
+
+    model = ESN(2, 4, 1)
+    invalid_ps = (; reservoir = NamedTuple(), state_modifiers = ())
+    @test_throws ArgumentError ReservoirComputing.addreadout!(
+        model, zeros(Float32, 1, 4), invalid_ps, NamedTuple()
+    )
+
+    chain = ReservoirChain(Collect(), LinearReadout(2 => 1))
+    chain_ps, chain_st = setup(rng, chain)
+    invalid_chain_ps = NamedTuple{(:layer_1,)}((chain_ps.layer_1,))
+    @test_throws ArgumentError ReservoirComputing.addreadout!(
+        chain, zeros(Float32, 1, 2), invalid_chain_ps, chain_st
+    )
+end
+
 @testset "train model-level smoke" begin
     rng = MersenneTwister(42)
     in_dims, res_dims, out_dims = 3, 12, 2

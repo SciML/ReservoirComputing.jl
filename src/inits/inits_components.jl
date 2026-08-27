@@ -141,6 +141,22 @@ function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Nothing)
     return reservoir_matrix
 end
 
+function __validate_add_jumps_arguments(reservoir_matrix, jump_size, start)
+    N = size(reservoir_matrix, 1)
+    N == size(reservoir_matrix, 2) || throw(
+        DimensionMismatch(
+            "reservoir_matrix must be square, got size $(size(reservoir_matrix))"
+        )
+    )
+    1 ≤ start ≤ N || throw(
+        ArgumentError("start must be in 1:$N, got $start")
+    )
+    1 ≤ jump_size < N || throw(
+        ArgumentError("jump_size must be in 1:$(N - 1), got $jump_size")
+    )
+    return N
+end
+
 """
     AbstractSignPattern
 
@@ -626,7 +642,7 @@ function add_jumps!(
         start::Integer = 1,
         kwargs...
     )
-    N = size(reservoir_matrix, 1)
+    N = __validate_add_jumps_arguments(reservoir_matrix, jump_size, start)
     g = gcd(N, jump_size)
     ring_len = (N % jump_size == 0) ? div(N, g) : fld(N, jump_size)
     weights = fill(weight, ring_len)
@@ -646,10 +662,7 @@ function add_jumps!(
         start::Integer = 1,
         kwargs...
     )
-    N = size(reservoir_matrix, 1)
-    @assert N == size(reservoir_matrix, 2) "reservoir_matrix must be square"
-    @assert 1 ≤ start ≤ N "start must be in 1:N"
-    @assert 1 ≤ jump_size < N "jump_size must be in 1:(N-1)"
+    N = __validate_add_jumps_arguments(reservoir_matrix, jump_size, start)
 
     divisible = (N % jump_size == 0)
 
