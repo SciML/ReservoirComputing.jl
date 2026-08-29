@@ -36,26 +36,31 @@ reservoir computing models. More specifically the software offers:
 - Base layers for reservoir computing model construction
   such as `ReservoirComputer` and `ReservoirChain`.
 - Additional, lower level building blocks for custom reservoir computers,
-  such as `Collect`, `ESNCell`, `SciMLProblemReservoir`, `DelayLayer`,
-  `NonlinearFeaturesLayer`, `MemoryESNCell`, `LinearReadout`, `SVMReadout`,
-  and more
+  such as `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`,
+  `MemoryESNCell`, `LinearReadout`, `SVMReadout`, and more
 - Fully built models:
-    + [Echo state networks](https://doi.org/10.1126/science.1091277) `ESN`
-    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepESN`
-    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250) `DelayESN`/`InputDelayESN`/`StateDelayESN`
-    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) `ES2N`
-    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) `EuSN`
-    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) `HybridESN`
-    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) `EIESN`/`AdditiveEIESN`
-    + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113) `SVESM`
-    + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6) `LIFESN`
-    + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
-    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
-    + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) `RMNCell`/`RMNESN` / `RMNResESN`
-    + [Continuous-time echo state networks](https://doi.org/10.1007/978-3-642-35289-8_36) `ContinuousESN`
+    + ESN variations:
+        * [Echo state networks](https://doi.org/10.1126/science.1091277) `ESN`
+        * [Echo state networks with delays](https://doi.org/10.1063/5.0258250) `DelayESN`/`InputDelayESN`/`StateDelayESN`
+        * [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045) `ES2N`
+        * [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411) `EuSN`
+        * [Hybrid echo state networks](https://doi.org/10.1063/1.5028373) `HybridESN`
+        * [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708) `EIESN`/`AdditiveEIESN`
+        * [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113) `SVESM`
+        * [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
+        * [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) `RMNCell`/`RMNESN`/`RMNResESN`
+        * [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepESN`
+        * [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6) `LIFESN`
     + [Liquid state machines](https://doi.org/10.1162/089976602760407955) `LSM`
     + [Conceptors](https://arxiv.org/abs/1403.3369) `Conceptor`
+    + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
     + [Reservoir computing with cellular automata](https://arxiv.org/abs/1410.0162) `RECA`
+- Wrappers:
+    + [Deep reservoirs](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepReservoir`
+    + [Local information flow](https://doi.org/10.1007/s11071-025-10942-6) `LocalInformationFlow`
+- Continuous time reservoirs:
+    + `SciMLProblemReservoir`
+    + [Continuous-time echo state networks](https://doi.org/10.1007/978-3-642-35289-8_36) `ContinuousESN`
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
