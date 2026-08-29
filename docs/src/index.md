@@ -1,7 +1,8 @@
 # ReservoirComputing.jl
 
 ReservoirComputing.jl is a versatile and user-friendly Julia package designed
-for the implementation of Reservoir Computing models, such as Echo State Networks (ESNs).
+for the implementation of Reservoir Computing models, such as Echo State Networks (ESNs),
+liquid state machines, and conceptors.
 Reservoir Computing expands the input data into a higher-dimensional
 space, leveraging regression techniques for effective model training.
 This approach can be thought as a kernel method with an explicit kernel trick.
@@ -75,7 +76,8 @@ or `dev` the package.
   such as [`ReservoirChain`](@ref).
 - Additional, lower level building blocks for custom reservoir computers,
   such as [`Collect`](@ref), [`ESNCell`](@ref), [`ES2NCell`](@ref),
-  [`DelayLayer`](@ref), [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
+  [`SciMLProblemReservoir`](@ref), [`DelayLayer`](@ref),
+  [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
   [`SVMReadout`](@ref), and more.
 - Fully built models:
     + [Echo state networks](https://doi.org/10.1126/science.1091277)  [`ESN`](@ref)
@@ -90,6 +92,10 @@ or `dev` the package.
     + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966)  [`ResESN`](@ref)
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
     + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) [`RMNCell`](@ref)/[`RMNESN`](@ref)/[`RMNResESN`](@ref)
+    + [Continuous-time echo state networks](https://doi.org/10.1007/978-3-642-35289-8_36)  [`ContinuousESN`](@ref)
+    + [Liquid state machines](https://doi.org/10.1162/089976602760407955)  [`LSM`](@ref)
+    + [Conceptors](https://arxiv.org/abs/1403.3369)  [`Conceptor`](@ref)
+    + [Reservoir computing with cellular automata](https://arxiv.org/abs/1410.0162)  [`RECA`](@ref)
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through

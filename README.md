@@ -20,7 +20,8 @@
 # ReservoirComputing.jl
 
 ReservoirComputing.jl provides an efficient, modular and easy to use
-implementation of Reservoir Computing models such as Echo State Networks (ESNs).
+implementation of Reservoir Computing models such as Echo State Networks (ESNs),
+liquid state machines, and conceptors.
 For information on using this package please refer to the
 [stable documentation](https://docs.sciml.ai/ReservoirComputing/stable/).
 Use the
@@ -35,8 +36,9 @@ reservoir computing models. More specifically the software offers:
 - Base layers for reservoir computing model construction
   such as `ReservoirComputer` and `ReservoirChain`.
 - Additional, lower level building blocks for custom reservoir computers,
-  such as `Collect`, `ESNCell`, `DelayLayer`, `NonlinearFeaturesLayer`,
-  `MemoryESNCell`, `LinearReadout`, `SVMReadout`, and more
+  such as `Collect`, `ESNCell`, `SciMLProblemReservoir`, `DelayLayer`,
+  `NonlinearFeaturesLayer`, `MemoryESNCell`, `LinearReadout`, `SVMReadout`,
+  and more
 - Fully built models:
     + [Echo state networks](https://doi.org/10.1126/science.1091277) `ESN`
     + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002) `DeepESN`
@@ -50,6 +52,10 @@ reservoir computing models. More specifically the software offers:
     + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966) `ResESN`
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2) `NGRC`
     + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) `RMNCell`/`RMNESN` / `RMNResESN`
+    + [Continuous-time echo state networks](https://doi.org/10.1007/978-3-642-35289-8_36) `ContinuousESN`
+    + [Liquid state machines](https://doi.org/10.1162/089976602760407955) `LSM`
+    + [Conceptors](https://arxiv.org/abs/1403.3369) `Conceptor`
+    + [Reservoir computing with cellular automata](https://arxiv.org/abs/1410.0162) `RECA`
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
