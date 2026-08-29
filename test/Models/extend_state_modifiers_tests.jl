@@ -25,41 +25,71 @@ begin
 
     @testset "Extend receives the model input in state_modifiers" begin
         models = (
-            ESN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            ResESN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            ES2N(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            EuSN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            EIESN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            AdditiveEIESN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            LIFESN(3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            RMNESN(3, 4, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            RMNResESN(3, 4, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            InputDelayESN(3, 5, 1; num_delays = 1,
+            ESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            ResESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            ES2N(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            EuSN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            EIESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            AdditiveEIESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            LIFESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            RMNESN(
+                3, 4, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            RMNResESN(
+                3, 4, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            InputDelayESN(
+                3, 5, 1; num_delays = 1,
                 init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            StateDelayESN(3, 5, 1; num_delays = 1,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            StateDelayESN(
+                3, 5, 1; num_delays = 1,
                 init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            DelayESN(3, 5, 1; num_input_delays = 1, num_state_delays = 1,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            DelayESN(
+                3, 5, 1; num_input_delays = 1, num_state_delays = 1,
                 init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = (_EXTEND_MODIFIER,)),
-            DeepESN(3, 5, 1; depth = 1,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
+            DeepESN(
+                3, 5, 1; depth = 1,
                 init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = _EXTEND_MODIFIER),
-            DeepESN(3, 5, 1; depth = 2,
+                state_modifiers = _EXTEND_MODIFIER
+            ),
+            DeepESN(
+                3, 5, 1; depth = 2,
                 init_reservoir = _EXTEND_RESERVOIR_INIT,
-                state_modifiers = _EXTEND_MODIFIER),
-            NGRC(3, 1; num_delays = 1,
-                state_modifiers = (_EXTEND_MODIFIER,)),
+                state_modifiers = _EXTEND_MODIFIER
+            ),
+            NGRC(
+                3, 1; num_delays = 1,
+                state_modifiers = (_EXTEND_MODIFIER,)
+            ),
         )
 
         for model in models
