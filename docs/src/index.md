@@ -1,7 +1,8 @@
 # ReservoirComputing.jl
 
 ReservoirComputing.jl is a versatile and user-friendly Julia package designed
-for the implementation of Reservoir Computing models, such as Echo State Networks (ESNs).
+for the implementation of Reservoir Computing models, such as Echo State Networks (ESNs),
+liquid state machines, and conceptors.
 Reservoir Computing expands the input data into a higher-dimensional
 space, leveraging regression techniques for effective model training.
 This approach can be thought as a kernel method with an explicit kernel trick.
@@ -78,18 +79,28 @@ or `dev` the package.
   [`DelayLayer`](@ref), [`NonlinearFeaturesLayer`](@ref), [`LinearReadout`](@ref),
   [`SVMReadout`](@ref), and more.
 - Fully built models:
-    + [Echo state networks](https://doi.org/10.1126/science.1091277)  [`ESN`](@ref)
-    + [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002)  [`DeepESN`](@ref)
-    + [Echo state networks with delays](https://doi.org/10.1063/5.0258250)  [`DelayESN`](@ref)/[`InputDelayESN`](@ref)/[`StateDelayESN`](@ref)
-    + [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045)  [`ES2N`](@ref)
-    + [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411)  [`EuSN`](@ref)
-    + [Hybrid echo state networks](https://doi.org/10.1063/1.5028373)  [`HybridESN`](@ref)
-    + [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708)  [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
-    + [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113)  [`SVESM`](@ref)
-    + [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6)  [`LIFESN`](@ref)
-    + [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966)  [`ResESN`](@ref)
+    + ESN variations:
+        * [Echo state networks](https://doi.org/10.1126/science.1091277)  [`ESN`](@ref)
+        * [Echo state networks with delays](https://doi.org/10.1063/5.0258250)  [`DelayESN`](@ref)/[`InputDelayESN`](@ref)/[`StateDelayESN`](@ref)
+        * [Edge of stability echo state networks](https://doi.org/10.1109/tnnls.2024.3400045)  [`ES2N`](@ref)
+        * [Euler state networks](https://doi.org/10.1016/j.neucom.2024.127411)  [`EuSN`](@ref)
+        * [Hybrid echo state networks](https://doi.org/10.1063/1.5028373)  [`HybridESN`](@ref)
+        * [Neuromorphic reservoir computing](https://doi.org/10.1063/5.0282708)  [`EIESN`](@ref)/[`AdditiveEIESN`](@ref)
+        * [Support vector echo-state machine](https://doi.org/10.1109/TNN.2006.885113)  [`SVESM`](@ref)
+        * [Residual echo state networks](https://doi.org/10.1016/j.neucom.2024.127966)  [`ResESN`](@ref)
+        * [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) [`RMNCell`](@ref)/[`RMNESN`](@ref)/[`RMNResESN`](@ref)
+        * [Deep echo state networks](https://doi.org/10.1016/j.neunet.2018.08.002)  [`DeepESN`](@ref)
+        * [Local information flow echo state network](https://doi.org/10.1007/s11071-025-10942-6)  [`LIFESN`](@ref)
+    + [Liquid state machines](https://doi.org/10.1162/089976602760407955)  [`LSM`](@ref)
+    + [Conceptors](https://arxiv.org/abs/1403.3369)  [`Conceptor`](@ref)
     + [Next generation reservoir computing](https://doi.org/10.1038/s41467-021-25801-2)  [`NGRC`](@ref)
-    + [Reservoir memory networks](https://doi.org/10.14428/ESANN/2024.ES2024-117) [`RMNCell`](@ref)/[`RMNESN`](@ref)/[`RMNResESN`](@ref)
+    + [Reservoir computing with cellular automata](https://arxiv.org/abs/1410.0162)  [`RECA`](@ref)
+- Wrappers:
+    + [Deep reservoirs](https://doi.org/10.1016/j.neunet.2018.08.002)  [`DeepReservoir`](@ref)
+    + [Local information flow](https://doi.org/10.1007/s11071-025-10942-6)  [`LocalInformationFlow`](@ref)
+- Continuous time reservoirs:
+    + [`SciMLProblemReservoir`](@ref)
+    + [Continuous-time echo state networks](https://doi.org/10.1007/978-3-642-35289-8_36)  [`ContinuousESN`](@ref)
 - 20+ reservoir initializers and 5+ input layer initializers
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
