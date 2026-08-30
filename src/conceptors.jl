@@ -1057,9 +1057,9 @@ function optimal_aperture(
     isempty(apertures) && throw(ArgumentError("apertures must not be empty"))
     attenuations = [
         attenuation(
-                concept, ps, st;
-                conceptor = conceptor_matrix(correlation, aperture), kwargs...
-            ) for aperture in apertures
+            concept, ps, st;
+            conceptor = conceptor_matrix(correlation, aperture), kwargs...
+        ) for aperture in apertures
     ]
     return apertures[argmin(attenuations)], attenuations
 end
