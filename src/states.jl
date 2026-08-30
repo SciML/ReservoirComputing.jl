@@ -90,8 +90,7 @@ end
 @doc raw"""
     Extend(op)
 
-Wrapper layer that concatenates the reservoir state produced by `op` with the
-input that `Extend` receives.
+Wrapper layer that concatenates an input with the state produced by `op`.
 
 For an input vector or matrix `x` and a wrapped layer producing state `s`,
 `Extend` computes:
@@ -127,6 +126,12 @@ In this example the input to `Extend` is the initial value fed to
 [`ReservoirChain`](@ref). After `Extend`, the value in the chain will
 be the state returned by the [`StatefulLayer`](@ref), `vcat`ed with
 the input.
+
+When `Extend` is used in a model's `state_modifiers`, `op` receives the current
+reservoir features while the concatenated input is the input to the model (or to
+the current layer of a deep model). Automatic readout sizing assumes that `op`
+preserves the feature width; pass `readout_in_dims` to the model constructor when
+it does not.
 """
 @concrete struct Extend <: AbstractLuxWrapperLayer{:op}
     op <: AbstractLuxLayer
@@ -142,6 +147,15 @@ end
 function (ex::Extend)(inp, ps, st::NamedTuple)
     state, st_op = apply(ex.op, inp, ps.op, st.op)
     return vcat(inp, state), (; op = st_op)
+end
+
+@inline function __apply_state_modifier(ex::Extend, features, inp, ps, st)
+    state, st_op = apply(ex.op, features, ps.op, st.op)
+    return vcat(inp, state), (; op = st_op)
+end
+
+@inline function __state_modifier_output_dims(::Extend, state_dims::Int, input_dims::Int)
+    return input_dims + state_dims
 end
 
 Base.show(io::IO, ex::Extend) = print(io, "Extend(", ex.op, ")")

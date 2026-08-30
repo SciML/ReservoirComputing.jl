@@ -3,7 +3,7 @@
         alpha=1.0, beta=1.0, init_reservoir=rand_sparse, init_input=scaled_rand,
         init_bias=zeros32, init_state=randn32, use_bias=False(),
         state_modifiers=(), readout_activation=identity,
-        init_orthogonal=orthogonal)
+        init_orthogonal=orthogonal, readout_in_dims=nothing)
 
 Residual Echo State Network (ResESN) [Ceni2024](@cite).
 
@@ -46,6 +46,8 @@ Unlike [`ES2N`](@ref), where the skip and nonlinear weights are coupled as
   - `state_modifiers`: A layer or collection of layers applied to the reservoir
     state before the readout. Accepts a single layer, an `AbstractVector`, or a
     `Tuple`. Default: empty `()`.
+  - `readout_in_dims`: Readout input width for a custom dimension-changing
+    modifier. `nothing` infers the width for `Extend`. Default: `nothing`.
   - `readout_activation`: Activation for the linear readout. Default: `identity`.
 
 ## Inputs
@@ -91,13 +93,15 @@ function ResESN(
         out_dims::IntegerType, activation = tanh;
         readout_activation = identity,
         state_modifiers = (),
+        readout_in_dims = nothing,
         kwargs...
     )
     cell = StatefulLayer(ResESNCell(in_dims => res_dims, activation; kwargs...))
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)
-    ro = LinearReadout(res_dims => out_dims, readout_activation)
+    ro_dims = __resolve_readout_in_dims(readout_in_dims, mods, Int(res_dims), Int(in_dims))
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return ResESN(cell, mods, ro)
 end
 

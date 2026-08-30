@@ -32,7 +32,12 @@ and [`collectstates`](@ref) methods then compose the three components. Each
 component must accept its matching parameter and state entry and return
 `(output, updated_state)` through `LuxCore.apply`.
 
-`state_modifiers` must preserve the feature layout expected by `readout`.
+Ordinary `state_modifiers` receive the current feature array. An [`Extend`](@ref)
+modifier additionally receives the input to the model, or the input to the current
+layer of a deep model, and prepends that input to the wrapped modifier's output.
+High-level model constructors account for this extra width automatically when the
+operation wrapped by `Extend` preserves the feature width. Pass `readout_in_dims`
+when a custom modifier changes the feature width in another way.
 Parameter and state containers returned by the Lux generic functions have the
 named fields `reservoir`, `state_modifiers`, and `readout` in that order.
 

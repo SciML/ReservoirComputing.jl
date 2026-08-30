@@ -77,11 +77,65 @@ end
     return out, (head_st, tail_st...)
 end
 
+@inline function __apply_state_modifier(layer, features, _, ps, st)
+    return apply(layer, features, ps, st)
+end
+
+@inline function __apply_state_modifiers(
+        ::Tuple{}, features, _, ::Tuple{}, ::Tuple{}
+    )
+    return features, ()
+end
+
+@inline function __apply_state_modifiers(
+        modifiers::Tuple, features, inp, ps::Tuple, st::Tuple
+    )
+    out, head_st = __apply_state_modifier(
+        first(modifiers), features, inp, first(ps), first(st)
+    )
+    out, tail_st = __apply_state_modifiers(
+        Base.tail(modifiers), out, inp, Base.tail(ps), Base.tail(st)
+    )
+    return out, (head_st, tail_st...)
+end
+
+@inline function __state_modifier_output_dims(::Any, state_dims::Int, ::Int)
+    return state_dims
+end
+
+@inline function __state_modifier_output_dims(
+        ::Tuple{}, state_dims::Int, ::Int
+    )
+    return state_dims
+end
+
+
+@inline function __state_modifier_output_dims(
+        modifiers::Tuple, state_dims::Int, input_dims::Int
+    )
+    output_dims = __state_modifier_output_dims(first(modifiers), state_dims, input_dims)
+    return __state_modifier_output_dims(Base.tail(modifiers), output_dims, input_dims)
+end
+
+function __resolve_readout_in_dims(
+        readout_in_dims::Nothing, modifiers::Tuple, state_dims::Int, input_dims::Int
+    )
+    return __state_modifier_output_dims(modifiers, state_dims, input_dims)
+end
+
+function __resolve_readout_in_dims(
+        readout_in_dims::IntegerType, ::Tuple, ::Int, ::Int
+    )
+    readout_in_dims > 0 || throw(
+        ArgumentError("`readout_in_dims` must be positive, got $readout_in_dims.")
+    )
+    return Int(readout_in_dims)
+end
+
 function __partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
-    out,
-        st_mods = __apply_seq(
-        rc.state_modifiers, out, ps.state_modifiers, st.state_modifiers
+    out, st_mods = __apply_state_modifiers(
+        rc.state_modifiers, out, inp, ps.state_modifiers, st.state_modifiers
     )
     return out, (reservoir = st_res, state_modifiers = st_mods)
 end

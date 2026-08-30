@@ -117,8 +117,8 @@ end
     cell_output, cell_state = apply(
         first(cells), inp, first(ps_cells), first(st_cells)
     )
-    output, modifier_state = __apply_seq(
-        first(modifiers), cell_output, first(ps_modifiers), first(st_modifiers)
+    output, modifier_state = __apply_state_modifiers(
+        first(modifiers), cell_output, inp, first(ps_modifiers), first(st_modifiers)
     )
     final_output, remaining_cell_states, remaining_modifier_states =
         __apply_deep_layers(
