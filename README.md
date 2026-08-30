@@ -131,6 +131,10 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
     label="actual")
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Citing
 
 If you use this library in your work, please cite:
