@@ -34,7 +34,7 @@ begin
         @test pred_set isa StateSpaceSet
         @test stack(pred_set) ≈ pred_matrix
 
-        empty_set = StateSpaceSet{3, Float32}()
+        empty_set = view(train_set, 1:0)
         @test_throws ArgumentError train(model, empty_set, empty_set, ps, st)
         @test_throws ArgumentError predict(model, empty_set, ps, st)
     end
