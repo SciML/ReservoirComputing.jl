@@ -105,6 +105,8 @@ or `dev` the package.
 - 5+ reservoir states modification algorithms
 - Sparse matrix computation through
   [SparseArrays.jl](https://docs.julialang.org/en/v1/stdlib/SparseArrays/)
+- `StateSpaceSet` inputs and outputs for `train` and `predict` through
+  [StateSpaceSets.jl](https://github.com/JuliaDynamics/StateSpaceSets.jl)
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
 - Ridge training via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
