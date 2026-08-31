@@ -13,8 +13,7 @@ The notes below are extra conventions this library enforces on top of those.
 This repository uses [conventional commits](https://www.conventionalcommits.org/)
 (`docs:`, `fix:`, `feat:`, `chore:`, ...).
 
-Keep the subject short. Put what changed in the body. Do not add LLM
-`Co-Authored-By` trailers.
+Keep the subject short. Put what changed in the body.
 
 ## Naming
 
@@ -26,8 +25,9 @@ a formula line-for-line.
 
 ## Models and cells
 
-Models are three fields only: `(reservoir, state_modifiers, readout)`.
-Do not add config fields on the model wrapper.
+Most models are `(reservoir, state_modifiers, readout)`. Some add a layer
+(`knowledge_model` on `HybridESN`, `input_delay` on `DelayESN`). Do not add
+config fields on the model wrapper.
 
 Cells use `(in_dims, out_dims)::Pair` constructors and kwargs. Do not invent
 a new cell if `ESNCell(...; activation=identity)` already does the job.
