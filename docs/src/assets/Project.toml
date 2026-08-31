@@ -28,7 +28,7 @@ WeightInitializers = "d49dbf32-c5c2-4618-8acc-27bb2598ef2d"
 [compat]
 CellularAutomata = "0.0.6, 0.1"
 ConcreteStructs = "0.2"
-DataInterpolations = "6, 7, 8, 9.0"
+DataInterpolations = "6, 7, 8, 9.0, 10.1"
 Documenter = "1"
 DocumenterCitations = "1"
 DocumenterInterLinks = "1"
