@@ -1,6 +1,6 @@
 # Next Generation Reservoir Computing
 
-This tutorial shows how to use next generation reservoir computing [NGRC](@ref)
+This tutorial shows how to use next generation reservoir computing [`NGRC`](@ref)
 in ReservoirComputing.jl to model the chaotic Lorenz system.
 
 NGRC works differently compared to traditional reservoir computing. In NGRC
