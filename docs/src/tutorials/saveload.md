@@ -7,7 +7,7 @@ define the model, its parameters `ps`, and its states `st`. In this example we a
 going to show how saving and loading a model can be done leveraging
 [JLD2.jl](https://github.com/JuliaIO/JLD2.jl).
 
-Let's assume you have trained an [ESN](@ref), and you want to save it. Following the
+Let's assume you have trained an [`ESN`](@ref), and you want to save it. Following the
 [getting started](getting_started.md) example we are going to train the ESN on the Lorenz system:
 
 ```@example saveload

@@ -120,6 +120,7 @@ We welcome posts of relevant papers or ideas in the issues section.
 For deeper insights into the library's functionality, the API section in the
 documentation is a great resource. For any queries not suited for issues,
 please reach out to the lead developers via Slack or email.
+See [CONTRIBUTING.md](https://github.com/SciML/ReservoirComputing.jl/blob/master/CONTRIBUTING.md).
 
 ## Citing
 
