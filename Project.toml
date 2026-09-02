@@ -1,6 +1,6 @@
 name = "ReservoirComputing"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
-version = "0.12.39"
+version = "0.12.40"
 authors = ["Francesco Martinuzzi"]
 
 [deps]
@@ -22,6 +22,7 @@ DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StateSpaceSets = "40b095a5-5852-4c12-98c7-d43bf788e795"
 
 [extensions]
 RCCellularAutomataExt = "CellularAutomata"
@@ -30,6 +31,7 @@ RCMLJLinearModelsExt = "MLJLinearModels"
 RCODEReservoirExt = "DataInterpolations"
 RCODEReservoirSparseArraysExt = ["DataInterpolations", "SparseArrays"]
 RCSparseArraysExt = "SparseArrays"
+RCStateSpaceSetsExt = "StateSpaceSets"
 
 [compat]
 ArrayInterface = "7.19.0"
@@ -54,6 +56,7 @@ SciMLBase = "3"
 SciMLTesting = "2.4"
 Serialization = "1.10"
 SparseArrays = "1.10"
+StateSpaceSets = "2"
 Static = "1.2.0"
 StaticArrays = "1.9.8"
 Statistics = "1.10"
@@ -74,9 +77,10 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SciMLTesting = "09d9d899-5365-40a9-917a-5f67fddea283"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StateSpaceSets = "40b095a5-5852-4c12-98c7-d43bf788e795"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SafeTestsets", "SciMLTesting", "CellularAutomata", "DataInterpolations", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "OrdinaryDiffEq", "OrdinaryDiffEqCore", "OrdinaryDiffEqLowOrderRK", "Serialization", "SparseArrays", "StaticArrays", "Statistics"]
+test = ["Test", "SafeTestsets", "SciMLTesting", "CellularAutomata", "DataInterpolations", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "OrdinaryDiffEq", "OrdinaryDiffEqCore", "OrdinaryDiffEqLowOrderRK", "Serialization", "SparseArrays", "StateSpaceSets", "StaticArrays", "Statistics"]
