@@ -2,6 +2,12 @@
 versions = ["lts", "1", "pre"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
+["Core 32-bit"]
+group = "Core"
+versions = ["1"]
+os = ["ubuntu-latest"]
+arch = "x86"
+
 [Layers]
 versions = ["lts", "1", "pre"]
 os = ["ubuntu-latest", "windows-latest", "macos-latest"]
