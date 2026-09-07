@@ -1,4 +1,4 @@
-function _topology_spec(func::Symbol)
+function __topology_spec(func::Symbol)
     func === :delay_line! && return (:delay, :shift, 1)
     func === :backward_connection! && return (:fb, :shift, 1)
     func === :simple_cycle! && return (:cycle, nothing, nothing)
@@ -9,18 +9,18 @@ function _topology_spec(func::Symbol)
     return throw(ArgumentError("@topology unknown building block `$func`"))
 end
 
-function _topology_kw(prefix::Symbol, param::Symbol)
+function __topology_kw(prefix::Symbol, param::Symbol)
     param === :permutation_matrix && return param
     startswith(String(param), String(prefix)) && return param
     return Symbol(prefix, :_, param)
 end
 
-function _topology_weight_kw(prefix::Symbol)
+function __topology_weight_kw(prefix::Symbol)
     prefix === :weight && return :weight
     return Symbol(prefix, :_weight)
 end
 
-function _topology_kws(ex)
+function __topology_kws(ex)
     kws = Dict{Symbol, Any}()
     Meta.isexpr(ex, :call) || return kws
     for arg in ex.args[2:end]
@@ -35,7 +35,7 @@ function _topology_kws(ex)
     return kws
 end
 
-function _topology_entry(stmt)
+function __topology_entry(stmt)
     prefix = nothing
     if Meta.isexpr(stmt, :(=), 2) && stmt.args[1] isa Symbol
         prefix, stmt = stmt.args
@@ -44,21 +44,21 @@ function _topology_entry(stmt)
     func isa Symbol && endswith(String(func), "!") || throw(
         ArgumentError("@topology expected a bang call, got $stmt")
     )
-    return prefix, func, _topology_kws(stmt)
+    return prefix, func, __topology_kws(stmt)
 end
 
-function _typed_kw(name, typ, default)
+function __topology_typed_kw(name, typ, default)
     return Expr(:kw, Expr(:(::), name, typ), default)
 end
 
-function _topology_expand(name::Symbol, body)
+function __topology_expand(name::Symbol, body)
     stmts = Meta.isexpr(body, :block) ?
         filter(s -> !(s isa LineNumberNode), body.args) : Any[body]
     isempty(stmts) && throw(
         ArgumentError("@topology requires at least one building block")
     )
 
-    entries = map(_topology_entry, stmts)
+    entries = map(__topology_entry, stmts)
     n_signs = count(e -> e[2] !== :permute_matrix!, entries)
     used = Set{Symbol}()
     function claim(kw)
@@ -71,7 +71,7 @@ function _topology_expand(name::Symbol, body)
     sign_kws = Any[]
     calls = Expr[]
     for (alias, func, kws) in entries
-        spec_prefix, extra, extra_default = _topology_spec(func)
+        spec_prefix, extra, extra_default = __topology_spec(func)
         weight_prefix = alias === nothing ? spec_prefix : alias
         weighted = func !== :permute_matrix!
         allowed = extra === nothing ? (:weight,) : (:weight, extra)
@@ -82,20 +82,20 @@ function _topology_expand(name::Symbol, body)
 
         args = Any[:rng, :reservoir_matrix]
         if weighted
-            wkw = claim(_topology_weight_kw(weight_prefix))
+            wkw = claim(__topology_weight_kw(weight_prefix))
             wdef = get(kws, :weight, nothing)
             wdef = wdef === nothing ? :(T(0.1f0)) :
                 wdef isa Number ? :(T($wdef)) : wdef
-            push!(sig, _typed_kw(wkw, :(Union{Number, AbstractVector}), wdef))
+            push!(sig, __topology_typed_kw(wkw, :(Union{Number, AbstractVector}), wdef))
             push!(args, :(T.($wkw)))
         end
         if extra !== nothing
             ekw = claim(
-                alias === nothing ? _topology_kw(spec_prefix, extra) : extra
+                alias === nothing ? __topology_kw(spec_prefix, extra) : extra
             )
             etype = extra === :permutation_matrix ?
                 :(Union{Nothing, AbstractMatrix}) : :Integer
-            push!(sig, _typed_kw(ekw, etype, get(kws, extra, extra_default)))
+            push!(sig, __topology_typed_kw(ekw, etype, get(kws, extra, extra_default)))
             push!(args, ekw)
         end
         bang = getfield(@__MODULE__, func)
@@ -104,7 +104,7 @@ function _topology_expand(name::Symbol, body)
                 splat = :kwargs
             else
                 splat = claim(Symbol(spec_prefix, :_kwargs))
-                push!(sign_kws, _typed_kw(splat, :NamedTuple, :(NamedTuple())))
+                push!(sign_kws, __topology_typed_kw(splat, :NamedTuple, :(NamedTuple())))
             end
             push!(calls, Expr(:call, bang, Expr(:parameters, :($splat...)), args...))
         else
@@ -113,8 +113,8 @@ function _topology_expand(name::Symbol, body)
     end
     push!(
         sig,
-        _typed_kw(:radius, :(Union{AbstractFloat, Nothing}), :nothing),
-        _typed_kw(:return_sparse, :Bool, :false),
+        __topology_typed_kw(:radius, :(Union{AbstractFloat, Nothing}), :nothing),
+        __topology_typed_kw(:return_sparse, :Bool, :false),
     )
     if n_signs == 1
         push!(sig, :(kwargs...))
@@ -211,5 +211,5 @@ macro topology(name, body)
     name isa Symbol || throw(
         ArgumentError("@topology first argument must be an identifier, got $name")
     )
-    return esc(_topology_expand(name, body))
+    return esc(__topology_expand(name, body))
 end
