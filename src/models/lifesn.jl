@@ -19,7 +19,7 @@ end
 @doc raw"""
     LIFESN(in_dims, res_dims, out_dims, activation=tanh;
         lookback_horizon=2, readout_activation=identity,
-        state_modifiers=(), kwargs...)
+        state_modifiers=(), readout_in_dims=nothing, kwargs...)
 
 Local Information Flow Echo State Network [Liu2025](@cite).
 
@@ -81,6 +81,8 @@ Composition:
   - `state_modifiers`: A layer or collection of layers applied to the reservoir
     state before the readout. Accepts a single layer, an `AbstractVector`, or a
     `Tuple`. Default: empty `()`.
+  - `readout_in_dims`: Readout input width for a custom dimension-changing
+    modifier. `nothing` infers the width for `Extend`. Default: `nothing`.
   - `readout_activation`: Activation for the linear readout. Default: `identity`.
 """
 @concrete struct LIFESN <:
@@ -96,6 +98,7 @@ function LIFESN(
         lookback_horizon::IntegerType = 2,
         readout_activation = identity,
         state_modifiers = (),
+        readout_in_dims = nothing,
         kwargs...
     )
     cell = StatefulLayer(
@@ -104,7 +107,8 @@ function LIFESN(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)
-    ro = LinearReadout(res_dims => out_dims, readout_activation)
+    ro_dims = __resolve_readout_in_dims(readout_in_dims, mods, Int(res_dims), Int(in_dims))
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return LIFESN(cell, mods, ro)
 end
 

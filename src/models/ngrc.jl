@@ -78,7 +78,7 @@ function NGRC(
     mods = __wrap_layers(mods_tuple_raw)
     if ro_dims === nothing
         n_taps = in_dims * (num_delays + 1)
-        ro_dims = __infer_ngrc_ro_dims(mods, n_taps)
+        ro_dims = __infer_ngrc_ro_dims(mods, Int(n_taps), Int(in_dims))
     end
     readout = LinearReadout(ro_dims => out_dims, readout_activation)
 
@@ -88,13 +88,14 @@ end
 # Measure the exact feature length feeding the readout by running a zero probe
 # vector through the already-constructed `features`/`state_modifiers` chain,
 # instead of assuming every feature function preserves the delayed-input length.
-function __infer_ngrc_ro_dims(mods::Tuple, n_taps::Int)
+function __infer_ngrc_ro_dims(mods::Tuple, n_taps::Int, input_dims::Int)
     rng = Random.default_rng()
     ps_mods = Tuple(initialparameters(rng, layer) for layer in mods)
     st_mods = Tuple(initialstates(rng, layer) for layer in mods)
     probe = zeros(n_taps)
+    input_probe = zeros(input_dims)
     try
-        out, _ = __apply_seq(mods, probe, ps_mods, st_mods)
+        out, _ = __apply_state_modifiers(mods, probe, input_probe, ps_mods, st_mods)
         return length(out)
     catch err
         throw(

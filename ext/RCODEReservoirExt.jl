@@ -147,14 +147,22 @@ end
 @inline __with_carry(st_res, u) = merge(st_res, (; carry = (copy(u),)))
 
 function __apply_modifiers_continuous(
-        modifiers::Tuple, states_matrix::AbstractMatrix, ps_mods, st_mods
+        modifiers::Tuple, states_matrix::AbstractMatrix, inputs::AbstractMatrix,
+        ps_mods, st_mods
     )
     isempty(modifiers) && return states_matrix, st_mods
     n_samples = size(states_matrix, 2)
+    size(inputs, 2) == n_samples || throw(
+        DimensionMismatch(
+            "continuous reservoir states and inputs must have the same number " *
+                "of samples, got $n_samples and $(size(inputs, 2))."
+        )
+    )
     src_cols = eachcol(states_matrix)
+    input_cols = eachcol(inputs)
 
-    first_col, new_st = ReservoirComputing.__apply_seq(
-        modifiers, first(src_cols), ps_mods, st_mods
+    first_col, new_st = ReservoirComputing.__apply_state_modifiers(
+        modifiers, first(src_cols), first(input_cols), ps_mods, st_mods
     )
     # `similar(first_col, ...)` — not `similar(states_matrix, ...)` — so the
     # output matrix takes the modifier output's eltype. If a modifier
@@ -162,9 +170,11 @@ function __apply_modifiers_continuous(
     # not be silently truncated back to the reservoir state's eltype.
     output = similar(first_col, length(first_col), n_samples)
     output[:, 1] .= first_col
-    for (idx, src_col) in Iterators.drop(enumerate(src_cols), 1)
-        modified_col, new_st = ReservoirComputing.__apply_seq(
-            modifiers, src_col, ps_mods, new_st
+    for (idx, (src_col, input_col)) in Iterators.drop(
+            enumerate(zip(src_cols, input_cols)), 1
+        )
+        modified_col, new_st = ReservoirComputing.__apply_state_modifiers(
+            modifiers, src_col, input_col, ps_mods, new_st
         )
         output[:, idx] .= modified_col
     end
@@ -219,7 +229,8 @@ function __collectstates(
 
     raw_states = __sample(res.sampler, sol)
     modified_states, st_mods = __apply_modifiers_continuous(
-        rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
+        rc.state_modifiers, raw_states, data,
+        ps.state_modifiers, st.state_modifiers
     )
 
     newst = (
@@ -312,8 +323,9 @@ function __predict(
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
-            state_after_mods, st_mods = ReservoirComputing.__apply_seq(
-                rc.state_modifiers, current_state, ps.state_modifiers, st_mods
+            state_after_mods, st_mods = ReservoirComputing.__apply_state_modifiers(
+                rc.state_modifiers, current_state, current_input,
+                ps.state_modifiers, st_mods
             )
         else
             state_after_mods = current_state
@@ -347,6 +359,7 @@ function ReservoirComputing.ContinuousESN(
         state_modifiers = (),
         readout_activation = identity,
         use_jac_prototype::Bool = false,
+        readout_in_dims = nothing,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -379,7 +392,10 @@ function ReservoirComputing.ContinuousESN(
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)
 
-    readout = LinearReadout(res_dims => out_dims, readout_activation)
+    ro_dims = ReservoirComputing.__resolve_readout_in_dims(
+        readout_in_dims, mods, Int(res_dims), Int(in_dims)
+    )
+    readout = LinearReadout(ro_dims => out_dims, readout_activation)
     return ContinuousESN(cell, mods, readout)
 end
 
@@ -441,7 +457,8 @@ function __collectstates(
 
     raw_states = __sample(TerminalStateSampling(), sol)
     modified_states, st_mods = __apply_modifiers_continuous(
-        rc.state_modifiers, raw_states, ps.state_modifiers, st.state_modifiers
+        rc.state_modifiers, raw_states, data,
+        ps.state_modifiers, st.state_modifiers
     )
 
     newst = (
@@ -512,8 +529,9 @@ function __predict(
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
-            state_after_mods, st_mods = ReservoirComputing.__apply_seq(
-                rc.state_modifiers, current_state, ps.state_modifiers, st_mods
+            state_after_mods, st_mods = ReservoirComputing.__apply_state_modifiers(
+                rc.state_modifiers, current_state, current_input,
+                ps.state_modifiers, st_mods
             )
         else
             state_after_mods = current_state
@@ -548,6 +566,7 @@ function ReservoirComputing.LSM(
         init_state = zeros32,
         state_modifiers = (),
         readout_activation = identity,
+        readout_in_dims = nothing,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -568,9 +587,11 @@ function ReservoirComputing.LSM(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)
-    readout = LinearReadout(
-        __feature_dim(feature_map, res_dims) => out_dims, readout_activation
+    feature_dims = __feature_dim(feature_map, res_dims)
+    ro_dims = ReservoirComputing.__resolve_readout_in_dims(
+        readout_in_dims, mods, feature_dims, Int(in_dims)
     )
+    readout = LinearReadout(ro_dims => out_dims, readout_activation)
     return LSM(cell, mods, readout)
 end
 
@@ -846,7 +867,8 @@ function __collectstates(
     )
 
     modified_states, st_mods = __apply_modifiers_continuous(
-        rc.state_modifiers, features, ps.state_modifiers, st.state_modifiers
+        rc.state_modifiers, features, data,
+        ps.state_modifiers, st.state_modifiers
     )
     newst = (
         reservoir = __with_carry(
@@ -945,8 +967,9 @@ function __predict(
         end
 
         if !isempty(rc.state_modifiers)
-            state_after_mods, st_mods = ReservoirComputing.__apply_seq(
-                rc.state_modifiers, features_col, ps.state_modifiers, st_mods
+            state_after_mods, st_mods = ReservoirComputing.__apply_state_modifiers(
+                rc.state_modifiers, features_col, current_input,
+                ps.state_modifiers, st_mods
             )
         else
             state_after_mods = features_col

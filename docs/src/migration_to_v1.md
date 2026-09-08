@@ -79,3 +79,16 @@ require changes at call sites.
 
 Its tests now cover element types, dimensions, partial application, deterministic seeded
 output, state/model column partitioning, scaling bounds, and invalid dimensions.
+
+## Input-extended reservoir states
+
+`Extend` can be passed in `state_modifiers` to prepend the current model input to the
+wrapped modifier's output:
+
+```julia
+model = ESN(3, 100, 3; state_modifiers = (Extend(Collect()),))
+```
+
+High-level constructors size their linear readout automatically for `Extend` when
+its wrapped operation preserves the feature width. For a custom modifier that changes
+the feature width, pass the resulting width explicitly through `readout_in_dims`.

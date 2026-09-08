@@ -1,7 +1,7 @@
 @doc raw"""
     HybridESN(km, km_dims, in_dims, res_dims, out_dims, [activation];
         state_modifiers=(), readout_activation=identity,
-        include_collect=true, kwargs...)
+        include_collect=true, readout_in_dims=nothing, kwargs...)
 
 Hybrid Echo State Network [Pathak2018](@cite).
 
@@ -37,6 +37,8 @@ Hybrid Echo State Network [Pathak2018](@cite).
 - `state_modifiers`: A layer or collection of layers applied to the reservoir
     state before the readout. Accepts a single layer, an `AbstractVector`, or a
     `Tuple`. Default: empty `()`.
+- `readout_in_dims`: Total readout input width for a custom dimension-changing
+    modifier. `nothing` infers the width for `Extend`. Default: `nothing`.
 - `readout_activation`: Activation for the linear readout. Default: `identity`.
 - `include_collect`: Whether the readout should include collection mode.
     Default: `true`.
@@ -93,6 +95,7 @@ function HybridESN(
         state_modifiers = (),
         readout_activation = identity,
         include_collect::BoolType = True(),
+        readout_in_dims = nothing,
         kwargs...
     )
     esn_inp_size = in_dims + km_dims
@@ -100,8 +103,16 @@ function HybridESN(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)
+    inferred_res_dims = __resolve_readout_in_dims(
+        nothing, mods, Int(res_dims), Int(in_dims)
+    )
+    ro_dims = if readout_in_dims === nothing
+        inferred_res_dims + Int(km_dims)
+    else
+        __resolve_readout_in_dims(readout_in_dims, (), 0, 0)
+    end
     ro = LinearReadout(
-        res_dims + km_dims => out_dims, readout_activation;
+        ro_dims => out_dims, readout_activation;
         include_collect = static(include_collect)
     )
     km_layer = km isa WrappedFunction ? km : WrappedFunction(km)
@@ -134,8 +145,8 @@ function __partial_apply(hesn::HybridESN, inp, ps, st)
     k_t, st_km = hesn.knowledge_model(inp, ps.knowledge_model, st.knowledge_model)
     xin = vcat(k_t, inp)
     r, st_reservoir = apply(hesn.reservoir, xin, ps.reservoir, st.reservoir)
-    rstar, st_mods = __apply_seq(
-        hesn.state_modifiers, r, ps.state_modifiers, st.state_modifiers
+    rstar, st_mods = __apply_state_modifiers(
+        hesn.state_modifiers, r, inp, ps.state_modifiers, st.state_modifiers
     )
     feats = vcat(k_t, rstar)
     return feats,

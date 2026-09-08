@@ -51,4 +51,19 @@ begin
         cleared = resetcarry!(rng, reca, st)
         @test cleared.reservoir.carry === nothing
     end
+
+    @testset "CellularAutomata extension preserves input for Extend" begin
+        rng = MersenneTwister(406)
+        reca = RECA(
+            4, 2, DCA(90);
+            input_encoding = RandomMapping(2, 8),
+            generations = 2,
+            state_modifiers = (Extend(Collect()),)
+        )
+        ps, st = setup(rng, reca)
+        data = Int[0 1 0; 1 0 1; 0 0 1; 1 1 0]
+        states, _ = collectstates(reca, data, ps, st)
+        @test states[1:4, :] == data
+        @test size(ps.readout.weight, 2) == size(states, 1)
+    end
 end

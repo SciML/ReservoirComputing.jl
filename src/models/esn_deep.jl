@@ -2,7 +2,8 @@
     DeepESN(in_dims, res_dims, out_dims,
             activation=tanh; depth=2, leak_coefficient=1.0, init_reservoir=rand_sparse,
             init_input=scaled_rand, init_bias=zeros32, init_state=randn32,
-            use_bias=false, state_modifiers=(), readout_activation=identity)
+            use_bias=false, state_modifiers=(), readout_activation=identity,
+            readout_in_dims=nothing)
 
 Deep Echo State Network [Gallicchio2017](@cite).
 
@@ -62,6 +63,8 @@ Composition:
   - `state_modifiers`: Per-layer modifier(s) applied to each layer’s state before it
     feeds into the next layer (and the readout for the last layer). Accepts `nothing`,
     a single layer, a vector/tuple of length `L`, or per-layer collections. Defaults to no modifiers.
+  - `readout_in_dims`: Final readout input width for a custom dimension-changing
+    modifier. `nothing` infers the width for `Extend`. Default: `nothing`.
   - `readout_activation`: Activation for the final linear readout. Default: `identity`.
 
 ## Inputs
@@ -111,7 +114,8 @@ function DeepESN(
         init_state = randn32,
         use_bias = false,
         state_modifiers = (),
-        readout_activation = identity
+        readout_activation = identity,
+        readout_in_dims = nothing
     )
     n_layers = length(res_dims)
     acts = __asvec(activation, n_layers)
@@ -123,10 +127,25 @@ function DeepESN(
     ub = __asvec(use_bias, n_layers)
     mods0 = __asvec(state_modifiers, n_layers)
 
+    state_modifiers = ntuple(n_layers) do idx
+        mods = mods0[idx]
+        mods === nothing ? nothing : __wrap_layer(mods)
+    end
+    mods_per_layer = map(__coerce_layer_mods, state_modifiers) |> Tuple
+
+    layer_input_dims = ntuple(n_layers) do idx
+        dims = Int(in_dims)
+        for previous_idx in 1:(idx - 1)
+            dims = __state_modifier_output_dims(
+                mods_per_layer[previous_idx], Int(res_dims[previous_idx]), dims
+            )
+        end
+        dims
+    end
+
     cells = ntuple(n_layers) do idx
-        input_dims = idx == firstindex(res_dims) ? in_dims : res_dims[idx - 1]
         cell = ESNCell(
-            input_dims => res_dims[idx], acts[idx];
+            layer_input_dims[idx] => res_dims[idx], acts[idx];
             use_bias = static(ub[idx]),
             init_bias = ibias[idx],
             init_reservoir = ires[idx],
@@ -136,12 +155,13 @@ function DeepESN(
         )
         StatefulLayer(cell)
     end
-    state_modifiers = ntuple(n_layers) do idx
-        mods = mods0[idx]
-        mods === nothing ? nothing : __wrap_layer(mods)
-    end
-    mods_per_layer = map(__coerce_layer_mods, state_modifiers) |> Tuple
-    ro = LinearReadout(last(res_dims) => out_dims, readout_activation)
+    inferred_ro_dims = __state_modifier_output_dims(
+        last(mods_per_layer), Int(last(res_dims)), last(layer_input_dims)
+    )
+    ro_dims = __resolve_readout_in_dims(
+        readout_in_dims, (), inferred_ro_dims, last(layer_input_dims)
+    )
+    ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return DeepESN(cells, mods_per_layer, ro)
 end
 
