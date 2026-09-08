@@ -142,7 +142,7 @@ function __topology_expand(name::Symbol, body)
         end,
     )
     return quote
-        Base.@__doc__ $primary
+        $primary
         function $name(dims::Integer...; kwargs...)
             return $name($Utils.default_rng(), Float32, dims...; kwargs...)
         end
