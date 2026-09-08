@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Using different linear methods · ReservoirComputing.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">ReservoirComputing.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../esn/">Basics</a></li><li><a class="tocitem" href="../layers/">Using different layers</a></li><li class="is-active"><a class="tocitem" href>Using different linear methods</a></li><li><a class="tocitem" href="../dafesn/">Double Activation Function ESN</a></li><li><a class="tocitem" href="../esgp/">ESGP</a></li></ul></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="../../user/models/">Models</a></li><li><a class="tocitem" href="../../user/layers/">Layers</a></li><li><a class="tocitem" href="../../user/linear/">Linear Models</a></li><li><a class="tocitem" href="../../user/spec/">Special ESNs</a></li><li><a class="tocitem" href="../../user/nla/">Non Linear Algorithm</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Using different linear methods</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Using different linear methods</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/examples/linear.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Using-different-linear-methods-1"><a class="docs-heading-anchor" href="#Using-different-linear-methods-1">Using different linear methods</a><a class="docs-heading-anchor-permalink" href="#Using-different-linear-methods-1" title="Permalink"></a></h1><p>The standard implementation of <code>ESNtrain</code> uses Ridge Regression as the method of choice for the training of the ESN but there are other linear methods available. Leveraging <a href="https://alan-turing-institute.github.io/MLJLinearModels.jl/stable/">MLJLinearModels</a> ReservoirComputing gives the possibility to train ESNs using a vast range of linear models. Using the same task as before, predicting the Lorenz system, we will illustrate how to use <code>ESNtrain</code> with Lasso, Elastic Net, and regression with Huber loss function.</p><p>First, we obtain the data in the usual way:</p><pre><code class="language-julia">using ParameterizedFunctions, OrdinaryDiffEq
+
+#lorenz system parameters
+u0 = [1.0,0.0,0.0]                       
+tspan = (0.0,1000.0)                      
+p = [10.0,28.0,8/3]
+
+#define lorenz system
+function lorenz(du,u,p,t)
+    du[1] = p[1]*(u[2]-u[1])
+    du[2] = u[1]*(p[2]-u[3]) - u[2]
+    du[3] = u[1]*u[2] - p[3]*u[3]
+end
+
+#solve system
+prob = ODEProblem(lorenz, u0, tspan, p)  
+sol = solve(prob, ABM54(), dt=0.02)   
+v = sol.u
+data = Matrix(hcat(v...))
+
+shift = 300
+train_len = 5000
+predict_len = 1250
+
+#get data
+train = data[:, shift:shift+train_len-1]
+test = data[:, shift+train_len:shift+train_len+predict_len-1]</code></pre><p>And we can also use the same parameters:</p><pre><code class="language-julia">using ReservoirComputing
+#model parameters
+approx_res_size = 300
+radius = 1.2
+activation = tanh
+degree = 6
+sigma = 0.1
+alpha = 1.0
+nla_type = NLAT2()
+extended_states = false
+
+#create echo state network  
+esn = ESN(approx_res_size,
+    train,
+    degree,
+    radius,
+    activation = activation,
+    sigma = sigma,
+    alpha = alpha,
+    nla_type = nla_type,
+    extended_states = extended_states)</code></pre><p>To obtain <code>W_out</code>, we can define a <code>linear_model</code> struct using one of the implemented constructors:</p><ul><li><code>Ridge()</code></li><li><code>Lasso()</code></li><li><code>ElastNet()</code></li><li><code>RobustHuber()</code></li></ul><p>Each of them takes as input the regularization coefficient(s) and a MLJLinearModels.Solver as solver. Let&#39;s see a couple of examples. Using Ridge():</p><pre><code class="language-julia">using MLJLinearModels
+linear_model = Ridge(beta, Analytical())
+W_out = ESNtrain(linear_model, esn)
+output = ESNpredict(esn, predict_len, W_out)</code></pre><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90960134-d30d0400-e49f-11ea-847b-6bed1b04c201.png" alt="esnRidgefixedseed"/></p><p>Using Lasso():</p><pre><code class="language-julia">beta = 0.0001
+linear_model = Lasso(beta, ProxGrad(max_iter = 10000))
+W_out = ESNtrain(linear_model, esn)
+output = ESNpredict(esn, predict_len, W_out)</code></pre><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90960194-4747a780-e4a0-11ea-9e81-37f12624c503.png" alt="esnLassofixedseed"/></p><p>Since in the linear model struct we used a MLJLinearModels.Solver, we can specify any parameter necessary, like in this case the <code>max_iter</code>.</p><p>Using ElastNet():</p><pre><code class="language-julia">lambda = 0.1
+gamma = 0.0001
+linear_model = ElastNet(lambda, gamma, ProxGrad(max_iter = 10000))
+W_out = ESNtrain(linear_model, esn)
+output = ESNpredict(esn, predict_len, W_out)</code></pre><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90960243-98579b80-e4a0-11ea-86ae-2cc9c666d1d9.png" alt="esnElastNetfixedseed"/></p><p>Using RobustHuber():</p><pre><code class="language-julia">delta = 0.5
+lambda = 0.1
+gamma = 0.0
+linear_model = RobustHuber(lambda, gamma, LBFGS())
+W_out = ESNtrain(linear_model, esn)
+output = ESNpredict(esn, predict_len, W_out)</code></pre><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90960413-9cd08400-e4a1-11ea-83c3-b3c6dbe78cd5.png" alt="esnHuberfixedseed"/></p><p>For the complete list of solvers please refer to <a href="https://alan-turing-institute.github.io/MLJLinearModels.jl/stable/solvers/">MLJLinearModels solvers</a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../layers/">« Using different layers</a><a class="docs-footer-nextpage" href="../dafesn/">Double Activation Function ESN »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 8 November 2020 19:39">Sunday 8 November 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

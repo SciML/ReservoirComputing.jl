@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>ESGP · ReservoirComputing.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ReservoirComputing.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">ReservoirComputing.jl</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../esn/">Basics</a></li><li><a class="tocitem" href="../layers/">Using different layers</a></li><li><a class="tocitem" href="../linear/">Using different linear methods</a></li><li><a class="tocitem" href="../dafesn/">Double Activation Function ESN</a></li><li class="is-active"><a class="tocitem" href>ESGP</a><ul class="internal"><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li></ul></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="../../user/models/">Models</a></li><li><a class="tocitem" href="../../user/layers/">Layers</a></li><li><a class="tocitem" href="../../user/linear/">Linear Models</a></li><li><a class="tocitem" href="../../user/spec/">Special ESNs</a></li><li><a class="tocitem" href="../../user/nla/">Non Linear Algorithm</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>ESGP</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>ESGP</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/SciML/ReservoirComputing.jl/blob/master/docs/src/examples/esgp.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="ESGP"><a class="docs-heading-anchor" href="#ESGP">ESGP</a><a id="ESGP-1"></a><a class="docs-heading-anchor-permalink" href="#ESGP" title="Permalink"></a></h1><p>The linear nature of the ESN training allows for a solution obtained by Gaussian Regression. This was the main idea behind the paper [1], which details the implementation of the Echo State Gaussian Processes that are present in ReservoirComputing. Using the same example as before, prediction of the Lorenz system, we are going to show how to use this specific model.</p><pre><code class="language-julia">using ParameterizedFunctions, OrdinaryDiffEq
+
+#lorenz system parameters
+u0 = [1.0,0.0,0.0]                       
+tspan = (0.0,1000.0)                      
+p = [10.0,28.0,8/3]
+
+#define lorenz system
+function lorenz(du,u,p,t)
+    du[1] = p[1]*(u[2]-u[1])
+    du[2] = u[1]*(p[2]-u[3]) - u[2]
+    du[3] = u[1]*u[2] - p[3]*u[3]
+end
+
+#solve system
+prob = ODEProblem(lorenz, u0, tspan, p)  
+sol = solve(prob, ABM54(), dt=0.02)   
+v = sol.u
+data = Matrix(hcat(v...))
+
+shift = 300
+train_len = 5000
+predict_len = 1250
+
+#get data
+train = data[:, shift:shift+train_len-1]
+test = data[:, shift+train_len:shift+train_len+predict_len-1]</code></pre><p>Now we can define the parameters and create the ESN in the usual way:</p><pre><code class="language-julia">using ReservoirComputing
+#model parameters
+approx_res_size = 300
+radius = 1.2
+activation = tanh
+degree = 6
+sigma = 0.1
+beta = 0.0
+alpha = 1.0
+nla_type = NLADefault()
+extended_states = true
+
+#create echo state network  
+Random.seed!(42) #fixed seed for reproducibility
+esn = ESN(approx_res_size,
+    train,
+    degree,
+    radius,
+    activation = activation,
+    sigma = sigma,
+    alpha = alpha,
+    nla_type = nla_type,
+    extended_states = extended_states)</code></pre><p>Using the package <a href="https://stor-i.github.io/GaussianProcesses.jl/latest/">GaussianProcesses</a> we were able to implement a training and a predict function for the ESN. In order to use them, we need to import the package.</p><pre><code class="language-julia">using GaussianProcesses
+mean = MeanZero()
+kernel = SE(1.0, 1.0)
+gp = ESGPtrain(esn, mean, kernel, lognoise = -2.0, optimize = false);
+output, sigmas = ESGPpredict(esn, predict_len, gp)</code></pre><pre><code class="language-julia">plot(transpose(output),layout=(3,1), label=&quot;predicted&quot;)
+plot!(transpose(test),layout=(3,1), label=&quot;actual&quot;)</code></pre><p><img src="https://user-images.githubusercontent.com/10376688/90963508-6fdb9b80-e4b8-11ea-98ea-a45980f33cb6.png" alt="esgpfixedseed"/></p><p>Since the implementation of this model is based on an external package, the user is free to choose a different <a href="https://stor-i.github.io/GaussianProcesses.jl/latest/mean/">mean</a> or <a href="https://stor-i.github.io/GaussianProcesses.jl/latest/kernels/">kernel</a>, as well as use different input layers and reservoirs (as previously defined).</p><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>[1]: Chatzis, Sotirios P., and Yiannis Demiris. &quot;Echo state Gaussian process.&quot; IEEE Transactions on Neural Networks 22.9 (2011): 1435-1445.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../dafesn/">« Double Activation Function ESN</a><a class="docs-footer-nextpage" href="../../user/models/">Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 21 June 2021 23:20">Monday 21 June 2021</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
