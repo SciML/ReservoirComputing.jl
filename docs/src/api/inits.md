@@ -83,6 +83,8 @@ where full details and examples are provided.
 
 ## Building functions
 
+- [`@topology`](inits/topology.md): Builds a reservoir initializer from a
+    stack of building-block mutators.
 - [`add_jumps!`](inits/add_jumps!.md): Inserts jump connections at
     fixed intervals into an existing reservoir.
 - [`backward_connection!`](inits/backward_connection!.md): Adds backward
