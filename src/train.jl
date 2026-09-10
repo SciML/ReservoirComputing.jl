@@ -197,6 +197,38 @@ function __train_ridge(
     return Matrix(solution.u')
 end
 
+function __shift_teacher(target_data::AbstractMatrix)
+    teacher = similar(target_data)
+    n_samples = size(target_data, 2)
+    teacher[:, 1] .= zero(eltype(target_data))
+    n_samples > 1 && (teacher[:, 2:n_samples] .= view(target_data, :, 1:(n_samples - 1)))
+    return teacher
+end
+
+function __train_collect_args(rc, train_data::AbstractMatrix, target_data)
+    __has_output_feedback(rc) || return train_data
+    size(target_data, 2) == size(train_data, 2) || throw(
+        DimensionMismatch(
+            "train data has $(size(train_data, 2)) samples, " *
+                "targets have $(size(target_data, 2))"
+        )
+    )
+    size(target_data, 1) == Int(__reservoir_cell(rc).feedback_dims) || throw(
+        DimensionMismatch(
+            "targets have $(size(target_data, 1)) rows, expected " *
+                "feedback_dims=$(__reservoir_cell(rc).feedback_dims)"
+        )
+    )
+    return (train_data, __shift_teacher(target_data))
+end
+
+function __train_collect_args(
+        rc, train_data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, _
+    )
+    __require_output_feedback(rc)
+    return train_data
+end
+
 @doc raw"""
     train(rc, train_data, target_data, ps, st;
           objective=RidgeRegression(0.0), solver=nothing,
@@ -211,7 +243,11 @@ and returns new parameters and states (inputs `ps` / `st` are not mutated).
 
   - `rc`: model with a trainable readout (e.g. [`ESN`](@ref),
     [`ReservoirChain`](@ref)).
-  - `train_data`: inputs; columns are time steps.
+  - `train_data`: inputs; columns are time steps. For a reservoir with
+    output feedback, pass `(train_data, teacher_data)` to supply the
+    feedback \(\mathbf{y}\) aligned with each input column. If only the
+    input matrix is given, the teacher is `target_data` shifted one step,
+    with a zero column at the first time step.
   - `target_data`: targets aligned with `train_data`.
   - `ps`: model parameters.
   - `st`: model states.
@@ -237,7 +273,9 @@ function train(
         return_states::Bool = false,
         kwargs...
     )
-    raw_states, st_after = collectstates(rc, train_data, ps, st)
+    raw_states, st_after = collectstates(
+        rc, __train_collect_args(rc, train_data, target_data), ps, st
+    )
     states_wo,
         targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)

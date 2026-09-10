@@ -231,6 +231,14 @@ function has_bias(l::AbstractLuxLayer)
     return ifelse(res === nothing, false, res)
 end
 
+function has_feedback(l::AbstractLuxLayer)
+    flag = getproperty(l, Val(:use_feedback))
+    flag === nothing && return false
+    res = known(flag)
+    return ifelse(res === nothing, false, res)
+end
+has_feedback(::Nothing) = false
+
 @generated function getproperty(x::X, ::KnownSymbolType{v}) where {X, v}
     if hasfield(X, v)
         return :(getfield(x, v))

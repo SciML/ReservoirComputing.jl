@@ -132,10 +132,55 @@ function __resolve_readout_in_dims(
     return Int(readout_in_dims)
 end
 
+@inline __driving_input(inp::AbstractArray) = inp
+@inline function __driving_input(
+        (inp, _)::Tuple{<:AbstractArray, <:AbstractArray}
+    )
+    return inp
+end
+
+function __reservoir_cell(rc)
+    hasfield(typeof(rc), :reservoir) || return nothing
+    res = getfield(rc, :reservoir)
+    return hasfield(typeof(res), :cell) ? getfield(res, :cell) : nothing
+end
+
+__has_output_feedback(rc) = has_feedback(__reservoir_cell(rc))
+
+function __require_output_feedback(rc)
+    __has_output_feedback(rc) || throw(
+        ArgumentError(
+            "teacher data requires a reservoir with use_feedback=true"
+        )
+    )
+    return nothing
+end
+
+function __validate_feedback_data(rc, train_data, teacher_data, context)
+    __require_nonempty_data(train_data, context)
+    __require_output_feedback(rc)
+    n_samples = size(train_data, 2)
+    n_teacher = size(teacher_data, 2)
+    n_samples == n_teacher || throw(
+        DimensionMismatch(
+            "train data has $n_samples samples, teacher data has $n_teacher"
+        )
+    )
+    fb_dims = Int(__reservoir_cell(rc).feedback_dims)
+    size(teacher_data, 1) == fb_dims || throw(
+        DimensionMismatch(
+            "teacher data has $(size(teacher_data, 1)) rows, expected " *
+                "feedback_dims=$fb_dims"
+        )
+    )
+    return nothing
+end
+
 function __partial_apply(rc::AbstractReservoirComputer, inp, ps, st)
     out, st_res = apply(rc.reservoir, inp, ps.reservoir, st.reservoir)
     out, st_mods = __apply_state_modifiers(
-        rc.state_modifiers, out, inp, ps.state_modifiers, st.state_modifiers
+        rc.state_modifiers, out, __driving_input(inp),
+        ps.state_modifiers, st.state_modifiers
     )
     return out, (reservoir = st_res, state_modifiers = st_mods)
 end
@@ -146,8 +191,30 @@ function (rc::AbstractReservoirComputer)(inp, ps, st)
     return out, merge(new_st, (readout = st_ro,))
 end
 
+@doc raw"""
+    collectstates(rc::AbstractReservoirComputer, data, ps, st)
+
+Harvest reservoir features over the columns of `data`.
+
+When the reservoir has output feedback (`use_feedback=true`), `data` must be
+`(train_data, teacher_data)` with matching column counts. Column `t` of
+`teacher_data` is the feedback \(\mathbf{y}(t-1)\) used with input column `t`.
+"""
 function collectstates(
         rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
+    )
+    return __collectstates(rc.reservoir, rc, data, ps, st)
+end
+
+function collectstates(
+        rc::AbstractReservoirComputer,
+        data::Tuple{<:AbstractMatrix, <:AbstractMatrix},
+        ps, st::NamedTuple
+    )
+    hasfield(typeof(rc), :reservoir) || throw(
+        ArgumentError(
+            "teacher data requires a reservoir with use_feedback=true"
+        )
     )
     return __collectstates(rc.reservoir, rc, data, ps, st)
 end
@@ -163,17 +230,13 @@ function __collectstates(
     )
 end
 
-function __collectstates(
-        _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
-    )
-    __require_nonempty_data(data, "collectstates")
+function __harvest_states(rc, cols, like, ps, st)
     newst = st
-    nsteps = size(data, 2)
-    cols = eachcol(data)
+    nsteps = size(like, 2)
     x1 = first(cols)
     current_state, partial_st = __partial_apply(rc, x1, ps, newst)
     state_dims = size(current_state, 1)
-    states = similar(data, state_dims, nsteps)
+    states = similar(like, state_dims, nsteps)
     states[:, 1] .= current_state
     newst = merge(partial_st, (readout = newst.readout,))
     for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
@@ -181,8 +244,31 @@ function __collectstates(
         states[:, idx] .= current_state
         newst = merge(partial_st, (readout = newst.readout,))
     end
-
     return states, newst
+end
+
+function __collectstates(
+        _, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st::NamedTuple
+    )
+    __require_nonempty_data(data, "collectstates")
+    __has_output_feedback(rc) && throw(
+        ArgumentError(
+            "collectstates for a model with output feedback requires teacher " *
+                "data; pass (train_data, teacher_data)"
+        )
+    )
+    return __harvest_states(rc, eachcol(data), data, ps, st)
+end
+
+function __collectstates(
+        _, rc::AbstractReservoirComputer,
+        data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, ps, st::NamedTuple
+    )
+    train_data, teacher_data = data
+    __validate_feedback_data(rc, train_data, teacher_data, "collectstates")
+    return __harvest_states(
+        rc, zip(eachcol(train_data), eachcol(teacher_data)), train_data, ps, st
+    )
 end
 
 __set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
