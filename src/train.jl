@@ -179,7 +179,7 @@ function __train_ridge(
     )
     design, rhs = __ridge_augmented_system(objective, states, targets)
     solution = try
-        solve(LinearProblem(design, rhs), solver; kwargs...)
+        solve(LinearProblem(design, rhs), solver; verbose = false, kwargs...)
     catch err
         err isa DimensionMismatch || rethrow()
         throw(
@@ -191,10 +191,12 @@ function __train_ridge(
             )
         )
     end
-    successful_retcode(solution) || throw(
+    successful_retcode(solution) && return Matrix(solution.u')
+    # LinearSolve QR NoPivot reports Failure on rank-deficient least squares.
+    solver isa LinearSolveQRFactorization || throw(
         ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
     )
-    return Matrix(solution.u')
+    return Matrix((qr(design) \ rhs)')
 end
 
 function __shift_teacher(target_data::AbstractMatrix)
@@ -206,7 +208,6 @@ function __shift_teacher(target_data::AbstractMatrix)
 end
 
 function __train_collect_args(rc, train_data::AbstractMatrix, target_data)
-    __has_output_feedback(rc) || return train_data
     size(target_data, 2) == size(train_data, 2) || throw(
         DimensionMismatch(
             "train data has $(size(train_data, 2)) samples, " *
@@ -222,11 +223,25 @@ function __train_collect_args(rc, train_data::AbstractMatrix, target_data)
     return (train_data, __shift_teacher(target_data))
 end
 
-function __train_collect_args(
-        rc, train_data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, _
+function __train_fit(
+        rc, train_data, target_data, ps, st;
+        objective = RidgeRegression(0.0),
+        solver = nothing,
+        washout::Integer = 0,
+        return_states::Bool = false,
+        kwargs...
     )
-    __require_output_feedback(rc)
-    return train_data
+    raw_states, st_after = collectstates(rc, train_data, ps, st)
+    states_wo,
+        targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
+        (raw_states, target_data)
+    output_matrix = if isnothing(solver)
+        __fit_readout(objective, states_wo, targets_wo; kwargs...)
+    else
+        __fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
+    end
+    ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
+    return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
 end
 
 @doc raw"""
@@ -266,26 +281,39 @@ and returns new parameters and states (inputs `ps` / `st` are not mutated).
   - `(ps, st)`, or `((ps, st), states)` if `return_states=true`.
 """
 function train(
-        rc, train_data, target_data, ps, st;
+        rc, train_data::AbstractMatrix, target_data, ps, st;
         objective = RidgeRegression(0.0),
         solver = nothing,
         washout::Integer = 0,
         return_states::Bool = false,
         kwargs...
     )
-    raw_states, st_after = collectstates(
-        rc, __train_collect_args(rc, train_data, target_data), ps, st
-    )
-    states_wo,
-        targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
-        (raw_states, target_data)
-    output_matrix = if isnothing(solver)
-        __fit_readout(objective, states_wo, targets_wo; kwargs...)
-    else
-        __fit_readout(objective, states_wo, targets_wo; solver = solver, kwargs...)
+    if __has_output_feedback(rc)
+        return train(
+            rc, __train_collect_args(rc, train_data, target_data),
+            target_data, ps, st;
+            objective, solver, washout, return_states, kwargs...
+        )
     end
-    ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
-    return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
+    return __train_fit(
+        rc, train_data, target_data, ps, st;
+        objective, solver, washout, return_states, kwargs...
+    )
+end
+
+function train(
+        rc, train_data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, target_data, ps, st;
+        objective = RidgeRegression(0.0),
+        solver = nothing,
+        washout::Integer = 0,
+        return_states::Bool = false,
+        kwargs...
+    )
+    __require_output_feedback(rc)
+    return __train_fit(
+        rc, train_data, target_data, ps, st;
+        objective, solver, washout, return_states, kwargs...
+    )
 end
 
 @generated function __setweight_rt(p::NamedTuple{K}, W) where {K}
