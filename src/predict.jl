@@ -238,7 +238,7 @@ end
 function __predict(
         ::AbstractSciMLProblemReservoir,
         ::AbstractReservoirComputer,
-        ::Tuple, ::Any, ::Any
+        ::Tuple{<:AbstractMatrix, <:AbstractMatrix}, ::Any, ::Any
     )
     return error(
         "Teacher-forced `predict(rc, (data, teacher), ps, st)` for a " *

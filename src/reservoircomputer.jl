@@ -140,9 +140,9 @@ end
 end
 
 function __reservoir_cell(rc)
-    hasfield(typeof(rc), :reservoir) || return nothing
-    res = getfield(rc, :reservoir)
-    return hasfield(typeof(res), :cell) ? getfield(res, :cell) : nothing
+    res = getproperty(rc, Val(:reservoir))
+    res === nothing && return nothing
+    return getproperty(res, Val(:cell))
 end
 
 __has_output_feedback(rc) = has_feedback(__reservoir_cell(rc))
@@ -211,12 +211,13 @@ function collectstates(
         data::Tuple{<:AbstractMatrix, <:AbstractMatrix},
         ps, st::NamedTuple
     )
-    hasfield(typeof(rc), :reservoir) || throw(
+    res = getproperty(rc, Val(:reservoir))
+    res === nothing && throw(
         ArgumentError(
             "teacher data requires a reservoir with use_feedback=true"
         )
     )
-    return __collectstates(rc.reservoir, rc, data, ps, st)
+    return __collectstates(res, rc, data, ps, st)
 end
 
 function __collectstates(
