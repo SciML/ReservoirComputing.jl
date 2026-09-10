@@ -133,9 +133,9 @@ version = "1.11.0"
 
 [[deps.Atomix]]
 deps = ["UnsafeAtomics"]
-git-tree-sha1 = "b8651b2eb5796a386b0398a20b519a6a6150f75c"
+git-tree-sha1 = "1bbcf97714051f302b3beafab65bcdeb6044c4df"
 uuid = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
-version = "1.1.3"
+version = "1.2.1"
 
     [deps.Atomix.extensions]
     AtomixCUDAExt = "CUDA"
@@ -433,9 +433,9 @@ version = "1.9.1"
 
 [[deps.DiffEqBase]]
 deps = ["ArrayInterface", "BracketingNonlinearSolve", "ConcreteStructs", "DocStringExtensions", "FastBroadcast", "FastClosures", "FastPower", "FunctionWrappers", "FunctionWrappersWrappers", "LinearAlgebra", "Logging", "Markdown", "MuladdMacro", "PrecompileTools", "Printf", "RecursiveArrayTools", "Reexport", "RespecializeParams", "SciMLBase", "SciMLLogging", "SciMLOperators", "SciMLStructures", "Setfield", "StaticArraysCore", "SymbolicIndexingInterface", "TruncatedStacktraces"]
-git-tree-sha1 = "0c3a9e543894cc514b78eb812f4b301984ae6dc8"
+git-tree-sha1 = "4c891f1fb0db55190e0bda36fd583844c5225361"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "7.20.1"
+version = "7.21.0"
 
     [deps.DiffEqBase.extensions]
     DiffEqBaseCUDAExt = "CUDA"
@@ -1184,9 +1184,9 @@ weakdeps = ["ChainRulesCore", "SparseArrays", "Statistics"]
 
 [[deps.LinearSolve]]
 deps = ["AMD", "ArrayInterface", "ConcreteStructs", "DocStringExtensions", "EnumX", "GPUArraysCore", "InteractiveUtils", "Krylov", "LHLFactorization", "Libdl", "LinearAlgebra", "MKL_jll", "Markdown", "OpenBLAS_jll", "PrecompileTools", "Preferences", "PureKLU", "RecursiveArrayTools", "Reexport", "SciMLBase", "SciMLLogging", "SciMLOperators", "SciMLStructures", "Setfield", "SparseArrays", "SparseColumnPivotedQR", "StaticArraysCore"]
-git-tree-sha1 = "cae07ee3eb7eb63a14ebab34be82baac1bb8ae63"
+git-tree-sha1 = "0a6eb67268e9179ff2b5950f17d921589c3f53e4"
 uuid = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-version = "5.16.0"
+version = "5.17.0"
 
     [deps.LinearSolve.extensions]
     LinearSolveAMDGPUExt = "AMDGPU"
@@ -1832,7 +1832,7 @@ version = "1.3.1"
 deps = ["ArrayInterface", "ConcreteStructs", "LinearAlgebra", "LinearSolve", "LuxCore", "NNlib", "PrecompileTools", "Random", "SciMLBase", "Static", "WeightInitializers"]
 path = "/home/runner/_work/ReservoirComputing.jl/ReservoirComputing.jl"
 uuid = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
-version = "0.12.40"
+version = "0.12.41"
 
     [deps.ReservoirComputing.extensions]
     RCCellularAutomataExt = "CellularAutomata"
