@@ -17,6 +17,7 @@ Echo State Network [Jaeger2004](@cite).
 \begin{aligned}
     \mathbf{x}(t) &= (1-\alpha)\, \mathbf{x}(t-1) + \alpha\, \phi\!\left(
         \mathbf{W}_{\text{in}}\, \mathbf{u}(t) + \mathbf{W}_r\, \mathbf{x}(t-1)
+        + \mathbf{W}_{\mathrm{fb}}\, \mathbf{y}(t-1)
         + \mathbf{b} \right) \\
     \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
     \mathbf{y}(t) &= \rho\!\left(
@@ -24,6 +25,10 @@ Echo State Network [Jaeger2004](@cite).
         + \mathbf{b}_{\text{out}} \right)
 \end{aligned}
 ```
+
+The \(\mathbf{W}_{\mathrm{fb}}\mathbf{y}(t-1)\) term is included only when
+`use_feedback=true`. Train with teacher forcing; `predict` then feeds the
+previous model output back through `W_fb`.
 
 ## Arguments
 
@@ -45,6 +50,10 @@ Reservoir (passed to [`ESNCell`](@ref)):
   - `init_state`: Initializer used when an external state is not provided.
     Default: `randn32`.
   - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
+  - `use_feedback`: Whether the reservoir uses output feedback `W_fb`.
+    Default: `false`. When `true`, `feedback_dims` is set to `out_dims`.
+  - `init_feedback`: Initializer for `W_fb`. Used only if `use_feedback=true`.
+    Default: [`scaled_rand`](@ref).
 
 Composition:
 
@@ -70,6 +79,8 @@ Composition:
       - `input_matrix :: (res_dims × in_dims)` — `W_in`
       - `reservoir_matrix :: (res_dims × res_dims)` — `W_res`
       - `bias :: (res_dims,)` — present only if `use_bias=true`
+      - `feedback_matrix :: (res_dims × out_dims)` — `W_fb`,
+        present only if `use_feedback=true`
   - `state_modifiers` — a `Tuple` with parameters for each modifier layer (may be empty).
   - `readout` — parameters of [`LinearReadout`](@ref), typically:
       - `weight :: (out_dims × res_dims)` — `W_out`
@@ -100,7 +111,9 @@ function ESN(
         readout_in_dims = nothing,
         kwargs...
     )
-    cell = StatefulLayer(ESNCell(in_dims => res_dims, activation; kwargs...))
+    cell = StatefulLayer(
+        ESNCell(in_dims => res_dims, activation; kwargs..., feedback_dims = out_dims)
+    )
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
     mods = __wrap_layers(mods_tuple)

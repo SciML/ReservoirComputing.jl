@@ -39,11 +39,15 @@ sequence.
 
 - Feeds each column of `data` as input; the model state is threaded across time,
   and an output is produced for each input column.
+- If the reservoir has output feedback, previous model outputs are fed back
+  through `W_fb`. Pass `(data, teacher_data)` to teacher-force that feedback
+  instead.
 
 ### Arguments
 
 - `rc`: The reservoir chain / model.
-- `data`: Input sequence of shape `(in_dims, T)` (columns are time).
+- `data`: Input sequence of shape `(in_dims, T)` (columns are time), or
+  `(data, teacher_data)` when forcing output feedback.
 - `ps`: Model parameters.
 - `st`: Model states.
 
@@ -128,6 +132,15 @@ function predict(rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
     return __predict(res, rc, data, ps, st)
 end
 
+function predict(
+        rc::AbstractReservoirComputer,
+        data::Tuple{<:AbstractMatrix, <:AbstractMatrix},
+        ps, st
+    )
+    res = hasfield(typeof(rc), :reservoir) ? rc.reservoir : nothing
+    return __predict(res, rc, data, ps, st)
+end
+
 function __predict(
         ::AbstractSciMLProblemReservoir,
         ::AbstractReservoirComputer, ::Integer, ::Any, ::Any;
@@ -157,10 +170,48 @@ function __predict(
         ::Any, rc::AbstractReservoirComputer, steps::Integer, ps, st;
         initialdata::AbstractVector
     )
+    __has_output_feedback(rc) && throw(
+        ArgumentError(
+            "autoregressive predict is not defined for models with output " *
+                "feedback; use predict(rc, data, ps, st) with a driving input"
+        )
+    )
     return __autoregressive_predict(rc, steps, ps, st, initialdata)
 end
 
+function __zero_feedback(data::AbstractMatrix, fb_dims::Integer)
+    y0 = similar(data, fb_dims)
+    fill!(y0, zero(eltype(data)))
+    return y0
+end
+
+function __feedback_predict(rc, data, ps, st, teacher)
+    __require_nonempty_data(data, "predict")
+    n_samples = size(data, 2)
+    fb_dims = Int(__reservoir_cell(rc).feedback_dims)
+    y_fb = if teacher === nothing
+        __zero_feedback(data, fb_dims)
+    else
+        __validate_feedback_data(rc, data, teacher, "predict")
+        teacher[:, 1]
+    end
+
+    first_output, st = apply(rc, (data[:, 1], y_fb), ps, st)
+    __require_closed_loop_dimension(first_output, fb_dims, 1)
+    outputs = similar(first_output, size(first_output, 1), n_samples)
+    outputs[:, 1] .= first_output
+
+    for t in 2:n_samples
+        y_fb = teacher === nothing ? outputs[:, t - 1] : teacher[:, t]
+        current_output, st = apply(rc, (data[:, t], y_fb), ps, st)
+        __require_closed_loop_dimension(current_output, fb_dims, t)
+        outputs[:, t] .= current_output
+    end
+    return outputs, st
+end
+
 function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
+    __has_output_feedback(rc) && return __feedback_predict(rc, data, ps, st, nothing)
     __require_nonempty_data(data, "predict")
     n_samples = size(data, 2)
 
@@ -174,4 +225,23 @@ function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, p
         outputs[:, idx] .= current_output
     end
     return outputs, st
+end
+
+function __predict(
+        ::Any, rc::AbstractReservoirComputer,
+        data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, ps, st
+    )
+    train_data, teacher_data = data
+    return __feedback_predict(rc, train_data, ps, st, teacher_data)
+end
+
+function __predict(
+        ::AbstractSciMLProblemReservoir,
+        ::AbstractReservoirComputer,
+        ::Tuple{<:AbstractMatrix, <:AbstractMatrix}, ::Any, ::Any
+    )
+    return error(
+        "Teacher-forced `predict(rc, (data, teacher), ps, st)` for a " *
+            "`SciMLProblemReservoir` requires the `RCODEReservoirExt` extension."
+    )
 end

@@ -72,7 +72,6 @@ Created by `initialstates(rng, esn)`:
     init_bias
     init_reservoir
     init_input
-    #init_feedback::F
     init_state
     leak_coefficient
     diffusion

@@ -115,3 +115,58 @@ end
     @test weights_default == weights_ls
     @test size(weights_default) == (n_outputs, n_features)
 end
+
+@testset "ESN output feedback: train, collectstates, predict" begin
+    rng = MersenneTwister(42)
+    eye32(m, n) = Matrix{Float32}(I, m, n)
+    init_I = (rng, m, n) -> eye32(m, n)
+    init_Z = (rng, m, n) -> zeros(Float32, m, n)
+    init_state0(rng, m, B) = B == 1 ? zeros(Float32, m) : zeros(Float32, m, B)
+
+    model = ESN(
+        3, 3, 3, identity;
+        use_feedback = true,
+        use_bias = false,
+        leak_coefficient = 1.0,
+        init_input = init_I,
+        init_reservoir = init_Z,
+        init_feedback = init_I,
+        init_state = init_state0,
+    )
+    ps, st = setup(rng, model)
+    @test size(ps.reservoir.feedback_matrix) == (3, 3)
+    ps = merge(ps, (readout = (; weight = eye32(3, 3)),))
+
+    data = Float32[1 0 0; 0 1 0; 0 0 1]
+    teacher_zero = zeros(Float32, 3, 3)
+    teacher_shift = Float32[0 1 0; 0 0 1; 0 0 0]
+
+    @test_throws ArgumentError collectstates(model, data, ps, st)
+    states_tf, _ = collectstates(model, (data, teacher_zero), ps, st)
+    @test states_tf ≈ data
+
+    Y_unlock, _ = predict(model, data, ps, st)
+    @test Y_unlock ≈ Float32[1 1 1; 0 1 1; 0 0 1]
+
+    Y_tf, _ = predict(model, (data, teacher_zero), ps, st)
+    @test Y_tf ≈ data
+
+    @test_throws ArgumentError predict(model, 3, ps, st; initialdata = data[:, 1])
+
+    targets = data
+    ps_auto, _ = train(
+        model, data, targets, ps, st;
+        objective = RidgeRegression(0.0),
+    )
+    ps_explicit, _ = train(
+        model, (data, teacher_shift), targets, ps, st;
+        objective = RidgeRegression(0.0),
+    )
+    @test ps_auto.readout.weight ≈ ps_explicit.readout.weight
+
+    plain = ESN(3, 12, 2)
+    ps_p, st_p = setup(MersenneTwister(42), plain)
+    @test_throws ArgumentError train(
+        plain, (data, teacher_zero), randn(Float32, 2, 3), ps_p, st_p
+    )
+end

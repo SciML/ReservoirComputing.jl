@@ -179,7 +179,7 @@ function __train_ridge(
     )
     design, rhs = __ridge_augmented_system(objective, states, targets)
     solution = try
-        solve(LinearProblem(design, rhs), solver; kwargs...)
+        solve(LinearProblem(design, rhs), solver; verbose = false, kwargs...)
     catch err
         err isa DimensionMismatch || rethrow()
         throw(
@@ -191,45 +191,39 @@ function __train_ridge(
             )
         )
     end
-    successful_retcode(solution) || throw(
+    successful_retcode(solution) && return Matrix(solution.u')
+    # LinearSolve QR NoPivot reports Failure on rank-deficient least squares.
+    solver isa LinearSolveQRFactorization || throw(
         ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
     )
-    return Matrix(solution.u')
+    return Matrix((qr(design) \ rhs)')
 end
 
-@doc raw"""
-    train(rc, train_data, target_data, ps, st;
-          objective=RidgeRegression(0.0), solver=nothing,
-          washout=0, return_states=false)
+function __shift_teacher(target_data::AbstractMatrix)
+    teacher = similar(target_data)
+    n_samples = size(target_data, 2)
+    teacher[:, 1] .= zero(eltype(target_data))
+    n_samples > 1 && (teacher[:, 2:n_samples] .= view(target_data, :, 1:(n_samples - 1)))
+    return teacher
+end
 
-Train the readout of a reservoir computer.
+function __train_collect_args(rc, train_data::AbstractMatrix, target_data)
+    size(target_data, 2) == size(train_data, 2) || throw(
+        DimensionMismatch(
+            "train data has $(size(train_data, 2)) samples, " *
+                "targets have $(size(target_data, 2))"
+        )
+    )
+    size(target_data, 1) == Int(__reservoir_cell(rc).feedback_dims) || throw(
+        DimensionMismatch(
+            "targets have $(size(target_data, 1)) rows, expected " *
+                "feedback_dims=$(__reservoir_cell(rc).feedback_dims)"
+        )
+    )
+    return (train_data, __shift_teacher(target_data))
+end
 
-Builds features from `train_data`, fits them to `target_data` with `objective`,
-and returns new parameters and states (inputs `ps` / `st` are not mutated).
-
-## Arguments
-
-  - `rc`: model with a trainable readout (e.g. [`ESN`](@ref),
-    [`ReservoirChain`](@ref)).
-  - `train_data`: inputs; columns are time steps.
-  - `target_data`: targets aligned with `train_data`.
-  - `ps`: model parameters.
-  - `st`: model states.
-
-## Keyword arguments
-
-  - `objective`: what to fit. Default [`RidgeRegression`](@ref).
-  - `solver`: how to solve when needed. For ridge, `nothing` uses
-    [`QRFactorization`](@ref).
-  - `washout`: initial time steps to drop from features and targets. Default `0`.
-  - `return_states`: if `true`, also return the feature matrix used for the fit.
-  - `kwargs...`: passed to the objective's backend when applicable.
-
-## Returns
-
-  - `(ps, st)`, or `((ps, st), states)` if `return_states=true`.
-"""
-function train(
+function __train_fit(
         rc, train_data, target_data, ps, st;
         objective = RidgeRegression(0.0),
         solver = nothing,
@@ -248,6 +242,78 @@ function train(
     end
     ps2, st_after = addreadout!(rc, output_matrix, ps, st_after)
     return return_states ? ((ps2, st_after), states_wo) : (ps2, st_after)
+end
+
+@doc raw"""
+    train(rc, train_data, target_data, ps, st;
+          objective=RidgeRegression(0.0), solver=nothing,
+          washout=0, return_states=false)
+
+Train the readout of a reservoir computer.
+
+Builds features from `train_data`, fits them to `target_data` with `objective`,
+and returns new parameters and states (inputs `ps` / `st` are not mutated).
+
+## Arguments
+
+  - `rc`: model with a trainable readout (e.g. [`ESN`](@ref),
+    [`ReservoirChain`](@ref)).
+  - `train_data`: inputs; columns are time steps. For a reservoir with
+    output feedback, pass `(train_data, teacher_data)` to supply the
+    feedback \(\mathbf{y}\) aligned with each input column. If only the
+    input matrix is given, the teacher is `target_data` shifted one step,
+    with a zero column at the first time step.
+  - `target_data`: targets aligned with `train_data`.
+  - `ps`: model parameters.
+  - `st`: model states.
+
+## Keyword arguments
+
+  - `objective`: what to fit. Default [`RidgeRegression`](@ref).
+  - `solver`: how to solve when needed. For ridge, `nothing` uses
+    [`QRFactorization`](@ref).
+  - `washout`: initial time steps to drop from features and targets. Default `0`.
+  - `return_states`: if `true`, also return the feature matrix used for the fit.
+  - `kwargs...`: passed to the objective's backend when applicable.
+
+## Returns
+
+  - `(ps, st)`, or `((ps, st), states)` if `return_states=true`.
+"""
+function train(
+        rc, train_data::AbstractMatrix, target_data, ps, st;
+        objective = RidgeRegression(0.0),
+        solver = nothing,
+        washout::Integer = 0,
+        return_states::Bool = false,
+        kwargs...
+    )
+    if __has_output_feedback(rc)
+        return train(
+            rc, __train_collect_args(rc, train_data, target_data),
+            target_data, ps, st;
+            objective, solver, washout, return_states, kwargs...
+        )
+    end
+    return __train_fit(
+        rc, train_data, target_data, ps, st;
+        objective, solver, washout, return_states, kwargs...
+    )
+end
+
+function train(
+        rc, train_data::Tuple{<:AbstractMatrix, <:AbstractMatrix}, target_data, ps, st;
+        objective = RidgeRegression(0.0),
+        solver = nothing,
+        washout::Integer = 0,
+        return_states::Bool = false,
+        kwargs...
+    )
+    __require_output_feedback(rc)
+    return __train_fit(
+        rc, train_data, target_data, ps, st;
+        objective, solver, washout, return_states, kwargs...
+    )
 end
 
 @generated function __setweight_rt(p::NamedTuple{K}, W) where {K}

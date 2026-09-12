@@ -25,6 +25,22 @@ ps, st = train(model, input_data, target_data, ps, st;
 `objective` chooses what to fit (here ridge). `solver` chooses how to solve it;
 omitting `solver` uses [`QRFactorization`](@ref).
 
+## Output feedback
+
+An [`ESN`](@ref) / [`ESNCell`](@ref) with `use_feedback=true` injects the
+previous output through `W_fb`. Training uses teacher forcing: pass
+`(train_data, teacher_data)`, or pass only `train_data` and the teacher is
+`target_data` shifted by one step (zeros at the first column).
+
+```@example training
+fb_model = ESN(3, 100, 5; use_feedback = true)
+ps_fb, st_fb = setup(rng, fb_model)
+ps_fb, st_fb = train(fb_model, input_data, target_data, ps_fb, st_fb)
+```
+
+After training, [`predict`](@ref) feeds the model's own previous output through
+`W_fb` while still consuming the driving input.
+
 ```@example training
 ps, st = train(model, input_data, target_data, ps, st;
     objective = RidgeRegression())
