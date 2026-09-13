@@ -2240,11 +2240,11 @@ Default kwargs:
 ```jldoctest forcon
 julia> reservoir_matrix = permutation_init(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.1
- 0.0  0.1  0.0  0.0  0.0
- 0.1  0.0  0.0  0.0  0.0
  0.0  0.0  0.1  0.0  0.0
  0.0  0.0  0.0  0.1  0.0
+ 0.0  0.1  0.0  0.0  0.0
+ 0.1  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.1
 ```
 
 Changing the weights magnitudes to a different unique value:
@@ -2252,11 +2252,11 @@ Changing the weights magnitudes to a different unique value:
 ```jldoctest forcon
 julia> reservoir_matrix = permutation_init(5, 5; weight=0.99)
 5×5 Matrix{Float32}:
- 0.0   0.0   0.0   0.0   0.99
- 0.0   0.99  0.0   0.0   0.0
- 0.99  0.0   0.0   0.0   0.0
  0.0   0.0   0.99  0.0   0.0
  0.0   0.0   0.0   0.99  0.0
+ 0.0   0.99  0.0   0.0   0.0
+ 0.99  0.0   0.0   0.0   0.0
+ 0.0   0.0   0.0   0.0   0.99
 ```
 
 Changing the weights signs with different sign patterns:
@@ -2264,11 +2264,11 @@ Changing the weights signs with different sign patterns:
 ```jldoctest forcon
 julia> reservoir_matrix = permutation_init(5, 5; signs = RandomSigns())
 5×5 Matrix{Float32}:
- 0.0  0.1   0.0  0.0   0.0
- 0.0  0.0  -0.1  0.0   0.0
- 0.1  0.0   0.0  0.0   0.0
- 0.0  0.0   0.0  0.0  -0.1
- 0.0  0.0   0.0  0.1   0.0
+  0.0  0.1  0.0   0.0  0.0
+ -0.1  0.0  0.0   0.0  0.0
+  0.0  0.0  0.0   0.0  0.1
+  0.0  0.0  0.0  -0.1  0.0
+  0.0  0.0  0.1   0.0  0.0
 ```
 
 Changing the weights to random numbers. Note that the length of the given array
@@ -2288,11 +2288,11 @@ Returning a sparse matrix:
 ```jldoctest forcon
 julia> reservoir_matrix = permutation_init(5, 5; return_sparse=true)
 5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
-  ⋅    ⋅    ⋅    ⋅   0.1
-  ⋅   0.1   ⋅    ⋅    ⋅
- 0.1   ⋅    ⋅    ⋅    ⋅
   ⋅    ⋅   0.1   ⋅    ⋅
   ⋅    ⋅    ⋅   0.1   ⋅
+  ⋅   0.1   ⋅    ⋅    ⋅
+ 0.1   ⋅    ⋅    ⋅    ⋅
+  ⋅    ⋅    ⋅    ⋅   0.1
 ```
 
 """
