@@ -3,31 +3,31 @@
     weight=0.1, permutation_matrix=nothing, return_sparse=false,
     radius=nothing, kwargs...)</code></pre><p>Creates a permutation reservoir as described in (<a href="../../../references/#Boedecker2009" id="Boedecker2009-cite-1">Boedecker <em>et al.</em>, 2009</a>), by first initializing a scaled identity (self-loops) and then applying a column permutation.</p><p>This construction yields:</p><p class="math-container">\[    \widehat{W} = \lambda P\]</p><p><strong>Arguments</strong></p><ul><li><code>rng</code>: Random number generator. Default is <code>Utils.default_rng()</code>from <a href="https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers">WeightInitializers</a>.</li><li><code>T</code>: Type of the elements in the reservoir matrix. Default is <code>Float32</code>.</li><li><code>dims</code>: Dimensions of the reservoir matrix.</li></ul><p><strong>Keyword arguments</strong></p><ul><li><code>weight</code>: Weight used for the initial self-loop initialization (and the magnitude of the nonzeros after permutation). Default is 0.1.</li><li><code>permutation_matrix</code>: Optional permutation matrix to apply. If <code>nothing</code>, a random permutation is generated (using <code>rng</code>) and applied.</li><li><code>return_sparse</code>: flag for returning a <code>sparse</code> matrix. <code>true</code> requires <code>SparseArrays</code> to be loaded. Default is <code>false</code>.</li><li><code>radius</code>: The desired spectral radius of the reservoir. If <code>nothing</code> is passed, no scaling takes place. Defaults to <code>nothing</code>.</li><li><code>signs</code>: Controls sign flips. Use <a href="../sign_patterns/#ReservoirComputing.RandomSigns"><code>RandomSigns</code></a>,     <a href="../sign_patterns/#ReservoirComputing.RegularSigns"><code>RegularSigns</code></a>, or <a href="../sign_patterns/#ReservoirComputing.IrrationalDigitSigns"><code>IrrationalDigitSigns</code></a>. Pass <code>nothing</code> to     leave signs     unchanged. Default is <code>nothing</code>.</li></ul><p><strong>Examples</strong></p><p>Default kwargs:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5)
 5×5 Matrix{Float32}:
- 0.0  0.0  0.0  0.0  0.1
+ 0.0  0.0  0.1  0.0  0.0
+ 0.0  0.0  0.0  0.1  0.0
  0.0  0.1  0.0  0.0  0.0
  0.1  0.0  0.0  0.0  0.0
- 0.0  0.0  0.1  0.0  0.0
- 0.0  0.0  0.0  0.1  0.0</code></pre><p>Changing the weights magnitudes to a different unique value:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5; weight=0.99)
+ 0.0  0.0  0.0  0.0  0.1</code></pre><p>Changing the weights magnitudes to a different unique value:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5; weight=0.99)
 5×5 Matrix{Float32}:
- 0.0   0.0   0.0   0.0   0.99
+ 0.0   0.0   0.99  0.0   0.0
+ 0.0   0.0   0.0   0.99  0.0
  0.0   0.99  0.0   0.0   0.0
  0.99  0.0   0.0   0.0   0.0
- 0.0   0.0   0.99  0.0   0.0
- 0.0   0.0   0.0   0.99  0.0</code></pre><p>Changing the weights signs with different sign patterns:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5; signs = RandomSigns())
+ 0.0   0.0   0.0   0.0   0.99</code></pre><p>Changing the weights signs with different sign patterns:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5; signs = RandomSigns())
 5×5 Matrix{Float32}:
- 0.0  0.1   0.0  0.0   0.0
- 0.0  0.0  -0.1  0.0   0.0
- 0.1  0.0   0.0  0.0   0.0
- 0.0  0.0   0.0  0.0  -0.1
- 0.0  0.0   0.0  0.1   0.0</code></pre><p>Changing the weights to random numbers. Note that the length of the given array must be at least as long as the subdiagonal one wants to fill:</p><pre><code class="language-julia-repl hljs">julia&gt; weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
+  0.0  0.1  0.0   0.0  0.0
+ -0.1  0.0  0.0   0.0  0.0
+  0.0  0.0  0.0   0.0  0.1
+  0.0  0.0  0.0  -0.1  0.0
+  0.0  0.0  0.1   0.0  0.0</code></pre><p>Changing the weights to random numbers. Note that the length of the given array must be at least as long as the subdiagonal one wants to fill:</p><pre><code class="language-julia-repl hljs">julia&gt; weights = Float32[0.2, 0.4, 0.6, 0.8, 1.0];
 
 julia&gt; reservoir_matrix = permutation_init(MersenneTwister(123), 5, 5; weight=weights);
 
 julia&gt; size(reservoir_matrix) == (5, 5) &amp;&amp; sort(reservoir_matrix[reservoir_matrix .!= 0]) == weights
 true</code></pre><p>Returning a sparse matrix:</p><pre><code class="language-julia-repl hljs">julia&gt; reservoir_matrix = permutation_init(5, 5; return_sparse=true)
 5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
-  ⋅    ⋅    ⋅    ⋅   0.1
+  ⋅    ⋅   0.1   ⋅    ⋅
+  ⋅    ⋅    ⋅   0.1   ⋅
   ⋅   0.1   ⋅    ⋅    ⋅
  0.1   ⋅    ⋅    ⋅    ⋅
-  ⋅    ⋅   0.1   ⋅    ⋅
-  ⋅    ⋅    ⋅   0.1   ⋅</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/4d26551d50c2cc0322c54d99764d5f25b6ae614a/src/inits/inits_reservoir.jl#L2197-L2298">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Boedecker, J.; Obst, O.; Mayer, N. M. and Asada, M. (2009). <em>Studies on reservoir initialization and dynamics shaping in echo state networks.</em> In: <em>ESANN</em>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 10 September 2026 05:17">Thursday 10 September 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  ⋅    ⋅    ⋅    ⋅   0.1</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/SciML/ReservoirComputing.jl/blob/f600c2298d10fb1d70dd81412bb50a4c27088ac6/src/inits/inits_reservoir.jl#L2197-L2298">source</a></section></details></article><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><div class="citation noncanonical"><ul><li><div>Boedecker, J.; Obst, O.; Mayer, N. M. and Asada, M. (2009). <em>Studies on reservoir initialization and dynamics shaping in echo state networks.</em> In: <em>ESANN</em>.</div></li></ul></div></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Sunday 13 September 2026 11:30">Sunday 13 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
