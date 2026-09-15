@@ -27,6 +27,7 @@ pages = [
         "Utilities" => "api/utils.md",
         "Train" => "api/train.md",
         "Predict" => "api/predict.md",
+        "Jacobian" => "api/jacobian.md",
         "States" => "api/states.md",
         "Initializers" => "api/inits.md",
         "Developer Interfaces" => "api/developer.md",
