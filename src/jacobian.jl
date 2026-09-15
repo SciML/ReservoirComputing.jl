@@ -91,33 +91,28 @@ function jacobians(
         initialdata::AbstractVector, backend::Symbol = :analytical
     )
     steps ≥ 1 || throw(ArgumentError("steps must be ≥ 1, got $steps"))
-    input_length = length(initialdata)
     __require_esn_closedloop_io(esn)
-
-    current_output, st = apply(esn, initialdata, ps, st)
-    __require_closed_loop_dimension(current_output, input_length, 1)
-
-    x = __carry_state_vector(st)
-    n = length(x)
-    Js = Array{eltype(x)}(undef, n, n, steps)
-    outputs = similar(current_output, length(current_output), steps)
-
-    jacobian!(view(Js, :, :, 1), esn, x, ps, st; backend)
-    outputs[:, 1] .= current_output
-
-    for step in 2:steps
-        current_output, st = apply(esn, current_output, ps, st)
+    input_length = length(initialdata)
+    current_input = initialdata
+    outputs = nothing
+    Js = nothing
+    for step in 1:steps
+        current_output, st = apply(esn, current_input, ps, st)
         __require_closed_loop_dimension(current_output, input_length, step)
         x = __carry_state_vector(st)
+        if step == 1
+            n = length(x)
+            Js = Array{eltype(x)}(undef, n, n, steps)
+            outputs = similar(current_output, length(current_output), steps)
+        end
         jacobian!(view(Js, :, :, step), esn, x, ps, st; backend)
         outputs[:, step] .= current_output
+        current_input = current_output
     end
     return Js, outputs, st
 end
 
-function __jacobian_state_vector(state::AbstractVector)
-    return state
-end
+__jacobian_state_vector(state::AbstractVector) = state
 
 function __jacobian_state_vector(state::AbstractMatrix)
     size(state, 2) == 1 || throw(
@@ -158,24 +153,20 @@ end
 function __closed_loop_quantities(esn::ESN, x::AbstractVector, ps)
     cell = esn.reservoir.cell
     z = __apply_modifiers_pure(esn.state_modifiers, x, ps.state_modifiers)
-    u = __readout_pure(esn.readout, z, ps.readout)
-
+    u = first(esn.readout(z, ps.readout, NamedTuple()))
     input_matrix = ps.reservoir.input_matrix
     reservoir_matrix = ps.reservoir.reservoir_matrix
     bias = safe_getproperty(ps.reservoir, Val(:bias))
     preactivation = dense_bias(input_matrix, u, nothing) .+
         dense_bias(reservoir_matrix, x, bias)
-
     T = eltype(x)
     leak = __format_leak(T, cell.leak_coefficient)
     x_new = __one_minus_leak(T, leak) .* x .+ leak .* cell.activation.(preactivation)
     return (; x_new, u, preactivation, z, leak, input_matrix, reservoir_matrix)
 end
 
-function __closed_loop_step(esn::ESN, x::AbstractVector, ps)
-    q = __closed_loop_quantities(esn, x, ps)
-    return q.x_new, q.u
-end
+__closed_loop_step(esn::ESN, x::AbstractVector, ps) =
+    ((q = __closed_loop_quantities(esn, x, ps)); (q.x_new, q.u))
 
 __apply_modifiers_pure(::Tuple{}, x, ::Tuple{}) = x
 
@@ -187,67 +178,35 @@ function __apply_modifiers_pure(modifiers::Tuple, x, ps_mods::Tuple)
     return features
 end
 
-function __readout_pure(readout::LinearReadout, features, ps_readout)
-    out = ps_readout.weight * features
-    if has_bias(readout)
-        out = out .+ ps_readout.bias
-    end
-    return readout.activation.(out)
-end
-
 function __analytical_closedloop_jacobian!(J::AbstractMatrix, esn::ESN, x::AbstractVector, ps)
     __ensure_supported_modifiers(esn.state_modifiers)
     q = __closed_loop_quantities(esn, x, ps)
     M = __state_modifiers_jacobian(esn.state_modifiers, x)
-    Du_Dx = __readout_jacobian(esn.readout, q.z, ps.readout, M)
-
-    J .= q.input_matrix * Du_Dx
+    J .= q.input_matrix * __readout_jacobian(esn.readout, q.z, ps.readout, M)
     J .+= q.reservoir_matrix # densifies if `reservoir_matrix` is sparse
-
-    dφ = __activation_derivative(esn.reservoir.cell.activation, q.preactivation)
-    __scale_rows!(J, q.leak, dφ)
-    __add_leak_identity!(J, q.leak)
-    return J
+    return __finalize_leak_jacobian!(
+        J, q.leak, __activation_derivative(esn.reservoir.cell.activation, q.preactivation)
+    )
 end
 
-function __scale_rows!(J::AbstractMatrix, leak::Number, dφ::AbstractVector)
+function __finalize_leak_jacobian!(J::AbstractMatrix, leak::Number, dφ::AbstractVector)
+    J .*= leak .* dφ
     @inbounds for i in axes(J, 1)
-        scale = leak * dφ[i]
-        for j in axes(J, 2)
-            J[i, j] *= scale
-        end
+        J[i, i] += one(eltype(J)) - leak
     end
     return J
 end
 
-function __scale_rows!(J::AbstractMatrix, leak::AbstractArray, dφ::AbstractVector)
-    leak_vec = vec(leak)
-    length(leak_vec) == length(dφ) || throw(
+function __finalize_leak_jacobian!(J::AbstractMatrix, leak::AbstractArray, dφ::AbstractVector)
+    α = vec(leak)
+    length(α) == length(dφ) || throw(
         DimensionMismatch(
-            "leak_coefficient length $(length(leak_vec)) must match reservoir size $(length(dφ))"
+            "leak_coefficient length $(length(α)) must match reservoir size $(length(dφ))"
         )
     )
+    J .*= α .* dφ
     @inbounds for i in axes(J, 1)
-        scale = leak_vec[i] * dφ[i]
-        for j in axes(J, 2)
-            J[i, j] *= scale
-        end
-    end
-    return J
-end
-
-function __add_leak_identity!(J::AbstractMatrix, leak::Number)
-    one_minus = one(eltype(J)) - leak
-    @inbounds for i in axes(J, 1)
-        J[i, i] += one_minus
-    end
-    return J
-end
-
-function __add_leak_identity!(J::AbstractMatrix, leak::AbstractArray)
-    leak_vec = vec(leak)
-    @inbounds for i in axes(J, 1)
-        J[i, i] += one(eltype(J)) - leak_vec[i]
+        J[i, i] += one(eltype(J)) - α[i]
     end
     return J
 end
@@ -255,25 +214,15 @@ end
 function __readout_jacobian(readout::LinearReadout, z, ps_readout, M::AbstractMatrix)
     weight_M = ps_readout.weight * M
     readout.activation === identity && return weight_M
-
     pre = ps_readout.weight * z
-    if has_bias(readout)
-        pre = pre .+ ps_readout.bias
-    end
+    has_bias(readout) && (pre = pre .+ ps_readout.bias)
     return __activation_derivative(readout.activation, pre) .* weight_M
 end
 
 __activation_derivative(::typeof(identity), a::AbstractVector) = ones(eltype(a), length(a))
-
-function __activation_derivative(::typeof(tanh), a::AbstractVector)
-    y = tanh.(a)
-    return one(eltype(a)) .- y .* y
-end
-
-function __activation_derivative(::typeof(tanh_fast), a::AbstractVector)
-    y = tanh_fast.(a)
-    return one(eltype(a)) .- y .* y
-end
+__activation_derivative(::typeof(tanh), a::AbstractVector) = (y = tanh.(a); one(eltype(a)) .- y .* y)
+__activation_derivative(::typeof(tanh_fast), a::AbstractVector) =
+    (y = tanh_fast.(a); one(eltype(a)) .- y .* y)
 
 function __activation_derivative(activation, ::AbstractVector)
     throw(
@@ -290,30 +239,25 @@ __unwrap_modifier(modifier) = modifier
 function __ensure_supported_modifiers(modifiers::Tuple)
     for modifier in modifiers
         unwrapped = __unwrap_modifier(modifier)
-        if unwrapped isa Extend
-            throw(
-                ArgumentError(
-                    "closed-loop jacobian does not support `Extend` " *
-                        "(autonomous state is not the reservoir carry alone)"
-                )
+        unwrapped isa Extend && throw(
+            ArgumentError(
+                "closed-loop jacobian does not support `Extend` " *
+                    "(autonomous state is not the reservoir carry alone)"
             )
-        end
-        if !hasmethod(__state_modifier_jacobian, Tuple{typeof(unwrapped), AbstractVector})
+        )
+        hasmethod(__state_modifier_jacobian, Tuple{typeof(unwrapped), AbstractVector}) ||
             throw(
-                ArgumentError(
-                    "no analytical Jacobian for state modifier $(unwrapped); " *
-                        "use `backend=:forwarddiff` after `using ForwardDiff`"
-                )
+            ArgumentError(
+                "no analytical Jacobian for state modifier $(unwrapped); " *
+                    "use `backend=:forwarddiff` after `using ForwardDiff`"
             )
-        end
+        )
     end
     return nothing
 end
 
-function __state_modifiers_jacobian(::Tuple{}, x::AbstractVector)
-    n = length(x)
-    return Matrix{eltype(x)}(I, n, n)
-end
+__state_modifiers_jacobian(::Tuple{}, x::AbstractVector) =
+    Matrix{eltype(x)}(I, length(x), length(x))
 
 function __state_modifiers_jacobian(modifiers::Tuple, x::AbstractVector)
     features = x
@@ -329,21 +273,16 @@ function __state_modifiers_jacobian(modifiers::Tuple, x::AbstractVector)
 end
 
 function __state_modifier_jacobian(::typeof(NLAT1), x::AbstractVector)
-    T = eltype(x)
-    n = length(x)
-    M = Matrix{T}(I, n, n)
+    M = Matrix{eltype(x)}(I, length(x), length(x))
     @inbounds for i in eachindex(x)
-        if isodd(i)
-            M[i, i] = 2 * x[i]
-        end
+        isodd(i) && (M[i, i] = 2 * x[i])
     end
     return M
 end
 
 function __state_modifier_jacobian(::typeof(NLAT2), x::AbstractVector)
     T = eltype(x)
-    n = length(x)
-    M = Matrix{T}(I, n, n)
+    M = Matrix{T}(I, length(x), length(x))
     first_i = firstindex(x)
     @inbounds for i in eachindex(x)
         if i > first_i && isodd(i)
@@ -357,10 +296,8 @@ end
 
 function __state_modifier_jacobian(::typeof(NLAT3), x::AbstractVector)
     T = eltype(x)
-    n = length(x)
-    M = Matrix{T}(I, n, n)
-    first_i = firstindex(x)
-    last_i = lastindex(x)
+    M = Matrix{T}(I, length(x), length(x))
+    first_i, last_i = firstindex(x), lastindex(x)
     @inbounds for i in eachindex(x)
         if first_i < i < last_i && isodd(i)
             M[i, i] = zero(T)
@@ -372,20 +309,13 @@ function __state_modifier_jacobian(::typeof(NLAT3), x::AbstractVector)
 end
 
 function __state_modifier_jacobian(::Pad, x::AbstractVector)
-    T = eltype(x)
     n = length(x)
-    M = zeros(T, n + 1, n)
-    @inbounds for i in 1:n
-        M[i, i] = one(T)
-    end
-    return M
+    return vcat(Matrix{eltype(x)}(I, n, n), zeros(eltype(x), 1, n))
 end
 
 function __state_modifier_jacobian(partial_square::PartialSquare, x::AbstractVector)
-    T = eltype(x)
-    n = length(x)
-    M = Matrix{T}(I, n, n)
-    threshold = floor(Int, partial_square.eta * n)
+    M = Matrix{eltype(x)}(I, length(x), length(x))
+    threshold = floor(Int, partial_square.eta * length(x))
     @inbounds for i in 1:threshold
         M[i, i] = 2 * x[i]
     end
@@ -393,22 +323,15 @@ function __state_modifier_jacobian(partial_square::PartialSquare, x::AbstractVec
 end
 
 function __state_modifier_jacobian(::typeof(ExtendedSquare), x::AbstractVector)
-    T = eltype(x)
     n = length(x)
-    M = zeros(T, 2n, n)
-    @inbounds for i in 1:n
-        M[i, i] = one(T)
-        M[n + i, i] = 2 * x[i]
-    end
-    return M
+    return vcat(Matrix{eltype(x)}(I, n, n), Matrix(2 .* Diagonal(x)))
 end
 
 function __forwarddiff_closedloop_jacobian!(
         J::AbstractMatrix, esn::ESN, x::AbstractVector, ps
     )
     ext = Base.get_extension(@__MODULE__, :RCForwardDiffExt)
-    ext === nothing && error(
-        "backend=:forwarddiff requires ForwardDiff (`using ForwardDiff`)"
-    )
+    ext === nothing &&
+        error("backend=:forwarddiff requires ForwardDiff (`using ForwardDiff`)")
     return ext.forwarddiff_closedloop_jacobian!(J, esn, x, ps)
 end
