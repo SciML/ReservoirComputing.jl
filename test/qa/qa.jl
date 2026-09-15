@@ -3,10 +3,10 @@ using JET
 
 # ExplicitImports only checks an extension module once it exists, and an extension only
 # exists once its trigger package is loaded. Loading the weakdeps here is what puts
-# RCCellularAutomataExt, RCODEReservoirExt, RCLIBSVMExt, RCMLJLinearModelsExt,
-# RCSparseArraysExt and RCStateSpaceSetsExt in scope for the QA checks.
-using CellularAutomata, DataInterpolations, LIBSVM, MLJLinearModels, SparseArrays,
-    StateSpaceSets
+# RCCellularAutomataExt, RCForwardDiffExt, RCODEReservoirExt, RCLIBSVMExt,
+# RCMLJLinearModelsExt, RCSparseArraysExt and RCStateSpaceSetsExt in scope for the QA checks.
+using CellularAutomata, DataInterpolations, ForwardDiff, LIBSVM, MLJLinearModels,
+    SparseArrays, StateSpaceSets
 
 # ReservoirComputing's own extension hook points. ExplicitImports' `allow_internal_imports`
 # / `allow_internal_accesses` defaults would cover these, but they key off
@@ -24,10 +24,12 @@ rc_internal_hooks = (
     :__check_protected_kwargs,
     :__collectstates,
     :__continuous_esn_rhs!,
+    :__closed_loop_step,
     :__feature_dim,
     :__fit_readout,
     :__init_encoder_st,
     :__predict,
+    :__require_esn_closedloop_io,
     :__reservoir_jac_prototype,
     :__resolve_readout_in_dims,
     :__supports_ar,
