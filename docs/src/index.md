@@ -44,6 +44,11 @@ This approach can be thought as a kernel method with an explicit kernel trick.
     If you feel that this is causing confusion in some places, please open an issue!
 
 
+## Upgrading
+
+If you are updating from a `0.12` release toward v1, see
+[Migrating to v1](migration_to_v1.md) for renames, removals, and behavior changes.
+
 ## Installation
 
 To install ReservoirComputing.jl, ensure you have Julia version 1.10 or higher.
