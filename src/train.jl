@@ -192,7 +192,6 @@ function __train_ridge(
         )
     end
     successful_retcode(solution) && return Matrix(solution.u')
-    # LinearSolve QR NoPivot reports Failure on rank-deficient least squares.
     solver isa LinearSolveQRFactorization || throw(
         ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
     )
