@@ -2238,37 +2238,28 @@ This construction yields:
 Default kwargs:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5)
-5×5 Matrix{Float32}:
- 0.0  0.0  0.1  0.0  0.0
- 0.0  0.0  0.0  0.1  0.0
- 0.0  0.1  0.0  0.0  0.0
- 0.1  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.1
+julia> m = permutation_init(5, 5);
+
+julia> size(m) == (5, 5) && count(!iszero, m) == 5 && sort(vec(m[m .!= 0])) == fill(0.1f0, 5)
+true
 ```
 
 Changing the weights magnitudes to a different unique value:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5; weight=0.99)
-5×5 Matrix{Float32}:
- 0.0   0.0   0.99  0.0   0.0
- 0.0   0.0   0.0   0.99  0.0
- 0.0   0.99  0.0   0.0   0.0
- 0.99  0.0   0.0   0.0   0.0
- 0.0   0.0   0.0   0.0   0.99
+julia> m = permutation_init(5, 5; weight=0.99);
+
+julia> size(m) == (5, 5) && count(!iszero, m) == 5 && sort(vec(m[m .!= 0])) == fill(0.99f0, 5)
+true
 ```
 
 Changing the weights signs with different sign patterns:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5; signs = RandomSigns())
-5×5 Matrix{Float32}:
-  0.0  0.1  0.0   0.0  0.0
- -0.1  0.0  0.0   0.0  0.0
-  0.0  0.0  0.0   0.0  0.1
-  0.0  0.0  0.0  -0.1  0.0
-  0.0  0.0  0.1   0.0  0.0
+julia> m = permutation_init(5, 5; signs = RandomSigns());
+
+julia> size(m) == (5, 5) && count(!iszero, m) == 5 && sort(abs.(vec(m[m .!= 0]))) == fill(0.1f0, 5)
+true
 ```
 
 Changing the weights to random numbers. Note that the length of the given array
@@ -2286,13 +2277,11 @@ true
 Returning a sparse matrix:
 
 ```jldoctest forcon
-julia> reservoir_matrix = permutation_init(5, 5; return_sparse=true)
-5×5 SparseMatrixCSC{Float32, Int64} with 5 stored entries:
-  ⋅    ⋅   0.1   ⋅    ⋅
-  ⋅    ⋅    ⋅   0.1   ⋅
-  ⋅   0.1   ⋅    ⋅    ⋅
- 0.1   ⋅    ⋅    ⋅    ⋅
-  ⋅    ⋅    ⋅    ⋅   0.1
+julia> reservoir_matrix = permutation_init(MersenneTwister(123), 5, 5; return_sparse=true);
+
+julia> reservoir_matrix isa SparseMatrixCSC && size(reservoir_matrix) == (5, 5) &&
+           nnz(reservoir_matrix) == 5 && sort(abs.(nonzeros(reservoir_matrix))) == fill(0.1f0, 5)
+true
 ```
 
 """
