@@ -1,5 +1,6 @@
 pages = [
     "ReservoirComputing.jl" => "index.md",
+    "Migrating to v1" => "migration_to_v1.md",
     "Getting Started with ReservoirComputing.jl" => "tutorials/getting_started.md",
     "Tutorials" => Any[
         "Building a model from scratch" => "tutorials/scratch.md",

@@ -1,7 +1,7 @@
 # Migrating to ReservoirComputing.jl v1
 
-This is a draft migration guide for changes planned for ReservoirComputing.jl v1.
-It is intentionally not included in the documentation navigation yet.
+Changes from the last `0.12` releases to v1. Deprecated names still emit
+warnings on `0.12.x` and are removed at the v1.0 cut.
 
 ## Initializer sign patterns
 
@@ -30,11 +30,10 @@ minimal_init(100, 3) # signs = nothing
 
 ### Migrating `sampling_type`
 
-The old `sampling_type` keyword and its sampler-specific forwarded keywords are
-deprecated. They remain available temporarily and emit a deprecation warning.
+`sampling_type` and its sampler-specific forwarded keywords are removed in v1.0.
 
-| Before v1 | v1-compatible replacement |
-|:----------|:--------------------------|
+| Before v1 | v1 replacement |
+|:----------|:---------------|
 | `sampling_type = :no_sample` | `signs = nothing` |
 | `sampling_type = :bernoulli_sample!, positive_prob = p` | `signs = RandomSigns(p)` |
 | `sampling_type = :regular_sample!, strides = s` | `signs = RegularSigns(s)` |
@@ -73,12 +72,8 @@ minimal_init(100, 3; signs = RandomSigns())
 ## Initializer behavior corrections
 
 `informed_init` now extracts scalar random values correctly when assigning informed
-input connections. Earlier versions attempted scalar arithmetic with a zero-dimensional
-array and could fail before returning the initialized matrix. This correction does not
-require changes at call sites.
-
-Its tests now cover element types, dimensions, partial application, deterministic seeded
-output, state/model column partitioning, scaling bounds, and invalid dimensions.
+input connections. Earlier versions could fail on zero-dimensional array arithmetic.
+Call sites do not need changes.
 
 ## Input-extended reservoir states
 
@@ -92,3 +87,54 @@ model = ESN(3, 100, 3; state_modifiers = (Extend(Collect()),))
 High-level constructors size their linear readout automatically for `Extend` when
 its wrapped operation preserves the feature width. For a custom modifier that changes
 the feature width, pass the resulting width explicitly through `readout_in_dims`.
+
+## Training API
+
+```julia
+ps, st = train(model, train_data, target_data, ps, st;
+    objective = RidgeRegression(1e-3))
+```
+
+### Generic `train!` → `train`
+
+The model-level bang API is removed in v1.0. Map the positional training method to
+`objective`:
+
+| Before v1 | v1 replacement |
+|:----------|:---------------|
+| `train!(model, data, targets, ps, st, StandardRidge(1e-3))` | `train(model, data, targets, ps, st; objective = RidgeRegression(1e-3))` |
+| `train!(model, data, targets, ps, st)` | `train(model, data, targets, ps, st)` |
+
+`washout`, `return_states`, and `solver` keep the same names. Conceptor
+`train!(rng, concept::Conceptor, ...)` is unchanged.
+
+### Objective-level `train`
+
+`train(objective, states, targets; solver=...)` is removed in v1.0. Fit through the
+model instead (returns `(ps, st)`, not a bare weight matrix):
+
+```julia
+# before
+W = train(RidgeRegression(1e-3), states, targets)
+
+# after
+ps, st = train(model, train_data, target_data, ps, st;
+    objective = RidgeRegression(1e-3))
+```
+
+## Renames
+
+| Before v1 | v1 |
+|:----------|:---|
+| `StandardRidge` | [`RidgeRegression`](@ref) |
+| `toepliz_init` | [`toeplitz_init`](@ref) |
+| `model.states_modifiers` | `model.state_modifiers` |
+
+## Conceptor `tolerance`
+
+[`conceptor_and`](@ref) accepts optional `tolerance` for its relative rank cutoff.
+Default `nothing` preserves the previous behavior:
+
+```julia
+conceptor_and(C1, C2; tolerance = 1e-10)
+```

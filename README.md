@@ -133,6 +133,12 @@ plot!(transpose(test)[:, 1], transpose(test)[:, 2], transpose(test)[:, 3];
     label="actual")
 ```
 
+## Upgrading
+
+If you are updating from a `0.12` release toward v1, see the
+[migration guide](https://docs.sciml.ai/ReservoirComputing/dev/migration_to_v1/)
+for renames, removals, and behavior changes.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
