@@ -295,6 +295,49 @@ begin
         end
     end
 
+    @testset "ESNCell: output feedback" begin
+        @test_throws ArgumentError ESNCell(3 => 5; use_feedback = true)
+
+        cell = ESNCell(
+            3 => 3, identity;
+            use_bias = False(),
+            use_feedback = true,
+            feedback_dims = 3,
+            leak_coefficient = 1.0,
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_feedback = _W_I,
+            init_state = _Z32,
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        @test size(ps.feedback_matrix) == (3, 3)
+        shown = sprint(show, cell)
+        @test occursin("use_feedback=true", shown)
+        @test occursin("feedback_dims=3", shown)
+        @test !occursin("use_feedback", sprint(show, ESNCell(3 => 5)))
+
+        u = Float32[1, 2, 3]
+        y_prev = Float32[4, 5, 6]
+        h0 = zeros(Float32, 3)
+        (h_tuple, _) = cell(((u, y_prev), (h0,)), ps, NamedTuple())
+        h_new, (hcarry,) = h_tuple
+        @test h_new ≈ u .+ y_prev
+        @test hcarry ≈ h_new
+
+        @test_throws ArgumentError cell((u, (h0,)), ps, NamedTuple())
+
+        cell_off = ESNCell(
+            3 => 3, identity;
+            use_bias = False(),
+            init_input = _W_I,
+            init_reservoir = _W_ZZ,
+            init_state = _Z32,
+        )
+        ps_off = initialparameters(MersenneTwister(0), cell_off)
+        @test !haskey(ps_off, :feedback_matrix)
+        @test_throws ArgumentError cell_off(((u, y_prev), (h0,)), ps_off, NamedTuple())
+    end
+
     @testset "ResESNCell: decoupled alpha/beta" begin
         cell = ResESNCell(
             3 => 3,
