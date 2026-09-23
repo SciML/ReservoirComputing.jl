@@ -19,6 +19,7 @@ WeightInitializers = "d49dbf32-c5c2-4618-8acc-27bb2598ef2d"
 [weakdeps]
 CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
@@ -26,6 +27,7 @@ StateSpaceSets = "40b095a5-5852-4c12-98c7-d43bf788e795"
 
 [extensions]
 RCCellularAutomataExt = "CellularAutomata"
+RCForwardDiffExt = "ForwardDiff"
 RCLIBSVMExt = "LIBSVM"
 RCMLJLinearModelsExt = "MLJLinearModels"
 RCODEReservoirExt = "DataInterpolations"
@@ -39,6 +41,7 @@ CellularAutomata = "0.0.6, 0.1"
 ConcreteStructs = "0.2.3"
 DataInterpolations = "9.0, 10.1"
 DifferentialEquations = "8"
+ForwardDiff = "0.10, 1"
 LIBSVM = "0.8"
 LinearAlgebra = "1.10"
 LinearSolve = "5.1"
@@ -68,6 +71,7 @@ julia = "1.10"
 CellularAutomata = "878138dc-5b27-11ea-1a71-cb95d38d6b29"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
 MLJLinearModels = "6ee0df7b-362f-4a72-a706-9e79364fb692"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
@@ -83,4 +87,4 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SafeTestsets", "SciMLTesting", "CellularAutomata", "DataInterpolations", "DifferentialEquations", "MLJLinearModels", "LIBSVM", "OrdinaryDiffEq", "OrdinaryDiffEqCore", "OrdinaryDiffEqLowOrderRK", "Serialization", "SparseArrays", "StateSpaceSets", "StaticArrays", "Statistics"]
+test = ["Test", "SafeTestsets", "SciMLTesting", "CellularAutomata", "DataInterpolations", "DifferentialEquations", "ForwardDiff", "MLJLinearModels", "LIBSVM", "OrdinaryDiffEq", "OrdinaryDiffEqCore", "OrdinaryDiffEqLowOrderRK", "Serialization", "SparseArrays", "StateSpaceSets", "StaticArrays", "Statistics"]
