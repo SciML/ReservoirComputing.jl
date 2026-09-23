@@ -179,7 +179,7 @@ function __train_ridge(
     )
     design, rhs = __ridge_augmented_system(objective, states, targets)
     solution = try
-        solve(LinearProblem(design, rhs), solver; kwargs...)
+        solve(LinearProblem(design, rhs), solver; verbose = false, kwargs...)
     catch err
         err isa DimensionMismatch || rethrow()
         throw(
@@ -191,10 +191,11 @@ function __train_ridge(
             )
         )
     end
-    successful_retcode(solution) || throw(
+    successful_retcode(solution) && return Matrix(solution.u')
+    solver isa LinearSolveQRFactorization || throw(
         ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
     )
-    return Matrix(solution.u')
+    return Matrix((qr(design) \ rhs)')
 end
 
 @doc raw"""

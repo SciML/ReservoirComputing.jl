@@ -183,6 +183,19 @@ end
     end
 end
 
+@testset "__fit_readout(RidgeRegression): rank-deficient λ=0" begin
+    states = reshape(Float32.(1:24), 3, 8) ./ 10.0f0
+    targets = vcat(
+        reshape(states[1, :] .+ 2 .* states[2, :], 1, :),
+        reshape(states[3, :] .- states[1, :], 1, :),
+    )
+    weights = ReservoirComputing.__fit_readout(RidgeRegression(Float32, 0), states, targets)
+    @test eltype(weights) === Float32
+    @test weights ≈ ReservoirComputing.__fit_readout(
+        RidgeRegression(Float32, 0), states, targets; solver = QRSolver()
+    ) rtol = 1.0e-5
+end
+
 @testset "__fit_readout(RidgeRegression): default solver is QRFactorization" begin
     rng = MersenneTwister(23)
     states, targets, _ = random_ridge_problem(rng, Float64, 5, 30, 2)
