@@ -38,9 +38,7 @@ LinearSolve = "4.2, 5"
 LuxCore = "1.3"
 MLJLinearModels = "0.10"
 OrdinaryDiffEqAdamsBashforthMoulton = "2"
-# Cap at 4.13: Adams/LowOrderRK 2.x need OrdinaryDiffEqCore.u_cache
-# (comma is union in Pkg compat, so ">=x, <y" does not cap).
-OrdinaryDiffEqCore = "4.8.1 - 4.13"
+OrdinaryDiffEqCore = "4.8.1"
 OrdinaryDiffEqTsit5 = "1, 2"
 Plots = "1"
 ReservoirComputing = "0.12.0"
