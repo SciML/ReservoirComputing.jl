@@ -2,7 +2,7 @@ name: Benchmark this PR
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
     paths-ignore: ['docs/**']
 
 permissions:
