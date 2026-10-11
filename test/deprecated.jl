@@ -6,6 +6,13 @@ using LinearSolve: SVDFactorization
 
 # Delete with src/deprecated.jl at v1.0.
 
+# `@test_deprecated` returns the expression value under `--depwarn=yes`/`no`, but under
+# `--depwarn=error` it becomes `@test_throws ErrorException` and returns a `Test.Pass`.
+# Never unpack its return value. Assert deprecation separately, then obtain values via a
+# second call to the deprecated API when that call can complete (depwarn ≠ error), or via
+# the delegated non-deprecated implementation when depwarn=error (call throws).
+const _DEPWARN_ERROR = Base.JLOptions().depwarn == Int8(2)
+
 @testset "StandardRidge is deprecated alias of RidgeRegression" begin
     @test StandardRidge === RidgeRegression
     @test StandardRidge(1.0e-3) isa RidgeRegression
@@ -28,8 +35,12 @@ end
     ps_kw, _ = train(
         model, train_data, target_data, ps, st; objective = ridge
     )
-    result = @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
-    ps_pos = result[1]
+    @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
+    ps_pos, _ = if _DEPWARN_ERROR
+        train(model, train_data, target_data, ps, st; objective = ridge)
+    else
+        train!(model, train_data, target_data, ps, st, ridge)
+    end
     @test ps_pos.readout.weight ≈ ps_kw.readout.weight
 end
 
@@ -42,9 +53,18 @@ end
     weights_new = ReservoirComputing.__fit_readout(
         ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
-    result = @test_deprecated train(
+    @test_deprecated train(
         ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
+    result = if _DEPWARN_ERROR
+        ReservoirComputing.__fit_readout(
+            ridge, states, targets; solver = ReservoirComputing.QRFactorization()
+        )
+    else
+        train(
+            ridge, states, targets; solver = ReservoirComputing.QRFactorization()
+        )
+    end
     @test result ≈ weights_new
 end
 
@@ -63,11 +83,21 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    result = @test_deprecated train!(
+    @test_deprecated train!(
         model, train_data, target_data, ps, st, RidgeRegression(1.0e-3);
         solver = SVDFactorization(),
     )
-    ps_trained = result[1]
+    ps_trained, _ = if _DEPWARN_ERROR
+        train(
+            model, train_data, target_data, ps, st;
+            objective = RidgeRegression(1.0e-3), solver = SVDFactorization(),
+        )
+    else
+        train!(
+            model, train_data, target_data, ps, st, RidgeRegression(1.0e-3);
+            solver = SVDFactorization(),
+        )
+    end
     @test size(ps_trained.readout.weight) == (out_dims, res_dims)
     @test all(isfinite, ps_trained.readout.weight)
 end
