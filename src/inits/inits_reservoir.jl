@@ -6,6 +6,9 @@ Create and return a random sparse reservoir matrix.
 The matrix will be of size specified by `dims`, with specified `sparsity`
 and scaled spectral radius according to `radius`.
 
+Every column keeps at least one nonzero entry, whatever the size and `sparsity`, so
+the matrix is never all zero and can be scaled to `radius`.
+
 ## Arguments
 
   - `rng`: Random number generator. Default is `Utils.default_rng()`from
@@ -18,8 +21,10 @@ and scaled spectral radius according to `radius`.
 
   - `radius`: The desired spectral radius of the reservoir.
     Defaults to 1.0.
-  - `sparsity`: The sparsity level of the reservoir matrix,
-    controlling the fraction of zero elements. Defaults to 0.1.
+  - `sparsity`: Fraction of nonzero entries in each column of the reservoir matrix.
+    Each column has about `sparsity * n` nonzero entries for an `n`-by-`n` matrix and
+    never fewer than one, so reservoirs with `n < 1 / sparsity` get a single nonzero
+    entry per column. Defaults to 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -37,6 +42,15 @@ julia> dense_matrix = rand_sparse(rng, 5, 5; sparsity = 0.8);
 
 julia> size(sparse_matrix) == size(dense_matrix) == (5, 5) &&
        count(!iszero, sparse_matrix) < count(!iszero, dense_matrix)
+true
+```
+
+Small reservoirs keep one nonzero entry per column:
+
+```jldoctest randsparse
+julia> small_matrix = rand_sparse(MersenneTwister(123), 5, 5);
+
+julia> all(==(1), count(!iszero, small_matrix; dims = 1))
 true
 ```
 
@@ -60,7 +74,7 @@ function rand_sparse(
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
-    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
+    reservoir_matrix = __sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     check_inf_nan(reservoir_matrix)
     return return_init_as(Val(return_sparse), reservoir_matrix)
