@@ -313,4 +313,45 @@ begin
         @test length(first(stm.reservoir.carry)) == res_dim
     end
 
+    @testset "ContinuousESN: activation and init_state are used" begin
+        dim, res_dim = 2, 20
+        data = randn(MersenneTwister(1), Float32, dim, 30)
+        function sin_rhs!(dx, x, p, t)
+            mul!(dx, p.reservoir_matrix, x)
+            mul!(dx, p.input_matrix, p.input(t), true, true)
+            @. dx = -x + sin(dx)
+            return nothing
+        end
+        solve_kw = (; reltol = 1.0e-8, abstol = 1.0e-10)
+        esn_tanh = ContinuousESN(dim, res_dim, dim, (0.0, 3.0), Tsit5(); solve_kw...)
+        esn_sin = ContinuousESN(dim, res_dim, dim, sin, (0.0, 3.0), Tsit5(); solve_kw...)
+        esn_ref = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5(); equations = sin_rhs!, solve_kw...
+        )
+        ps, st = setup(MersenneTwister(7), esn_tanh)
+        s_tanh, _ = collectstates(esn_tanh, data, ps, st)
+        s_sin, _ = collectstates(esn_sin, data, ps, st)
+        s_ref, _ = collectstates(esn_ref, data, ps, st)
+        @test s_sin ≈ s_ref
+        @test !isapprox(s_sin, s_tanh; rtol = 1.0e-3)
+        ps_act = merge(ps, (reservoir = merge(ps.reservoir, (activation = sin,)),))
+        @test first(collectstates(esn_tanh, data, ps_act, st)) ≈ s_sin
+
+        esn_half = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5();
+            init_state = (rng, dims...) -> fill(0.5f0, dims...), solve_kw...
+        )
+        s_half, _ = collectstates(esn_half, data, ps, st)
+        @test !isapprox(s_half[:, 1], s_tanh[:, 1]; rtol = 1.0e-3)
+        @test eltype(s_half) == eltype(ps.reservoir.input_matrix)
+
+        esn_rand = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5(); init_state = randn32, solve_kw...
+        )
+        s_rand, st_rand = collectstates(esn_rand, data, ps, st)
+        @test s_rand == first(collectstates(esn_rand, data, ps, st))
+        @test s_rand != s_tanh
+        @test st_rand.reservoir.rng != st.reservoir.rng
+    end
+
 end
