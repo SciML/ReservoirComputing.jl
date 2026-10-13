@@ -134,6 +134,21 @@ begin
             @test sort(unique(dl)) == Float32.([-0.1, 0.1])
         end
 
+        @testset "modified_lm gives every input a logistic chain" begin
+            factor, n_inputs = 3, 4
+            n_rows = factor * n_inputs
+            lm = modified_lm(rng, Float64, n_rows, n_inputs; factor)
+            for col in 1:n_inputs
+                chain = ((col - 1) * factor + 1):(col * factor)
+                head = lm[first(chain), col]
+                @test head ≈ 0.3 * sin(col * pi / (n_rows * 5.9))
+                @test lm[chain[2], col] ≈ 2.35 * head * (1 - head)
+                @test all(!iszero, lm[chain, col])
+                @test all(iszero, lm[setdiff(1:n_rows, chain), col])
+            end
+            @test all(!iszero, modified_lm(rng, Float32, 5, 1; factor = 5))
+        end
+
         @testset "Sign patterns" begin
             @test all(==(0.1f0), minimal_init(Xoshiro(0), Float32, 2, 3))
 

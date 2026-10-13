@@ -204,7 +204,8 @@ end
     RECA(in_dims, out_dims, automaton;
         input_encoding=RandomMapping(),
         generations=8, state_modifiers=(),
-        readout_activation=identity, readout_in_dims=nothing)
+        readout_activation=identity, readout_in_dims=nothing,
+        rng=Random.default_rng())
 
 Construct a cellular–automata reservoir model.
 
@@ -237,5 +238,7 @@ A linear [`LinearReadout`](@ref) maps these features to `out_dims`.
   Default is none.
 - `readout_activation`: Activation applied by the readout
   Default is `identity`.
+- `rng`: Random number generator used to draw the input maps when the model is
+  constructed. Default is `Random.default_rng()`.
 """
 RECA(::Any...) = error("RECA requires CellularAutomata.jl; use it to enable this constructor.")

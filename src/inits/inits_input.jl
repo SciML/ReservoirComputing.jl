@@ -673,12 +673,12 @@ julia> using ReservoirComputing: modified_lm
 
 julia> input_matrix = modified_lm(20, 10; factor = 2, return_sparse = true);
 
-julia> issparse(input_matrix) && size(input_matrix) == (20, 10) && nnz(input_matrix) == 18
+julia> issparse(input_matrix) && size(input_matrix) == (20, 10) && nnz(input_matrix) == 20
 true
 
 julia> input_matrix = modified_lm(12, 4; factor = 3, return_sparse = true);
 
-julia> issparse(input_matrix) && size(input_matrix) == (12, 4) && nnz(input_matrix) == 9
+julia> issparse(input_matrix) && size(input_matrix) == (12, 4) && nnz(input_matrix) == 12
 true
 ```
 """
@@ -701,8 +701,7 @@ function modified_lm(
     for idx_col in 1:num_columns
         base_row = (idx_col - 1) * factor + 1
         output_matrix[base_row, idx_col] = amplitude * sin(
-            ((idx_col - 1) * pi) /
-                (factor * num_columns * sine_divisor)
+            (idx_col * pi) / (factor * num_columns * sine_divisor)
         )
         for jdx in 1:(factor - 1)
             current_row = base_row + jdx

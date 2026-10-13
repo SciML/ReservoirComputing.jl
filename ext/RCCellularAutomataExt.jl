@@ -3,10 +3,13 @@ using ReservoirComputing: RECA, AbstractInputEncoding, ReservoirComputer,
     IntegerType, LinearReadout, StatefulLayer, __resolve_readout_in_dims
 import ReservoirComputing: RECACell, RECA, RandomMapping, RandomMaps
 using CellularAutomata: CellularAutomata, CellularAutomaton
-using Random: randperm
+using Random: Random, AbstractRNG, randperm
 
-function create_encoding(rm::RandomMapping, in_dims::IntegerType, generations::IntegerType)
-    maps = init_maps(in_dims, rm.permutations, rm.expansion_size)
+function create_encoding(
+        rng::AbstractRNG, rm::RandomMapping, in_dims::IntegerType,
+        generations::IntegerType
+    )
+    maps = init_maps(rng, in_dims, rm.permutations, rm.expansion_size)
     states_size = generations * rm.expansion_size * rm.permutations
     ca_size = rm.expansion_size * rm.permutations
     return RandomMaps(
@@ -50,20 +53,18 @@ function single_encoding(input_vector, encoded_vector, map)
     return new_enc_vec
 end
 
-function init_maps(input_size, permutations, mapped_vector_size)
+function init_maps(rng::AbstractRNG, input_size, permutations, mapped_vector_size)
     maps = Array{Int}(undef, permutations, input_size)
-    #tot_size = input_size*permutations
 
     for i in 1:permutations
-        maps[i, :] = mapping(input_size, mapped_vector_size)
+        maps[i, :] = mapping(rng, input_size, mapped_vector_size)
     end
 
     return maps
 end
 
-function mapping(input_size, mapped_vector_size)
-    #sample(1:mapped_vector_size, input_size; replace=false)
-    return randperm(mapped_vector_size)[1:input_size]
+function mapping(rng::AbstractRNG, input_size, mapped_vector_size)
+    return randperm(rng, mapped_vector_size)[1:input_size]
 end
 
 function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
@@ -91,9 +92,10 @@ function RECA(
         generations::Integer = 8,
         state_modifiers = (),
         readout_activation = identity,
-        readout_in_dims = nothing
+        readout_in_dims = nothing,
+        rng::AbstractRNG = Random.default_rng()
     )
-    rm = create_encoding(input_encoding, in_dims, generations)
+    rm = create_encoding(rng, input_encoding, in_dims, generations)
     cell = RECACell(automaton, rm)
 
     mods = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?

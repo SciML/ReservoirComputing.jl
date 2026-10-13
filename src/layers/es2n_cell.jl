@@ -3,7 +3,7 @@
         use_bias=False(), init_bias=zeros32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=randn32, init_orthogonal=orthogonal,
-        proximity=1.0))
+        proximity=1.0)
 
 Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
 
@@ -18,15 +18,15 @@ Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
 ```
 ## Arguments
 
-    - `in_dims`: Input dimension.
-    - `out_dims`: Reservoir (hidden state) dimension.
-    - `activation`: Activation function. Default: `tanh_fast`.
+  - `in_dims`: Input dimension.
+  - `out_dims`: Reservoir (hidden state) dimension.
+  - `activation`: Activation function. Default: `tanh_fast`.
 
 ## Keyword arguments
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-    Default is `rand32`.
+    Default is `zeros32`.
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_orthogonal`: Initializer for the orthogonal matrix `O`.
@@ -35,7 +35,7 @@ Edge of Stability Echo State Network (ES2N) cell [Ceni2025](@cite).
     Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
     state is not provided. Default is `randn32`.
-  - `proximity`: Proximity coefficient `α ∈ (0,1]`. Default: `1.0`.
+  - `proximity`: Proximity coefficient `β ∈ (0,1]`. Default: `1.0`.
 
 ## Inputs
 
@@ -110,7 +110,7 @@ function (esn::ES2NCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
-    h_new = (one(T) - t_prox) .* ps.orthogonal_matrix * hidden_state .+
+    h_new = (one(T) - t_prox) .* (ps.orthogonal_matrix * hidden_state) .+
         t_prox .* candidate_h
     return (h_new, (h_new,)), st
 end

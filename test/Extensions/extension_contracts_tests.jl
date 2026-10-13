@@ -44,6 +44,24 @@ begin
         )
     end
 
+    @testset "CellularAutomata extension draws RECA maps from rng" begin
+        function build_reca(; kwargs...)
+            return RECA(
+                4, 2, DCA(90); input_encoding = RandomMapping(2, 8), generations = 2,
+                kwargs...
+            )
+        end
+        reca_maps(model) = model.reservoir.cell.enc.maps
+        @test reca_maps(build_reca(; rng = MersenneTwister(1))) ==
+            reca_maps(build_reca(; rng = MersenneTwister(1)))
+        @test reca_maps(build_reca(; rng = MersenneTwister(1))) !=
+            reca_maps(build_reca(; rng = MersenneTwister(2)))
+        Random.seed!(407)
+        default_maps = reca_maps(build_reca())
+        Random.seed!(407)
+        @test reca_maps(build_reca(; rng = Random.default_rng())) == default_maps
+    end
+
     @testset "CellularAutomata extension clears a RECA carry" begin
         rng = MersenneTwister(405)
         reca = RECA(4, 4, DCA(90); input_encoding = RandomMapping(2, 8), generations = 2)
