@@ -68,28 +68,22 @@ private training helpers from another package.
 ## Example
 
 ```julia
-weights = train(RidgeRegression(1.0e-3), states, targets;
-    solver = QRFactorization())
+ps, st = train(rc, train_data, target_data, ps, st;
+    objective = RidgeRegression(1.0e-3), solver = QRSolver())
 ```
 """
 abstract type AbstractReservoirComputingSolver end
-
-@doc raw"""
-    QRFactorization()
-
-Default solver for [`RidgeRegression`](@ref). This is ReservoirComputing's
-owned solver facade; it dispatches to LinearSolve's QR factorization
-implementation. For other algorithms, load LinearSolve.jl and pass a
-documented LinearSolve algorithm as `solver`.
-"""
-struct QRFactorization <: AbstractReservoirComputingSolver end
 
 @doc raw"""
     QRSolver()
 
 Legacy built-in QR solver for [`RidgeRegression`](@ref).
 
-Prefer [`QRFactorization`](@ref) unless you need this path explicitly.
+Solves the ridge system with a column-pivoted QR factorization, so rank-deficient
+`Float32` or `Float64` features (for example with `reg = 0`) give the minimum-norm
+least-squares solution; other element types need `reg > 0` in that case.
+Prefer `QRFactorization()` (LinearSolve's QR algorithm, available from
+`using ReservoirComputing`) unless you need this path explicitly.
 """
 struct QRSolver <: AbstractReservoirComputingSolver end
 
@@ -142,17 +136,8 @@ function __train_ridge(
         states::AbstractMatrix, target_data::AbstractMatrix; kwargs...
     )
     design, rhs = __ridge_augmented_system(objective, states, target_data)
-    weight_transpose = qr(design) \ rhs
+    weight_transpose = design \ rhs
     return Matrix(weight_transpose')
-end
-
-function __train_ridge(
-        ::QRFactorization, objective::RidgeRegression,
-        states::AbstractMatrix, targets::AbstractMatrix; kwargs...
-    )
-    return __train_ridge(
-        LinearSolveQRFactorization(), objective, states, targets; kwargs...
-    )
 end
 
 function __train_ridge(
@@ -192,10 +177,10 @@ function __train_ridge(
         )
     end
     successful_retcode(solution) && return Matrix(solution.u')
-    solver isa LinearSolveQRFactorization || throw(
+    solver isa QRFactorization || throw(
         ArgumentError("solver $(typeof(solver)) failed to solve the ridge regression system")
     )
-    return Matrix((qr(design) \ rhs)')
+    return Matrix((design \ rhs)')
 end
 
 @doc raw"""
@@ -221,7 +206,10 @@ and returns new parameters and states (inputs `ps` / `st` are not mutated).
 
   - `objective`: what to fit. Default [`RidgeRegression`](@ref).
   - `solver`: how to solve when needed. For ridge, `nothing` uses
-    [`QRFactorization`](@ref).
+    `QRFactorization()` from LinearSolve.jl, which ReservoirComputing reexports. If
+    that factorization fails because the features are rank deficient, a pivoted QR
+    returns the minimum-norm solution instead for `Float32` and `Float64`; other
+    element types need `reg > 0` in that case.
   - `washout`: initial time steps to drop from features and targets. Default `0`.
   - `return_states`: if `true`, also return the feature matrix used for the fit.
   - `kwargs...`: passed to the objective's backend when applicable.

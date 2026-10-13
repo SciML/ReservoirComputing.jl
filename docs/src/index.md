@@ -115,7 +115,8 @@ or `dev` the package.
 - Multiple training algorithms via [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl)
   and [MLJLinearModels.jl](https://github.com/JuliaAI/MLJLinearModels.jl)
 - Ridge training via [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl)
-  (`QRFactorization` default; other algorithms selectable)
+  (LinearSolve's `QRFactorization`, reexported by ReservoirComputing, is the default;
+  other algorithms selectable)
   
 ## Contributing
 
