@@ -100,6 +100,10 @@ updated states for every layer.
     holds the parameters for that layer.
   - Field names are generated as `:layer_1, :layer_2, ...` when constructed
     positionally, or preserved when you pass a `NamedTuple`/keyword constructor.
+    A named entry `k` that expands to several layers (a [`LinearReadout`](@ref)
+    with `include_collect=true` becomes `Collect()` followed by the readout,
+    unless a `Collect` already precedes it) gives `:k_1, :k_2, ...` to the added
+    layers and `:k` to the last one.
 
 ## States
 
@@ -131,7 +135,22 @@ function ReservoirChain(xs...; name = nothing)
     return ReservoirChain(named_tuple_layers(wrap_functions_in_chain_call(xs)...), name)
 end
 ReservoirChain(xs::AbstractVector; kwargs...) = ReservoirChain(xs...; kwargs...)
-ReservoirChain(nt::NamedTuple; name = nothing) = ReservoirChain(nt, name)
+function ReservoirChain(nt::NamedTuple; name = nothing)
+    names = Symbol[]
+    layers = AbstractLuxLayer[]
+    for (key, layer) in pairs(nt)
+        wrapped = layer isa LinearReadout && !isempty(layers) && last(layers) isa Collect ?
+            (layer,) : wrap_functions_in_chain_call((layer,))
+        for (idx, wrapped_layer) in enumerate(wrapped)
+            push!(names, idx == length(wrapped) ? key : Symbol(key, :_, idx))
+            push!(layers, wrapped_layer)
+        end
+    end
+    allunique(names) || throw(
+        ArgumentError("ReservoirChain layer names must be unique, got $(Tuple(names)).")
+    )
+    return ReservoirChain(NamedTuple{Tuple(names)}(Tuple(layers)), name)
+end
 ReservoirChain(; name = nothing, kwargs...) = ReservoirChain((; kwargs...); name)
 
 function wrap_functions_in_chain_call(layers::Union{AbstractVector, Tuple})
@@ -173,13 +192,13 @@ end
     st_symbols = [gensym() for _ in 1:N]
     calls = [
         :(
-            (
-                $(x_symbols[i + 1]),
-                $(st_symbols[i]),
-            ) = @inline apply(
-                layers.$(fields[i]), $(x_symbols[i]), ps.$(fields[i]), st.$(fields[i])
+                (
+                    $(x_symbols[i + 1]),
+                    $(st_symbols[i]),
+                ) = @inline apply(
+                    layers.$(fields[i]), $(x_symbols[i]), ps.$(fields[i]), st.$(fields[i])
+                )
             )
-        )
             for i in 1:N
     ]
     push!(calls, :(st = NamedTuple{$fields}((($(Tuple(st_symbols)...),)))))
@@ -189,7 +208,7 @@ end
 
 Base.getindex(c::ReservoirChain, i::Int) = c.layers[i]
 function Base.getindex(c::ReservoirChain, i::AbstractArray)
-    return ReservoirChain(index_namedtuple(c.layers, i))
+    return ReservoirChain(index_namedtuple(c.layers, i), nothing)
 end
 
 function Base.getproperty(c::ReservoirChain, name::Symbol)
@@ -210,8 +229,10 @@ function sample_replicate(rng::AbstractRNG)
 end
 
 function init_hidden_state(rng::AbstractRNG, rnn, inp)
-    y = similar(inp, rnn.out_dims, Base.size(inp, 2))
-    copyto!(y, rnn.init_state(rng, size(y)...))
+    h0 = rnn.init_state(rng, rnn.out_dims, Base.size(inp, 2))
+    T = promote_type(eltype(inp), eltype(h0))
+    y = similar(inp, T, rnn.out_dims, Base.size(inp, 2))
+    copyto!(y, h0)
     return ArrayInterface.aos_to_soa(y)
 end
 
