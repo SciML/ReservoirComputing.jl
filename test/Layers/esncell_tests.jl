@@ -329,4 +329,62 @@ begin
         end
     end
 
+    @testset "EuSNCell: forward-Euler update" begin
+        @testset "state is kept when the activation term is zero" begin
+            cell = EuSNCell(
+                1 => 2,
+                identity;
+                leak_coefficient = 0.1,
+                diffusion = 0.0,
+                init_input = _W_ZZ,
+                init_reservoir = _W_ZZ,
+            )
+            ps = initialparameters(MersenneTwister(0), cell)
+
+            (y_tuple, _) = cell((Float32[0], (Float32[1, 2],)), ps, NamedTuple())
+            y, (hcarry,) = y_tuple
+
+            @test y ≈ Float32[1, 2]
+            @test hcarry ≈ y
+        end
+
+        @testset "h + ε φ((W_r - W_rᵀ - γ I) h + W_in u)" begin
+            cell = EuSNCell(
+                2 => 2,
+                identity;
+                leak_coefficient = 0.5,
+                diffusion = 0.25,
+                init_input = _W_I,
+                init_reservoir = (rng, m, n) -> Float32[0 1; 0 0],
+            )
+            ps = initialparameters(MersenneTwister(0), cell)
+
+            x = Float32[0.5, -1]
+            h0 = Float32[1, 2]
+            (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
+            y, (hcarry,) = y_tuple
+
+            expected = Float32[
+                1 + 0.5 * (0.5 + (-0.25 * 1 + 1 * 2)),
+                2 + 0.5 * (-1 + (-1 * 1 - 0.25 * 2)),
+            ]
+            @test y ≈ expected
+            @test hcarry ≈ y
+        end
+    end
+
+    @testset "EuSN: the default initial state is zero" begin
+        cell = EuSNCell(3 => 30)
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        x = Float32[0.3, -0.2, 0.5]
+
+        (y_default, _), _ = cell(x, ps, st)
+        (y_zero, _), _ = cell((x, (zeros(Float32, 30, 1),)), ps, st)
+
+        @test y_default == y_zero
+        @test cell.init_state === zeros32
+        @test EuSN(3, 30, 2).reservoir.cell.init_state === zeros32
+    end
+
 end

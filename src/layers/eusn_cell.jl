@@ -2,7 +2,7 @@
     EuSNCell(in_dims => out_dims, [activation];
         use_bias=false, init_bias=rand32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
-        init_state=randn32, leak_coefficient=1.0, diffusion=1.0)
+        init_state=zeros32, leak_coefficient=1.0, diffusion=1.0)
 
 Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 
@@ -12,7 +12,7 @@ Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 \begin{aligned}
     \mathbf{x}(t) &= \mathbf{x}(t-1) + \varepsilon\, \phi\!\left(
         \mathbf{W}_{\text{in}}\, \mathbf{u}(t) +
-        (\mathbf{W}_r - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
+        (\mathbf{W}_r - \mathbf{W}_r^{\top} - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
         + \mathbf{b} \right)
 \end{aligned}
 ```
@@ -32,9 +32,12 @@ Euler State Network (EuSN) cell [Gallicchio2024](@cite).
   - `init_input`: Initializer for the input matrix `W_in`.
     Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
-    state is not provided. Default is `randn32`.
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
-  - `diffusion`: Diffusiona parameter `∈ (0,1]`. Default: `1.0`.
+    state is not provided. Default is `zeros32`: EuSN dynamics are non-dissipative,
+    so the initial state does not decay, and starting from zero follows
+    [Gallicchio2024](@cite) (`h(0) = 0`).
+  - `leak_coefficient`: Euler step size `ε`. Default: `1.0`.
+  - `diffusion`: Diffusion coefficient `γ`, the weight of the `-γ I` term in the
+    recurrent matrix. Default: `1.0`.
 
 ## Inputs
 
@@ -83,7 +86,7 @@ function EuSNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_state = randn32, leak_coefficient::AbstractFloat = 1.0,
+        init_state = zeros32, leak_coefficient::AbstractFloat = 1.0,
         diffusion::AbstractFloat = 1.0
     )
     return EuSNCell(
@@ -101,7 +104,7 @@ function (esn::EuSNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(asynm_matrix, hidden_state, bias)
     candidate_h = esn.activation.(win_inp .+ w_state)
-    h_new = (one(T) - t_lc) .* hidden_state .+ t_lc .* candidate_h
+    h_new = hidden_state .+ t_lc .* candidate_h
     return (h_new, (h_new,)), st
 end
 

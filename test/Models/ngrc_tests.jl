@@ -135,6 +135,26 @@ begin
             @test size(w) == (1, 1)
             @test isapprox(w[1, 1], a; atol = 0.05)
         end
+
+        @testset "autoregressive predict is repeatable from the same states" begin
+            walk = cumsum(0.1f0 .* randn(rng, Float32, 2, 60); dims = 2)
+            ngrc = NGRC(2, 2; num_delays = 2, features = (square_feature,))
+            ps, st = setup(rng, ngrc)
+            ps, st = train(
+                ngrc, walk[:, 1:(end - 1)], walk[:, 2:end], ps, st;
+                objective = RidgeRegression(1.0e-4),
+            )
+
+            st_before = deepcopy(st)
+            initialdata = walk[:, end]
+            y1, st1 = predict(ngrc, 5, ps, st; initialdata)
+            y2, st2 = predict(ngrc, 5, ps, st; initialdata)
+
+            @test st == st_before
+            @test all(isfinite, y1)
+            @test y1 == y2
+            @test st1.reservoir.history == st2.reservoir.history
+        end
     end
 
 

@@ -33,6 +33,24 @@ begin
         error("Could not build LIF for $(cell_ctor).")
     end
 
+    function build_local_lif(cell_ctor, H::Int; init_state = zeros32, init_buffer = zeros32)
+        return LocalInformationFlow(cell_ctor, 1 => 30, H, tanh; init_buffer, init_state)
+    end
+
+    const _RNG_MAKERS = (
+        () -> (Random.seed!(7); Random.default_rng()),
+        () -> Xoshiro(7),
+        () -> MersenneTwister(7),
+    )
+
+    function run_lif_sequence(layer, ps, st, inputs)
+        y = nothing
+        for u in inputs
+            y, st = layer(Float32[u], ps, st)
+        end
+        return y
+    end
+
     @testset "LocalInformationFlow: generic wrapper contract" begin
         cell_ctors = (ESNCell, ES2NCell, EuSNCell, EIESNCell, AdditiveEIESNCell)
 
@@ -49,6 +67,8 @@ begin
                 @test haskey(st, :cell)
                 @test haskey(st, :input_buffer)
                 @test st.input_buffer === nothing
+                @test haskey(st, :start_states)
+                @test st.start_states === nothing
             end
         end
 
@@ -170,6 +190,171 @@ begin
                 y, _ = y_tuple
 
                 @test st1.input_buffer == () || st1.input_buffer === nothing
+                @test st1.start_states !== nothing
+            end
+        end
+
+        @testset "output depends only on the last lookback_horizon inputs" begin
+            seq_a = [5.0, -3.0, 1.0, 0.2, 0.4, 0.6, 0.8]
+            seq_b = [-4.0, 2.0, 7.0, 0.2, 0.4, 0.6, 0.8]
+
+            for ctor in cell_ctors
+                lif = StatefulLayer(build_local_lif(ctor, 3))
+                ps, st = setup(MersenneTwister(5), lif)
+
+                y_a = run_lif_sequence(lif, ps, st, seq_a)
+                y_b = run_lif_sequence(lif, ps, st, seq_b)
+
+                @test y_a ≈ y_b rtol = 1.0e-6
+            end
+        end
+
+        @testset "lookback_horizon=1 uses no past input" begin
+            for ctor in cell_ctors
+                lif = StatefulLayer(build_local_lif(ctor, 1; init_state = randn32))
+                ps, st = setup(MersenneTwister(5), lif)
+
+                y_long = run_lif_sequence(lif, ps, st, [5.0, -3.0, 0.8])
+                y_short = run_lif_sequence(lif, ps, st, [0.1, 0.8])
+
+                @test y_long ≈ y_short rtol = 1.0e-6
+            end
+        end
+
+        @testset "the carried state does not influence the output" begin
+            x1 = Float32[0.3]
+            x2 = Float32[-0.7]
+            x3 = Float32[1.1]
+            arbitrary = (fill(100.0f0, 30, 1),)
+
+            for ctor in cell_ctors
+                lif = build_local_lif(ctor, 3)
+                ps = initialparameters(MersenneTwister(6), lif)
+                st = initialstates(MersenneTwister(6), lif)
+
+                (_, carry1), st1 = lif(x1, ps, st)
+                (_, carry2), st2 = lif((x2, carry1), ps, st1)
+
+                (y_normal, carry_normal), st_normal = lif((x3, carry2), ps, st2)
+                (y_other, carry_other), st_other = lif((x3, arbitrary), ps, st2)
+                (y_none, _), _ = lif(x3, ps, st2)
+
+                @test y_other ≈ y_normal rtol = 1.0e-6
+                @test y_none ≈ y_normal rtol = 1.0e-6
+                @test only(carry_other) ≈ only(carry_normal) rtol = 1.0e-6
+                @test st_other.input_buffer == st_normal.input_buffer
+            end
+        end
+
+        @testset "a random init_state is the same for every window" begin
+            seq = [5.0, -3.0, 1.0, 0.2, 0.4, 0.6, 0.8]
+            seq_b = [-4.0, 2.0, 7.0, 0.2, 0.4, 0.6, 0.8]
+            seq_c = [5.0, -3.0, 1.0, 0.2, 0.4, -1.5, 0.8]
+
+            for make_rng in _RNG_MAKERS, ctor in cell_ctors
+                lif = StatefulLayer(build_local_lif(ctor, 3; init_state = randn32))
+                ps, st = setup(make_rng(), lif)
+
+                y_long = run_lif_sequence(lif, ps, st, seq)
+                y_short = run_lif_sequence(lif, ps, st, seq[(end - 3):end])
+                @test run_lif_sequence(lif, ps, st, seq) == y_long
+                @test y_long ≈ run_lif_sequence(lif, ps, st, seq_b) rtol = 1.0e-6
+                @test y_long ≈ y_short rtol = 1.0e-6
+                @test !(y_long ≈ run_lif_sequence(lif, ps, st, seq_c))
+
+                zero_lif = StatefulLayer(build_local_lif(ctor, 3))
+                ps_zero, st_zero = setup(make_rng(), zero_lif)
+                @test !(y_long ≈ run_lif_sequence(zero_lif, ps_zero, st_zero, seq))
+            end
+        end
+
+        @testset "lazy initialization does not advance the RNG of the input state" begin
+            x = Float32[0.3]
+
+            for make_rng in _RNG_MAKERS, ctor in cell_ctors
+                lif = build_local_lif(ctor, 3; init_state = randn32, init_buffer = randn32)
+                ps = initialparameters(MersenneTwister(6), lif)
+                st = initialstates(make_rng(), lif)
+                rng_before = copy(st.rng)
+
+                (y_1, _), st_1 = lif(x, ps, st)
+                (y_2, _), st_2 = lif(x, ps, st)
+
+                @test st.rng == rng_before
+                @test st.input_buffer === nothing
+                @test st.start_states === nothing
+                @test y_1 == y_2
+                @test st_1.input_buffer == st_2.input_buffer
+                @test st_1.start_states == st_2.start_states
+                @test st_1.rng == st_2.rng
+                @test st_1.rng !== st.rng
+
+                (_, _), st_3 = lif(x, ps, st_1)
+                @test st_3.rng === st_1.rng
+                @test st_3.start_states === st_1.start_states
+            end
+        end
+
+        @testset "the buffer keeps its own copy of the inputs" begin
+            for ctor in cell_ctors
+                lif = build_local_lif(ctor, 3; init_state = randn32)
+                ps = initialparameters(MersenneTwister(8), lif)
+                st = initialstates(MersenneTwister(8), lif)
+
+                x1 = Float32[0.4]
+                x2 = Float32[-0.6]
+                (_, _), st_1 = lif(x1, ps, st)
+                (_, _), st_2 = lif(x2, ps, st_1)
+                (y_before, _), _ = lif(Float32[0.9], ps, st_2)
+
+                fill!(x1, 100.0f0)
+                fill!(x2, -100.0f0)
+                (y_after, _), _ = lif(Float32[0.9], ps, st_2)
+
+                @test st_2.input_buffer == (Float32[0.4], Float32[-0.6])
+                @test y_after == y_before
+            end
+        end
+
+        @testset "a saved state without start_states is accepted" begin
+            x1 = Float32[0.3]
+            x2 = Float32[-0.7]
+            x3 = Float32[1.1]
+            x4 = Float32[0.2]
+
+            for make_rng in _RNG_MAKERS, ctor in cell_ctors
+                lif = build_local_lif(ctor, 3; init_state = randn32)
+                ps = initialparameters(MersenneTwister(9), lif)
+                st = initialstates(make_rng(), lif)
+                (_, _), st_1 = lif(x1, ps, st)
+                (_, _), warm = lif(x2, ps, st_1)
+
+                old_layout = (rng = warm.rng, input_buffer = warm.input_buffer, cell = warm.cell)
+                rng_before = copy(old_layout.rng)
+                rng_after = copy(old_layout.rng)
+                start_states = ReservoirComputing.init_hidden_states(rng_after, lif, x3)
+                new_layout = (
+                    rng = old_layout.rng,
+                    input_buffer = old_layout.input_buffer,
+                    start_states = start_states,
+                    cell = old_layout.cell,
+                )
+
+                (y_old, carry_old), st_old = lif(x3, ps, old_layout)
+                (y_new, carry_new), st_new = lif(x3, ps, new_layout)
+
+                @test !haskey(old_layout, :start_states)
+                @test old_layout.rng == rng_before
+                @test haskey(st_old, :start_states)
+                @test st_old.start_states == start_states
+                @test st_old.rng == rng_after
+                @test st_old.input_buffer == st_new.input_buffer
+                @test y_old == y_new
+                @test carry_old == carry_new
+
+                (_, _), st_next = lif(x4, ps, st_old)
+                @test st_next.start_states === st_old.start_states
+                @test st_next.rng === st_old.rng
             end
         end
     end
