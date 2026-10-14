@@ -19,6 +19,7 @@ rc_internal_hooks = (
     :IntegerType,
     :__apply_seq,
     :__apply_state_modifiers,
+    :__check_input_dt,
     :__check_lsm_components,
     :__check_lsm_tspan,
     :__check_protected_kwargs,

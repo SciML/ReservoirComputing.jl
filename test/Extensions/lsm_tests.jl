@@ -526,4 +526,42 @@ begin
         @test se[1:n_in, :] == data
         @test size(ps_e.readout.weight, 2) == size(se, 1)
     end
+
+    @testset "LSM: input_dt" begin
+        in_dim, res_dim, T_train, steps, Δt = 2, 6, 10, 6, 0.5
+        make(tspan; kwargs...) = _lsm_f64(
+            in_dim, res_dim, in_dim, tspan, Tsit5();
+            init_input = (rng, d...) -> fill(2.0, d...),
+            reltol = 1.0e-9, abstol = 1.0e-11, dtmax = 0.1, kwargs...
+        )
+        data = 0.5 .+ rand(MersenneTwister(4), in_dim, T_train + 1)
+        data, target = data[:, 1:T_train], data[:, 2:end]
+        lsm_default = make((0.0, T_train * Δt))
+        lsm_dt = make((0.0, 1.0); input_dt = Δt)
+        @test lsm_dt.reservoir.input_dt == Δt
+        @test lsm_default.reservoir.input_dt === nothing
+        @test !haskey(lsm_dt.reservoir.kwargs, :input_dt)
+        @test haskey(lsm_dt.reservoir.kwargs, :dtmax)
+        @test occursin("input_dt = 0.5", sprint(show, lsm_dt.reservoir))
+        ps, st = setup(MersenneTwister(0), lsm_default)
+
+        s_default, _ = collectstates(lsm_default, data, ps, st)
+        s_dt, _ = collectstates(lsm_dt, data, ps, st)
+        @test s_dt ≈ s_default atol = 1.0e-8
+
+        ps, st = train(
+            lsm_default, data, target, ps, st; objective = RidgeRegression(1.0e-4)
+        )
+        x0 = data[:, end]
+        out_ref, _ = predict(make((0.0, steps * Δt)), steps, ps, st; initialdata = x0)
+        out_dt, _ = predict(lsm_dt, steps, ps, st; initialdata = x0)
+        out_default, _ = predict(lsm_default, steps, ps, st; initialdata = x0)
+        @test out_dt ≈ out_ref atol = 1.0e-8
+        @test !isapprox(out_default, out_ref; atol = 1.0e-3)
+
+        for bad in (0, 0.0, -1.0, NaN, Inf, -Inf)
+            @test_throws ArgumentError make((0.0, 1.0); input_dt = bad)
+            @test_throws ArgumentError LSMCell(2 => 3; tspan = (0.0, 1.0), input_dt = bad)
+        end
+    end
 end

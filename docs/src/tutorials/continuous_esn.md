@@ -58,28 +58,22 @@ init_reservoir_f64(rng, d...) = rand_sparse(
     rng, Float64, d...; radius = res_radius, sparsity = res_sparsity
 )
 
-esn_train = ContinuousESN(
+esn = ContinuousESN(
     3, N_res, 3, (0.0, Float64(train_len)), Tsit5();
-    init_input = init_input_f64,
-    init_reservoir = init_reservoir_f64,
-    state_modifiers = (NLAT2(),),
-    reltol = 1.0e-6, abstol = 1.0e-8
-)
-esn_pred = ContinuousESN(
-    3, N_res, 3, (0.0, Float64(predict_len)), Tsit5();
+    input_dt = 1.0,
     init_input = init_input_f64,
     init_reservoir = init_reservoir_f64,
     state_modifiers = (NLAT2(),),
     reltol = 1.0e-6, abstol = 1.0e-8
 )
 
-ps, st = setup(rng, esn_train)
+ps, st = setup(rng, esn)
 ```
 
 ## Training
 
 ```@example continuous-esn-lorenz
-ps, st = train(esn_train, input_data, target_data, ps, st;
+ps, st = train(esn, input_data, target_data, ps, st;
     objective = RidgeRegression(1.0e-6))
 ```
 
@@ -87,7 +81,7 @@ ps, st = train(esn_train, input_data, target_data, ps, st;
 
 ```@example continuous-esn-lorenz
 output, _ = predict(
-    esn_pred, predict_len, ps, st; initialdata = test[:, 1]
+    esn, predict_len, ps, st; initialdata = test[:, 1]
 )
 ```
 

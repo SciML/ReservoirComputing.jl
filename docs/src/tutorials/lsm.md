@@ -44,17 +44,9 @@ init_input_f64(rng, d...) = scaled_rand(rng, Float64, d...)
 init_reservoir_f64(rng, d...) = dale_sparse(rng, Float64, d...)
 init_state_f64(rng, d...) = zeros(Float64, d...)
 
-lsm_train = LSM(
+lsm = LSM(
     2, N_res, 2, (0.0, train_len * dt), Tsit5();
-    feature_map = MembraneVoltageFeature(),
-    init_input = init_input_f64,
-    init_reservoir = init_reservoir_f64,
-    init_state = init_state_f64,
-    dtmax = 5.0e-4,
-    reltol = 1.0e-6, abstol = 1.0e-8
-)
-lsm_pred = LSM(
-    2, N_res, 2, (0.0, predict_len * dt), Tsit5();
+    input_dt = dt,
     feature_map = MembraneVoltageFeature(),
     init_input = init_input_f64,
     init_reservoir = init_reservoir_f64,
@@ -63,13 +55,13 @@ lsm_pred = LSM(
     reltol = 1.0e-6, abstol = 1.0e-8
 )
 
-ps, st = setup(rng, lsm_train)
+ps, st = setup(rng, lsm)
 ```
 
 ## Training
 
 ```@example lsm-orbit
-ps, st = train(lsm_train, input_data, target_data, ps, st;
+ps, st = train(lsm, input_data, target_data, ps, st;
     washout = 50, objective = RidgeRegression(1.0e-5))
 ```
 
@@ -77,7 +69,7 @@ ps, st = train(lsm_train, input_data, target_data, ps, st;
 
 ```@example lsm-orbit
 output, _ = predict(
-    lsm_pred, predict_len, ps, st; initialdata = seed
+    lsm, predict_len, ps, st; initialdata = seed
 )
 
 p1 = plot(test[1, :], test[2, :]; label = "actual", linewidth = 2.5,

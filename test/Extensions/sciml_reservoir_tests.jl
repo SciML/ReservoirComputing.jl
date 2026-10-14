@@ -97,4 +97,24 @@ begin
         @test all(isfinite, out_ar)
     end
 
+    @testset "SciMLProblemReservoir input_dt construction" begin
+        prob = (placeholder = true,)
+        sampler = TerminalStateSampling()
+
+        @test SciMLProblemReservoir(prob, sampler, (0.0, 1.0)).input_dt === nothing
+        res = SciMLProblemReservoir(
+            prob, sampler, (0.0, 1.0), :solver_arg; input_dt = 0.5, dt = 0.1
+        )
+        @test res.input_dt == 0.5
+        @test !haskey(res.kwargs, :input_dt)
+        @test res.kwargs[:dt] == 0.1
+        @test occursin("input_dt = 0.5", sprint(show, res))
+        @test !occursin("input_dt", sprint(show, SciMLProblemReservoir(prob, sampler, (0.0, 1.0))))
+
+        for bad in (0, 0.0, -1.0, NaN, Inf, -Inf, "a", 1 + 2im)
+            @test_throws ArgumentError SciMLProblemReservoir(
+                prob, sampler, (0.0, 1.0); input_dt = bad
+            )
+        end
+    end
 end

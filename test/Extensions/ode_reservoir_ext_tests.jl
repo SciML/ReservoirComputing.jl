@@ -460,4 +460,157 @@ begin
         @test_throws ArgumentError collectstates(rc, data, ps, st)
     end
 
+    @testset "input_dt makes the time step independent of the horizon" begin
+        rng = MersenneTwister(21)
+        in_dim, res_dim, T_train, steps = 2, 6, 12, 7
+        prob, = build_esn_problem(rng, in_dim, res_dim, (0.0, 1.0))
+        kw = (; reltol = 1.0e-10, abstol = 1.0e-12)
+        make(tspan; kwargs...) = ReservoirComputer(
+            SciMLProblemReservoir(
+                remake(prob; tspan), TerminalStateSampling(), tspan, Tsit5();
+                kw..., kwargs...
+            ),
+            LinearReadout(res_dim => in_dim),
+        )
+        data = randn(rng, in_dim, T_train)
+        Δt = 0.5
+
+        rc_default = make((0.0, T_train * Δt))
+        rc_dt = make((0.0, 1.0); input_dt = Δt)
+        ps, st = setup(MersenneTwister(0), rc_default)
+
+        s_default, _ = collectstates(rc_default, data, ps, st)
+        s_dt, _ = collectstates(rc_dt, data, ps, st)
+        @test s_dt ≈ s_default atol = 1.0e-8
+
+        rc_ref = make((0.0, steps * Δt))
+        x0 = data[:, end]
+        out_ref, _ = predict(rc_ref, steps, ps, st; initialdata = x0)
+        out_dt, _ = predict(rc_dt, steps, ps, st; initialdata = x0)
+        out_default, _ = predict(rc_default, steps, ps, st; initialdata = x0)
+        @test out_dt ≈ out_ref atol = 1.0e-8
+        @test !isapprox(out_default, out_ref; atol = 1.0e-3)
+
+        rc_old = make((0.0, 1.0))
+        s_old, _ = collectstates(rc_old, data, ps, st)
+        @test collectstates(make((0.0, 1.0); input_dt = nothing), data, ps, st)[1] == s_old
+    end
+
+    @testset "input_dt: user dt still reaches solve" begin
+        rng = MersenneTwister(22)
+        prob, = build_esn_problem(rng, 2, 4, (0.0, 3.0))
+        data = randn(rng, 2, 3)
+        make(dt) = ReservoirComputer(
+            SciMLProblemReservoir(
+                prob, TerminalStateSampling(), (0.0, 3.0), Euler();
+                input_dt = 1.0, dt = dt
+            ),
+            LinearReadout(4 => 2),
+        )
+        rc_a, rc_b = make(0.5), make(0.1)
+        ps, st = setup(MersenneTwister(0), rc_a)
+        @test :dt in keys(rc_a.reservoir.kwargs)
+        @test !(:input_dt in keys(rc_a.reservoir.kwargs))
+        sa, _ = collectstates(rc_a, data, ps, st)
+        sb, _ = collectstates(rc_b, data, ps, st)
+        @test !isapprox(sa, sb; atol = 1.0e-4)
+    end
+
+    struct PlainContinuousReservoir <: AbstractSciMLProblemReservoir
+        prob
+        sampler
+        tspan
+        args
+        kwargs
+    end
+
+    struct DtContinuousReservoir <: AbstractSciMLProblemReservoir
+        prob
+        sampler
+        tspan
+        args
+        kwargs
+        input_dt
+    end
+
+    @testset "custom AbstractSciMLProblemReservoir subtypes and input_dt" begin
+        rng = MersenneTwister(31)
+        in_dim, res_dim, T_train, steps = 2, 5, 9, 6
+        tspan = (0.0, Float64(T_train))
+        prob, = build_esn_problem(rng, in_dim, res_dim, tspan)
+        args = (Tsit5(),)
+        kwargs = (; reltol = 1.0e-10, abstol = 1.0e-12)
+        sampler = TerminalStateSampling()
+        data = randn(rng, in_dim, T_train)
+        x0 = data[:, end]
+        readout = LinearReadout(res_dim => in_dim)
+
+        builtin = ReservoirComputer(
+            SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...), readout
+        )
+        plain = ReservoirComputer(
+            PlainContinuousReservoir(prob, sampler, tspan, args, kwargs), readout
+        )
+        ps, st = setup(MersenneTwister(0), builtin)
+        s_builtin, _ = collectstates(builtin, data, ps, st)
+        s_plain, _ = collectstates(plain, data, ps, st)
+        @test s_plain == s_builtin
+        out_builtin, _ = predict(builtin, steps, ps, st; initialdata = x0)
+        out_plain, _ = predict(plain, steps, ps, st; initialdata = x0)
+        @test out_plain == out_builtin
+
+        with_dt = ReservoirComputer(
+            DtContinuousReservoir(prob, sampler, (0.0, 1.0), args, kwargs, 1.0), readout
+        )
+        out_dt, _ = predict(with_dt, steps, ps, st; initialdata = x0)
+        ref = ReservoirComputer(
+            SciMLProblemReservoir(
+                prob, sampler, (0.0, Float64(steps)), args...; kwargs...
+            ),
+            readout,
+        )
+        out_ref, _ = predict(ref, steps, ps, st; initialdata = x0)
+        @test out_dt == out_ref
+        @test !isapprox(out_plain, out_ref; atol = 1.0e-3)
+
+        no_dt = ReservoirComputer(
+            DtContinuousReservoir(prob, sampler, tspan, args, kwargs, nothing), readout
+        )
+        @test collectstates(no_dt, data, ps, st)[1] == s_builtin
+    end
+
+    @testset "input_dt grids: precision and integer input_dt" begin
+        rng = MersenneTwister(41)
+        prob, = build_esn_problem(rng, 1, 3, (0.0, 1.0))
+        ext = Base.get_extension(ReservoirComputing, :RCODEReservoirExt)
+        n = 3000
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), (0.0, 1.0), Euler();
+            input_dt = Float16(0.01), dt = 0.005
+        )
+        ts = ext.__input_grid(
+            res.tspan, res.input_dt, n
+        )
+        @test allunique(ts[2])
+        @test all(>(0), diff(ts[2]))
+        win = ext.__window_grid(
+            res.tspan, res.input_dt, n
+        )
+        @test length(win) == n + 1
+        @test all(>(0), diff(win))
+
+        data = randn(rng, 1, 5)
+        make(dt_in, tspan) = ReservoirComputer(
+            SciMLProblemReservoir(
+                prob, TerminalStateSampling(), tspan, Tsit5(); input_dt = dt_in
+            ),
+            LinearReadout(3 => 1),
+        )
+        rc_int, rc_float = make(1, (0, 5)), make(1.0, (0.0, 5.0))
+        ps, st = setup(MersenneTwister(0), rc_float)
+        @test collectstates(rc_int, data, ps, st)[1] == collectstates(rc_float, data, ps, st)[1]
+        x0 = data[:, end]
+        @test predict(rc_int, 4, ps, st; initialdata = x0)[1] ==
+            predict(rc_float, 4, ps, st; initialdata = x0)[1]
+    end
 end

@@ -5,7 +5,7 @@
         init_bias = zeros32, init_state = randn32,
         equations = __continuous_esn_rhs!,
         state_modifiers = (), readout_activation = identity,
-        readout_in_dims = nothing,
+        readout_in_dims = nothing, input_dt = nothing,
         kwargs...)
 
 Continuous-time Echo State Network
@@ -48,6 +48,14 @@ Reservoir (passed to [`ContinuousESNCell`](@ref)):
     Default: `randn32`.
   - `equations`: ODE right-hand side function `(dx, x, p, t) -> nothing`.
     Default is the continuous-time leaky-integrator ESN ODE.
+  - `input_dt`: Duration of each input column in `collectstates` and of
+    each step in autoregressive `predict`. Default: `nothing`, which splits
+    `tspan` into one equal window per input column (or per predicted step),
+    so the time step depends on how many columns or steps are used. With a
+    positive finite real, every window lasts `input_dt` from `tspan[1]` on
+    and `tspan[2]` is not used; training and prediction then share one time
+    step for any length. Not forwarded to `solve`; a `dt` in `kwargs...`
+    still reaches the solver.
 
 Composition:
 

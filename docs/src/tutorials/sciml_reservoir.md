@@ -35,7 +35,7 @@ The constructor follows the
 [DiffEqFlux `NeuralODE` pattern](https://github.com/SciML/DiffEqFlux.jl/blob/master/src/neural_de.jl):
 
 ```julia
-SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)
+SciMLProblemReservoir(prob, sampler, tspan, args...; input_dt = nothing, kwargs...)
 ```
 
 * `prob` — any `AbstractSciMLProblem`. The reservoir's initial state is
@@ -48,7 +48,15 @@ SciMLProblemReservoir(prob, sampler, tspan, args...; kwargs...)
   input column grid is synthesised from `tspan` and the input width.
 * `args...` — forwarded to `solve` positionally; the solver algorithm
   is the first element (`Tsit5()`, `Euler()`, …).
-* `kwargs...` — forwarded to `solve`. The three keys `saveat`,
+* `input_dt` — duration of every input column. With the default `nothing`,
+  the input grid is synthesised from `tspan` and the input width, so the
+  time step is `(t1 - t0)` divided by the number of columns (or predicted
+  steps). With a positive finite real, every column and every
+  autoregressive step lasts `input_dt` starting at `tspan[1]`, and
+  `tspan[2]` is not used; one model then trains and predicts with the same
+  time step for any number of columns or steps.
+* `kwargs...` — forwarded to `solve`. A `dt` here still reaches the solver.
+  The three keys `saveat`,
   `save_everystep`, and `dense` are owned by the helper and rejected
   at construction.
 
@@ -73,6 +81,13 @@ interpolated input signal.
 This input-at-start / sample-at-end alignment matches the discrete
 update semantics: `states[:, k]` is the reservoir state after
 processing input `k`, with no off-by-one offset.
+
+By default the width `Δt` depends on `n_samples`, and the autoregressive
+`predict(rc, steps, ...)` uses `Δt = (t1 - t0) / steps`. A model trained
+on one length and rolled out for another therefore integrates with a
+different time step. Pass `input_dt = Δt` to fix the width: window `k`
+is `[t0 + (k-1)Δt, t0 + kΔt]` for any `n_samples` or `steps`, and `t1`
+is ignored.
 
 ## A worked example: linear ODE with closed-form solution
 
@@ -193,29 +208,26 @@ function ctesn_rhs!(dx, x, p, t)
 end
 
 # 4. Wrap as SciMLProblemReservoir with Δt = 1 per input window
-function build_rc(tspan_len)
-    prob = ODEProblem(
-        ctesn_rhs!, initial_state,
-        (0.0, Float64(tspan_len)), (Wr = Wr, Win = Win, b = bias)
-    )
-    res = SciMLProblemReservoir(
-        prob, TerminalStateSampling(),
-        (0.0, Float64(tspan_len)), Tsit5();
-        reltol = 1.0e-6, abstol = 1.0e-8
-    )
-    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 3))
-end
-
-rc_train = build_rc(train_len)
-rc_predict = build_rc(predict_len)
-ps, st = setup(rng, rc_train)
+tspan = (0.0, Float64(train_len))
+prob = ODEProblem(
+    ctesn_rhs!, initial_state,
+    tspan, (Wr = Wr, Win = Win, b = bias)
+)
+res = SciMLProblemReservoir(
+    prob, TerminalStateSampling(),
+    tspan, Tsit5();
+    input_dt = 1.0,
+    reltol = 1.0e-6, abstol = 1.0e-8
+)
+rc = ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 3))
+ps, st = setup(rng, rc)
 
 # 5. Fit the linear readout on the collected continuous states
-ps, st = train(rc_train, input_data, target_data, ps, st;
+ps, st = train(rc, input_data, target_data, ps, st;
     objective = RidgeRegression(1.0e-6))
 
 # 6. Autoregressive rollout under the same continuous dynamics
-output, _ = predict(rc_predict, predict_len, ps, st; initialdata = test[:, 1])
+output, _ = predict(rc, predict_len, ps, st; initialdata = test[:, 1])
 
 dt = 0.02
 lorenz_maxlyap = 0.9056
@@ -306,22 +318,18 @@ function mg_reservoir_rhs!(dx, x, p, t)
     return dx .= .-x .+ tanh.(p.Wr * x .+ p.Win * input_t .+ p.b)
 end
 
-function build_mg_rc(n_steps)
-    tspan = (0.0, n_steps * 1.0)
-    prob = ODEProblem(mg_reservoir_rhs!, initial_state, tspan,
-        (Wr = Wr, Win = Win, b = bias))
-    res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5();
-        reltol = 1.0e-6, abstol = 1.0e-8)
-    return ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 1))
-end
+tspan = (0.0, Float64(train_len))
+prob = ODEProblem(mg_reservoir_rhs!, initial_state, tspan,
+    (Wr = Wr, Win = Win, b = bias))
+res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5();
+    input_dt = 1.0, reltol = 1.0e-6, abstol = 1.0e-8)
+rc_mg = ReservoirComputer(res, (NLAT2(),), LinearReadout(N_res => 1))
 
-rc_mg_train = build_mg_rc(train_len)
-rc_mg_predict = build_mg_rc(predict_len)
-ps_mg, st_mg = setup(rng, rc_mg_train)
-ps_mg, st_mg = train(rc_mg_train, input_data, target_data, ps_mg, st_mg;
+ps_mg, st_mg = setup(rng, rc_mg)
+ps_mg, st_mg = train(rc_mg, input_data, target_data, ps_mg, st_mg;
     objective = RidgeRegression(1.0e-6), washout = 0)
 
-mg_output, _ = predict(rc_mg_predict, predict_len, ps_mg, st_mg;
+mg_output, _ = predict(rc_mg, predict_len, ps_mg, st_mg;
     initialdata = test_data[:, 1])
 
 plot([test_data[1, :], mg_output[1, :]];

@@ -205,16 +205,14 @@ function __collectstates(
         )
     )
 
-    Δt = (t1 - t0) / n_samples
-    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
-    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+    input_ts, sample_ts, solve_tspan = __input_grid(res.tspan, __input_dt(res), n_samples)
 
     input_interp = __make_input_fn(data, input_ts)
     solve_p = __build_solve_params(res.prob.p, ps.reservoir, input_interp)
 
     prob_remade = remake(
         res.prob;
-        tspan = res.tspan,
+        tspan = solve_tspan,
         p = solve_p,
         u0 = __seed_u(st.reservoir, () -> res.prob.u0),
     )
@@ -239,6 +237,26 @@ function __collectstates(
         readout = st.readout,
     )
     return modified_states, newst
+end
+
+__input_dt(res) = hasfield(typeof(res), :input_dt) ? res.input_dt : nothing
+
+function __input_grid(tspan, input_dt, n_samples)
+    t0, t1 = tspan
+    if input_dt === nothing
+        Δt = (t1 - t0) / n_samples
+        input_ts = collect(range(t0, t1 - Δt; length = n_samples))
+        sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+        return input_ts, sample_ts, tspan
+    end
+    ts = collect(range(float(t0); step = input_dt, length = n_samples + 1))
+    return ts[1:(end - 1)], ts[2:end], (t0, last(ts))
+end
+
+function __window_grid(tspan, input_dt, steps)
+    t0, t1 = tspan
+    input_dt === nothing && return collect(range(t0, t1; length = steps + 1))
+    return collect(range(float(t0); step = input_dt, length = steps + 1))
 end
 
 function __predict(
@@ -279,7 +297,7 @@ function __predict(
                 "tspan = ($t0, $t1)."
         )
     )
-    ts = collect(range(t0, t1; length = steps + 1))
+    ts = __window_grid(res.tspan, __input_dt(res), steps)
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
@@ -360,6 +378,7 @@ function ReservoirComputing.ContinuousESN(
         readout_activation = identity,
         use_jac_prototype::Bool = false,
         readout_in_dims = nothing,
+        input_dt = nothing,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -378,13 +397,14 @@ function ReservoirComputing.ContinuousESN(
             "ContinuousESN requires `tspan[2] > tspan[1]`, got tspan = $tspan"
         )
     )
+    ReservoirComputing.__check_input_dt(input_dt)
     ReservoirComputing.__check_protected_kwargs(kwargs)
 
     cell = ContinuousESNCell(
         activation, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias),
-        equations, tspan, args, kwargs,
+        equations, tspan, args, kwargs, input_dt,
         static(use_jac_prototype)
     )
 
@@ -428,9 +448,7 @@ function __collectstates(
         )
     )
 
-    Δt = (t1 - t0) / n_samples
-    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
-    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+    input_ts, sample_ts, solve_tspan = __input_grid(cell.tspan, cell.input_dt, n_samples)
 
     input_interp = __make_input_fn(data, input_ts)
     solve_p = __build_solve_params(nothing, ps.reservoir, input_interp)
@@ -445,7 +463,7 @@ function __collectstates(
         __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
     ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
-    prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
+    prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, solve_tspan, solve_p)
 
     sol = solve(
         prob, cell.args...;
@@ -486,7 +504,7 @@ function __predict(
                 "tspan = ($t0, $t1)."
         )
     )
-    ts = collect(range(t0, t1; length = steps + 1))
+    ts = __window_grid(cell.tspan, cell.input_dt, steps)
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
@@ -567,6 +585,7 @@ function ReservoirComputing.LSM(
         state_modifiers = (),
         readout_activation = identity,
         readout_in_dims = nothing,
+        input_dt = nothing,
         kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
@@ -574,6 +593,7 @@ function ReservoirComputing.LSM(
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
     ReservoirComputing.__check_lsm_components(neuron, encoder, feature_map)
     ReservoirComputing.__check_lsm_tspan(tspan)
+    ReservoirComputing.__check_input_dt(input_dt)
     ReservoirComputing.__check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(
         ArgumentError("LSM owns the solve callback; drop `callback` from kwargs.")
@@ -582,7 +602,7 @@ function ReservoirComputing.LSM(
     cell = LSMCell(
         neuron, encoder, feature_map, in_dims, res_dims,
         init_bias, init_reservoir, init_input, init_state,
-        static(use_bias), tspan, args, kwargs
+        static(use_bias), tspan, args, kwargs, input_dt
     )
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         Tuple(state_modifiers) : (state_modifiers,)
@@ -834,19 +854,17 @@ function __collectstates(
 
     n_units = cell.out_dims
     T = eltype(ps.reservoir.input_matrix)
-    Δt = (t1 - t0) / n_samples
-    input_ts = collect(range(t0, t1 - Δt; length = n_samples))
-    sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
+    input_ts, sample_ts, solve_tspan = __input_grid(cell.tspan, cell.input_dt, n_samples)
 
     cbset, input_fn, st_enc_new, poisson_times = __lsm_callbacks(
-        cell, n_units, data, input_ts, t1, st.reservoir.encoder
+        cell, n_units, data, input_ts, last(solve_tspan), st.reservoir.encoder
     )
     solve_p = __lsm_pack(cell, ps.reservoir, input_fn, n_units, T)
     u0, st_res_new = __lsm_u0(cell, st.reservoir, n_units, T)
 
     tstops = poisson_times === nothing ? sample_ts : sort!(vcat(sample_ts, poisson_times))
     ode_fn = ODEFunction{true, FullSpecialize}(__lsm_rhs!)
-    prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
+    prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, solve_tspan, solve_p)
     sol = solve(
         prob, cell.args...;
         callback = cbset,
@@ -907,7 +925,7 @@ function __predict(
 
     n_units = cell.out_dims
     T = eltype(ps.reservoir.input_matrix)
-    ts = collect(range(t0, t1; length = steps + 1))
+    ts = __window_grid(cell.tspan, cell.input_dt, steps)
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 

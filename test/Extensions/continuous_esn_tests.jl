@@ -209,6 +209,52 @@ begin
         @test ar1 ≈ ar2
     end
 
+    @testset "ContinuousESN: input_dt" begin
+        in_dim, res_dim, T_train, steps, Δt = 2, 30, 12, 7, 0.5
+        kw = (; reltol = 1.0e-10, abstol = 1.0e-12)
+        make(tspan; kwargs...) = ContinuousESN(
+            in_dim, res_dim, in_dim, tspan, Tsit5(); kw..., kwargs...
+        )
+        data = randn(MersenneTwister(3), in_dim, T_train)
+        esn_default = make((0.0, T_train * Δt))
+        esn_dt = make((0.0, 1.0); input_dt = Δt)
+        @test esn_dt.reservoir.input_dt == Δt
+        @test esn_default.reservoir.input_dt === nothing
+        @test !haskey(esn_dt.reservoir.kwargs, :input_dt)
+        @test occursin("input_dt = 0.5", sprint(show, esn_dt.reservoir))
+        ps, st = setup(MersenneTwister(0), esn_default)
+
+        s_default, _ = collectstates(esn_default, data, ps, st)
+        s_dt, _ = collectstates(esn_dt, data, ps, st)
+        @test s_dt ≈ s_default atol = 1.0e-8
+
+        x0 = data[:, end]
+        out_ref, _ = predict(make((0.0, steps * Δt)), steps, ps, st; initialdata = x0)
+        out_dt, _ = predict(esn_dt, steps, ps, st; initialdata = x0)
+        out_default, _ = predict(esn_default, steps, ps, st; initialdata = x0)
+        @test out_dt ≈ out_ref atol = 1.0e-8
+        @test !isapprox(out_default, out_ref; atol = 1.0e-3)
+
+        for bad in (0, 0.0, -1.0, NaN, Inf, -Inf)
+            @test_throws ArgumentError make((0.0, 1.0); input_dt = bad)
+            @test_throws ArgumentError ContinuousESNCell(
+                2 => 3; tspan = (0.0, 1.0), input_dt = bad
+            )
+        end
+
+        esn_euler = ContinuousESN(
+            in_dim, res_dim, in_dim, (0.0, 1.0), Euler(); input_dt = 1.0, dt = 0.5
+        )
+        @test :dt in keys(esn_euler.reservoir.kwargs)
+        @test !(:input_dt in keys(esn_euler.reservoir.kwargs))
+        sa, _ = collectstates(esn_euler, data, ps, st)
+        esn_euler2 = ContinuousESN(
+            in_dim, res_dim, in_dim, (0.0, 1.0), Euler(); input_dt = 1.0, dt = 0.1
+        )
+        sb, _ = collectstates(esn_euler2, data, ps, st)
+        @test !isapprox(sa, sb; atol = 1.0e-4)
+    end
+
     @testset "ContinuousESN: state modifiers compose" begin
         rng = MersenneTwister(31)
         in_dim, res_dim, out_dim, T_steps = 2, 10, 1, 8

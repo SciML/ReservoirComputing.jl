@@ -293,7 +293,7 @@ end
         neuron=LIFNeuron(), encoder=CurrentInjection(),
         feature_map=ExponentialSpikeFilter(),
         use_bias=false, init_bias=zeros32, init_reservoir=dale_sparse,
-        init_input=scaled_rand, init_state=zeros32, kwargs...)
+        init_input=scaled_rand, init_state=zeros32, input_dt=nothing, kwargs...)
 
 Spiking reservoir cell for [`LSM`](@ref) ([Maass2002](@cite)).
 State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
@@ -320,6 +320,11 @@ State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
   - `init_input`: For `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: For bias when `use_bias=true`. Default: `zeros32`.
   - `init_state`: For membrane voltage. Default: `zeros32`.
+  - `input_dt`: Duration of each input column in `collectstates` and of
+    each step in autoregressive `predict`. Default: `nothing`, which splits
+    `tspan` into one equal window per input column (or per predicted step).
+    With a positive finite real, every window lasts `input_dt` from
+    `tspan[1]` on and `tspan[2]` is not used. Not forwarded to `solve`.
   - `kwargs...`: Forwarded to `solve`. Rejected: `saveat`,
     `save_everystep`, `dense`, `callback`. Use `dtmax ≈ tau_ref/4`.
 
@@ -343,6 +348,7 @@ State is ``(V, I_{\mathrm{syn}})`` of length `2 * out_dims`.
     tspan
     args
     kwargs
+    input_dt
 end
 
 function __check_lsm_tspan(tspan)
@@ -368,12 +374,14 @@ function LSMCell(
         feature_map = ExponentialSpikeFilter(),
         use_bias::BoolType = False(),
         init_bias = zeros32, init_reservoir = dale_sparse,
-        init_input = scaled_rand, init_state = zeros32, kwargs...
+        init_input = scaled_rand, init_state = zeros32, input_dt = nothing,
+        kwargs...
     )
     in_dims > 0 || throw(ArgumentError("in_dims must be positive, got $in_dims"))
     out_dims > 0 || throw(ArgumentError("out_dims must be positive, got $out_dims"))
     __check_lsm_components(neuron, encoder, feature_map)
     __check_lsm_tspan(tspan)
+    __check_input_dt(input_dt)
     __check_protected_kwargs(kwargs)
     haskey(kwargs, :callback) && throw(
         ArgumentError("LSM owns the solve callback; drop `callback` from kwargs.")
@@ -381,7 +389,7 @@ function LSMCell(
     return LSMCell(
         neuron, encoder, feature_map, in_dims, out_dims,
         init_bias, init_reservoir, init_input, init_state,
-        static(use_bias), tspan, args, kwargs
+        static(use_bias), tspan, args, kwargs, input_dt
     )
 end
 
@@ -412,5 +420,6 @@ function Base.show(io::IO, cell::LSMCell)
     print(io, "LSMCell(", cell.in_dims, " => ", cell.out_dims)
     print(io, ", tspan = ")
     show(io, cell.tspan)
+    cell.input_dt === nothing || print(io, ", input_dt = ", cell.input_dt)
     return print(io, ")")
 end

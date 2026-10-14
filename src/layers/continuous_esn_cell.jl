@@ -4,7 +4,7 @@
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
         equations = __continuous_esn_rhs!,
-        use_jac_prototype = false, kwargs...)
+        use_jac_prototype = false, input_dt = nothing, kwargs...)
 
 Continuous-time Echo State Network cell
 ([Lukosevicius2012](@cite)). Integrates the ODE
@@ -43,6 +43,11 @@ Continuous-time Echo State Network cell
     dense or the RHS is user-supplied. Only benefits implicit solvers
     (`Rodas5`, `TRBDF2`, …) — no effect on `Tsit5` and other explicit
     methods. Default: `false`.
+  - `input_dt`: Duration of each input column in `collectstates` and of
+    each step in autoregressive `predict`. Default: `nothing`, which splits
+    `tspan` into one equal window per input column (or per predicted step).
+    With a positive finite real, every window lasts `input_dt` from
+    `tspan[1]` on and `tspan[2]` is not used. Not forwarded to `solve`.
   - `kwargs...`: Forwarded to `solve` as keyword arguments.
 
 ## Parameters
@@ -64,6 +69,7 @@ Continuous-time Echo State Network cell
     tspan
     args
     kwargs
+    input_dt
     use_jac_prototype <: StaticBool
 end
 
@@ -73,13 +79,14 @@ function ContinuousESNCell(
         init_bias = zeros32, init_reservoir = rand_sparse,
         init_input = scaled_rand, init_state = zeros32,
         equations = __continuous_esn_rhs!,
-        use_jac_prototype::BoolType = False(), kwargs...
+        use_jac_prototype::BoolType = False(), input_dt = nothing, kwargs...
     )
+    __check_input_dt(input_dt)
     return ContinuousESNCell(
         activation, in_dims, out_dims,
         init_bias, init_reservoir, init_input, init_state,
         static(use_bias),
-        equations, tspan, args, kwargs,
+        equations, tspan, args, kwargs, input_dt,
         static(use_jac_prototype)
     )
 end
@@ -119,6 +126,7 @@ function Base.show(io::IO, cell::ContinuousESNCell)
     print(io, "ContinuousESNCell(", cell.in_dims, " => ", cell.out_dims)
     print(io, ", tspan = ")
     show(io, cell.tspan)
+    cell.input_dt === nothing || print(io, ", input_dt = ", cell.input_dt)
     has_bias(cell) || print(io, ", use_bias = false")
     known(cell.use_jac_prototype) && print(io, ", use_jac_prototype = true")
     return print(io, ")")

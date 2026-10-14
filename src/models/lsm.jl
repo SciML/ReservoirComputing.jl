@@ -5,7 +5,7 @@
         use_bias=false, init_reservoir=dale_sparse, init_input=scaled_rand,
         init_bias=zeros32, init_state=zeros32,
         state_modifiers=(), readout_activation=identity,
-        readout_in_dims=nothing, kwargs...)
+        readout_in_dims=nothing, input_dt=nothing, kwargs...)
 
 Liquid State Machine ([Maass2002](@cite)): [`LSMCell`](@ref), optional
 `state_modifiers`, and [`LinearReadout`](@ref).
@@ -31,6 +31,13 @@ Reservoir (to [`LSMCell`](@ref)):
   - `init_input`: Default [`scaled_rand`](@ref).
   - `init_bias`: Default `zeros32`.
   - `init_state`: Default `zeros32`.
+  - `input_dt`: Duration of each input column in `collectstates` and of
+    each step in autoregressive `predict`. Default: `nothing`, which splits
+    `tspan` into one equal window per input column (or per predicted step),
+    so the time step depends on how many columns or steps are used. With a
+    positive finite real, every window lasts `input_dt` from `tspan[1]` on
+    and `tspan[2]` is not used. Not forwarded to `solve`; a `dt` in
+    `kwargs...` still reaches the solver.
 
 Composition:
 
