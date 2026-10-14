@@ -302,7 +302,9 @@ function pseudo_svd(
         i = rand_range(rng, res_dim)
         j = rand_range(rng, res_dim)
         θ = DeviceAgnostic.rand(rng, T) * T(2) .- T(1)
-        reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
+        if i != j
+            reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
+        end
         tmp = get_sparsity(reservoir_matrix, res_dim)
     end
     check_inf_nan(reservoir_matrix)
