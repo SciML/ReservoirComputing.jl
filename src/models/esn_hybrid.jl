@@ -16,8 +16,8 @@ Hybrid Echo State Network [Pathak2018](@cite).
 ## Arguments
 
 - `km`: Knowledge model applied to the input (e.g. a physical model, neural
-    submodule, or differentiable function). May be a `WrappedFunction` or any
-    callable layer.
+    submodule, or differentiable function). A Lux layer is used as is; any other
+    callable is wrapped in a `WrappedFunction`.
 - `km_dims`: Output dimension of the knowledge model `km`.
 - `in_dims`: Input dimension.
 - `res_dims`: Reservoir (hidden state) dimension.
@@ -115,7 +115,7 @@ function HybridESN(
         ro_dims => out_dims, readout_activation;
         include_collect = static(include_collect)
     )
-    km_layer = km isa WrappedFunction ? km : WrappedFunction(km)
+    km_layer = km isa AbstractLuxLayer ? km : WrappedFunction(km)
     return HybridESN(reservoir, km_layer, mods, ro)
 end
 
@@ -150,7 +150,7 @@ function __partial_apply(hesn::HybridESN, inp, ps, st)
     )
     feats = vcat(k_t, rstar)
     return feats,
-        (reservoir = st_reservoir, state_modifiers = st_mods, knowledge_model = st_km)
+        (reservoir = st_reservoir, knowledge_model = st_km, state_modifiers = st_mods)
 end
 
 function (hesn::HybridESN)(inp, ps, st)
