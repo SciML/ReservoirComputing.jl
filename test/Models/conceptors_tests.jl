@@ -178,14 +178,14 @@ begin
             output = vec(outputs)
             best = minimum(
                 sqrt(
-                        mean(
-                            abs2,
-                            output .- [
-                                sign * sin(2pi * index / period + phase) for
+                    mean(
+                        abs2,
+                        output .- [
+                            sign * sin(2pi * index / period + phase) for
                                 index in eachindex(output)
-                            ],
-                        )
-                    ) / std(output) for phase in 0:0.02:2pi, sign in (-1.0, 1.0)
+                        ],
+                    )
+                ) / std(output) for phase in 0:0.02:2pi, sign in (-1.0, 1.0)
             )
             @test best < 0.05
             @test count(>(0.5), conceptor_singular_values(get_conceptor(st, :sine))) < 80
