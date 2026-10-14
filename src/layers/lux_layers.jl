@@ -164,6 +164,10 @@ end
 
 (c::ReservoirChain)(x, ps, st::NamedTuple) = applychain(c.layers, x, ps, st)
 
+function __reset_delay(rng::AbstractRNG, c::ReservoirChain, st, init_carry)
+    return map((layer, st_layer) -> __reset_delay(rng, layer, st_layer, init_carry), c.layers, st)
+end
+
 @generated function applychain(
         layers::NamedTuple{fields}, x, ps, st::NamedTuple{fields}
     ) where {fields}

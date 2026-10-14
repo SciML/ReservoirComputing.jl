@@ -432,6 +432,13 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
     return inp_with_delay, (history = history, clock = clock, rng = st.rng)
 end
 
+function __reset_delay(rng::AbstractRNG, dl::DelayLayer, st, init_carry)
+    history = init_carry === nothing ? nothing : init_carry(rng, dl.in_dims, dl.num_delays)
+    return merge(st, (; history, clock = 0))
+end
+
+__reset_delay(::AbstractRNG, _, st, init_carry) = st
+
 function Base.show(io::IO, dl::DelayLayer)
     print(io, "DelayLayer(", dl.in_dims, "; num_delays=", dl.num_delays)
 

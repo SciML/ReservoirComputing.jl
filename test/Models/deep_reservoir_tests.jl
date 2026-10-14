@@ -185,4 +185,46 @@ begin
             @test length(trained_st.cells) == 1
         end
     end
+
+    @testset "resetcarry! resets DelayLayers among the per-layer modifiers" begin
+        res_dims = 12
+        X1 = randn(MersenneTwister(5), Float32, 3, 10)
+        X2 = randn(MersenneTwister(6), Float32, 3, 10)
+        ones_init = (rng, dims...) -> ones(Float32, dims...)
+        models = (
+            DeepReservoir(
+                (
+                    ESNCell(3 => res_dims; init_state = zeros32),
+                    ESNCell(res_dims => res_dims; init_state = zeros32),
+                ),
+                LinearReadout(3 * res_dims => 2);
+                state_modifiers = (nothing, (DelayLayer(res_dims; num_delays = 2),)),
+            ),
+        )
+        for m in models
+            ps, st0 = setup(MersenneTwister(11), m)
+            run = st -> first(collectstates(m, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = collectstates(m, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+            @test run(resetcarry!(MersenneTwister(1), m, deepcopy(st1))) == ref
+            st_zero = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, zeros32)
+            )
+            @test run(st_zero) == ref
+            st_ones = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, ones_init)
+            )
+            delay_st = first(st_ones.state_modifiers[2])
+            delay_st = haskey(delay_st, :op) ? delay_st.op : delay_st
+            @test all(==(1), delay_st.history)
+            @test delay_st.clock == 0
+            @test run(st_ones) != ref
+            st_skip = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, nothing)
+            )
+            @test run(st_skip) == ref
+        end
+    end
+
 end

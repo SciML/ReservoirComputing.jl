@@ -184,6 +184,29 @@ __carry_dimensions(cell::RMNCell) = (
     __cell_out_dims(cell.linear_reservoir),
 )
 __carry_dimensions(cell::LocalInformationFlow) = __carry_dimensions(cell.cell)
+__carry_dimensions(res::SciMLProblemReservoir) = (length(res.prob.u0),)
+
+__carry_cell(layer) = layer.cell
+__carry_cell(res::AbstractSciMLProblemReservoir) = res
+
+__init_carry_state(::Any, init_carry, rng, dim) = init_carry(rng, dim, 1)
+__init_carry_state(::AbstractSciMLProblemReservoir, init_carry, rng, dim) =
+    vec(init_carry(rng, dim, 1))
+function __init_carry_state(res::SciMLProblemReservoir, init_carry, rng, dim)
+    return convert(Vector{eltype(res.prob.u0)}, vec(init_carry(rng, dim, 1)))
+end
+
+function __reset_deep_delays(rng::AbstractRNG, mods, st_mods, init_carry, n_layers)
+    mods === nothing && return st_mods
+    initializers = Tuple(__asvec(init_carry, n_layers))
+    return ntuple(n_layers) do idx
+        mods[idx] === nothing ? st_mods[idx] :
+            map(
+                (layer, st_layer) -> __reset_delay(rng, layer, st_layer, initializers[idx]),
+                mods[idx], st_mods[idx]
+            )
+    end
+end
 
 function __reset_deep_carry(
         rng::AbstractRNG, layer::StatefulLayer, st, initializer
@@ -212,6 +235,20 @@ function __reset_deep_carry(::AbstractRNG, layer::AbstractLuxLayer, _, initializ
     )
 end
 
+"""
+    resetcarry!(rng, dres::DeepReservoir, st; init_carry=nothing)
+
+Reset the carry of every stateful cell of a [`DeepReservoir`](@ref), and the history
+and clock of every [`DelayLayer`](@ref) among the per-layer `state_modifiers`.
+
+`init_carry` is `nothing`, a function, or a tuple or vector with one entry per layer
+(`nothing` or a function). Entry `i` sets the carry of cell `i`, called as
+`f(rng, dim)`, and the delay layers of layer `i`'s modifiers, called as
+`f(rng, in_dims, num_delays)`, so the initializers must accept both calls (the
+[WeightInitializers.jl](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+functions do). A `nothing` entry clears the carry and the delay history of that layer,
+which is then rebuilt from the layer's own initializers on the next call.
+"""
 function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = nothing)
     n_layers = length(dres.cells)
     initializers = Tuple(__asvec(init_carry, n_layers))
@@ -219,9 +256,8 @@ function resetcarry!(rng::AbstractRNG, dres::DeepReservoir, st; init_carry = not
         __reset_deep_carry(rng, dres.cells[idx], st.cells[idx], initializers[idx])
     end
 
-    return (;
-        cells = new_cells,
-        state_modifiers = st.state_modifiers,
-        readout = st.readout,
+    new_mods = __reset_deep_delays(
+        rng, dres.state_modifiers, st.state_modifiers, init_carry, n_layers
     )
+    return (; cells = new_cells, state_modifiers = new_mods, readout = st.readout)
 end

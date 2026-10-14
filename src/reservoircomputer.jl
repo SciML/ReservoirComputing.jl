@@ -238,6 +238,20 @@ otherwise they are taken from the cell. When `init_carry=nothing`,
 the carry is cleared and the cell's initializer is used on the next call. This does
 not require the cell to expose an output dimension.
 
+For continuous-time reservoirs ([`ContinuousESN`](@ref), [`LSM`](@ref) and
+[`SciMLProblemReservoir`](@ref)) the carry is the ODE state vector, and `init_carry` is
+called as `init_carry(rng, dim, 1)` and flattened to a vector. `dim` is `out_dims` for
+`ContinuousESN`, `length(prob.u0)` for `SciMLProblemReservoir`, and `out_dims` for `LSM`,
+where `init_carry` sets only the membrane potentials (the first half of the state)
+and the remaining half of the state is set to zero.
+
+The history and clock of every [`DelayLayer`](@ref) held by the model, in
+`st.input_delay` or in `st.state_modifiers`, are reset as well: with
+`init_carry=nothing` the history is cleared and rebuilt from the layer's `init_delay`
+on the next call, and with a function the history is set to
+`init_carry(rng, in_dims, num_delays)`. The clock restarts at zero. Other modifier
+and readout states are unchanged.
+
 ## Arguments
 
 - `rng`: Random number generator (used if a new carry is sampled/created).
@@ -269,12 +283,26 @@ function resetcarry!(
     if init_carry === nothing
         new_state = nothing
     else
-        dims = carry === nothing ? __carry_dimensions(rc.reservoir.cell) :
+        cell = __carry_cell(rc.reservoir)
+        dims = carry === nothing ? __carry_dimensions(cell) :
             map(state -> size(state, 1), carry)
-        new_state = map(dim -> init_carry(rng, dim, 1), dims)
+        new_state = map(dim -> __init_carry_state(cell, init_carry, rng, dim), dims)
     end
-    new_cell = merge(st.reservoir, (; carry = new_state))
-    return merge(st, (reservoir = new_cell,))
+    new_res = merge(st.reservoir, (; carry = new_state))
+    new_st = __reset_modifier_delays(rng, rc, merge(st, (reservoir = new_res,)), init_carry)
+    return haskey(st, :input_delay) ?
+        merge(
+            new_st,
+            (input_delay = __reset_delay(rng, rc.input_delay, st.input_delay, init_carry),)
+        ) : new_st
+end
+
+function __reset_modifier_delays(rng::AbstractRNG, rc, st, init_carry)
+    new_mods = map(
+        (layer, st_layer) -> __reset_delay(rng, layer, st_layer, init_carry),
+        rc.state_modifiers, st.state_modifiers
+    )
+    return merge(st, (state_modifiers = new_mods,))
 end
 
 function resetcarry!(

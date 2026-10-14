@@ -113,7 +113,8 @@ end
     resetcarry!(rng, rc::NGRC, ps, st; init_carry=nothing)
 
 Reset the delay history of the internal [`DelayLayer`](@ref) of an [`NGRC`](@ref)
-and restart its clock. Readout and state modifier states are returned unchanged.
+and of every [`DelayLayer`](@ref) among its `state_modifiers`, and restart their
+clocks. The readout state and the states of other modifiers are returned unchanged.
 
 ## Keyword arguments
 
@@ -127,15 +128,15 @@ and restart its clock. Readout and state modifier states are returned unchanged.
 
 ## Returns
 
-  - `resetcarry!(rng, rc, st; ...) -> st′` with the reset `st′.reservoir`.
+  - `resetcarry!(rng, rc, st; ...) -> st′` with the reset `st′.reservoir` and
+    `st′.state_modifiers`.
   - `resetcarry!(rng, rc, ps, st; ...) -> (ps, st′)`.
 """
 function resetcarry!(
         rng::AbstractRNG, rc::NGRC, st; init_carry = nothing
     )
-    dl = rc.reservoir
-    history = init_carry === nothing ? nothing : init_carry(rng, dl.in_dims, dl.num_delays)
-    return merge(st, (reservoir = merge(st.reservoir, (; history, clock = 0)),))
+    st_res = __reset_delay(rng, rc.reservoir, st.reservoir, init_carry)
+    return __reset_modifier_delays(rng, rc, merge(st, (reservoir = st_res,)), init_carry)
 end
 
 @doc raw"""

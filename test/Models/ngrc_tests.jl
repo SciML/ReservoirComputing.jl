@@ -139,6 +139,35 @@ begin
             @test size(y_ones) == size(y_fresh)
         end
 
+        @testset "resetcarry! resets DelayLayers among the state modifiers" begin
+            ngrc = NGRC(
+                2, 1; num_delays = 2, include_input = True(),
+                state_modifiers = (DelayLayer(6; num_delays = 2),),
+            )
+            ps, st0 = setup(MersenneTwister(2), ngrc)
+            X1 = rand(MersenneTwister(3), Float32, 2, 10)
+            X2 = rand(MersenneTwister(4), Float32, 2, 10)
+            run = st -> first(predict(ngrc, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = predict(ngrc, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+
+            st_reset = resetcarry!(rng, ngrc, deepcopy(st1))
+            @test st_reset.state_modifiers[end].history === nothing
+            @test st_reset.state_modifiers[end].clock == 0
+            @test run(st_reset) == ref
+
+            st_zero = resetcarry!(rng, ngrc, deepcopy(st1); init_carry = zeros32)
+            @test run(st_zero) == ref
+
+            ones_init = (rng, dims...) -> ones(Float32, dims...)
+            st_ones = resetcarry!(rng, ngrc, deepcopy(st1); init_carry = ones_init)
+            @test st_ones.state_modifiers[end].history == ones(Float32, 6, 2)
+            @test st_ones.state_modifiers[end].clock == 0
+            @test st_ones.readout == st1.readout
+            @test run(st_ones) != ref
+        end
+
         @testset "simple 1D linear system learning" begin
             # x_{t+1} = a * x_t with a = 0.8
             a = 0.8f0
