@@ -1156,7 +1156,7 @@ end
 
 """
     train!(rng, concept::Conceptor, named_signals, named_targets, ps, st,
-           train_method=StandardRidge(0.0);
+           train_method=RidgeRegression(0.0);
            washout=0, return_states=false, init_carry=nothing) -> (ps, st)
 
 Train a single readout on conceptor-filtered reservoir features. For each
@@ -1168,17 +1168,18 @@ the pooled feature matrix is also returned.
 
 ## Arguments
 
-- `named_signals`: Iterable of named input sequences.
+- `named_signals`: Iterable of named input sequences. A vector is read as a
+  single input channel.
 - `named_targets`: Iterable containing one target sequence for every signal name.
 - `train_method`: Readout fitting method; defaults to unregularized
-  [`StandardRidge`](@ref).
+  [`RidgeRegression`](@ref).
 
 ## Keywords
 
 - `washout::Int = 0`: Initial columns removed from every feature and target.
 - `return_states::Bool = false`: Return pooled conceptor-filtered features.
 - `init_carry = nothing`: Initial carry passed when resetting each sequence.
-- `kwargs...`: Additional options forwarded to `train`.
+- `kwargs...`: Additional options for the readout fit, such as `solver`.
 
 ## Returns
 
@@ -1192,7 +1193,7 @@ function train!(
         named_targets,
         ps::NamedTuple,
         st::NamedTuple,
-        train_method = StandardRidge(0.0);
+        train_method = RidgeRegression(0.0);
         washout::Int = 0,
         return_states::Bool = false,
         init_carry = nothing,
@@ -1210,7 +1211,7 @@ function train!(
         haskey(targets, name) || throw(ArgumentError("no target data for pattern :$name"))
         st_reset = resetcarry!(rng, concept.model, st.model; init_carry = init_carry)
         st_tmp = merge(st, (; model = st_reset))
-        states, _ = collectstates(concept, signal, ps, st_tmp; conceptor = name)
+        states, _ = collectstates(concept, __as_matrix(signal), ps, st_tmp; conceptor = name)
         tgt = targets[name]
         if washout > 0
             states = states[:, (washout + 1):end]
@@ -1222,7 +1223,7 @@ function train!(
 
     features = reduce(hcat, all_states)
     pooled_targets = reduce(hcat, all_targets)
-    W_out = train(train_method, features, pooled_targets; kwargs...)
+    W_out = __fit_readout(train_method, features, pooled_targets; kwargs...)
     ps2, st2 = addreadout!(concept, W_out, ps, st)
     return return_states ? ((ps2, st2), features) : (ps2, st2)
 end
