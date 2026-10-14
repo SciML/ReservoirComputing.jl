@@ -108,17 +108,34 @@ function __infer_ngrc_ro_dims(mods::Tuple, n_taps::Int, input_dims::Int)
     end
 end
 
+"""
+    resetcarry!(rng, rc::NGRC, st; init_carry=nothing)
+    resetcarry!(rng, rc::NGRC, ps, st; init_carry=nothing)
+
+Reset the delay history of the internal [`DelayLayer`](@ref) of an [`NGRC`](@ref)
+and restart its clock. Readout and state modifier states are returned unchanged.
+
+## Keyword arguments
+
+  - `init_carry`:
+      + `nothing` (default): clear the history, so that the next call rebuilds
+        it from the `init_delay` initializers, exactly as for a fresh `setup`.
+      + `f`: a function following the
+        [WeightInitializers.jl](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+        convention. The history is set to `f(rng, in_dims, num_delays)`, one column
+        per delay.
+
+## Returns
+
+  - `resetcarry!(rng, rc, st; ...) -> st′` with the reset `st′.reservoir`.
+  - `resetcarry!(rng, rc, ps, st; ...) -> (ps, st′)`.
+"""
 function resetcarry!(
         rng::AbstractRNG, rc::NGRC, st; init_carry = nothing
     )
-    carry = get(st.reservoir, :carry, nothing)
-    @warn(
-        """
-        Next generation reservoir computing has no internal state to reset.
-        Returning untouched model states.
-        """
-    )
-    return st
+    dl = rc.reservoir
+    history = init_carry === nothing ? nothing : init_carry(rng, dl.in_dims, dl.num_delays)
+    return merge(st, (reservoir = merge(st.reservoir, (; history, clock = 0)),))
 end
 
 @doc raw"""

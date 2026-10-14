@@ -100,6 +100,45 @@ begin
             @test propertynames(st2) == propertynames(st)
         end
 
+        @testset "resetcarry! restores the initial delay state" begin
+            ngrc = NGRC(
+                2, 1; num_delays = 2, features = (square_feature,), include_input = True(),
+            )
+            ps, st = setup(MersenneTwister(2), ngrc)
+            X = rand(MersenneTwister(3), Float32, 2, 30)
+            Y = rand(MersenneTwister(4), Float32, 1, 30)
+            ps_tr, st_tr = train(
+                ngrc, X, Y, ps, st; objective = RidgeRegression(1.0e-4),
+            )
+            Xt = rand(MersenneTwister(5), Float32, 2, 10)
+            _, st_new = setup(MersenneTwister(2), ngrc)
+            st_fresh = merge(st_tr, (reservoir = st_new.reservoir,))
+            y_fresh, _ = predict(ngrc, Xt, ps_tr, st_fresh)
+
+            y_carried, _ = predict(ngrc, Xt, ps_tr, deepcopy(st_tr))
+            @test y_carried != y_fresh
+
+            st_reset = resetcarry!(rng, ngrc, deepcopy(st_tr))
+            @test st_reset.reservoir.history === nothing
+            @test st_reset.reservoir.clock == 0
+            @test st_reset.readout == st_tr.readout
+            y_reset, _ = predict(ngrc, Xt, ps_tr, st_reset)
+            @test y_reset == y_fresh
+
+            st_zero = resetcarry!(rng, ngrc, deepcopy(st_tr); init_carry = zeros32)
+            y_zero, _ = predict(ngrc, Xt, ps_tr, st_zero)
+            @test y_zero == y_fresh
+
+            ones_init = (rng, dims...) -> ones(Float32, dims...)
+            st_ones = resetcarry!(rng, ngrc, deepcopy(st_tr); init_carry = ones_init)
+            @test st_ones.reservoir.history == ones(Float32, 2, 2)
+            @test st_ones.reservoir.clock == 0
+            _, st_ones_ps = resetcarry!(rng, ngrc, ps_tr, st_tr; init_carry = ones_init)
+            @test st_ones_ps.reservoir.history == ones(Float32, 2, 2)
+            y_ones, _ = predict(ngrc, Xt, ps_tr, st_ones)
+            @test size(y_ones) == size(y_fresh)
+        end
+
         @testset "simple 1D linear system learning" begin
             # x_{t+1} = a * x_t with a = 0.8
             a = 0.8f0

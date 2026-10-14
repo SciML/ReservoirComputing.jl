@@ -231,8 +231,10 @@ end
 
 Reset (or set) the hidden-state carry of a model in the echo state network family.
 
-When a function is supplied as `init_carry`, an existing carry provides its leading
-dimension; otherwise the reservoir output size is used. When `init_carry=nothing`,
+When a function is supplied as `init_carry`, it is called as `init_carry(rng, dim, 1)`
+once per state held by the cell (one for most cells, a hidden state and a memory
+state for [`RMNCell`](@ref)). An existing carry provides the leading dimensions;
+otherwise they are taken from the cell. When `init_carry=nothing`,
 the carry is cleared and the cell's initializer is used on the next call. This does
 not require the cell to expose an output dimension.
 
@@ -254,7 +256,8 @@ not require the cell to expose an output dimension.
 ## Returns
 
 - `resetcarry!(rng, rc, st; ...) -> st′`:
-  Updated states with `st′.cell.carry` set to `nothing` or `(h0,)`.
+  Updated states with `st′.reservoir.carry` set to `nothing` or a tuple with one
+  state per recurrent state of the cell.
 - `resetcarry!(rng, rc, ps, st; ...) -> (ps, st′)`:
   Same as above, but also returns the unchanged `ps` for convenience.
 
@@ -266,14 +269,9 @@ function resetcarry!(
     if init_carry === nothing
         new_state = nothing
     else
-        if carry === nothing
-            sz = __cell_out_dims(rc.reservoir.cell)
-        else
-            state = first(carry)
-            sz = size(state, 1)
-        end
-        new_state = init_carry(rng, sz, 1)
-        new_state = (new_state,)
+        dims = carry === nothing ? __carry_dimensions(rc.reservoir.cell) :
+            map(state -> size(state, 1), carry)
+        new_state = map(dim -> init_carry(rng, dim, 1), dims)
     end
     new_cell = merge(st.reservoir, (; carry = new_state))
     return merge(st, (reservoir = new_cell,))
