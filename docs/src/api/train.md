@@ -6,5 +6,4 @@
     QRSolver
     QRFactorization
     RidgeRegression
-    StandardRidge
 ```
