@@ -222,12 +222,6 @@ Base.length(c::ReservoirChain) = length(c.layers)
 Base.lastindex(c::ReservoirChain) = lastindex(c.layers)
 Base.firstindex(c::ReservoirChain) = firstindex(c.layers)
 
-### from Lux.Utils
-function sample_replicate(rng::AbstractRNG)
-    rand(rng)
-    return replicate(rng)
-end
-
 function init_hidden_state(rng::AbstractRNG, rnn, inp)
     h0 = rnn.init_state(rng, rnn.out_dims, Base.size(inp, 2))
     T = promote_type(eltype(inp), eltype(h0))

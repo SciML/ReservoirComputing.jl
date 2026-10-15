@@ -354,4 +354,15 @@ begin
         @test st_rand.reservoir.rng != st.reservoir.rng
     end
 
+    @testset "ContinuousESN: collectstates is reproducible with default_rng setup" begin
+        esn = ContinuousESN(
+            3, 30, 1, (0.0, 1.0), Tsit5();
+            init_state = (rng, d...) -> rand(rng, Float32, d...),
+        )
+        ps, st = setup(Random.default_rng(), esn)
+        data = randn(MersenneTwister(1), Float32, 3, 8)
+        s1, _ = collectstates(esn, data, ps, deepcopy(st))
+        s2, _ = collectstates(esn, data, ps, deepcopy(st))
+        @test s1 == s2
+    end
 end
