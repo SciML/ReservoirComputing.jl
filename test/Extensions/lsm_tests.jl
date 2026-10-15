@@ -107,6 +107,95 @@ begin
         @test T_end / n_spikes > T_isi * 1.1
     end
 
+    @testset "LIF: refractory end is a solver stop, spike times independent of step size" begin
+        tau_m, r_m, I, tau_ref = 0.02, 1.0, 1.5, 0.0123
+        T_end = 0.5
+        function filtered(; kwargs...)
+            lsm = _lsm_f64(
+                1, 1, 1, (0.0, T_end), Tsit5();
+                neuron = LIFNeuron(;
+                    tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                    v_reset = 0.0, tau_ref = tau_ref, tau_syn = 0.005,
+                ),
+                feature_map = ExponentialSpikeFilter(; filter_tau = 0.01),
+                kwargs...,
+            )
+            ps, st = setup(MersenneTwister(1), lsm)
+            ps = _set_res!(ps; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
+            feats, _ = collectstates(lsm, ones(Float64, 1, 2), ps, st)
+            return feats[1, end]
+        end
+        coarse = filtered()
+        fine = filtered(; reltol = 1.0e-10, abstol = 1.0e-12, dtmax = 1.0e-5)
+        @test isapprox(coarse, fine; rtol = 1.0e-2)
+    end
+
+    @testset "LIF: refractory stops stay inside the solve window" begin
+        tau_m, r_m, I, tau_ref = 0.02, 1.0, 1.5, 0.3
+        T_end = 0.5
+        n_win = 5
+        function build(; feature_map = ExponentialSpikeFilter(; filter_tau = 0.05), kwargs...)
+            return _lsm_f64(
+                1, 1, 1, (0.0, T_end), Tsit5();
+                neuron = LIFNeuron(;
+                    tau_m = tau_m, r_m = r_m, v_rest = 0.0, v_th = 1.0,
+                    v_reset = 0.0, tau_ref = tau_ref, tau_syn = 0.005,
+                ),
+                feature_map = feature_map,
+                kwargs...,
+            )
+        end
+        function collect_window(lsm)
+            ps, st = setup(MersenneTwister(1), lsm)
+            ps = _set_res!(ps; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
+            return collectstates(lsm, ones(Float64, 1, n_win), ps, st)
+        end
+        feats, st_new = collect_window(build())
+        feats_ref, st_ref = collect_window(
+            build(; reltol = 1.0e-10, abstol = 1.0e-12, dtmax = 1.0e-5)
+        )
+        @test size(feats) == (1, n_win)
+        @test all(>(0), feats)
+        @test isapprox(feats, feats_ref; rtol = 1.0e-2)
+        @test isapprox(
+            first(st_new.reservoir.carry), first(st_ref.reservoir.carry); atol = 1.0e-3
+        )
+
+        steps = 5
+        for fmap in (ExponentialSpikeFilter(; filter_tau = 0.05), MembraneVoltageFeature())
+            lsm_ar = build(; feature_map = fmap)
+            ps_ar, st_ar = setup(MersenneTwister(1), lsm_ar)
+            ps_ar = _set_res!(ps_ar; Win = reshape([I], 1, 1), W = reshape([0.0], 1, 1))
+            ps_ar = merge(ps_ar, (readout = (weight = reshape([3.0], 1, 1),),))
+            y_ar, _ = predict(lsm_ar, steps, ps_ar, st_ar; initialdata = [1.0])
+            lsm_ar_ref = build(;
+                feature_map = fmap, reltol = 1.0e-10, abstol = 1.0e-12, dtmax = 1.0e-5
+            )
+            y_ref, _ = predict(lsm_ar_ref, steps, ps_ar, st_ar; initialdata = [1.0])
+            @test size(y_ar) == (1, steps)
+            @test all(isfinite, y_ar)
+            @test isapprox(y_ar, y_ref; rtol = 1.0e-2, atol = 1.0e-6)
+        end
+    end
+
+    @testset "LIF: Float32 states with Float64 tspan and tiny tau_ref" begin
+        f32_ones = (rng, d...) -> ones(Float32, d...)
+        f32_zeros = (rng, d...) -> zeros(Float32, d...)
+        for tau_ref in (0.0, 1.0e-12)
+            lsm = LSM(
+                1, 1, 1, (0.0, 0.5), Tsit5();
+                neuron = LIFNeuron(; tau_ref = tau_ref),
+                feature_map = SpikeCountFeatures(),
+                init_input = f32_ones, init_reservoir = f32_zeros, init_state = f32_zeros,
+            )
+            ps, st = setup(MersenneTwister(1), lsm)
+            ps = _set_res!(ps; Win = reshape(Float32[1.5], 1, 1), W = zeros(Float32, 1, 1))
+            counts, _ = collectstates(lsm, ones(Float32, 1, 10), ps, st)
+            @test size(counts) == (1, 10)
+            @test sum(counts) > 5
+        end
+    end
+
     @testset "LIF: subthreshold V matches closed form" begin
         tau_m, r_m, I = 0.02, 1.0, 0.5
         V_ss = r_m * I
@@ -433,6 +522,8 @@ begin
         @test_throws ArgumentError LIFNeuron(; tau_m = 0.0)
         @test_throws ArgumentError LIFNeuron(; tau_syn = -1.0)
         @test_throws ArgumentError LIFNeuron(; tau_ref = -0.1)
+        @test_throws ArgumentError LIFNeuron(; v_th = 0.0, v_reset = 0.0)
+        @test_throws ArgumentError LIFNeuron(; v_th = -1.0)
         @test_throws ArgumentError LIFNeuron(; r_m = 0.0)
         @test_throws ArgumentError ExponentialSpikeFilter(; filter_tau = 0.0)
         @test_throws ArgumentError PoissonRateEncoder(; rate_scale = -1.0)

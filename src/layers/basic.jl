@@ -337,9 +337,9 @@ sequence, delayed entries correspond to zero padding.
 
   - `num_delays`: Number of delayed copies to keep. The output
     will have `(num_delays + 1) * input_dim` entries: the current vector plus
-    `num_delays` past vectors. Default is 2.
+    `num_delays` past vectors. Must be non-negative. Default is 2.
   - `stride`: Delay stride in layer calls. The internal buffer
-    is updated only when `clock % stride == 0`. Default is 1.
+    is updated only when `clock % stride == 0`. Must be at least 1. Default is 1.
   - `init_delay`: Initializer(s) for the delays. Must be either a
     single function (e.g. `zeros32`, `randn32`) or an `NTuple` of
     `num_delays` functions, e.g. `(zeros32, randn32)`. If a single function
@@ -380,6 +380,10 @@ None
 end
 
 function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
+    num_delays >= 0 || throw(
+        ArgumentError("num_delays must be non-negative, got $num_delays")
+    )
+    stride >= 1 || throw(ArgumentError("stride must be positive, got $stride"))
     if init_delay isa Tuple
         length(init_delay) == num_delays || throw(
             DimensionMismatch(

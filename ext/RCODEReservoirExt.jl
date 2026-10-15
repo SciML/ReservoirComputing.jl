@@ -6,7 +6,7 @@ using LuxCore: apply, replicate
 using Random: AbstractRNG, randexp
 using SciMLBase: FullSpecialize, ODEFunction, ODEProblem, init, reinit!, remake, solve,
     solve!, NullParameters, VectorContinuousCallback, DiscreteCallback, CallbackSet,
-    successful_retcode
+    successful_retcode, add_tstop!
 using Static: known, static
 using WeightInitializers: zeros32
 
@@ -627,7 +627,9 @@ function __lsm_fire!(integrator, unit::Integer)
     T = eltype(integrator.u)
     t = integrator.t
     integrator.u[unit] = T(neuron.v_reset)
-    p.ref_until[unit] = t + T(neuron.tau_ref)
+    ref_end = t + oftype(t, neuron.tau_ref)
+    p.ref_until[unit] = ref_end
+    t < ref_end < p.t_end[1] && add_tstop!(integrator, ref_end)
     W = p.reservoir_matrix
     @inbounds for post in 1:n_units
         integrator.u[n_units + post] += W[post, unit]
@@ -789,7 +791,8 @@ function __lsm_pack(cell::LSMCell, ps_res, input_fn, n_units::Int, ::Type{T}) wh
         reservoir_matrix = ps_res.reservoir_matrix,
         input = input_fn,
         I_ext = zeros(T, n_units),
-        ref_until = fill(typemin(T), n_units),
+        ref_until = fill(typemin(Float64), n_units),
+        t_end = [typemax(Float64)],
         spike_t = T[],
         spike_i = Int[],
     )
@@ -850,6 +853,7 @@ function __collectstates(
     solve_p = __lsm_pack(cell, ps.reservoir, input_fn, n_units, T)
     u0, st_res_new = __lsm_u0(cell, st.reservoir, n_units, T)
 
+    solve_p.t_end[1] = last(sample_ts)
     tstops = poisson_times === nothing ? sample_ts : sort!(vcat(sample_ts, poisson_times))
     ode_fn = ODEFunction{true, FullSpecialize}(__lsm_rhs!)
     prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
@@ -950,6 +954,10 @@ function __predict(
             integrator, current_state;
             t0 = t_lo, tf = t_hi, erase_sol = true, reset_dt = true,
         )
+        solve_p.t_end[1] = t_hi
+        for ref_end in solve_p.ref_until
+            t_lo < ref_end < t_hi && add_tstop!(integrator, oftype(integrator.t, ref_end))
+        end
         solve!(integrator)
         successful_retcode(integrator.sol) || throw(
             ErrorException("LSM AR step failed with retcode $(integrator.sol.retcode)")

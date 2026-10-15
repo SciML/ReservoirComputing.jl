@@ -6,6 +6,15 @@ using LinearSolve: SVDFactorization
 
 # Delete with src/deprecated.jl at v1.0.
 
+@testset "train! rejects negative washout" begin
+    rng = MersenneTwister(5)
+    model = ESN(2, 12, 2)
+    ps, st = setup(rng, model)
+    X = randn(rng, Float32, 2, 30)
+    Y = randn(rng, Float32, 2, 30)
+    @test_throws ArgumentError @test_deprecated train!(model, X, Y, ps, st; washout = -1)
+end
+
 @testset "StandardRidge is deprecated alias of RidgeRegression" begin
     @test StandardRidge === RidgeRegression
     @test StandardRidge(1.0e-3) isa RidgeRegression
