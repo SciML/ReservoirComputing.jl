@@ -398,14 +398,14 @@ end
 
 function initialstates(rng::AbstractRNG, cell::LSMCell)
     return (
-        rng = replicate(rng),
+        rng = __owned_replicate(rng),
         encoder = __init_encoder_st(rng, cell.encoder),
     )
 end
 
 __init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
 function __init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
-    return (rng = replicate(rng),)
+    return (rng = __owned_replicate(rng),)
 end
 
 function Base.show(io::IO, cell::LSMCell)
