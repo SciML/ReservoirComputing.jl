@@ -495,7 +495,9 @@ applying:
 ## Keyword arguments
 
   - `amplitude`: Scaling factor used to initialize the first row.
-    This parameter adjusts the amplitude of the sine function. Default value is one.
+    This parameter adjusts the amplitude of the sine function. It must satisfy
+    `abs(amplitude) <= 1`, since the mapping applies the arccosine to the first row.
+    Default value is one.
   - `sine_divisor`: Divisor applied in the sine function's phase. Default value is one.
   - `chebyshev_parameter`: Control parameter for the Chebyshev mapping in
     subsequent rows. This parameter influences the distribution of the
@@ -516,11 +518,17 @@ true
 """
 function chebyshev_mapping(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat = one(T), sine_divisor::AbstractFloat = one(T),
-        chebyshev_parameter::AbstractFloat = one(T),
+        amplitude::Real = one(T), sine_divisor::Real = one(T),
+        chebyshev_parameter::Real = one(T),
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
+    abs(amplitude) <= 1 || throw(
+        ArgumentError(
+            "amplitude must satisfy abs(amplitude) <= 1 for the arccosine in the " *
+                "Chebyshev mapping to be defined, got $amplitude"
+        )
+    )
     input_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     n_rows, n_cols = dims[1], dims[2]
 
@@ -594,8 +602,8 @@ true
 """
 function logistic_mapping(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        amplitude::AbstractFloat = 0.3, sine_divisor::AbstractFloat = 5.9,
-        logistic_parameter::AbstractFloat = 3.7,
+        amplitude::Real = 0.3, sine_divisor::Real = 5.9,
+        logistic_parameter::Real = 3.7,
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -684,8 +692,8 @@ true
 """
 function modified_lm(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        factor::Integer, amplitude::AbstractFloat = 0.3,
-        sine_divisor::AbstractFloat = 5.9, logistic_parameter::AbstractFloat = 2.35,
+        factor::Integer, amplitude::Real = 0.3,
+        sine_divisor::Real = 5.9, logistic_parameter::Real = 2.35,
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)

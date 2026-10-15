@@ -94,6 +94,80 @@ begin
             )
         end
 
+        @testset "Integer-valued radius is accepted" begin
+            W = rand(Xoshiro(1), Float32, 8, 8)
+            @test check_radius(ReservoirComputing.scale_radius!(copy(W), 1), 1.0)
+            for init in (simple_cycle, double_cycle, selfloop_backward_cycle, low_connectivity)
+                @test init(Xoshiro(1), Float32, 6, 6; radius = 1) ==
+                    init(Xoshiro(1), Float32, 6, 6; radius = 1.0)
+            end
+            @test chaotic_init(Xoshiro(1), Float32, 16, 16; radius = 1) ==
+                chaotic_init(Xoshiro(1), Float32, 16, 16; radius = 1.0)
+            @test chaotic_init(Xoshiro(1), Float32, 16, 16; extra_edge_probability = 0) isa
+                Matrix{Float32}
+        end
+
+        @testset "double_cycle and selfloop_backward_cycle accept vector weights" begin
+            cw = Float32[0.1, 0.2, 0.3, 0.4, 0.5]
+            sw = Float32[0.6, 0.7, 0.8, 0.9, 1.0]
+            M = double_cycle(Xoshiro(1), Float32, 5, 5; cycle_weight = cw, second_cycle_weight = sw)
+            @test all(i -> M[i + 1, i] == cw[i], 1:4) && M[5, 1] == cw[5]
+            @test all(i -> M[i, i + 1] == sw[i], 1:4) && M[1, 5] == sw[5]
+            @test double_cycle(Xoshiro(1), Float32, 5, 5; cycle_weight = fill(0.2f0, 5)) ==
+                double_cycle(Xoshiro(1), Float32, 5, 5; cycle_weight = 0.2f0)
+
+            M = selfloop_backward_cycle(
+                Xoshiro(1), Float32, 5, 5;
+                cycle_weight = cw, selfloop_weight = sw, fb_weight = cw
+            )
+            @test all(i -> M[i, i] == sw[i], 1:2:5)
+            @test all(i -> M[i - 1, i] == cw[i], 2:2:5)
+            @test all(i -> M[i + 1, i] == cw[i], 1:4)
+            @test selfloop_backward_cycle(
+                Xoshiro(1), Float32, 5, 5; selfloop_weight = fill(0.5f0, 5)
+            ) == selfloop_backward_cycle(Xoshiro(1), Float32, 5, 5; selfloop_weight = 0.5f0)
+        end
+
+        @testset "Rational radius is accepted" begin
+            for init in (simple_cycle, double_cycle, selfloop_backward_cycle, low_connectivity)
+                @test init(Xoshiro(1), Float32, 6, 6; radius = 1 // 2) ==
+                    init(Xoshiro(1), Float32, 6, 6; radius = 0.5)
+            end
+            @test chaotic_init(Xoshiro(1), Float32, 16, 16; radius = 1 // 2) ==
+                chaotic_init(Xoshiro(1), Float32, 16, 16; radius = 0.5)
+        end
+
+        @testset "Vector weights must match the matrix size" begin
+            for len in (4, 6)
+                w = fill(0.1f0, len)
+                @test_throws DimensionMismatch double_cycle(Xoshiro(1), Float32, 5, 5; cycle_weight = w)
+                @test_throws DimensionMismatch double_cycle(Xoshiro(1), Float32, 5, 5; second_cycle_weight = w)
+                @test_throws DimensionMismatch selfloop_backward_cycle(Xoshiro(1), Float32, 5, 5; cycle_weight = w)
+                @test_throws DimensionMismatch selfloop_backward_cycle(Xoshiro(1), Float32, 5, 5; selfloop_weight = w)
+                @test_throws DimensionMismatch selfloop_backward_cycle(Xoshiro(1), Float32, 5, 5; fb_weight = w)
+            end
+        end
+
+        @testset "permute_matrix! rng is optional" begin
+            W = rand(Xoshiro(1), Float32, 5, 5)
+            P = permute_matrix!(copy(W))
+            @test sort(vec(P)) == sort(vec(W))
+            perm = Float32.(Matrix(I, 5, 5)[:, [2, 3, 4, 5, 1]])
+            @test permute_matrix!(copy(W), perm) == W * perm
+            @test permute_matrix!(Xoshiro(2), copy(W)) == permute_matrix!(Xoshiro(2), copy(W))
+        end
+
+        @testset "low_connectivity radius = nothing does not rescale" begin
+            for kw in (
+                    (; connected = true), (; in_degree = 2), (; connected = true, cut_cycle = true),
+                )
+                M = low_connectivity(Xoshiro(1), Float64, 12, 12; kw...)
+                @test !check_radius(M, 1.0; tolerance = 1.0e-3)
+            end
+            M = low_connectivity(Xoshiro(1), Float64, 12, 12; connected = true, radius = 0.5)
+            @test check_radius(M, 0.5)
+        end
+
         @testset "Minimum complexity: $init" for init in [
                 delay_line,
                 delayline_backward,
@@ -124,6 +198,34 @@ begin
             #closure
             cl = init(rng)
             @test eltype(cl(T, res_size, in_size)) == T
+        end
+
+        @testset "chebyshev_mapping validates amplitude" begin
+            @test_throws ArgumentError chebyshev_mapping(Xoshiro(1), Float32, 6, 3; amplitude = 1.5)
+            @test_throws ArgumentError chebyshev_mapping(Xoshiro(1), Float32, 6, 3; amplitude = -1.5)
+            M = chebyshev_mapping(Xoshiro(1), Float32, 6, 3; amplitude = 1)
+            @test all(abs.(M) .<= 1)
+        end
+
+        @testset "Integer keywords are accepted" begin
+            @test size(
+                chebyshev_mapping(
+                    Xoshiro(1), Float32, 6, 3;
+                    amplitude = 1, sine_divisor = 2, chebyshev_parameter = 2
+                )
+            ) == (6, 3)
+            @test size(
+                logistic_mapping(
+                    Xoshiro(1), Float32, 6, 3;
+                    amplitude = 1, sine_divisor = 6, logistic_parameter = 3
+                )
+            ) == (6, 3)
+            @test size(
+                modified_lm(
+                    Xoshiro(1), Float32, 8, 4;
+                    factor = 2, amplitude = 1, sine_divisor = 6, logistic_parameter = 2
+                )
+            ) == (8, 4)
         end
 
         @testset "Minimum complexity: $init" for init in [

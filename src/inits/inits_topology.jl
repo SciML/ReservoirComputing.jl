@@ -113,7 +113,7 @@ function __topology_expand(name::Symbol, body)
     end
     push!(
         sig,
-        __topology_typed_kw(:radius, :(Union{AbstractFloat, Nothing}), :nothing),
+        __topology_typed_kw(:radius, :(Union{Real, Nothing}), :nothing),
         __topology_typed_kw(:return_sparse, :Bool, :false),
     )
     if n_signs == 1
