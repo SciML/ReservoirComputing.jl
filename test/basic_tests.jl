@@ -252,6 +252,85 @@ begin
             badx = rand(rng, Float32, 2)
             @test_throws DimensionMismatch dl(badx, ps, st)
         end
+
+        @testset "a call does not modify the history of its input state" begin
+            dl = DelayLayer(2; num_delays = 2, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+
+            history = Float32[1 2; 3 4]
+            st = (history = history, clock = 0, rng = rng)
+            y, st_new = dl(Float32[5, 6], ps, st)
+
+            @test history == Float32[1 2; 3 4]
+            @test st.history === history
+            @test y == Float32[5, 6, 1, 3, 2, 4]
+            @test st_new.history == Float32[5 1; 6 3]
+            @test st_new.history !== history
+            @test st_new.clock == 1
+
+            y_again, st_again = dl(Float32[5, 6], ps, st)
+            @test y_again == y
+            @test st_again.history == st_new.history
+        end
+
+        @testset "states returned by earlier calls keep their history" begin
+            dl = DelayLayer(1; num_delays = 2, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+            st0 = initialstates(rng, dl)
+
+            _, st1 = dl(Float32[1], ps, st0)
+            _, st2 = dl(Float32[2], ps, st1)
+            _, st3 = dl(Float32[3], ps, st2)
+
+            @test st1.history == Float32[1 0]
+            @test st2.history == Float32[2 1]
+            @test st3.history == Float32[3 2]
+
+            y_a, _ = dl(Float32[9], ps, st1)
+            y_b, _ = dl(Float32[9], ps, st1)
+            @test y_a == y_b == Float32[9, 1, 0]
+            @test st1.history == Float32[1 0]
+        end
+
+        @testset "single-column matrix input" begin
+            dl = DelayLayer(2; num_delays = 1, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+            st0 = initialstates(rng, dl)
+
+            y1, st1 = dl(Float32[1; 2;;], ps, st0)
+            y2, st2 = dl(Float32[3; 4;;], ps, st1)
+
+            @test y1 == Float32[1; 2; 0; 0;;]
+            @test y2 == Float32[3; 4; 1; 2;;]
+            @test st1.history == Float32[1; 2;;]
+            @test st2.history == Float32[3; 4;;]
+        end
+
+        @testset "initialization does not advance the RNG of the input state" begin
+            for make_rng in (Random.default_rng, () -> Xoshiro(3), () -> MersenneTwister(3))
+                dl = DelayLayer(2; num_delays = 2, init_delay = randn32)
+                caller_rng = make_rng()
+                caller_before = copy(caller_rng)
+                st = initialstates(caller_rng, dl)
+                rng_before = copy(st.rng)
+
+                @test copy(caller_rng) == caller_before
+                @test st.rng !== caller_rng
+
+                y_1, st_1 = dl(Float32[1, 2], NamedTuple(), st)
+                y_2, st_2 = dl(Float32[1, 2], NamedTuple(), st)
+
+                @test st.rng == rng_before
+                @test st.history === nothing
+                @test any(!iszero, y_1[3:end])
+                @test y_1 == y_2
+                @test st_1.history == st_2.history
+                @test st_1.rng !== st.rng
+
+                _, st_3 = dl(Float32[3, 4], NamedTuple(), st_1)
+                @test st_3.rng === st_1.rng
+            end
+        end
     end
 
     @testset "NonlinearFeaturesLayer" begin

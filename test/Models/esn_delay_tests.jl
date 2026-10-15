@@ -452,4 +452,33 @@ begin
         @test all(isfinite, out_tf)
     end
 
+    @testset "delay ESNs: autoregressive predict is repeatable from the same states" begin
+        rng = MersenneTwister(123)
+        walk = cumsum(0.1f0 .* randn(rng, Float32, 2, 60); dims = 2)
+        models = (
+            InputDelayESN(2, 30, 2; num_delays = 2),
+            StateDelayESN(2, 30, 2; num_delays = 2),
+            DelayESN(2, 30, 2; num_input_delays = 2, num_state_delays = 2),
+        )
+
+        for model in models
+            @testset "$(nameof(typeof(model)))" begin
+                ps, st = setup(rng, model)
+                ps, st = train(
+                    model, walk[:, 1:(end - 1)], walk[:, 2:end], ps, st;
+                    objective = RidgeRegression(1.0e-4),
+                )
+
+                st_before = deepcopy(st)
+                initialdata = walk[:, end]
+                y1, _ = predict(model, 5, ps, st; initialdata)
+                y2, _ = predict(model, 5, ps, st; initialdata)
+
+                @test st == st_before
+                @test all(isfinite, y1)
+                @test y1 == y2
+            end
+        end
+    end
+
 end

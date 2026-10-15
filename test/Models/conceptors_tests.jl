@@ -348,6 +348,13 @@ begin
             @test_throws ArgumentError train!(
                 rng9, concept, [:a => signal_a], [:missing_name => signal_a], ps, st
             )
+
+            vec_a, vec_b = vec(signal_a), vec(signal_b)
+            ps_vec, _ = @test_nowarn train!(
+                rng9, concept, [:a => vec_a, :b => vec_b],
+                [:a => vec_a, :b => vec_b], ps, st; washout = 20
+            )
+            @test ps_vec.model.readout.weight == ps2.model.readout.weight
         end
     end
 end

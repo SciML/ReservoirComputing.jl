@@ -173,7 +173,7 @@ function __collectstates(
     x1 = first(cols)
     current_state, partial_st = __partial_apply(rc, x1, ps, newst)
     state_dims = size(current_state, 1)
-    states = similar(data, state_dims, nsteps)
+    states = similar(data, eltype(current_state), state_dims, nsteps)
     states[:, 1] .= current_state
     newst = merge(partial_st, (readout = newst.readout,))
     for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)

@@ -293,10 +293,7 @@ function StateDelayESN(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (delay, state_modifiers...) : (delay, state_modifiers)
     mods = __wrap_layers(mods_tuple)
-    delayed_state_dims = res_dims * (num_delays + 1)
-    ro_in_dims = __resolve_readout_in_dims(
-        readout_in_dims, mods, delayed_state_dims, Int(in_dims)
-    )
+    ro_in_dims = __resolve_readout_in_dims(readout_in_dims, mods, res_dims, Int(in_dims))
     ro = LinearReadout(ro_in_dims => out_dims, readout_activation)
 
     return StateDelayESN(cell, mods, ro)
@@ -489,10 +486,7 @@ function DelayESN(
     mods_tuple = state_modifiers isa Tuple || state_modifiers isa AbstractVector ?
         (state_delay, state_modifiers...) : (state_delay, state_modifiers)
     st_mods = __wrap_layers(mods_tuple)
-    augmented_res_dims = res_dims * (num_state_delays + 1)
-    ro_dims = __resolve_readout_in_dims(
-        readout_in_dims, st_mods, augmented_res_dims, Int(in_dims)
-    )
+    ro_dims = __resolve_readout_in_dims(readout_in_dims, st_mods, res_dims, Int(in_dims))
     ro = LinearReadout(ro_dims => out_dims, readout_activation)
     return DelayESN(input_delay, cell, st_mods, ro)
 end

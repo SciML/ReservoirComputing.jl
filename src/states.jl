@@ -162,6 +162,18 @@ end
     return input_dims + state_dims
 end
 
+@inline function __state_modifier_output_dims(
+        wf::WrappedFunction, state_dims::Int, input_dims::Int
+    )
+    return __state_modifier_output_dims(wf.func, state_dims, input_dims)
+end
+
+@inline __state_modifier_output_dims(::Pad, state_dims::Int, ::Int) = state_dims + 1
+
+@inline function __state_modifier_output_dims(dl::DelayLayer, state_dims::Int, ::Int)
+    return (dl.num_delays + 1) * state_dims
+end
+
 Base.show(io::IO, ex::Extend) = print(io, "Extend(", ex.op, ")")
 
 @doc raw"""
@@ -489,3 +501,9 @@ end
 ExtendedSquare(x_old::AbstractMatrix) = __apply_tomatrix(ExtendedSquare, x_old)
 
 ExtendedSquare() = ExtendedSquare
+
+@inline function __state_modifier_output_dims(
+        ::typeof(ExtendedSquare), state_dims::Int, ::Int
+    )
+    return 2 * state_dims
+end

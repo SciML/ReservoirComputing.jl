@@ -1,10 +1,10 @@
 @doc raw"""
     EuSN(in_dims, res_dims, out_dims, activation=tanh;
         leak_coefficient=1.0, diffusion = 1.0, init_reservoir=rand_sparse, init_input=scaled_rand,
-        init_bias=zeros32, init_state=randn32, use_bias=false,
+        init_bias=zeros32, init_state=zeros32, use_bias=false,
         state_modifiers=(), readout_activation=identity, readout_in_dims=nothing)
 
-Euler State Network (ESN) [Gallicchio2024](@cite).
+Euler State Network (EuSN) [Gallicchio2024](@cite).
 
 ## Equations
 
@@ -12,7 +12,7 @@ Euler State Network (ESN) [Gallicchio2024](@cite).
 \begin{aligned}
     \mathbf{x}(t) &= \mathbf{x}(t-1) + \varepsilon\, \phi\!\left(
         \mathbf{W}_{\text{in}}\, \mathbf{u}(t) +
-        (\mathbf{W}_r - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
+        (\mathbf{W}_r - \mathbf{W}_r^{\top} - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
         + \mathbf{b} \right) \\
     \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
     \mathbf{y}(t) &= \rho\!\left(
@@ -30,14 +30,16 @@ Euler State Network (ESN) [Gallicchio2024](@cite).
 
 ## Keyword arguments
 
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
-  - `diffusion`: diffusion coefficient `∈ (0,1]`. Default: `1.0`.
+  - `leak_coefficient`: Euler step size `ε`. Default: `1.0`.
+  - `diffusion`: Diffusion coefficient `γ`, the weight of the `-γ I` term in the
+    recurrent matrix. Default: `1.0`.
   - `init_reservoir`: Initializer for `W_res`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initializer for reservoir bias (used if `use_bias=true`).
     Default: `zeros32`.
   - `init_state`: Initializer used when an external state is not provided.
-    Default: `randn32`.
+    Default: `zeros32`. EuSN dynamics are non-dissipative, so the initial state does
+    not decay, and starting from zero follows [Gallicchio2024](@cite) (`h(0) = 0`).
   - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
   - `state_modifiers`: A layer or collection of layers applied to the reservoir
     state before the readout. Accepts a single layer, an `AbstractVector`, or a

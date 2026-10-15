@@ -166,6 +166,19 @@ function init_hidden_states(rng::AbstractRNG, cell::AbstractEchoStateNetworkCell
     return (init_hidden_state(rng, cell, inp),)
 end
 
+function __owned_replicate(rng::AbstractRNG)
+    return replicate(rng)
+end
+
+function __owned_replicate(rng::Random.TaskLocalRNG)
+    return copy(rng)
+end
+
+function __owned_sample_replicate(rng::AbstractRNG)
+    rand(rng)
+    return __owned_replicate(rng)
+end
+
 function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTuple)
     rng = replicate(st.rng)
     hidden_state = init_hidden_state(rng, esn, inp)

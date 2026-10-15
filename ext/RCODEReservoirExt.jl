@@ -8,7 +8,7 @@ using SciMLBase: FullSpecialize, ODEFunction, ODEProblem, init, reinit!, remake,
     solve!, NullParameters, VectorContinuousCallback, DiscreteCallback, CallbackSet,
     successful_retcode
 using Static: known, static
-using WeightInitializers: randn32, zeros32
+using WeightInitializers: zeros32
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
@@ -354,7 +354,7 @@ function ReservoirComputing.ContinuousESN(
         init_bias = zeros32,
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
-        init_state = randn32,
+        init_state = zeros32,
         equations = ReservoirComputing.__continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
@@ -406,6 +406,20 @@ function ReservoirComputing.ContinuousESN(
     return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
 end
 
+function __continuous_esn_u0(cell::ContinuousESNCell, st_res, ps_res)
+    c = get(st_res, :carry, nothing)
+    c === nothing || return copy(first(c)), st_res
+    T = eltype(ps_res.input_matrix)
+    haskey(st_res, :rng) || return zeros(T, cell.out_dims), st_res
+    rng = replicate(st_res.rng)
+    u0 = T.(vec(cell.init_state(rng, cell.out_dims, 1)))
+    return u0, merge(st_res, (rng = rng,))
+end
+
+function __continuous_esn_params(cell::ContinuousESNCell, ps_res, input_fn)
+    return merge((; cell.activation), __build_solve_params(nothing, ps_res, input_fn))
+end
+
 function __collectstates(
         cell::ContinuousESNCell,
         rc::AbstractReservoirComputer,
@@ -433,14 +447,8 @@ function __collectstates(
     sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
     input_interp = __make_input_fn(data, input_ts)
-    solve_p = __build_solve_params(nothing, ps.reservoir, input_interp)
-
-    # `u0` element type follows `ps.reservoir.input_matrix` so the solver
-    # state, the parameter pack, and the input signal share a numeric
-    # type. The user controls eltype through the `init_*` initialisers.
-    u0 = __seed_u(
-        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    )
+    solve_p = __continuous_esn_params(cell, ps.reservoir, input_interp)
+    u0, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
     jac_prototype = known(cell.use_jac_prototype) ?
         __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
@@ -462,7 +470,7 @@ function __collectstates(
     )
 
     newst = (
-        reservoir = __with_carry(st.reservoir, sol.u[end]),
+        reservoir = __with_carry(st_res, sol.u[end]),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -490,9 +498,7 @@ function __predict(
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
-    current_state = __seed_u(
-        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    )
+    current_state, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
     current_input = initialdata
 
     st_mods = st.state_modifiers
@@ -504,7 +510,7 @@ function __predict(
     ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
 
     input_fn = ConstantInputWindow(current_input)
-    solve_p = __build_solve_params(nothing, ps.reservoir, input_fn)
+    solve_p = __continuous_esn_params(cell, ps.reservoir, input_fn)
     sub_prob = ODEProblem{true, FullSpecialize}(
         ode_fn, current_state, (window_starts[1], window_ends[1]), solve_p
     )
@@ -546,7 +552,7 @@ function __predict(
     end
 
     newst = (
-        reservoir = __with_carry(st.reservoir, current_state),
+        reservoir = __with_carry(st_res, current_state),
         state_modifiers = st_mods,
         readout = st_ro,
     )

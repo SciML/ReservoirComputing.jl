@@ -364,10 +364,13 @@ None
 ## States
 
   - `history`: a matrix whose column j holds the j-th most recent stored input.
-    On a stride update, the columns are shifted and the current input is placed
-    in column 1.
+    On a stride update, a new matrix is returned with the columns shifted and the
+    current input placed in column 1. The matrix of the input state is not modified.
   - `clock`: A counter that updates each call of the layer. The delay buffer is
     updated when `clock % stride == 0`.
+  - `rng`: an owned copy of the RNG given to `initialstates`. The first call samples
+    the initial `history` from a copy of it and returns the advanced copy, so the RNG
+    of the input state is never advanced.
 """
 @concrete struct DelayLayer <: AbstractLuxLayer
     in_dims <: Int
@@ -399,7 +402,7 @@ function initialstates(rng::AbstractRNG, dl::DelayLayer)
     history = nothing
     clock = 0
 
-    return (history = history, clock = clock, rng = rng)
+    return (history = history, clock = clock, rng = __owned_replicate(rng))
 end
 
 function init_delay_history(::Nothing, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
@@ -421,15 +424,18 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
             "DelayLayer expected input with $(dl.in_dims) rows, got $(size(inp, 1))."
         )
     )
-    history = init_delay_history(st.history, st.rng, dl, inp)
+    rng = st.history === nothing ? __owned_replicate(st.rng) : st.rng
+    history = init_delay_history(st.history, rng, dl, inp)
     inp_with_delay = vcat(inp, vec(history))
     clock = st.clock + 1
     if dl.num_delays > 0 && (clock % dl.stride == 0)
-        @views history[:, 2:end] .= history[:, 1:(end - 1)]
-        @views history[:, 1] .= inp
+        shifted = similar(history)
+        @views shifted[:, 2:end] .= history[:, 1:(end - 1)]
+        @views shifted[:, 1] .= inp
+        history = shifted
     end
 
-    return inp_with_delay, (history = history, clock = clock, rng = st.rng)
+    return inp_with_delay, (history = history, clock = clock, rng = rng)
 end
 
 function __reset_delay(rng::AbstractRNG, dl::DelayLayer, st, init_carry)
