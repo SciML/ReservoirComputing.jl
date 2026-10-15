@@ -252,6 +252,13 @@ on the next call, and with a function the history is set to
 `init_carry(rng, in_dims, num_delays)`. The clock restarts at zero. Other modifier
 and readout states are unchanged.
 
+For [`LIFESN`](@ref) the cached `start_states` and the input buffer of the
+[`LocalInformationFlow`](@ref) cell are reset together with the carry: with
+`init_carry=nothing` both are cleared and sampled again from the cell's `init_state` and
+`init_buffer` on the next call, and with a function `start_states` is set to the same
+states as the carry. The cell's `rng` is never advanced, so a random `init_state` and
+`init_buffer` are sampled again with the same values as in a fresh state.
+
 ## Arguments
 
 - `rng`: Random number generator (used if a new carry is sampled/created).
@@ -288,7 +295,7 @@ function resetcarry!(
             map(state -> size(state, 1), carry)
         new_state = map(dim -> __init_carry_state(cell, init_carry, rng, dim), dims)
     end
-    new_res = merge(st.reservoir, (; carry = new_state))
+    new_res = __reset_window(rc.reservoir, merge(st.reservoir, (; carry = new_state)), new_state)
     new_st = __reset_modifier_delays(rng, rc, merge(st, (reservoir = new_res,)), init_carry)
     return haskey(st, :input_delay) ?
         merge(

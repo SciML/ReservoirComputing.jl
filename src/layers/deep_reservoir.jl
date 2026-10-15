@@ -217,14 +217,14 @@ function __reset_deep_carry(
     dimensions = st.carry === nothing ? __carry_dimensions(layer.cell) :
         map(state -> size(state, 1), st.carry)
     carry = map(dim -> __asvec(initializer(rng, dim)), dimensions)
-    return merge(st, (; carry))
+    return __reset_window(layer, merge(st, (; carry)), carry)
 end
 
 __reset_deep_carry(::AbstractRNG, ::AbstractLuxLayer, st, ::Nothing) = st
 function __reset_deep_carry(
-        ::AbstractRNG, ::StatefulLayer, st, ::Nothing
+        ::AbstractRNG, layer::StatefulLayer, st, ::Nothing
     )
-    return merge(st, (; carry = nothing))
+    return __reset_window(layer, merge(st, (; carry = nothing)), nothing)
 end
 function __reset_deep_carry(::AbstractRNG, layer::AbstractLuxLayer, _, initializer)
     throw(
