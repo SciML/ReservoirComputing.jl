@@ -229,6 +229,11 @@ and returns new parameters and states (inputs `ps` / `st` are not mutated).
 ## Returns
 
   - `(ps, st)`, or `((ps, st), states)` if `return_states=true`.
+
+## Throws
+
+  - `ArgumentError`: if `washout` is negative or not smaller than the number of
+    time steps.
 """
 function train(
         rc, train_data, target_data, ps, st;
@@ -240,7 +245,7 @@ function train(
     )
     raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
-        targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
+        targets_wo = washout != 0 ? __apply_washout(raw_states, target_data, washout) :
         (raw_states, target_data)
     output_matrix = if isnothing(solver)
         __fit_readout(objective, states_wo, targets_wo; kwargs...)

@@ -73,6 +73,24 @@ end
     @test all(isfinite, ps_trained.readout.weight)
 end
 
+@testset "train model-level: negative washout is rejected by MLJ and LIBSVM" begin
+    rng = MersenneTwister(31)
+    X = randn(rng, Float64, 2, 40)
+    Y = randn(rng, Float64, 1, 40)
+    esn = ESN(2, 12, 1)
+    ps, st = setup(rng, esn)
+    @test_throws ArgumentError train(
+        esn, X, Y, ps, st;
+        objective = MLJLinearModels.RidgeRegression(1.0e-3; fit_intercept = false),
+        washout = -1,
+    )
+    svesm = SVESM(2, 12, 1, tanh)
+    ps2, st2 = setup(rng, svesm)
+    @test_throws ArgumentError train(
+        svesm, X, Y, ps2, st2; objective = NuSVR(), washout = -1
+    )
+end
+
 @testset "train model-level: MLJ solver kwarg reaches fit" begin
     rng = MersenneTwister(19)
     in_dims, res_dims, out_dims = 2, 12, 1

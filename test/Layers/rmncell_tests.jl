@@ -75,6 +75,18 @@ begin
             @test occursin("ESNCell", shown)
         end
 
+        @testset "MemoryESNCell: standalone use is rejected" begin
+            rng = MersenneTwister(7)
+            cell = MemoryESNCell((3, 20) => 20)
+            ps = initialparameters(rng, cell)
+            st = initialstates(rng, cell)
+            x = randn(rng, Float32, 3)
+            @test_throws ArgumentError cell(x, ps, st)
+            @test_throws ArgumentError ReservoirComputing.StatefulLayer(cell)(
+                x, ps, (cell = st, carry = nothing)
+            )
+        end
+
         @testset "RMNCell: initialparameters shapes & nested keys" begin
             rng = MersenneTwister(1)
             in_dims, mem_dims, res_dims = 3, 4, 5

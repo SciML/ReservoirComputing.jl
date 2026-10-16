@@ -295,6 +295,25 @@ begin
         end
     end
 
+    @testset "integer scalar keywords are accepted" begin
+        @test ESNCell(2 => 5; leak_coefficient = 1).leak_coefficient == 1
+        @test EuSNCell(2 => 5; leak_coefficient = 1, diffusion = 1).diffusion == 1
+        @test ES2NCell(2 => 5; proximity = 1).proximity == 1
+        @test ResESNCell(2 => 5; alpha = 1, beta = 1).alpha == 1
+        @test ReservoirComputing.MemoryESNCell((2, 3) => 5; leak_coefficient = 1) isa Any
+        @test ReservoirComputing.MemoryResESNCell((2, 3) => 5; alpha = 1, beta = 1) isa Any
+        @test RMNResESN(2, 3, 20, 2; alpha = 1, beta = 1) isa RMNResESN
+        rng = MersenneTwister(3)
+        cell_int = ESNCell(2 => 20; leak_coefficient = 1)
+        cell_float = ESNCell(2 => 20; leak_coefficient = 1.0)
+        ps = initialparameters(MersenneTwister(1), cell_int)
+        st = initialstates(MersenneTwister(1), cell_int)
+        x = randn(rng, Float32, 2)
+        y_int, _ = cell_int(x, ps, st)
+        y_float, _ = cell_float(x, ps, st)
+        @test y_int[1] == y_float[1]
+    end
+
     @testset "ResESNCell: decoupled alpha/beta" begin
         cell = ResESNCell(
             3 => 3,

@@ -89,7 +89,7 @@ function ResESNCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
-        alpha::AbstractFloat = 1.0, beta::AbstractFloat = 1.0
+        alpha::Real = 1.0, beta::Real = 1.0
     )
     return ResESNCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,

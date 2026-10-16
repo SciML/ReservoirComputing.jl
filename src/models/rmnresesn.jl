@@ -149,7 +149,7 @@ function RMNResESN(
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_memory = scaled_rand, init_orthogonal = orthogonal,
         init_bias = zeros32, init_state = randn32, use_bias = False(),
-        alpha::AbstractFloat = 1.0, beta::AbstractFloat = 1.0,
+        alpha::Real = 1.0, beta::Real = 1.0,
         state_modifiers = (), readout_activation = identity,
         readout_in_dims = nothing
     )

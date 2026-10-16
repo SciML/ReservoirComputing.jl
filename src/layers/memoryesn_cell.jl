@@ -6,6 +6,12 @@
 
 Echo State Network (ESN) recurrent cell with memory matrix [Gallicchio2024b](@cite).
 
+!!! note "Building block"
+    `MemoryESNCell` is a building block for [`RMNCell`](@ref) and cannot be used on its
+    own: the memory state is produced by the linear reservoir of the `RMNCell`, and
+    calling the cell with a plain input throws an `ArgumentError`. Use
+    [`RMNCell`](@ref), [`RMNESN`](@ref) or [`RMNResESN`](@ref) instead.
+
 ## Equations
 
 ```math
@@ -83,7 +89,7 @@ function MemoryESNCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_memory = rand_sparse, init_state = randn32,
-        leak_coefficient::AbstractFloat = 1.0
+        leak_coefficient::Real = 1.0
     )
     return MemoryESNCell(
         activation, in_dims, mem_dims, out_dims, init_bias, init_reservoir,
@@ -104,10 +110,12 @@ function initialparameters(rng::AbstractRNG, esn::MemoryESNCell)
 end
 
 function (esn::MemoryESNCell)(inp::AbstractArray, ps, st::NamedTuple)
-    rng = replicate(st.rng)
-    hidden_state = init_hidden_state(rng, esn, inp)
-    memory_state = init_hidden_state(rng, esn, inp)
-    return esn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
+    throw(
+        ArgumentError(
+            "MemoryESNCell cannot be used standalone: it needs a memory state supplied by a " *
+                "linear reservoir. Use it through RMNCell, RMNESN."
+        )
+    )
 end
 
 function (esn::MemoryESNCell)(

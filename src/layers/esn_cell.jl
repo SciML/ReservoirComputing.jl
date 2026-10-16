@@ -129,7 +129,7 @@ function ESNCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32,
-        leak_coefficient::Union{AbstractFloat, AbstractVector} = 1.0
+        leak_coefficient::Union{Real, AbstractVector} = 1.0
     )
 
     if isa(leak_coefficient, AbstractVector)
