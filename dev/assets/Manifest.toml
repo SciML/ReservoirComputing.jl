@@ -1078,10 +1078,10 @@ version = "1.8.0"
 
 [[deps.JSON]]
 deps = ["Dates", "Logging", "Parsers", "PrecompileTools", "StructUtils", "UUIDs", "Unicode"]
-git-tree-sha1 = "4657a834b01ce00f2b94546095c4350617b9af2c"
+git-tree-sha1 = "9939eb6f799a963b3392ac4a1d49d3fc0646eb80"
 registries = "General"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "1.10.0"
+version = "1.11.0"
 
     [deps.JSON.extensions]
     JSONArrowExt = ["ArrowTypes"]
@@ -1291,10 +1291,10 @@ version = "1.18.0+0"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "cc3ad4faf30015a3e8094c9b5b7f19e85bdf2386"
+git-tree-sha1 = "e2b48382276415b5a5d5282a5dd75a0f0bf4ac84"
 registries = "General"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
-version = "2.42.0+0"
+version = "2.42.2+0"
 
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
@@ -1583,10 +1583,10 @@ version = "8.0.1"
 
 [[deps.NNlib]]
 deps = ["Adapt", "Atomix", "BFloat16s", "ChainRulesCore", "GPUArraysCore", "KernelAbstractions", "LinearAlgebra", "Random", "ScopedValues", "Statistics"]
-git-tree-sha1 = "cb55491409d3a7cc0a43eb058f195a724793b02d"
+git-tree-sha1 = "a49236f1a13228b22d4cca36491466784335fc51"
 registries = "General"
 uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-version = "0.9.47"
+version = "0.9.48"
 
     [deps.NNlib.extensions]
     NNlibAMDGPUExt = "AMDGPU"
@@ -2339,18 +2339,20 @@ version = "0.6.1"
 
 [[deps.StructUtils]]
 deps = ["Dates", "UUIDs"]
-git-tree-sha1 = "b814d5005d6a529d740ffe06f8a86396f6501138"
+git-tree-sha1 = "ad435e30854ed0f50f4b7f67edd71664afecc5d8"
 registries = "General"
 uuid = "ec057cc2-7a8d-4b58-b3b3-92acb9f63b42"
-version = "2.9.2"
+version = "2.10.0"
 
     [deps.StructUtils.extensions]
+    StructUtilsDataFramesExt = ["DataFrames"]
     StructUtilsLazilyInitializedFieldsExt = ["LazilyInitializedFields"]
     StructUtilsMeasurementsExt = ["Measurements"]
     StructUtilsStaticArraysCoreExt = ["StaticArraysCore"]
     StructUtilsTablesExt = ["Tables"]
 
     [deps.StructUtils.weakdeps]
+    DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
     LazilyInitializedFields = "0e77f7df-68c5-4e49-93ce-4cd80f5598bf"
     Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
     StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
@@ -2445,10 +2447,11 @@ uuid = "781d530d-4396-4725-bb49-402e4bee1e77"
 version = "1.4.0"
 
 [[deps.URIs]]
-git-tree-sha1 = "908fec9df6c5de98548ead82a468c95ccf6cd263"
+deps = ["Serialization"]
+git-tree-sha1 = "0392e5e3c5327b90a487b0ff3e818c4aecd3660b"
 registries = "General"
 uuid = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
-version = "1.7.0"
+version = "1.7.1"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
