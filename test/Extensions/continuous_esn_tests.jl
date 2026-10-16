@@ -275,6 +275,29 @@ begin
         @test eltype(ps.reservoir.reservoir_matrix) == Float64
     end
 
+    @testset "ContinuousESN: resetcarry! with init_carry" begin
+        n, T_steps = 12, 8
+        esn = ContinuousESN(2, n, 1, (0.0, 1.0), Tsit5(); init_state = zeros32)
+        ps, st0 = setup(MersenneTwister(2), esn)
+        data = randn(MersenneTwister(1), Float32, 2, T_steps)
+        const03 = (rng, d...) -> fill(0.3f0, d...)
+        run = st -> first(collectstates(esn, data, ps, deepcopy(st)))
+        base = run(st0)
+        _, st1 = collectstates(esn, data, ps, deepcopy(st0))
+        manual = merge(st0, (reservoir = (carry = (fill(0.3f0, n),),),))
+        for st in (st0, st1)
+            st_zero = resetcarry!(MersenneTwister(3), esn, deepcopy(st); init_carry = zeros32)
+            @test first(st_zero.reservoir.carry) isa Vector
+            @test run(st_zero) == base
+            st_const = resetcarry!(MersenneTwister(3), esn, deepcopy(st); init_carry = const03)
+            @test first(st_const.reservoir.carry) == fill(0.3f0, n)
+            @test run(st_const) == run(manual)
+            @test run(st_const) != base
+            st_clear = resetcarry!(MersenneTwister(3), esn, deepcopy(st))
+            @test run(st_clear) == base
+        end
+    end
+
     @testset "ContinuousESN: autoregressive predict uses carry" begin
         rng = MersenneTwister(99)
         dim, res_dim, T_steps, steps = 2, 16, 20, 5

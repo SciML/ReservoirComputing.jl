@@ -231,10 +231,33 @@ end
 
 Reset (or set) the hidden-state carry of a model in the echo state network family.
 
-When a function is supplied as `init_carry`, an existing carry provides its leading
-dimension; otherwise the reservoir output size is used. When `init_carry=nothing`,
+When a function is supplied as `init_carry`, it is called as `init_carry(rng, dim, 1)`
+once per state held by the cell (one for most cells, a hidden state and a memory
+state for [`RMNCell`](@ref)). An existing carry provides the leading dimensions;
+otherwise they are taken from the cell. When `init_carry=nothing`,
 the carry is cleared and the cell's initializer is used on the next call. This does
 not require the cell to expose an output dimension.
+
+For continuous-time reservoirs ([`ContinuousESN`](@ref), [`LSM`](@ref) and
+[`SciMLProblemReservoir`](@ref)) the carry is the ODE state vector, and `init_carry` is
+called as `init_carry(rng, dim, 1)` and flattened to a vector. `dim` is `out_dims` for
+`ContinuousESN`, `length(prob.u0)` for `SciMLProblemReservoir`, and `out_dims` for `LSM`,
+where `init_carry` sets only the membrane potentials (the first half of the state)
+and the remaining half of the state is set to zero.
+
+The history and clock of every [`DelayLayer`](@ref) held by the model, in
+`st.input_delay` or in `st.state_modifiers`, are reset as well: with
+`init_carry=nothing` the history is cleared and rebuilt from the layer's `init_delay`
+on the next call, and with a function the history is set to
+`init_carry(rng, in_dims, num_delays)`. The clock restarts at zero. Other modifier
+and readout states are unchanged.
+
+For [`LIFESN`](@ref) the cached `start_states` and the input buffer of the
+[`LocalInformationFlow`](@ref) cell are reset together with the carry: with
+`init_carry=nothing` both are cleared and sampled again from the cell's `init_state` and
+`init_buffer` on the next call, and with a function `start_states` is set to the same
+states as the carry. The cell's `rng` is never advanced, so a random `init_state` and
+`init_buffer` are sampled again with the same values as in a fresh state.
 
 ## Arguments
 
@@ -254,7 +277,8 @@ not require the cell to expose an output dimension.
 ## Returns
 
 - `resetcarry!(rng, rc, st; ...) -> st′`:
-  Updated states with `st′.cell.carry` set to `nothing` or `(h0,)`.
+  Updated states with `st′.reservoir.carry` set to `nothing` or a tuple with one
+  state per recurrent state of the cell.
 - `resetcarry!(rng, rc, ps, st; ...) -> (ps, st′)`:
   Same as above, but also returns the unchanged `ps` for convenience.
 
@@ -266,17 +290,26 @@ function resetcarry!(
     if init_carry === nothing
         new_state = nothing
     else
-        if carry === nothing
-            sz = __cell_out_dims(rc.reservoir.cell)
-        else
-            state = first(carry)
-            sz = size(state, 1)
-        end
-        new_state = init_carry(rng, sz, 1)
-        new_state = (new_state,)
+        cell = __carry_cell(rc.reservoir)
+        dims = carry === nothing ? __carry_dimensions(cell) :
+            map(state -> size(state, 1), carry)
+        new_state = map(dim -> __init_carry_state(cell, init_carry, rng, dim), dims)
     end
-    new_cell = merge(st.reservoir, (; carry = new_state))
-    return merge(st, (reservoir = new_cell,))
+    new_res = __reset_window(rc.reservoir, merge(st.reservoir, (; carry = new_state)), new_state)
+    new_st = __reset_modifier_delays(rng, rc, merge(st, (reservoir = new_res,)), init_carry)
+    return haskey(st, :input_delay) ?
+        merge(
+            new_st,
+            (input_delay = __reset_delay(rng, rc.input_delay, st.input_delay, init_carry),)
+        ) : new_st
+end
+
+function __reset_modifier_delays(rng::AbstractRNG, rc, st, init_carry)
+    new_mods = map(
+        (layer, st_layer) -> __reset_delay(rng, layer, st_layer, init_carry),
+        rc.state_modifiers, st.state_modifiers
+    )
+    return merge(st, (state_modifiers = new_mods,))
 end
 
 function resetcarry!(

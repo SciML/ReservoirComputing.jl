@@ -484,6 +484,40 @@ begin
         @test lsm.reservoir.feature_map isa ExponentialSpikeFilter
     end
 
+    @testset "resetcarry! with init_carry" begin
+        n, n_win = 6, 5
+        lif = LIFNeuron(;
+            tau_m = 0.02, r_m = 1.0, v_rest = 0.0, v_th = 10.0,
+            v_reset = 0.0, tau_ref = 0.002, tau_syn = 0.005,
+        )
+        build = init_state -> _lsm_f64(
+            1, n, 1, (0.0, 0.05), Tsit5(); neuron = lif, init_state,
+            feature_map = MembraneVoltageFeature(), reltol = 1.0e-10, abstol = 1.0e-12,
+        )
+        const03 = (rng, d...) -> fill(0.3, d...)
+        lsm = build(f64_zeros)
+        lsm03 = build(const03)
+        ps, st0 = setup(MersenneTwister(5), lsm)
+        ps03, st03 = setup(MersenneTwister(5), lsm03)
+        data = zeros(Float64, 1, n_win)
+        run = (m, p, st) -> first(collectstates(m, data, p, deepcopy(st)))
+        base = run(lsm, ps, st0)
+        ref03 = run(lsm03, ps03, st03)
+        @test ref03 != base
+        _, st1 = collectstates(lsm, data, ps, deepcopy(st0))
+        for st in (st0, st1)
+            st_zero = resetcarry!(MersenneTwister(3), lsm, deepcopy(st); init_carry = f64_zeros)
+            @test length(first(st_zero.reservoir.carry)) == 2n
+            @test run(lsm, ps, st_zero) == base
+            st_const = resetcarry!(MersenneTwister(3), lsm, deepcopy(st); init_carry = const03)
+            u = first(st_const.reservoir.carry)
+            @test u == vcat(fill(0.3, n), zeros(n))
+            @test run(lsm, ps, st_const) == ref03
+            st_clear = resetcarry!(MersenneTwister(3), lsm, deepcopy(st))
+            @test run(lsm, ps, st_clear) == base
+        end
+    end
+
     @testset "init_state sets membrane IC" begin
         n = 4
         tau_m, V0, T_end, n_win = 0.02, 0.35, 0.05, 5
