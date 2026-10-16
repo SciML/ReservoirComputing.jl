@@ -159,7 +159,7 @@ function initialparameters(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
 end
 
 function initialstates(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
-    return (rng = sample_replicate(rng),)
+    return (rng = __owned_sample_replicate(rng),)
 end
 
 function init_hidden_states(rng::AbstractRNG, cell::AbstractEchoStateNetworkCell, inp::AbstractArray)

@@ -111,6 +111,20 @@ begin
             dl = init(res_size, res_size)
             @test sort(unique(dl)) == Float32.([0.0, 0.1])
         end
+
+        @testset "pseudo_svd keeps the singular values of the diagonal" begin
+            for seed in 1:20
+                expected = sort(
+                    diag(
+                        ReservoirComputing.create_diag(
+                            Xoshiro(seed), Float64, 10, 1.0
+                        )
+                    )
+                )
+                matrix = pseudo_svd(Xoshiro(seed), Float64, 10, 10; sparsity = 0.3)
+                @test sort(svdvals(matrix)) ≈ expected atol = 1.0e-12
+            end
+        end
     end
 
     @testset "Input Initializers" begin

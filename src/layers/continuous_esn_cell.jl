@@ -103,7 +103,7 @@ function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
 end
 
 function initialstates(rng::AbstractRNG, ::ContinuousESNCell)
-    return (rng = replicate(rng),)
+    return (rng = __owned_replicate(rng),)
 end
 
 function __continuous_esn_rhs!(dx, x, p, t)

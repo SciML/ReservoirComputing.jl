@@ -252,4 +252,42 @@ begin
         output, _ = predict(named, 3, ps_trained, st_trained; initialdata = data[:, end])
         @test size(output) == (2, 3)
     end
+
+    @testset "explicit Collect before readout is not doubled" begin
+        res() = StatefulLayer(ESNCell(2 => 5; init_reservoir = rand_sparse(; sparsity = 0.5)))
+        ncollect(c) = count(l -> l isa Collect, values(c.layers))
+        data = rand(MersenneTwister(408), Float32, 2, 12)
+        explicit = (
+            ReservoirChain(res(), Collect(), LinearReadout(5 => 2)),
+            ReservoirChain([res(), Collect(), LinearReadout(5 => 2)]),
+            ReservoirChain((; res = res(), c = Collect(), ro = LinearReadout(5 => 2))),
+        )
+        grouped = (
+            ReservoirChain(res(), Collect(), (LinearReadout(5 => 2),)),
+            ReservoirChain(res(), Collect(), [LinearReadout(5 => 2)]),
+            ReservoirChain([res(), [Collect(), (LinearReadout(5 => 2),)]]),
+            ReservoirChain((; res = res(), c = Collect(), head = (LinearReadout(5 => 2),))),
+            ReservoirChain(res(), (x -> x, Collect()), LinearReadout(5 => 2)),
+        )
+        for chain in (explicit..., grouped...)
+            @test length(chain.layers) == (chain === grouped[end] ? 4 : 3)
+            @test ncollect(chain) == 1
+            ps, st = setup(MersenneTwister(409), chain)
+            states, _ = collectstates(chain, data, ps, st)
+            @test size(states) == (5, 12)
+            ps_trained, st_trained = train(
+                chain, data, data, ps, st; objective = RidgeRegression(1.0e-6)
+            )
+            @test size(first(chain(data, ps_trained, st_trained))) == (2, 12)
+        end
+        @test keys(explicit[1].layers) == (:layer_1, :layer_2, :layer_3)
+
+        implicit = ReservoirChain(res(), LinearReadout(5 => 2))
+        @test length(implicit.layers) == 3
+        @test ncollect(implicit) == 1
+        @test ncollect(ReservoirChain([res(), LinearReadout(5 => 2)])) == 1
+        separated = ReservoirChain(res(), Collect(), x -> 2 .* x, LinearReadout(10 => 2))
+        @test ncollect(separated) == 2
+        @test ncollect(ReservoirChain(res(), Collect(), LinearReadout(5 => 2; include_collect = false))) == 1
+    end
 end

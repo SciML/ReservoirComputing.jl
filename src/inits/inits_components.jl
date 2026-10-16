@@ -63,7 +63,7 @@ end
 
 # error for sparse inits with no SparseArrays.jl call
 function throw_sparse_error(return_sparse::Bool)
-    return if return_sparse && !isdefined(Main, :SparseArrays)
+    return if return_sparse && Base.get_extension(@__MODULE__, :RCSparseArraysExt) === nothing
         error(
             """\n
             Sparse output requested but SparseArrays.jl is not loaded.

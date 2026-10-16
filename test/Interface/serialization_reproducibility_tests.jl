@@ -103,4 +103,48 @@ begin
         @test pred_rt ≈ pred
         @test eltype(pred_rt) === Float32
     end
+
+    @testset "collectstates is reproducible with default_rng setup" begin
+        data = randn(MersenneTwister(1), Float32, 3, 12)
+        models = (
+            ESN(3, 30, 2),
+            ES2N(3, 30, 2),
+            ResESN(3, 30, 2),
+            EIESN(3, 30, 2),
+            AdditiveEIESN(3, 30, 2),
+            DeepESN(3, [20, 25], 2),
+            RMNESN(3, 20, 25, 2),
+            RMNResESN(3, 20, 25, 2),
+            HybridESN(identity, 3, 3, 30, 2),
+            DelayESN(3, 30, 2; num_input_delays = 1, num_state_delays = 1),
+        )
+        for model in models
+            ps, st = setup(Random.default_rng(), model)
+            s1, _ = collectstates(model, data, ps, deepcopy(st))
+            s2, _ = collectstates(model, data, ps, deepcopy(st))
+            @test s1 == s2
+        end
+    end
+
+    @testset "RMNCell state does not alias the setup RNG" begin
+        data = randn(MersenneTwister(1), Float32, 3, 12)
+        make_rmn() = RMNCell(
+            MemoryESNCell((3, 20) => 25; init_memory = scaled_rand),
+            ESNCell(3 => 20, identity; init_reservoir = simple_cycle(; cycle_weight = 1)),
+        )
+        models = (
+            RMNESN(3, 20, 25, 2),
+            DeepReservoir((make_rmn(), ESNCell(25 => 20)), LinearReadout(20 => 2)),
+        )
+        for model in models, make_rng in (() -> Xoshiro(3), () -> MersenneTwister(3))
+            rng = make_rng()
+            ps, st = setup(rng, model)
+            before, _ = collectstates(model, data, ps, deepcopy(st))
+            st_copy = deepcopy(st)
+            rand(rng, 100)
+            @test st == st_copy
+            after, _ = collectstates(model, data, ps, deepcopy(st))
+            @test after == before
+        end
+    end
 end
