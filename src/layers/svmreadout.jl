@@ -1,8 +1,12 @@
 """
-    SVMReadout(in_dims => out_dims;
-        include_collect=true, kwargs...)
+    SVMReadout(in_dims => out_dims; include_collect=true)
 
 Readout layer based on support vector machines. Requires LIBSVM.jl.
+
+Load LIBSVM.jl with `import LIBSVM` rather than `using LIBSVM`: LIBSVM exports its own
+`predict`, which makes ReservoirComputing's [`predict`](@ref) ambiguous when both
+packages are brought in with `using`. The SVR hyperparameters belong to the LIBSVM
+objective passed to [`train`](@ref), not to `SVMReadout`.
 
 ## Arguments
 
@@ -13,7 +17,17 @@ Readout layer based on support vector machines. Requires LIBSVM.jl.
 
   - `include_collect`: If `true` (default), training collects features immediately
     before this layer (as if a [`Collect()`](@ref) were inserted right before it).
-  - `kwargs`: Specific keyword arguments for LIBSVM elements.
+
+## Example
+
+```julia
+import LIBSVM
+
+model = ReservoirComputer(StatefulLayer(ESNCell(3 => 100)), SVMReadout(100 => 5))
+ps, st = setup(rng, model)
+ps, st = train(model, input_data, target_data, ps, st;
+    objective = LIBSVM.EpsilonSVR(cost = 10.0))
+```
 """
 @concrete struct SVMReadout <: AbstractReservoirTrainableLayer
     in_dims <: IntegerType

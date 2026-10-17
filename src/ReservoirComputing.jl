@@ -2,11 +2,10 @@ module ReservoirComputing
 
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
-using LinearAlgebra: eigvals, eigen, I, qr, Diagonal, diag, mul!, Symmetric, norm,
+using LinearAlgebra: eigvals, eigen, I, Diagonal, diag, mul!, Symmetric, norm,
     svd, svdvals, nullspace, pinv, tr, checksquare, issymmetric, LAPACKException,
     QRIteration
-using LinearSolve: LinearProblem, solve
-using LinearSolve: QRFactorization as LinearSolveQRFactorization
+using LinearSolve: LinearProblem, solve, QRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
 import LuxCore: initialparameters, initialstates, statelength, outputsize
@@ -82,6 +81,7 @@ include("extensions/reca.jl")
 # Everything stays owned and documented upstream.
 export setup, apply, initialparameters, initialstates
 export orthogonal, rand32, randn32, sparse_init, zeros32
+export QRFactorization
 
 export ReservoirComputer
 export AbstractSciMLProblemReservoir, SciMLProblemReservoir, ContinuousESN, LSM
@@ -109,7 +109,7 @@ export band_init, block_diagonal, chaotic_init, cycle_jumps, delay_line, delayli
 export add_jumps!, backward_connection!, delay_line!, permute_matrix!, reverse_simple_cycle!,
     scale_radius!, self_loop!, simple_cycle!
 export @topology
-export polynomial_monomials, chebyshev_monomials, predict, QRSolver, QRFactorization,
+export polynomial_monomials, chebyshev_monomials, predict, QRSolver,
     resetcarry!, return_init_as, train, train!
 export AdditiveEIESN, DeepESN, DeepReservoir, DelayESN, EIESN, ES2N, ESN, EuSN, HybridESN, InputDelayESN, LIFESN, ResESN, StateDelayESN, SVESM
 export NGRC
