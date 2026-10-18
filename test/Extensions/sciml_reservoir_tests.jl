@@ -2,6 +2,7 @@
 begin
     using Test
     using Random
+    using OrdinaryDiffEq: Tsit5
     using ReservoirComputing
     using LuxCore: initialparameters, initialstates, setup
 
@@ -42,6 +43,12 @@ begin
             SciMLProblemReservoir(prob, sampler, tspan, :solver_arg; reltol = 1.0e-3)
         @test res_with_args.args == (:solver_arg,)
         @test res_with_args.kwargs[:reltol] == 1.0e-3
+        @test !occursin("args", sprint(show, res))
+        @test occursin(
+            "args=(Tsit5,)",
+            sprint(show, SciMLProblemReservoir(prob, sampler, tspan, Tsit5()))
+        )
+        @test endswith(sprint(show, res_with_args), ", args=(:solver_arg,), reltol=0.001)")
     end
 
     @testset "SciMLProblemReservoir as Lux layer" begin

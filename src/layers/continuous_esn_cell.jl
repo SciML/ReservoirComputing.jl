@@ -121,9 +121,15 @@ end
 
 function Base.show(io::IO, cell::ContinuousESNCell)
     print(io, "ContinuousESNCell(", cell.in_dims, " => ", cell.out_dims)
-    print(io, ", tspan = ")
+    print(io, ", tspan=")
     show(io, cell.tspan)
-    has_bias(cell) || print(io, ", use_bias = false")
-    known(cell.use_jac_prototype) && print(io, ", use_jac_prototype = true")
+    cell.activation === tanh || print(io, ", activation=", cell.activation)
+    cell.equations === __continuous_esn_rhs! || print(io, ", equations=", cell.equations)
+    __show_args(io, cell.args)
+    has_bias(cell) && print(io, ", use_bias=true")
+    known(cell.use_jac_prototype) && print(io, ", use_jac_prototype=true")
+    for (k, v) in pairs(cell.kwargs)
+        print(io, ", ", k, "=", v)
+    end
     return print(io, ")")
 end

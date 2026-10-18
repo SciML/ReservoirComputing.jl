@@ -26,7 +26,13 @@ begin
         @test occursin("AdditiveEIESNCell(3 => 5", shown)
         @test occursin("exc_recurrence_scale=0.8", shown)
         @test occursin("input_activation=abs", shown)
-        @test occursin("use_bias=true", shown)
+        @test !occursin("use_bias", shown)
+        @test sprint(show, AdditiveEIESNCell(3 => 5)) == "AdditiveEIESNCell(3 => 5)"
+        @test sprint(
+            show, AdditiveEIESNCell(3 => 5; exc_output_scale = 2.0, inh_output_scale = 0.3)
+        ) == "AdditiveEIESNCell(3 => 5, exc_output_scale=2.0, inh_output_scale=0.3)"
+        @test sprint(show, AdditiveEIESNCell(3 => 5; use_bias = false)) ==
+            "AdditiveEIESNCell(3 => 5, use_bias=false)"
     end
 
     @testset "AdditiveEIESNCell: tuple activation logic" begin

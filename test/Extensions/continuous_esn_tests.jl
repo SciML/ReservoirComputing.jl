@@ -14,6 +14,22 @@ begin
     using SciMLBase
     using DataInterpolations
 
+    @testset "ContinuousESNCell: show" begin
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0), args = (Tsit5(), :a))) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), args=(Tsit5, :a))"
+        @test occursin("args=(Tsit5,)", sprint(show, ContinuousESN(2, 5, 1, (0.0, 1.0), Tsit5())))
+        @test sprint(
+            show,
+            ContinuousESNCell(
+                2 => 3; tspan = (0.0, 1.0), activation = identity, args = (1,), abstol = 1.0e-6
+            )
+        ) == "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), activation=identity, args=(1,), abstol=1.0e-6)"
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0))) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0))"
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0), use_bias = true)) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), use_bias=true)"
+    end
+
     @testset "ContinuousESN: construction + parameter shapes" begin
         rng = MersenneTwister(0)
         in_dim, res_dim, out_dim = 3, 50, 2

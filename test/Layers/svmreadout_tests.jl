@@ -35,14 +35,10 @@ begin
 
     @testset "show" begin
         ro_t = SVMReadout(5 => 3; include_collect = True())
-        s = sprint(show, ro_t)
-        @test occursin("SVMReadout(5 => 3", s)
-        @test occursin("include_collect=true", s)
+        @test sprint(show, ro_t) == "SVMReadout(5 => 3)"
 
         ro_f = SVMReadout(5 => 3; include_collect = False())
-        s2 = sprint(show, ro_f)
-        @test occursin("SVMReadout(5 => 3", s2)
-        @test !occursin("include_collect=true", s2)
+        @test sprint(show, ro_f) == "SVMReadout(5 => 3, include_collect=false)"
     end
 
     @testset "include_collect wrapping" begin

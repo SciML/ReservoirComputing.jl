@@ -12,7 +12,7 @@ using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLa
 import LuxCore: initialparameters, initialstates, statelength, outputsize
 using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
-using SciMLBase: AbstractLinearAlgorithm, successful_retcode
+using SciMLBase: AbstractLinearAlgorithm, AbstractSciMLAlgorithm, successful_retcode
 using Static: StaticBool, StaticSymbol, StaticInt, True, False, static, known
 using WeightInitializers: orthogonal, rand32, randn32, sparse_init, zeros32
 
