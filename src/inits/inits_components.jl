@@ -75,15 +75,17 @@ function throw_sparse_error(return_sparse::Bool)
     end
 end
 
-function check_modified_ressize(res_size::Integer, approx_res_size::Integer)
-    return if res_size != approx_res_size
-        @warn """Reservoir size has changed!\n
-            Computed reservoir size ($res_size) does not equal the \
-        provided reservoir size ($approx_res_size). \n
-            Using computed value ($res_size). Make sure to modify the \
-        reservoir initializer accordingly. \n
-        """
+function __weighted_blocks(res_size::Integer, in_size::Integer)
+    if res_size < in_size
+        throw(
+            ArgumentError(
+                "res_size ($res_size) must be at least in_size ($in_size) so that every input is connected to a reservoir unit"
+            )
+        )
     end
+    q, r = divrem(res_size, in_size)
+    stops = cumsum([q + (j <= r) for j in 1:in_size])
+    return [(stop - (q + (j <= r)) + 1):stop for (j, stop) in enumerate(stops)]
 end
 
 function check_res_size(dims::Integer...)
