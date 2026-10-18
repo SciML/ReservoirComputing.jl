@@ -58,19 +58,21 @@ begin
         @test wrapped2 === ro_noic
     end
 
-    @testset "forward pass: no models ⇒ identity passthrough" begin
+    @testset "forward pass: no models throws" begin
         ro = SVMReadout(3 => 1)
-        ps = NamedTuple()
-        st = NamedTuple()
-        x_vec = randn(Float32, 3)
-        y_vec, st_out = ro(x_vec, ps, st)
-        @test y_vec == x_vec
-        @test st_out === st
+        @test_throws ArgumentError ro(randn(Float32, 3), NamedTuple(), NamedTuple())
+        @test_throws ArgumentError ro(randn(Float32, 3, 5), NamedTuple(), NamedTuple())
+    end
 
-        X = randn(Float32, 3, 5)
-        Y, st_out2 = ro(X, ps, st)
-        @test Y == X
-        @test st_out2 === st
+    @testset "matrix-producing objective is rejected" begin
+        X = randn(Float32, 2, 30)
+        Y = randn(Float32, 2, 30)
+        rc = ReservoirChain(StatefulLayer(ESNCell(2 => 20)), SVMReadout(20 => 2))
+        ps, st = setup(MersenneTwister(1), rc)
+        @test_throws ArgumentError train(rc, X, Y, ps, st)
+        @test_throws ArgumentError train(
+            rc, X, Y, ps, st; objective = RidgeRegression(1.0e-3)
+        )
     end
 
     @testset "train + addreadout! injects models (single-output SVR)" begin

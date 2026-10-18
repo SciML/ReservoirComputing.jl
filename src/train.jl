@@ -23,6 +23,13 @@ fitted weight matrix is `(n_outputs, n_features)`.
 """
 @concrete struct RidgeRegression
     reg <: Number
+
+    function RidgeRegression(reg::Real)
+        reg < 0 && throw(
+            ArgumentError("RidgeRegression regularization must be ≥ 0, got reg=$reg")
+        )
+        return new{typeof(reg)}(reg)
+    end
 end
 
 function RidgeRegression(::Type{T}, reg) where {T <: Number}
@@ -198,6 +205,37 @@ function __train_ridge(
     return Matrix((qr(design) \ rhs)')
 end
 
+__readout_out_dims(::Any) = nothing
+__readout_out_dims(ro::Union{LinearReadout, SVMReadout}) = ro.out_dims
+function __readout_out_dims(rc::AbstractReservoirComputer)
+    return hasproperty(rc, :readout) ? __readout_out_dims(rc.readout) : nothing
+end
+function __readout_out_dims(rc::ReservoirChain)
+    for layer in rc.layers
+        layer isa Union{LinearReadout, SVMReadout} && return layer.out_dims
+    end
+    return nothing
+end
+
+function __check_target_rows(rc, target_data)
+    target_data isa AbstractMatrix || return nothing
+    out_dims = __readout_out_dims(rc)
+    (out_dims === nothing || size(target_data, 1) == out_dims) && return nothing
+    throw(
+        DimensionMismatch(
+            "target_data has $(size(target_data, 1)) rows, but the readout has " *
+                "out_dims=$out_dims"
+        )
+    )
+end
+
+__svmreadout_matrix_error() = throw(
+    ArgumentError(
+        "SVMReadout must be trained with a LIBSVM `AbstractSVR` objective " *
+            "(e.g. `LIBSVM.EpsilonSVR()`); the given objective produced a weight matrix."
+    )
+)
+
 @doc raw"""
     train(rc, train_data, target_data, ps, st;
           objective=RidgeRegression(0.0), solver=nothing,
@@ -238,6 +276,7 @@ function train(
         return_states::Bool = false,
         kwargs...
     )
+    __check_target_rows(rc, target_data)
     raw_states, st_after = collectstates(rc, train_data, ps, st)
     states_wo,
         targets_wo = washout > 0 ? __apply_washout(raw_states, target_data, washout) :
@@ -306,6 +345,7 @@ function addreadout!(
                 "$(propertynames(rc.layers))"
         )
     )
+    any(Base.Fix2(isa, SVMReadout), rc.layers) && __svmreadout_matrix_error()
     new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end

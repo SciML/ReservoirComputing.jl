@@ -46,6 +46,9 @@ end
     @test fieldtype(typeof(RidgeRegression()), :reg) === Float64
     @test fieldtype(typeof(RidgeRegression(Float32, 1.0e-2)), :reg) === Float32
     @test_throws MethodError RidgeRegression("invalid")
+    @test_throws ArgumentError RidgeRegression(-1.0)
+    @test_throws ArgumentError RidgeRegression(Float32, -1)
+    @test RidgeRegression(0).reg == 0
 end
 
 @testset "__fit_readout(RidgeRegression): shape contract" begin

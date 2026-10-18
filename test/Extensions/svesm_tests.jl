@@ -81,6 +81,16 @@ begin
         @test length(pred) == out_dims
     end
 
+    @testset "SVESM: default ridge objective is rejected" begin
+        rng = MersenneTwister(5)
+        model = SVESM(2, 20, 2)
+        ps, st = setup(rng, model)
+        X = randn(rng, Float32, 2, 40)
+        Y = randn(rng, Float32, 2, 40)
+        @test_throws ArgumentError train(model, X, Y, ps, st)
+        @test_throws ArgumentError model(X[:, 1], ps, st)
+    end
+
     @testset "SVESM: train with NuSVR and state_modifiers" begin
         rng = MersenneTwister(77)
         in_dims, res_dims, out_dims = 2, 20, 2
