@@ -51,9 +51,10 @@ begin
             "LSMCell(2 => 3, tspan=(0.0, 1.0))"
         @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), use_bias = true, abstol = 1.0e-6)) ==
             "LSMCell(2 => 3, tspan=(0.0, 1.0), use_bias=true, abstol=1.0e-6)"
+        neuron = LIFNeuron(tau_m = 0.05)
         @test occursin(
-            "neuron=LIFNeuron",
-            sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), neuron = LIFNeuron(tau_m = 0.05)))
+            "neuron=" * repr(neuron),
+            sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), neuron))
         )
     end
 
