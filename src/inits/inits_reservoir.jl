@@ -304,6 +304,7 @@ function pseudo_svd(
         return_diag::Bool = false
     ) where {T <: Number}
     isempty(dims) && throw(ArgumentError("expected at least one dimension, got none"))
+    length(dims) == 1 || check_res_size(dims...)
     res_dim = Int(dims[1])
 
     reservoir_matrix = create_diag(
@@ -2309,6 +2310,7 @@ function permutation_init(
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     permute_matrix!(rng, reservoir_matrix, permutation_matrix)
@@ -2427,6 +2429,7 @@ function diagonal_init(
         return_diag::Bool = false, kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     if return_diag

@@ -287,6 +287,20 @@ begin
                 @test sort(svdvals(matrix)) ≈ expected atol = 1.0e-12
             end
         end
+
+        @testset "pseudo_svd accepts a single dimension" begin
+            @test pseudo_svd(Xoshiro(1), Float32, 5) == pseudo_svd(Xoshiro(1), Float32, 5, 5)
+            @test pseudo_svd(Xoshiro(1), Float32, 5; return_diag = true) ==
+                pseudo_svd(Xoshiro(1), Float32, 5, 5; return_diag = true)
+        end
+
+        @testset "Non-square dims throw: $init" for init in [
+                reservoir_inits...,
+                dale_sparse,
+                wigner_init,
+            ]
+            @test_throws DimensionMismatch init(Xoshiro(1), Float32, 5, 8)
+        end
     end
 
     @testset "Input Initializers" begin
@@ -444,6 +458,31 @@ begin
                 8, 3; model_in_size = 4
             )
         end
+    end
+
+    @testset "Weighted input initializers sizes" begin
+        for (rs, ins) in ((8, 3), (30, 7), (9, 3), (5, 5), (7, 1), (11, 4))
+            q, r = divrem(rs, ins)
+            counts = [q + (j <= r) for j in 1:ins]
+            for init in (weighted_init, weighted_minimal), sp in (false, true)
+                m = @test_nowarn init(Xoshiro(1), Float32, rs, ins; return_sparse = sp)
+                @test size(m) == (rs, ins)
+                @test [count(!iszero, c) for c in eachcol(Matrix(m))] == counts
+                @test all(count(!iszero, row) == 1 for row in eachrow(Matrix(m)))
+                rows = [findall(!iszero, c) for c in eachcol(Matrix(m))]
+                @test reduce(vcat, rows) == collect(1:rs)
+            end
+        end
+        @test_throws ArgumentError weighted_init(Xoshiro(1), Float32, 2, 3)
+        @test_throws ArgumentError weighted_minimal(Xoshiro(1), Float32, 2, 3)
+        @test_throws ArgumentError weighted_init(Xoshiro(1), Float32, 0, 3)
+        @test size(weighted_init(Xoshiro(1), Float32, 8, 3; scaling = [0.1, 0.2, 0.3])) == (8, 3)
+        @test size(weighted_init(Xoshiro(1), Float32, 8, 3; scaling = [(0.1, 0.2), (0.1, 0.2), (0.1, 0.2)])) == (8, 3)
+        esn = ESN(3, 20, 3; init_input = weighted_init)
+        ps, st = setup(Xoshiro(1), esn)
+        @test size(ps.reservoir.input_matrix) == (20, 3)
+        y, _ = esn(rand(Float32, 3, 5), ps, st)
+        @test size(y) == (3, 5)
     end
 
 end
