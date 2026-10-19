@@ -115,3 +115,12 @@ end
     @test weights_default == weights_ls
     @test size(weights_default) == (n_outputs, n_features)
 end
+
+@testset "QRFactorization is LinearSolve's and is not ambiguous with it" begin
+    user_module = Module()
+    Core.eval(user_module, :(using ReservoirComputing, LinearSolve))
+    linearsolve_qr = Core.eval(user_module, :(LinearSolve.QRFactorization))
+
+    @test ReservoirComputing.QRFactorization === linearsolve_qr
+    @test Core.eval(user_module, :(QRFactorization())) isa linearsolve_qr
+end

@@ -27,13 +27,13 @@ function __fit_readout(
     size_target = size(target, 1)
 
     if size_target == 1
-        vec_target = vec(target)
-        model = LIBSVM.fit!(svr, perm_states, vec_target)
+        vec_target = Float64.(vec(target))
+        model = LIBSVM.fit!(deepcopy(svr), perm_states, vec_target)
         return model
     else
         models = Vector{Any}(undef, size_target)
         for (idx, row_target) in enumerate(eachrow(target))
-            models[idx] = LIBSVM.fit!(svr, perm_states, row_target)
+            models[idx] = LIBSVM.fit!(deepcopy(svr), perm_states, Float64.(row_target))
         end
         return models
     end

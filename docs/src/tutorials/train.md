@@ -23,7 +23,9 @@ ps, st = train(model, input_data, target_data, ps, st;
 ```
 
 `objective` chooses what to fit (here ridge). `solver` chooses how to solve it;
-omitting `solver` uses [`QRFactorization`](@ref).
+omitting `solver` uses `QRFactorization()`, the QR algorithm of
+[LinearSolve.jl](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/), which
+ReservoirComputing reexports.
 
 ```@example training
 ps, st = train(model, input_data, target_data, ps, st;
@@ -116,10 +118,12 @@ ReservoirComputing.jl also allows users to train RC models with support vector r
 through [LIBSVM.jl](https://github.com/JuliaML/LIBSVM.jl). However, the majority of builtin
 models in the library uses a [`LinearReadout`](@ref) by default, which can only be trained with
 linear regression. In  order to use support vector regression, one needs to build a model
-with [`SVMReadout`](@ref)
+with [`SVMReadout`](@ref). Load LIBSVM.jl with `import LIBSVM` rather than `using LIBSVM`:
+LIBSVM exports its own `predict`, which makes ReservoirComputing's [`predict`](@ref)
+ambiguous when both packages are brought in with `using`.
 
 ```@example training
-using LIBSVM
+import LIBSVM
 
 model = ReservoirComputer(
     StatefulLayer(ESNCell(3=>100)),
@@ -133,5 +137,9 @@ We can now train our new `model` similarly to before:
 
 ```@example training
 ps, st = train(model, input_data, target_data, ps, st;
-    objective = EpsilonSVR()) # from LIBSVM
+    objective = LIBSVM.EpsilonSVR())
 ```
+
+The SVR hyperparameters belong to the LIBSVM objective passed to `train`, for example
+`LIBSVM.EpsilonSVR(cost = 10.0, epsilon = 0.01)`; `SVMReadout` itself takes only the
+dimensions and `include_collect`.
