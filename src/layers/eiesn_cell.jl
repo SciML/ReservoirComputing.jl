@@ -147,8 +147,8 @@ end
 
 function Base.show(io::IO, cell::EIESNCell)
     print(io, "EIESNCell($(cell.in_dims) => $(cell.out_dims)")
-    print(io, ", activation=$(cell.activation)")
-    print(io, ", use_bias=$(known(cell.use_bias))")
+    cell.activation == (tanh_fast, tanh_fast) || print(io, ", activation=$(cell.activation)")
+    has_bias(cell) || print(io, ", use_bias=false")
     cell.exc_recurrence_scale != 0.9  && print(io, ", exc_recurrence_scale=$(cell.exc_recurrence_scale)")
     cell.inh_recurrence_scale != 0.5  && print(io, ", inh_recurrence_scale=$(cell.inh_recurrence_scale)")
     cell.exc_output_scale != 1.0  && print(io, ", exc_output_scale=$(cell.exc_output_scale)")

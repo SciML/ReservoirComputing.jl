@@ -24,7 +24,7 @@ end
 function Base.show(io::IO, ro::SVMReadout)
     print(io, "SVMReadout($(ro.in_dims) => $(ro.out_dims)")
     ic = known(getproperty(ro, Val(:include_collect)))
-    ic === true && print(io, ", include_collect=true")
+    ic === false && print(io, ", include_collect=false")
     return print(io, ")")
 end
 

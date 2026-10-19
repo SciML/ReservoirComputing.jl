@@ -200,6 +200,17 @@ function initialstates(::AbstractRNG, ::AbstractSciMLProblemReservoir)
     return NamedTuple()
 end
 
+function __show_args(io::IO, args)
+    isempty(args) && return nothing
+    print(io, ", args=(")
+    for (i, a) in enumerate(args)
+        i > 1 && print(io, ", ")
+        a isa AbstractSciMLAlgorithm ? print(io, nameof(typeof(a))) : show(io, a)
+    end
+    length(args) == 1 && print(io, ",")
+    return print(io, ")")
+end
+
 function Base.show(io::IO, res::SciMLProblemReservoir)
     print(io, "SciMLProblemReservoir(")
     print(io, "prob = ")
@@ -208,6 +219,10 @@ function Base.show(io::IO, res::SciMLProblemReservoir)
     show(io, res.sampler)
     print(io, ", tspan = ")
     show(io, res.tspan)
+    __show_args(io, res.args)
+    for (k, v) in pairs(res.kwargs)
+        print(io, ", ", k, "=", v)
+    end
     print(io, ")")
     return
 end
