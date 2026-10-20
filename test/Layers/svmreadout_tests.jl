@@ -35,14 +35,10 @@ begin
 
     @testset "show" begin
         ro_t = SVMReadout(5 => 3; include_collect = True())
-        s = sprint(show, ro_t)
-        @test occursin("SVMReadout(5 => 3", s)
-        @test occursin("include_collect=true", s)
+        @test sprint(show, ro_t) == "SVMReadout(5 => 3)"
 
         ro_f = SVMReadout(5 => 3; include_collect = False())
-        s2 = sprint(show, ro_f)
-        @test occursin("SVMReadout(5 => 3", s2)
-        @test !occursin("include_collect=true", s2)
+        @test sprint(show, ro_f) == "SVMReadout(5 => 3, include_collect=false)"
     end
 
     @testset "include_collect wrapping" begin
@@ -156,6 +152,55 @@ begin
         X_new = randn(in_dims, 5)
         Y_pred, _ = ro(X_new, ps_svm, st0)
         @test size(Y_pred) == (out_dims, 5)
+    end
+
+    @testset "multi-output SVR fits each output separately ($T)" for T in (Float64, Float32)
+        rng = MersenneTwister(321)
+        in_dims, N, N_test = 3, 120, 40
+        coefficients = T[1.5 0.2 -0.7; -2.0 1.0 0.5]
+        X = randn(rng, T, in_dims, N)
+        X_test = randn(rng, T, in_dims, N_test)
+        targets = coefficients * X
+        targets_test = coefficients * X_test
+
+        svr = LIBSVM.EpsilonSVR(kernel = LIBSVM.Kernel.Linear)
+        models = ReservoirComputing.__fit_readout(svr, X, targets)
+        @test length(models) == 2
+        @test models[1] !== models[2]
+        @test all(model -> model !== svr, models)
+        @test svr.fit === nothing
+
+        ro = SVMReadout(in_dims => 2)
+        Y_pred, _ = ro(X_test, (models = models,), NamedTuple())
+        for idx in 1:2
+            @test norm(Y_pred[idx, :] - targets_test[idx, :]) <
+                0.1 * norm(targets_test[idx, :])
+        end
+    end
+
+    @testset "single-output SVR does not alias the objective" begin
+        rng = MersenneTwister(654)
+        in_dims, N, N_test = 3, 120, 40
+        coefficients = [1.5 0.2 -0.7; -2.0 1.0 0.5]
+        X = randn(rng, in_dims, N)
+        X_test = randn(rng, in_dims, N_test)
+        targets = coefficients * X
+        targets_test = coefficients * X_test
+
+        svr = LIBSVM.EpsilonSVR(kernel = LIBSVM.Kernel.Linear)
+        first_model = ReservoirComputing.__fit_readout(svr, X, targets[1:1, :])
+        first_prediction = LIBSVM.predict(first_model, permutedims(X_test))
+        @test first_model !== svr
+        @test svr.fit === nothing
+
+        second_model = ReservoirComputing.__fit_readout(svr, X, targets[2:2, :])
+        second_prediction = LIBSVM.predict(second_model, permutedims(X_test))
+        @test second_model !== first_model
+        @test LIBSVM.predict(first_model, permutedims(X_test)) == first_prediction
+        @test norm(first_prediction - targets_test[1, :]) <
+            0.1 * norm(targets_test[1, :])
+        @test norm(second_prediction - targets_test[2, :]) <
+            0.1 * norm(targets_test[2, :])
     end
 
     @testset "forward: 2D single-column input should behave like vector (regression test)" begin

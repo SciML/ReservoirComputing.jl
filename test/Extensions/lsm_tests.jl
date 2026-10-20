@@ -43,6 +43,21 @@ begin
         return tau_m * log((r_m * I - v_rest) / (r_m * I - v_th))
     end
 
+    @testset "LSMCell: show" begin
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), args = (Tsit5(),))) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0), args=(Tsit5,))"
+        @test occursin("args=(Tsit5,)", sprint(show, LSM(2, 10, 1, (0.0, 1.0), Tsit5())))
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0))) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0))"
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), use_bias = true, abstol = 1.0e-6)) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0), use_bias=true, abstol=1.0e-6)"
+        neuron = LIFNeuron(tau_m = 0.05)
+        @test occursin(
+            "neuron=" * repr(neuron),
+            sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), neuron))
+        )
+    end
+
     @testset "LSM: collectstates is reproducible with default_rng setup" begin
         for encoder in (CurrentInjection(), PoissonRateEncoder())
             lsm = _lsm_f64(

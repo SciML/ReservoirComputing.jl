@@ -144,3 +144,12 @@ end
     @test size(ps2.model.readout.weight) == (1, 10)
     @test_throws DimensionMismatch train(c, X, vcat(Y, Y), ps, st)
 end
+
+@testset "QRFactorization is LinearSolve's and is not ambiguous with it" begin
+    user_module = Module()
+    Core.eval(user_module, :(using ReservoirComputing, LinearSolve))
+    linearsolve_qr = Core.eval(user_module, :(LinearSolve.QRFactorization))
+
+    @test ReservoirComputing.QRFactorization === linearsolve_qr
+    @test Core.eval(user_module, :(QRFactorization())) isa linearsolve_qr
+end

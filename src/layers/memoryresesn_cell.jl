@@ -143,13 +143,14 @@ function (esn::MemoryResESNCell)(
 end
 
 function Base.show(io::IO, esn::MemoryResESNCell)
-    print(io, "MemoryResESNCell($(esn.in_dims) => $(esn.out_dims)")
+    print(io, "MemoryResESNCell(($(esn.in_dims), $(esn.mem_dims)) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.alpha != eltype(esn.alpha)(1.0)
         print(io, ", alpha=$(esn.alpha)")
     end
     if esn.beta != eltype(esn.beta)(1.0)
         print(io, ", beta=$(esn.beta)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

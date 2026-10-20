@@ -89,11 +89,11 @@ begin
         end
 
         @testset "show" begin
-            ro = LinearReadout(5 => 3; use_bias = False(), include_collect = True())
-            s = sprint(show, ro)
-            @test occursin("LinearReadout(5 => 3", s)
-            @test occursin("use_bias=false", s)
-            @test occursin("include_collect=true", s)
+            @test sprint(show, LinearReadout(5 => 3)) == "LinearReadout(5 => 3)"
+            @test sprint(show, LinearReadout(5 => 3, tanh)) == "LinearReadout(5 => 3, tanh)"
+            ro = LinearReadout(5 => 3; use_bias = True(), include_collect = False())
+            @test sprint(show, ro) ==
+                "LinearReadout(5 => 3, use_bias=true, include_collect=false)"
         end
 
         @testset "include_collect causes Collect() insertion" begin
@@ -167,6 +167,13 @@ begin
     end
 
     @testset "DelayLayer" begin
+        @testset "show" begin
+            @test sprint(show, DelayLayer(3)) == "DelayLayer(3)"
+            @test sprint(show, DelayLayer(3; num_delays = 4, stride = 2)) ==
+                "DelayLayer(3; num_delays=4, stride=2)"
+            @test sprint(show, DelayLayer(3; stride = 2)) == "DelayLayer(3; stride=2)"
+        end
+
         rng = MersenneTwister(123)
 
         @testset "constructor & init_delay expansion" begin
@@ -334,6 +341,13 @@ begin
     end
 
     @testset "NonlinearFeaturesLayer" begin
+        @testset "show" begin
+            @test sprint(show, NonlinearFeaturesLayer(abs)) ==
+                "NonlinearFeaturesLayer(features=(abs))"
+            @test sprint(show, NonlinearFeaturesLayer(abs; include_input = false)) ==
+                "NonlinearFeaturesLayer(features=(abs), include_input=false)"
+        end
+
         rng = MersenneTwister(123)
 
         @testset "constructor & flags" begin

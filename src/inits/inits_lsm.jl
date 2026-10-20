@@ -6,7 +6,9 @@
 Dale-compliant sparse reservoir: first
 `round(excitatory_fraction * n)` columns excitatory (non-negative), rest
 inhibitory (non-positive). Inhibitory magnitudes scaled by
-`ei_weight_ratio`, then spectral radius to `radius`.
+`ei_weight_ratio`, then spectral radius to `radius`. Every column keeps at least one
+nonzero entry, whatever the size and `sparsity`, so the matrix is never all zero and
+can be scaled to `radius`.
 
 ## Arguments
 
@@ -19,7 +21,8 @@ inhibitory (non-positive). Inhibitory magnitudes scaled by
 
   - `excitatory_fraction`: Fraction of excitatory units in `(0, 1)`.
     Default: `0.8`.
-  - `sparsity`: Fraction of zeros. Default: `0.1`.
+  - `sparsity`: Fraction of nonzero entries in each column, never fewer than one
+    per column. Default: `0.1`.
   - `std`: Sparse initialiser standard deviation. Default: `1.0`.
   - `radius`: Spectral radius. Default: `1.0`.
   - `ei_weight_ratio`: Inhibitory magnitude scale. Default: `1.0`.
@@ -62,7 +65,7 @@ function dale_sparse(
         ArgumentError("ei_weight_ratio must be positive, got $ei_weight_ratio")
     )
     lcl_sparsity = T(1) - T(sparsity)
-    W = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = T(std))
+    W = __sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = T(std))
     n_exc = clamp(round(Int, T(excitatory_fraction) * n), 1, n - 1)
     @inbounds for col in 1:n
         sign = col <= n_exc ? one(T) : -T(ei_weight_ratio)

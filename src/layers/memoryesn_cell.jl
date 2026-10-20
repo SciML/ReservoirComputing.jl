@@ -126,10 +126,11 @@ function (esn::MemoryESNCell)(
 end
 
 function Base.show(io::IO, esn::MemoryESNCell)
-    print(io, "MemoryESNCell($(esn.in_dims) => $(esn.out_dims)")
+    print(io, "MemoryESNCell(($(esn.in_dims), $(esn.mem_dims)) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.leak_coefficient != eltype(esn.leak_coefficient)(1.0)
         print(io, ", leak_coefficient=$(esn.leak_coefficient)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

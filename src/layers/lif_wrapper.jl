@@ -107,6 +107,14 @@ function LocalInformationFlow(
     return LocalInformationFlow(built_cell, lookback_horizon, init_buffer)
 end
 
+function Base.show(io::IO, lif::LocalInformationFlow)
+    print(io, "LocalInformationFlow(")
+    show(io, lif.cell)
+    print(io, ", ", lif.lookback_horizon)
+    lif.init_buffer === zeros32 || print(io, ", init_buffer=", lif.init_buffer)
+    return print(io, ")")
+end
+
 function initialparameters(rng::AbstractRNG, lif::LocalInformationFlow)
     return (cell = initialparameters(rng, lif.cell),)
 end

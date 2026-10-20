@@ -6,6 +6,7 @@ begin
     using ReservoirComputing
     using LuxCore: initialparameters, initialstates
     using Static
+    using WeightInitializers: ones32
 
     const _W_I = (rng, m, n) -> Matrix{Float32}(I, m, n)
     const _W_Z = (rng, m, n) -> zeros(Float32, m, n)
@@ -53,6 +54,16 @@ begin
 
     @testset "LocalInformationFlow: generic wrapper contract" begin
         cell_ctors = (ESNCell, ES2NCell, EuSNCell, EIESNCell, AdditiveEIESNCell)
+
+        @testset "show" begin
+            lif = LocalInformationFlow(ESNCell, 2 => 3, 4)
+            @test sprint(show, lif) == "LocalInformationFlow(ESNCell(2 => 3), 4)"
+            lif2 = LocalInformationFlow(
+                ESNCell, 2 => 3, 4; use_bias = true, init_buffer = ones32
+            )
+            @test sprint(show, lif2) ==
+                "LocalInformationFlow(ESNCell(2 => 3, use_bias=true), 4, init_buffer=ones32)"
+        end
 
         @testset "ps/st tree shape" begin
             rng = MersenneTwister(1)

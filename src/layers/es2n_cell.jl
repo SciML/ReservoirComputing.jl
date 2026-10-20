@@ -117,9 +117,10 @@ end
 
 function Base.show(io::IO, esn::ES2NCell)
     print(io, "ES2NCell($(esn.in_dims) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.proximity != eltype(esn.proximity)(1.0)
         print(io, ", proximity=$(esn.proximity)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

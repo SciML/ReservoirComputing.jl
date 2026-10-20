@@ -187,16 +187,38 @@ end
 end
 
 @testset "__fit_readout(RidgeRegression): rank-deficient λ=0" begin
-    states = reshape(Float32.(1:24), 3, 8) ./ 10.0f0
-    targets = vcat(
-        reshape(states[1, :] .+ 2 .* states[2, :], 1, :),
-        reshape(states[3, :] .- states[1, :], 1, :),
+    collinear = reshape(Float32.(1:24), 3, 8) ./ 10.0f0
+    collinear_targets = vcat(
+        reshape(collinear[1, :] .+ 2 .* collinear[2, :], 1, :),
+        reshape(collinear[3, :] .- collinear[1, :], 1, :),
     )
-    weights = ReservoirComputing.__fit_readout(RidgeRegression(Float32, 0), states, targets)
-    @test eltype(weights) === Float32
-    @test weights ≈ ReservoirComputing.__fit_readout(
-        RidgeRegression(Float32, 0), states, targets; solver = QRSolver()
-    ) rtol = 1.0e-5
+    duplicated = randn(Xoshiro(1), 5, 50)
+    duplicated = vcat(duplicated, duplicated[1:1, :])
+    zero_row = vcat(randn(Xoshiro(3), 4, 30), zeros(1, 30))
+    underdetermined = randn(Xoshiro(4), 6, 4)
+
+    problems = (
+        "collinear rows, Float32" => (collinear, collinear_targets, 1.0e-4),
+        "duplicated row" => (duplicated, randn(Xoshiro(2), 2, 50), 1.0e-8),
+        "zero row" => (zero_row, randn(Xoshiro(5), 2, 30), 1.0e-8),
+        "underdetermined" => (underdetermined, randn(Xoshiro(6), 2, 4), 1.0e-8),
+    )
+    solvers = (
+        "default" => nothing,
+        "QRFactorization" => QRFactorization(),
+        "QRSolver" => QRSolver(),
+        "SVDFactorization" => SVDFactorization(),
+    )
+    for (problem, (states, targets, rtol)) in problems, (name, solver) in solvers
+        @testset "$problem, $name" begin
+            reference = targets * pinv(states)
+            weights = ReservoirComputing.__fit_readout(
+                RidgeRegression(eltype(states), 0), states, targets; solver = solver
+            )
+            @test eltype(weights) === eltype(states)
+            @test weights ≈ reference rtol = rtol
+        end
+    end
 end
 
 @testset "__fit_readout(RidgeRegression): default solver is QRFactorization" begin
