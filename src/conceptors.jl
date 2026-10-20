@@ -621,6 +621,8 @@ function addreadout!(::Conceptor, weights, ::NamedTuple, ::NamedTuple)
     )
 end
 
+__readout_out_dims(concept::Conceptor) = __readout_out_dims(concept.model)
+
 reservoir_params(ps::NamedTuple) = ps.model.reservoir
 readout_params(ps::NamedTuple) = ps.model.readout
 
