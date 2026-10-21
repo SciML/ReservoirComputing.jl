@@ -188,12 +188,13 @@ end
 __set_readout_weight(ps_readout::NamedTuple, wro) = merge(ps_readout, (; weight = wro))
 
 function addreadout!(
-        ::AbstractReservoirComputer, output_matrix::AbstractMatrix,
+        rc::AbstractReservoirComputer, output_matrix::AbstractMatrix,
         ps::NamedTuple, st::NamedTuple
     )
     hasproperty(ps, :readout) || throw(
         ArgumentError("model parameters must contain a `readout` entry")
     )
+    hasproperty(rc, :readout) && rc.readout isa SVMReadout && __svmreadout_matrix_error()
     new_readout = __set_readout_weight(ps.readout, output_matrix)
     return merge(ps, (readout = new_readout,)), st
 end

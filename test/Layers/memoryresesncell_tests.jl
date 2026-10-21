@@ -55,7 +55,18 @@ begin
             shown = String(take!(io))
 
             @test occursin("MemoryResESNCell(", shown)
-            @test occursin("use_bias=false", shown)
+            @test !occursin("use_bias", shown)
+
+            @test sprint(show, MemoryResESNCell((3, 4) => 5)) ==
+                "MemoryResESNCell((3, 4) => 5)"
+            @test sprint(show, MemoryResESNCell((3, 4) => 5, identity)) ==
+                "MemoryResESNCell((3, 4) => 5, identity)"
+            @test sprint(show, MemoryESNCell((3, 4) => 5)) == "MemoryESNCell((3, 4) => 5)"
+            @test sprint(show, MemoryESNCell((3, 4) => 5, identity)) ==
+                "MemoryESNCell((3, 4) => 5, identity)"
+
+            cell_b = build_memresesn(3, 4, 5; use_bias = True())
+            @test occursin("use_bias=true", sprint(show, cell_b))
 
             cell_ab = build_memresesn(3, 4, 5; alpha = 0.25, beta = 0.75)
             io2 = IOBuffer()

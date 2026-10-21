@@ -76,7 +76,16 @@ begin
 
             @test occursin("$(cell_name(C))(3 => 5", shown)
             @test occursin(Regex("$(mix_label(C))=0\\.3(f0)?"), shown)
-            @test occursin("use_bias=false", shown)
+            @test !occursin("use_bias", shown)
+
+            cell_b = build_cell(C, 3, 5; mix = 0.3, use_bias = True())
+            @test occursin("use_bias=true", sprint(show, cell_b))
+            cell_d = build_cell(C, 3, 5; use_bias = False())
+            @test occursin("$(cell_name(C))(3 => 5", sprint(show, cell_d))
+            @test !occursin("use_bias", sprint(show, cell_d))
+
+            @test sprint(show, C(3 => 5)) == "$(cell_name(C))(3 => 5)"
+            @test sprint(show, C(3 => 5, identity)) == "$(cell_name(C))(3 => 5, identity)"
         end
 
         @testset "$(cell_name(C)): initialparameters shapes & bias flag" begin

@@ -43,6 +43,35 @@ begin
         return tau_m * log((r_m * I - v_rest) / (r_m * I - v_th))
     end
 
+    @testset "LSMCell: show" begin
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), args = (Tsit5(),))) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0), args=(Tsit5,))"
+        @test occursin("args=(Tsit5,)", sprint(show, LSM(2, 10, 1, (0.0, 1.0), Tsit5())))
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0))) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0))"
+        @test sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), use_bias = true, abstol = 1.0e-6)) ==
+            "LSMCell(2 => 3, tspan=(0.0, 1.0), use_bias=true, abstol=1.0e-6)"
+        neuron = LIFNeuron(tau_m = 0.05)
+        @test occursin(
+            "neuron=" * repr(neuron),
+            sprint(show, LSMCell(2 => 3; tspan = (0.0, 1.0), neuron))
+        )
+    end
+
+    @testset "LSM: collectstates is reproducible with default_rng setup" begin
+        for encoder in (CurrentInjection(), PoissonRateEncoder())
+            lsm = _lsm_f64(
+                3, 30, 1, (0.0, 0.05), Tsit5();
+                encoder, init_state = (rng, d...) -> rand(rng, d...),
+            )
+            ps, st = setup(Random.default_rng(), lsm)
+            data = abs.(randn(MersenneTwister(1), 3, 8))
+            s1, _ = collectstates(lsm, data, ps, deepcopy(st))
+            s2, _ = collectstates(lsm, data, ps, deepcopy(st))
+            @test s1 == s2
+        end
+    end
+
     @testset "dale_sparse: Dale structure" begin
         rng = MersenneTwister(0)
         n = 40

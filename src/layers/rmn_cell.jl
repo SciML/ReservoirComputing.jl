@@ -45,7 +45,7 @@ end
 function initialstates(rng::AbstractRNG, rmn::RMNCell)
     nlr_st = initialstates(rng, rmn.nonlinear_reservoir)
     lr_st = initialstates(rng, rmn.linear_reservoir)
-    return (nonlinear_reservoir = nlr_st, linear_reservoir = lr_st, rng = rng)
+    return (nonlinear_reservoir = nlr_st, linear_reservoir = lr_st, rng = __owned_replicate(rng))
 end
 
 function (rmn::RMNCell)(inp::AbstractArray, ps, st::NamedTuple)

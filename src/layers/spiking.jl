@@ -398,7 +398,7 @@ end
 
 function initialstates(rng::AbstractRNG, cell::LSMCell)
     return (
-        rng = replicate(rng),
+        rng = __owned_replicate(rng),
         encoder = __init_encoder_st(rng, cell.encoder),
     )
 end
@@ -412,12 +412,20 @@ end
 
 __init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
 function __init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
-    return (rng = replicate(rng),)
+    return (rng = __owned_replicate(rng),)
 end
 
 function Base.show(io::IO, cell::LSMCell)
     print(io, "LSMCell(", cell.in_dims, " => ", cell.out_dims)
-    print(io, ", tspan = ")
+    print(io, ", tspan=")
     show(io, cell.tspan)
+    cell.neuron == LIFNeuron() || print(io, ", neuron=", cell.neuron)
+    cell.encoder == CurrentInjection() || print(io, ", encoder=", cell.encoder)
+    cell.feature_map == ExponentialSpikeFilter() || print(io, ", feature_map=", cell.feature_map)
+    has_bias(cell) && print(io, ", use_bias=true")
+    __show_args(io, cell.args)
+    for (k, v) in pairs(cell.kwargs)
+        print(io, ", ", k, "=", v)
+    end
     return print(io, ")")
 end

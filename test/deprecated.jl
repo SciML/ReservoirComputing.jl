@@ -6,12 +6,25 @@ using LinearSolve: SVDFactorization
 
 # Delete with src/deprecated.jl at v1.0.
 
+# `@test_deprecated` returns the expression value under `--depwarn=yes`/`no`, but under
+# `--depwarn=error` it becomes `@test_throws ErrorException` and returns a `Test.Pass`.
+# Never unpack its return value. Under `--depwarn=error` the deprecated wrapper throws
+# before computing a value, so only the throw is asserted; value comparisons that depend
+# on the wrapper run only when depwarn ≠ error (Pkg.test uses `--depwarn=yes`).
+const _DEPWARN_ERROR = Base.JLOptions().depwarn == Int8(2)
+
 @testset "StandardRidge is deprecated alias of RidgeRegression" begin
     @test StandardRidge === RidgeRegression
     @test StandardRidge(1.0e-3) isa RidgeRegression
     @test StandardRidge(1.0e-3).reg == 1.0e-3
     @test StandardRidge().reg == 0.0
     @test StandardRidge(Float32, 1.0f-2).reg isa Float32
+end
+
+@testset "package precompiles with --depwarn=error" begin
+    code = "Base.compilecache(Base.identify_package(\"ReservoirComputing\"))"
+    cmd = `$(Base.julia_cmd()) --startup-file=no --project=$(Base.active_project()) --depwarn=error -e $code`
+    @test success(pipeline(cmd; stdout = devnull, stderr = devnull))
 end
 
 @testset "train! is deprecated and matches train" begin
@@ -28,9 +41,11 @@ end
     ps_kw, _ = train(
         model, train_data, target_data, ps, st; objective = ridge
     )
-    result = @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
-    ps_pos = result[1]
-    @test ps_pos.readout.weight ≈ ps_kw.readout.weight
+    @test_deprecated train!(model, train_data, target_data, ps, st, ridge)
+    if !_DEPWARN_ERROR
+        ps_pos, _ = train!(model, train_data, target_data, ps, st, ridge)
+        @test ps_pos.readout.weight ≈ ps_kw.readout.weight
+    end
 end
 
 @testset "train(objective, states, target_data) is deprecated and matches fitting" begin
@@ -42,10 +57,15 @@ end
     weights_new = ReservoirComputing.__fit_readout(
         ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
-    result = @test_deprecated train(
+    @test_deprecated train(
         ridge, states, targets; solver = ReservoirComputing.QRFactorization()
     )
-    @test result ≈ weights_new
+    if !_DEPWARN_ERROR
+        result = train(
+            ridge, states, targets; solver = ReservoirComputing.QRFactorization()
+        )
+        @test result ≈ weights_new
+    end
 end
 
 @testset "toepliz_init is deprecated alias of toeplitz_init" begin
@@ -63,11 +83,16 @@ end
     model = ESN(in_dims, res_dims, out_dims)
     ps, st = setup(rng, model)
 
-    result = @test_deprecated train!(
+    @test_deprecated train!(
         model, train_data, target_data, ps, st, RidgeRegression(1.0e-3);
         solver = SVDFactorization(),
     )
-    ps_trained = result[1]
-    @test size(ps_trained.readout.weight) == (out_dims, res_dims)
-    @test all(isfinite, ps_trained.readout.weight)
+    if !_DEPWARN_ERROR
+        ps_trained, _ = train!(
+            model, train_data, target_data, ps, st, RidgeRegression(1.0e-3);
+            solver = SVDFactorization(),
+        )
+        @test size(ps_trained.readout.weight) == (out_dims, res_dims)
+        @test all(isfinite, ps_trained.readout.weight)
+    end
 end

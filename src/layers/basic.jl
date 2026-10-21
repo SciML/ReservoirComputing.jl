@@ -184,9 +184,9 @@ end
 function Base.show(io::IO, ro::LinearReadout)
     print(io, "LinearReadout($(ro.in_dims) => $(ro.out_dims)")
     (ro.activation == identity) || print(io, ", $(ro.activation)")
-    has_bias(ro) || print(io, ", use_bias=false")
+    has_bias(ro) && print(io, ", use_bias=true")
     ic = known(getproperty(ro, Val(:include_collect)))
-    ic === true && print(io, ", include_collect=true")
+    ic === false && print(io, ", include_collect=false")
     return print(io, ")")
 end
 
@@ -446,10 +446,16 @@ end
 __reset_delay(::AbstractRNG, _, st, init_carry) = st
 
 function Base.show(io::IO, dl::DelayLayer)
-    print(io, "DelayLayer(", dl.in_dims, "; num_delays=", dl.num_delays)
+    print(io, "DelayLayer(", dl.in_dims)
+    sep = "; "
+    if dl.num_delays != 2
+        print(io, sep, "num_delays=", dl.num_delays)
+        sep = ", "
+    end
 
     if dl.stride != 1
-        print(io, ", stride=", dl.stride)
+        print(io, sep, "stride=", dl.stride)
+        sep = ", "
     end
 
     inits = dl.init_delay
@@ -457,9 +463,9 @@ function Base.show(io::IO, dl::DelayLayer)
         all_same = all(f -> f === first(inits), inits)
         if all_same && first(inits) === zeros32
         elseif all_same
-            print(io, ", init_delay=", first(inits))
+            print(io, sep, "init_delay=", first(inits))
         else
-            print(io, ", init_delay=(")
+            print(io, sep, "init_delay=(")
             for (i, f) in enumerate(inits)
                 i > 1 && print(io, ", ")
                 show(io, f)
@@ -566,11 +572,7 @@ function Base.show(io::IO, nfl::NonlinearFeaturesLayer)
     end
 
     inc = ReservoirComputing.known(nfl.include_input)
-    if inc === true
-        print(io, ", include_input=true")
-    elseif inc === false
-        print(io, ", include_input=false")
-    end
+    inc === false && print(io, ", include_input=false")
 
     return print(io, ")")
 end

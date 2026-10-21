@@ -19,7 +19,10 @@ begin
 
         @test occursin("EIESNCell(3 => 5", shown)
         @test occursin("exc_recurrence_scale=0.8", shown)
-        @test occursin("use_bias=true", shown)
+        @test !occursin("use_bias", shown)
+        @test sprint(show, EIESNCell(3 => 5)) == "EIESNCell(3 => 5)"
+        @test sprint(show, EIESNCell(3 => 5; use_bias = false)) ==
+            "EIESNCell(3 => 5, use_bias=false)"
 
         cell_tuple = EIESNCell(3 => 5, (tanh, identity))
         io2 = IOBuffer()

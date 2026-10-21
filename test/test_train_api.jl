@@ -115,3 +115,41 @@ end
     @test weights_default == weights_ls
     @test size(weights_default) == (n_outputs, n_features)
 end
+
+@testset "train rejects targets with wrong number of rows" begin
+    rng = MersenneTwister(77)
+    X = randn(rng, Float32, 2, 30)
+    Y = randn(rng, Float32, 2, 30)
+    esn = ESN(2, 10, 2)
+    ps, st = setup(rng, esn)
+    @test_throws DimensionMismatch train(esn, X, Y[1:1, :], ps, st)
+    @test_throws DimensionMismatch train(esn, X, vcat(Y, Y), ps, st)
+    ps2, _ = train(esn, X, Y, ps, st)
+    @test size(ps2.readout.weight) == (2, 10)
+
+    chain = ReservoirChain(StatefulLayer(ESNCell(2 => 10)), LinearReadout(10 => 2))
+    cps, cst = setup(rng, chain)
+    @test_throws DimensionMismatch train(chain, X, Y[1:1, :], cps, cst)
+    cps2, _ = train(chain, X, Y, cps, cst)
+    @test size(last(cps2).weight) == (2, 10)
+end
+
+@testset "train on a Conceptor checks target rows" begin
+    rng = MersenneTwister(78)
+    X = rand(rng, Float32, 1, 30)
+    Y = rand(rng, Float32, 1, 30)
+    c = Conceptor(ESN(1, 10, 1))
+    ps, st = setup(rng, c)
+    ps2, _ = train(c, X, Y, ps, st)
+    @test size(ps2.model.readout.weight) == (1, 10)
+    @test_throws DimensionMismatch train(c, X, vcat(Y, Y), ps, st)
+end
+
+@testset "QRFactorization is LinearSolve's and is not ambiguous with it" begin
+    user_module = Module()
+    Core.eval(user_module, :(using ReservoirComputing, LinearSolve))
+    linearsolve_qr = Core.eval(user_module, :(LinearSolve.QRFactorization))
+
+    @test ReservoirComputing.QRFactorization === linearsolve_qr
+    @test Core.eval(user_module, :(QRFactorization())) isa linearsolve_qr
+end
