@@ -53,8 +53,6 @@ function __apply_washout(states::AbstractMatrix, targets::AbstractMatrix, washou
     return states_wo, targets_wo
 end
 
-__set_readout(ps, m::ReservoirChain, W) = first(addreadout!(m, W, ps, NamedTuple()))
-
 """
     AbstractReservoirComputingSolver
 

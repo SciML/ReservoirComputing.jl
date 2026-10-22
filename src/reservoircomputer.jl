@@ -158,8 +158,8 @@ function __collectstates(
     )
     return error(
         "collectstates for a `SciMLProblemReservoir` requires the " *
-            "`RCODEReservoirExt` extension. Load `OrdinaryDiffEq`, `SciMLBase`, " *
-            "and `DataInterpolations` to enable continuous-time reservoirs."
+            "`RCODEReservoirExt` extension. Load `OrdinaryDiffEq` and " *
+            "`DataInterpolations` to enable continuous-time reservoirs."
     )
 end
 

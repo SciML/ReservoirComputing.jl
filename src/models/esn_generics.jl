@@ -40,22 +40,14 @@ abstract type AbstractEchoStateNetwork{Fields} <: AbstractReservoirComputer{Fiel
 __wrap_layer(x) = x isa Function ? WrappedFunction(x) : x
 __wrap_layers(xs::Tuple) = map(__wrap_layer, xs)
 
-@inline function __fillvec(x, n::Integer)
-    v = Vector{typeof(x)}(undef, n)
-    @inbounds @simd for i in 1:n
-        v[i] = x
-    end
-    return v
-end
-
-@inline __asvec(::Tuple{}, n::Integer) = __fillvec(nothing, n)
+@inline __asvec(::Tuple{}, n::Integer) = fill(nothing, n)
 
 @inline function __asvec(comp::Tuple, n::Integer)
     len = length(comp)
     if len == n
         return collect(comp)
     elseif len == 1
-        return __fillvec(comp[1], n)
+        return fill(comp[1], n)
     else
         throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
@@ -66,15 +58,15 @@ end
     if len == n
         return collect(comp)
     elseif len == 1
-        return __fillvec(comp[1], n)
+        return fill(comp[1], n)
     else
         throw(DimensionMismatch("Expected length $n or 1, got $len"))
     end
 end
 
-@inline __asvec(::Nothing, n::Integer) = __fillvec(nothing, n)
+@inline __asvec(::Nothing, n::Integer) = fill(nothing, n)
 
-@inline __asvec(comp, n::Integer) = __fillvec(comp, n)
+@inline __asvec(comp, n::Integer) = fill(comp, n)
 
 @inline __asvec(x) = (ndims(x) == 2 ? vec(x) : x)
 

@@ -29,6 +29,7 @@ begin
         ro = SVMReadout(6 => 2; include_collect = True())
         @test initialparameters(rng, ro) == NamedTuple()
         @test LuxCore.parameterlength(ro) == 0
+        @test ReservoirComputing.parameterlength === LuxCore.parameterlength
         @test LuxCore.statelength(ro) == 0
         @test LuxCore.outputsize(ro, nothing, rng) == (2,)
     end

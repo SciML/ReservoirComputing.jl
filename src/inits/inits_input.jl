@@ -8,8 +8,7 @@ a range defined by `scaling`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -100,8 +99,7 @@ additional reservoir node. An `ArgumentError` is thrown if `res_size < in_size`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -226,8 +224,7 @@ inspired by [Lu2017](@cite). Blocks are distributed as in
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -306,8 +303,7 @@ networks [Pathak2018](@cite).
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -387,8 +383,7 @@ An optional sign pattern controls which weights have their signs flipped.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -477,8 +472,7 @@ applying:
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -556,8 +550,7 @@ the logistic map recurrence:
 ```
 
 ## Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -637,8 +630,7 @@ If the provided number of rows does not match `factor * in_size`
 the number of rows is overridden.
 
 ## Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.

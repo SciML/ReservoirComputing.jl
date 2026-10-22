@@ -390,8 +390,7 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a delay line. Can be either a single number
     or an array.
@@ -453,8 +452,7 @@ Adds a backward connection in the `reservoir_matrix`, with given `shift` and
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a backward connection. Can be either a single number
     or an array.
@@ -525,8 +523,7 @@ Adds a simple cycle in the `reservoir_matrix`, with given
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -587,8 +584,7 @@ Adds a reverse simple cycle in the `reservoir_matrix`, with given
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -650,8 +646,7 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -755,13 +750,13 @@ end
 """
     self_loop!([rng], reservoir_matrix, weight; signs = nothing)
 
-Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `jump_size`.
-`weight` can be either a number or an array.
+Sets the diagonal of `reservoir_matrix` to `weight`, adding a self loop to each node.
+`weight` can be a number, a vector of length `size(reservoir_matrix, 1)`, or a function
+`weight(rng, n)` returning such a vector.
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a self loop. Can be either a single number
     or an array.
@@ -833,9 +828,7 @@ to a permutation matrix.
 ## Arguments
 
   - `rng`: Random number generator used when `permutation_matrix === nothing`.
-    Default is typically `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
-    (if you provide a wrapper method without `rng`).
+    Default is `Xoshiro(1234)` when using the wrapper method without `rng`.
   - `reservoir_matrix`: The reservoir weight matrix to be permuted.
   - `permutation_matrix`: A square permutation matrix of matching size. If `nothing`,
     a random permutation is used.

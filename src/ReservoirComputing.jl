@@ -8,7 +8,7 @@ using LinearAlgebra: eigvals, eigen, I, Diagonal, diag, mul!, Symmetric, norm,
 using LinearSolve: LinearProblem, solve, QRFactorization
 using LuxCore: AbstractLuxLayer, AbstractLuxContainerLayer, AbstractLuxWrapperLayer,
     setup, apply, replicate
-import LuxCore: initialparameters, initialstates, statelength, outputsize
+import LuxCore: initialparameters, initialstates, parameterlength, statelength, outputsize
 using NNlib: tanh_fast
 using Random: Random, AbstractRNG, randperm
 using SciMLBase: AbstractLinearAlgorithm, AbstractSciMLAlgorithm, successful_retcode

@@ -12,8 +12,7 @@ can be scaled to `radius`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Element type. Default is `Float32`.
   - `dims`: Square matrix dimensions.
 
