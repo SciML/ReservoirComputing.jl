@@ -382,6 +382,34 @@ begin
             @test ii_id === true
         end
 
+        @testset "matrix input applies features per column" begin
+            kr = x -> kron(x, x)
+            nfl = NonlinearFeaturesLayer(kr, x -> x .^ 2)
+            X = rand(MersenneTwister(1), Float32, 3, 4)
+            Y, _ = nfl(X, NamedTuple(), NamedTuple())
+            @test size(Y) == (3 + 9 + 3, 4)
+            for j in 1:4
+                @test Y[:, j] == first(nfl(X[:, j], NamedTuple(), NamedTuple()))
+            end
+            Y1, _ = nfl(X[:, 1:1], NamedTuple(), NamedTuple())
+            @test Y1 == Y[:, 1:1]
+        end
+
+        @testset "inside a ReservoirChain after a reservoir cell" begin
+            chain = ReservoirChain(
+                StatefulLayer(ESNCell(3 => 5)),
+                NonlinearFeaturesLayer(x -> x .^ 2),
+                LinearReadout(10 => 2)
+            )
+            ps, st = setup(MersenneTwister(2), chain)
+            X = rand(MersenneTwister(3), Float32, 3, 12)
+            states, _ = collectstates(chain, X, ps, st)
+            @test size(states) == (10, 12)
+            (ps_t, st_t) = train(chain, X, X[1:2, :], ps, st; objective = RidgeRegression(Float32, 1.0f-6))
+            out, _ = predict(chain, X, ps_t, st_t)
+            @test size(out) == (2, 12)
+        end
+
         @testset "initialparameters / initialstates" begin
             sq = x -> x .^ 2
             nfl = NonlinearFeaturesLayer(sq; include_input = true)

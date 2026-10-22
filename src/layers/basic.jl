@@ -541,17 +541,15 @@ function initialstates(rng::AbstractRNG, l::NonlinearFeaturesLayer)
 end
 
 function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
-    feature_vector = Any[]
-    if known(nfl.include_input) === true
-        push!(feature_vector, inp)
-    end
-    for func in nfl.features
-        nonlin_feat = func(inp)
-        push!(feature_vector, nonlin_feat)
-    end
-    out = reduce(vcat, feature_vector)
+    feats = map(func -> func(inp), nfl.features)
+    out = known(nfl.include_input) === true ? reduce(vcat, feats; init = inp) : reduce(vcat, feats)
 
     return out, st
+end
+
+function (nfl::NonlinearFeaturesLayer)(inp::AbstractMatrix, ps, st)
+    cols = map(col -> first(nfl(col, ps, st)), eachcol(inp))
+    return reduce(hcat, cols), st
 end
 
 function Base.show(io::IO, nfl::NonlinearFeaturesLayer)
