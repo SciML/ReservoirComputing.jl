@@ -190,6 +190,18 @@ begin
             @test dl2.init_delay === (init1, init2)
         end
 
+        @testset "constructor validation" begin
+            @test_throws ArgumentError DelayLayer(3; stride = 0)
+            @test_throws ArgumentError DelayLayer(3; stride = -2)
+            @test_throws ArgumentError DelayLayer(3; num_delays = -1)
+            @test DelayLayer(3; num_delays = 0).num_delays == 0
+            @test_throws ArgumentError NGRC(2, 2; num_delays = 2, stride = 0)
+            @test_throws ArgumentError InputDelayESN(2, 10, 2; stride = 0)
+            @test_throws ArgumentError StateDelayESN(2, 10, 2; stride = 0)
+            @test_throws ArgumentError DelayESN(2, 10, 2; input_stride = 0)
+            @test_throws ArgumentError DelayESN(2, 10, 2; state_stride = 0)
+        end
+
         @testset "initialstates & init_delay_history" begin
             init1(rng, d, b) = fill(Float32(1), d, b)
             init2(rng, d, b) = fill(Float32(2), d, b)

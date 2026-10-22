@@ -83,7 +83,7 @@ function ES2NCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
-        proximity::AbstractFloat = 1.0
+        proximity::Real = 1.0
     )
     return ES2NCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,

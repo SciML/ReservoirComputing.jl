@@ -1178,7 +1178,7 @@ the pooled feature matrix is also returned.
 
 ## Keywords
 
-- `washout::Int = 0`: Initial columns removed from every feature and target.
+- `washout::Int = 0`: Initial columns removed from every feature and target. Must be non-negative.
 - `return_states::Bool = false`: Return pooled conceptor-filtered features.
 - `init_carry = nothing`: Initial carry passed when resetting each sequence.
 - `kwargs...`: Additional options for the readout fit, such as `solver`.
@@ -1215,9 +1215,8 @@ function train!(
         st_tmp = merge(st, (; model = st_reset))
         states, _ = collectstates(concept, __as_matrix(signal), ps, st_tmp; conceptor = name)
         tgt = targets[name]
-        if washout > 0
-            states = states[:, (washout + 1):end]
-            tgt = tgt[:, (washout + 1):end]
+        if washout != 0
+            states, tgt = __apply_washout(states, tgt, washout)
         end
         push!(all_states, states)
         push!(all_targets, tgt)

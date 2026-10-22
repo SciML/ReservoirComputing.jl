@@ -355,6 +355,10 @@ begin
                 [:a => vec_a, :b => vec_b], ps, st; washout = 20
             )
             @test ps_vec.model.readout.weight == ps2.model.readout.weight
+            @test_throws ArgumentError train!(
+                rng9, concept, [:a => signal_a, :b => signal_b],
+                [:a => signal_a, :b => signal_b], ps, st; washout = -1
+            )
         end
     end
 end

@@ -80,7 +80,7 @@ end
 
 function __coerce_layer_mods(x)
     return x === nothing ? () :
-        x isa Tuple ? x :
-        x isa AbstractVector ? Tuple(x) :
-        (x,)
+        x isa Tuple ? __wrap_layers(x) :
+        x isa AbstractVector ? __wrap_layers(Tuple(x)) :
+        (__wrap_layer(x),)
 end

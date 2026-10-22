@@ -86,8 +86,8 @@ function EuSNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_state = zeros32, leak_coefficient::AbstractFloat = 1.0,
-        diffusion::AbstractFloat = 1.0
+        init_state = zeros32, leak_coefficient::Real = 1.0,
+        diffusion::Real = 1.0
     )
     return EuSNCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,

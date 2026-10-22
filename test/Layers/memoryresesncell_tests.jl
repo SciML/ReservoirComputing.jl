@@ -111,6 +111,18 @@ begin
             @test size(ps.bias) == (res_dims,)
         end
 
+        @testset "standalone use is rejected" begin
+            rng = MersenneTwister(5)
+            cell = build_memresesn(3, 4, 5)
+            ps = initialparameters(rng, cell)
+            st = initialstates(rng, cell)
+            x = randn(rng, Float32, 3)
+            @test_throws ArgumentError cell(x, ps, st)
+            @test_throws ArgumentError ReservoirComputing.StatefulLayer(cell)(
+                x, ps, (cell = st, carry = nothing)
+            )
+        end
+
         @testset "initialstates has rng" begin
             rng = MersenneTwister(3)
             cell = build_memresesn(3, 4, 5)
@@ -247,30 +259,6 @@ begin
             h_new, _ = y_tuple
 
             @test h_new ≈ U .+ M
-        end
-
-        @testset "forward: implicit init builds hidden and memory states" begin
-            rng = MersenneTwister(8)
-            D = 3
-            cell = build_memresesn(
-                D,
-                D,
-                D;
-                activation = identity,
-                init_input = _W_I,
-                init_reservoir = _W_ZZ,
-                init_memory = _W_ZZ,
-                init_orthogonal = _W_ZZ,
-                alpha = 0.0,
-                beta = 1.0,
-            )
-            ps = initialparameters(rng, cell)
-            st = initialstates(rng, cell)
-
-            u = Float32[1, 2, 3]
-            (y_tuple, _) = cell(u, ps, st)
-            h_new, _ = y_tuple
-            @test h_new ≈ u
         end
     end
 

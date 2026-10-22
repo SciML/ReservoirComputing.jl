@@ -12,6 +12,12 @@ extends [`ESNCell`](@ref). Intended to be plugged into an [`RMNCell`](@ref) as
 the nonlinear reservoir, with an [`ESNCell`](@ref) (with `identity` activation)
 playing the role of the linear memory reservoir.
 
+!!! note "Building block"
+    `MemoryResESNCell` is a building block for [`RMNCell`](@ref) and cannot be used on its
+    own: the memory state is produced by the linear reservoir of the `RMNCell`, and
+    calling the cell with a plain input throws an `ArgumentError`. Use
+    [`RMNCell`](@ref), [`RMNESN`](@ref) or [`RMNResESN`](@ref) instead.
+
 ## Equations
 
 ```math
@@ -96,7 +102,7 @@ function MemoryResESNCell(
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_memory = scaled_rand, init_state = randn32,
         init_orthogonal = orthogonal,
-        alpha::AbstractFloat = 1.0, beta::AbstractFloat = 1.0
+        alpha::Real = 1.0, beta::Real = 1.0
     )
     return MemoryResESNCell(
         activation, in_dims, mem_dims, out_dims, init_bias, init_reservoir,
@@ -119,10 +125,12 @@ function initialparameters(rng::AbstractRNG, esn::MemoryResESNCell)
 end
 
 function (esn::MemoryResESNCell)(inp::AbstractArray, ps, st::NamedTuple)
-    rng = replicate(st.rng)
-    hidden_state = init_hidden_state(rng, esn, inp)
-    memory_state = init_hidden_state(rng, esn, inp)
-    return esn((inp, (hidden_state, memory_state)), ps, merge(st, (; rng)))
+    throw(
+        ArgumentError(
+            "MemoryResESNCell cannot be used standalone: it needs a memory state supplied by a " *
+                "linear reservoir. Use it through RMNCell, RMNResESN."
+        )
+    )
 end
 
 function (esn::MemoryResESNCell)(

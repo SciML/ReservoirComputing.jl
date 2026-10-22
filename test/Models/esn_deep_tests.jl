@@ -113,6 +113,19 @@ begin
             @test typeof(updated_st) === typeof(collected_st)
         end
 
+        @testset "per-layer modifier tuples wrap plain functions" begin
+            rng = MersenneTwister(41)
+            desn = DeepESN(2, [10, 10], 2; state_modifiers = ((x -> x .+ 1,), ()))
+            ps, st = setup(rng, desn)
+            X = randn(rng, Float32, 2, 8)
+            states, _ = ReservoirComputing.collectstates(desn, X, ps, st)
+            @test size(states) == (10, 8)
+            @test desn.state_modifiers[1][1] isa ReservoirComputing.WrappedFunction
+            desn2 = DeepESN(2, [10, 10], 2; state_modifiers = ([x -> x, NLAT2()], nothing))
+            @test desn2.state_modifiers[1][1] isa ReservoirComputing.WrappedFunction
+            @test desn2.state_modifiers[1][2] isa ReservoirComputing.WrappedFunction
+        end
+
         @testset "state_modifiers per layer are applied in order" begin
             rng = MersenneTwister(4)
             D = 3
