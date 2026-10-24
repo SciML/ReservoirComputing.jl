@@ -1,6 +1,6 @@
 @doc raw"""
     MemoryESNCell(in_dims => out_dims, [activation];
-        use_bias=false, init_bias=rand32,
+        use_bias=false, init_bias=zeros32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_memory=rand_sparse, init_state=randn32, leak_coefficient=1.0)
 
@@ -32,7 +32,7 @@ Echo State Network (ESN) recurrent cell with memory matrix [Gallicchio2024b](@ci
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
+      Default is `zeros32`.
   - `init_reservoir`: Initializer for the reservoir matrix `W_r`.
     Default is [`rand_sparse`](@ref).
   - `init_memory`: Initializer for the memory matrix `W_m`.

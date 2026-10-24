@@ -1,6 +1,6 @@
 @doc raw"""
     EuSNCell(in_dims => out_dims, [activation];
-        use_bias=false, init_bias=rand32,
+        use_bias=false, init_bias=zeros32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=zeros32, leak_coefficient=1.0, diffusion=1.0)
 
@@ -26,7 +26,7 @@ Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
+      Default is `zeros32`.
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix `W_in`.
@@ -75,7 +75,6 @@ Created by `initialstates(rng, esn)`:
     init_bias
     init_reservoir
     init_input
-    #init_feedback::F
     init_state
     leak_coefficient
     diffusion

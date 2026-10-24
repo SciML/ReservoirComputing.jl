@@ -16,7 +16,6 @@ end
 
 function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     input_size = size(input_vector, 1)
-    #single_encoded_size = Int(size(tot_encoded_vector, 1)/permutations)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
@@ -52,7 +51,6 @@ end
 
 function init_maps(input_size, permutations, mapped_vector_size)
     maps = Array{Int}(undef, permutations, input_size)
-    #tot_size = input_size*permutations
 
     for i in 1:permutations
         maps[i, :] = mapping(input_size, mapped_vector_size)
@@ -62,7 +60,6 @@ function init_maps(input_size, permutations, mapped_vector_size)
 end
 
 function mapping(input_size, mapped_vector_size)
-    #sample(1:mapped_vector_size, input_size; replace=false)
     return randperm(mapped_vector_size)[1:input_size]
 end
 

@@ -49,6 +49,7 @@ begin
 
             ro_b = LinearReadout(7 => 5; use_bias = True())
             @test LuxCore.parameterlength(ro_b) == 5 * 7 + 5
+            @test ReservoirComputing.parameterlength === LuxCore.parameterlength
         end
 
         @testset "forward pass: vector, no-bias, identity" begin

@@ -1,7 +1,6 @@
 const BoolType = Union{StaticBool, Bool, Val{true}, Val{false}}
 const InputType = Tuple{<:AbstractArray, Tuple{<:AbstractArray}}
 const IntegerType = Union{Integer, StaticInt}
-const RCFields = (:cells, :state_modifiers, :readout)
 
 __quote_keys(t) = Expr(:tuple, (QuoteNode(s) for s in t)...)
 
