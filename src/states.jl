@@ -149,6 +149,10 @@ function (ex::Extend)(inp, ps, st::NamedTuple)
     return vcat(inp, state), (; op = st_op)
 end
 
+function __reset_delay(rng::AbstractRNG, ex::Extend, st, init_carry)
+    return (; op = __reset_delay(rng, ex.op, st.op, init_carry))
+end
+
 @inline function __apply_state_modifier(ex::Extend, features, inp, ps, st)
     state, st_op = apply(ex.op, features, ps.op, st.op)
     return vcat(inp, state), (; op = st_op)
