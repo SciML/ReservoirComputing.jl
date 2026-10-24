@@ -401,6 +401,35 @@ begin
         end
     end
 
+    @testset "EuSNCell: matches (W - Wᵀ - γI) h + b formula" begin
+        for use_bias in (false, true)
+            cell = EuSNCell(3 => 7; use_bias, diffusion = 0.3, leak_coefficient = 0.4)
+            ps = initialparameters(MersenneTwister(5), cell)
+            if use_bias
+                ps = merge(ps, (; bias = rand(MersenneTwister(6), Float32, 7)))
+            end
+            x = rand(MersenneTwister(7), Float32, 3)
+            h = rand(MersenneTwister(8), Float32, 7)
+            (y, _), _ = cell((x, (h,)), ps, NamedTuple())
+            W = ps.reservoir_matrix
+            A = W .- transpose(W) .- 0.3f0 .* Matrix{Float32}(I, 7, 7)
+            pre = ps.input_matrix * x .+ A * h
+            use_bias && (pre = pre .+ ps.bias)
+            @test y ≈ h .+ 0.4f0 .* tanh.(pre) rtol = 1.0f-5
+        end
+    end
+
+    @testset "EuSNCell: bias is not absorbed by the recurrent term" begin
+        cell = EuSNCell(
+            1 => 1, identity; use_bias = true, diffusion = 1.0, leak_coefficient = 1.0,
+            init_input = _W_ZZ, init_reservoir = (rng, m, n) -> Float32[1.0f8;;]
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        ps = merge(ps, (; bias = Float32[1]))
+        (y, _), _ = cell((Float32[0], (Float32[1],)), ps, NamedTuple())
+        @test y == Float32[1]
+    end
+
     @testset "EuSN: the default initial state is zero" begin
         cell = EuSNCell(3 => 30)
         ps = initialparameters(MersenneTwister(0), cell)

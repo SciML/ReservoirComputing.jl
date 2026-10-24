@@ -99,9 +99,9 @@ function (esn::EuSNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)
     t_diff = T(esn.diffusion)
-    asynm_matrix = compute_asym_recurrent(ps.reservoir_matrix, t_diff)
-    win_inp = dense_bias(ps.input_matrix, inp, nothing)
-    w_state = dense_bias(asynm_matrix, hidden_state, bias)
+    win_inp = dense_bias(ps.input_matrix, inp, bias)
+    w_state = dense_bias(ps.reservoir_matrix, hidden_state, nothing) .-
+        transpose(ps.reservoir_matrix) * hidden_state .- t_diff .* hidden_state
     candidate_h = esn.activation.(win_inp .+ w_state)
     h_new = hidden_state .+ t_lc .* candidate_h
     return (h_new, (h_new,)), st
@@ -118,9 +118,4 @@ function Base.show(io::IO, esn::EuSNCell)
     end
     has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
-end
-
-function compute_asym_recurrent(weight_hh::AbstractMatrix, gamma::AbstractFloat)
-    return weight_hh .- transpose(weight_hh) .-
-        gamma .* Matrix{eltype(weight_hh)}(I, size(weight_hh, 1), size(weight_hh, 1))
 end
