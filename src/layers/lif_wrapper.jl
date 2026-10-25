@@ -80,14 +80,14 @@ Created by `initialparameters(rng, lif)`:
 Created by `initialstates(rng, lif)`:
 
   - `rng`: an owned copy of the RNG given to `initialstates`. The first call samples
-    `start_states` and `input_buffer` from a copy of it and returns the advanced copy,
-    so the RNG of the input state is never advanced.
+    `start_states` and `input_buffer` from a copy of it and leaves it unchanged, so a
+    later re-initialization (as after [`resetcarry!`](@ref)) draws the same values.
   - `input_buffer`: a length `lookback_horizon-1` history of past inputs, stored as
     copies; initialized on first call using `init_buffer`.
   - `start_states`: the state tuple every window starts from; sampled on the first call
     with the wrapped cell's `init_state`. A state saved without this entry, as by earlier
-    versions, is accepted: the next call samples it from a copy of `rng`, keeps the saved
-    `input_buffer`, and returns the advanced `rng`.
+    versions, is accepted: the next call samples it from a copy of `rng` and keeps the saved
+    `input_buffer`.
   - `cell`: the wrapped cell’s own internal state (NamedTuple).
 """
 @concrete struct LocalInformationFlow <: AbstractEchoStateNetworkCell
@@ -144,6 +144,12 @@ function __init_input_buffer(
     return buf
 end
 
+__reset_window(_, st_res, _) = st_res
+
+function __reset_window(::StatefulLayer{<:LocalInformationFlow}, st_res, start_states)
+    return merge(st_res, (; cell = merge(st_res.cell, (; input_buffer = nothing, start_states))))
+end
+
 function init_hidden_states(rng::AbstractRNG, lif::LocalInformationFlow, inp::AbstractArray)
     return init_hidden_states(rng, lif.cell, inp)
 end
@@ -163,7 +169,7 @@ function __init_window_states(lif::LocalInformationFlow, inp::AbstractArray, st:
         input_buffer = __init_input_buffer(rng, lif, inp)
     end
 
-    return merge(st, (; rng, input_buffer, start_states))
+    return merge(st, (; input_buffer, start_states))
 end
 
 function (lif::LocalInformationFlow)((inp, _)::Tuple, ps, st::NamedTuple)

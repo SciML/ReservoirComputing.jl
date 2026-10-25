@@ -220,6 +220,20 @@ function (desn::DeepESN)(inp, ps, st)
     return inp_t, merge(new_st, (readout = st_ro,))
 end
 
+"""
+    resetcarry!(rng, desn::DeepESN, st; init_carry=nothing)
+
+Reset the carry of every cell of a [`DeepESN`](@ref), and the history and clock of
+every [`DelayLayer`](@ref) among the per-layer `state_modifiers`.
+
+`init_carry` is `nothing`, a function, or a tuple or vector with one entry per layer
+(`nothing` or a function). Entry `i` sets the carry of cell `i`, called as
+`f(rng, dim)`, and the delay layers of layer `i`'s modifiers, called as
+`f(rng, in_dims, num_delays)`, so the initializers must accept both calls (the
+[WeightInitializers.jl](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+functions do). A `nothing` entry clears the carry and the delay history of that layer,
+which is then rebuilt from the layer's own initializers on the next call.
+"""
 function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
     n_layers = length(desn.cells)
 
@@ -255,11 +269,10 @@ function resetcarry!(rng::AbstractRNG, desn::DeepESN, st; init_carry = nothing)
         end, n_layers
     )
 
-    return (;
-        cells = new_cells,
-        state_modifiers = st.state_modifiers,
-        readout = st.readout,
+    new_mods = __reset_deep_delays(
+        rng, desn.state_modifiers, st.state_modifiers, init_carry, n_layers
     )
+    return (; cells = new_cells, state_modifiers = new_mods, readout = st.readout)
 end
 
 function collectstates(desn::DeepESN, data::AbstractMatrix, ps, st::NamedTuple)
