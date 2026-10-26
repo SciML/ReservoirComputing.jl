@@ -1,8 +1,8 @@
 @doc raw"""
     EuSNCell(in_dims => out_dims, [activation];
-        use_bias=false, init_bias=rand32,
+        use_bias=false, init_bias=zeros32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
-        init_state=randn32, leak_coefficient=1.0, diffusion=1.0)
+        init_state=zeros32, leak_coefficient=1.0, diffusion=1.0)
 
 Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 
@@ -12,7 +12,7 @@ Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 \begin{aligned}
     \mathbf{x}(t) &= \mathbf{x}(t-1) + \varepsilon\, \phi\!\left(
         \mathbf{W}_{\text{in}}\, \mathbf{u}(t) +
-        (\mathbf{W}_r - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
+        (\mathbf{W}_r - \mathbf{W}_r^{\top} - \gamma\, \mathbf{I})\, \mathbf{x}(t-1)
         + \mathbf{b} \right)
 \end{aligned}
 ```
@@ -26,15 +26,18 @@ Euler State Network (EuSN) cell [Gallicchio2024](@cite).
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
+      Default is `zeros32`.
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix `W_in`.
     Default is [`scaled_rand`](@ref).
   - `init_state`: Initializer for the hidden state when an external
-    state is not provided. Default is `randn32`.
-  - `leak_coefficient`: Leak rate `α ∈ (0,1]`. Default: `1.0`.
-  - `diffusion`: Diffusiona parameter `∈ (0,1]`. Default: `1.0`.
+    state is not provided. Default is `zeros32`: EuSN dynamics are non-dissipative,
+    so the initial state does not decay, and starting from zero follows
+    [Gallicchio2024](@cite) (`h(0) = 0`).
+  - `leak_coefficient`: Euler step size `ε`. Default: `1.0`.
+  - `diffusion`: Diffusion coefficient `γ`, the weight of the `-γ I` term in the
+    recurrent matrix. Default: `1.0`.
 
 ## Inputs
 
@@ -72,7 +75,6 @@ Created by `initialstates(rng, esn)`:
     init_bias
     init_reservoir
     init_input
-    #init_feedback::F
     init_state
     leak_coefficient
     diffusion
@@ -83,8 +85,8 @@ function EuSNCell(
         (in_dims, out_dims)::Pair{<:IntegerType, <:IntegerType},
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_state = randn32, leak_coefficient::AbstractFloat = 1.0,
-        diffusion::AbstractFloat = 1.0
+        init_state = zeros32, leak_coefficient::Real = 1.0,
+        diffusion::Real = 1.0
     )
     return EuSNCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,
@@ -97,27 +99,23 @@ function (esn::EuSNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)
     t_diff = T(esn.diffusion)
-    asynm_matrix = compute_asym_recurrent(ps.reservoir_matrix, t_diff)
-    win_inp = dense_bias(ps.input_matrix, inp, nothing)
-    w_state = dense_bias(asynm_matrix, hidden_state, bias)
+    win_inp = dense_bias(ps.input_matrix, inp, bias)
+    w_state = dense_bias(ps.reservoir_matrix, hidden_state, nothing) .-
+        transpose(ps.reservoir_matrix) * hidden_state .- t_diff .* hidden_state
     candidate_h = esn.activation.(win_inp .+ w_state)
-    h_new = (one(T) - t_lc) .* hidden_state .+ t_lc .* candidate_h
+    h_new = hidden_state .+ t_lc .* candidate_h
     return (h_new, (h_new,)), st
 end
 
 function Base.show(io::IO, esn::EuSNCell)
     print(io, "EuSNCell($(esn.in_dims) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.leak_coefficient != eltype(esn.leak_coefficient)(1.0)
         print(io, ", leak_coefficient=$(esn.leak_coefficient)")
     end
     if esn.diffusion != eltype(esn.diffusion)(1.0)
         print(io, ", diffusion=$(esn.diffusion)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
-end
-
-function compute_asym_recurrent(weight_hh::AbstractMatrix, gamma::AbstractFloat)
-    return weight_hh .- transpose(weight_hh) .-
-        gamma .* Matrix{eltype(weight_hh)}(I, size(weight_hh, 1), size(weight_hh, 1))
 end

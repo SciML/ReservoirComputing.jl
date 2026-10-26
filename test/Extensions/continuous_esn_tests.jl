@@ -14,6 +14,22 @@ begin
     using SciMLBase
     using DataInterpolations
 
+    @testset "ContinuousESNCell: show" begin
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0), args = (Tsit5(), :a))) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), args=(Tsit5, :a))"
+        @test occursin("args=(Tsit5,)", sprint(show, ContinuousESN(2, 5, 1, (0.0, 1.0), Tsit5())))
+        @test sprint(
+            show,
+            ContinuousESNCell(
+                2 => 3; tspan = (0.0, 1.0), activation = identity, args = (1,), abstol = 1.0e-6
+            )
+        ) == "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), activation=identity, args=(1,), abstol=1.0e-6)"
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0))) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0))"
+        @test sprint(show, ContinuousESNCell(2 => 3; tspan = (0.0, 1.0), use_bias = true)) ==
+            "ContinuousESNCell(2 => 3, tspan=(0.0, 1.0), use_bias=true)"
+    end
+
     @testset "ContinuousESN: construction + parameter shapes" begin
         rng = MersenneTwister(0)
         in_dim, res_dim, out_dim = 3, 50, 2
@@ -221,7 +237,7 @@ begin
         @test esn_dt.reservoir.input_dt == Δt
         @test esn_default.reservoir.input_dt === nothing
         @test !haskey(esn_dt.reservoir.kwargs, :input_dt)
-        @test occursin("input_dt = 0.5", sprint(show, esn_dt.reservoir))
+        @test occursin("input_dt=0.5", sprint(show, esn_dt.reservoir))
         ps, st = setup(MersenneTwister(0), esn_default)
 
         s_default, _ = collectstates(esn_default, data, ps, st)
@@ -359,4 +375,56 @@ begin
         @test length(first(stm.reservoir.carry)) == res_dim
     end
 
+    @testset "ContinuousESN: activation and init_state are used" begin
+        dim, res_dim = 2, 20
+        data = randn(MersenneTwister(1), Float32, dim, 30)
+        function sin_rhs!(dx, x, p, t)
+            mul!(dx, p.reservoir_matrix, x)
+            mul!(dx, p.input_matrix, p.input(t), true, true)
+            @. dx = -x + sin(dx)
+            return nothing
+        end
+        solve_kw = (; reltol = 1.0e-8, abstol = 1.0e-10)
+        esn_tanh = ContinuousESN(dim, res_dim, dim, (0.0, 3.0), Tsit5(); solve_kw...)
+        esn_sin = ContinuousESN(dim, res_dim, dim, sin, (0.0, 3.0), Tsit5(); solve_kw...)
+        esn_ref = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5(); equations = sin_rhs!, solve_kw...
+        )
+        ps, st = setup(MersenneTwister(7), esn_tanh)
+        s_tanh, _ = collectstates(esn_tanh, data, ps, st)
+        s_sin, _ = collectstates(esn_sin, data, ps, st)
+        s_ref, _ = collectstates(esn_ref, data, ps, st)
+        @test s_sin ≈ s_ref
+        @test !isapprox(s_sin, s_tanh; rtol = 1.0e-3)
+        ps_act = merge(ps, (reservoir = merge(ps.reservoir, (activation = sin,)),))
+        @test first(collectstates(esn_tanh, data, ps_act, st)) ≈ s_sin
+
+        esn_half = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5();
+            init_state = (rng, dims...) -> fill(0.5f0, dims...), solve_kw...
+        )
+        s_half, _ = collectstates(esn_half, data, ps, st)
+        @test !isapprox(s_half[:, 1], s_tanh[:, 1]; rtol = 1.0e-3)
+        @test eltype(s_half) == eltype(ps.reservoir.input_matrix)
+
+        esn_rand = ContinuousESN(
+            dim, res_dim, dim, (0.0, 3.0), Tsit5(); init_state = randn32, solve_kw...
+        )
+        s_rand, st_rand = collectstates(esn_rand, data, ps, st)
+        @test s_rand == first(collectstates(esn_rand, data, ps, st))
+        @test s_rand != s_tanh
+        @test st_rand.reservoir.rng != st.reservoir.rng
+    end
+
+    @testset "ContinuousESN: collectstates is reproducible with default_rng setup" begin
+        esn = ContinuousESN(
+            3, 30, 1, (0.0, 1.0), Tsit5();
+            init_state = (rng, d...) -> rand(rng, Float32, d...),
+        )
+        ps, st = setup(Random.default_rng(), esn)
+        data = randn(MersenneTwister(1), Float32, 3, 8)
+        s1, _ = collectstates(esn, data, ps, deepcopy(st))
+        s2, _ = collectstates(esn, data, ps, deepcopy(st))
+        @test s1 == s2
+    end
 end

@@ -114,7 +114,7 @@ Leaky integrate-and-fire neuron with exponential synaptic current
   - `tau_m`: Membrane time constant. Default: `0.02`.
   - `v_rest`: Resting potential. Default: `0.0`.
   - `v_reset`: Reset potential. Default: `0.0`.
-  - `v_th`: Spike threshold. Default: `1.0`.
+  - `v_th`: Spike threshold. Must be greater than `v_reset`. Default: `1.0`.
   - `tau_ref`: Absolute refractory period. Default: `0.002`.
   - `r_m`: Membrane resistance. Default: `1.0`.
   - `tau_syn`: Synaptic decay time. Default: `0.005`.
@@ -137,6 +137,9 @@ function LIFNeuron(;
     r_m > 0 || throw(ArgumentError("r_m must be positive, got $r_m"))
     tau_syn > 0 || throw(ArgumentError("tau_syn must be positive, got $tau_syn"))
     tau_ref >= 0 || throw(ArgumentError("tau_ref must be non-negative, got $tau_ref"))
+    v_th > v_reset || throw(
+        ArgumentError("v_th must be greater than v_reset, got v_th=$v_th, v_reset=$v_reset")
+    )
     return LIFNeuron(tau_m, v_rest, v_reset, v_th, tau_ref, r_m, tau_syn)
 end
 
@@ -406,20 +409,28 @@ end
 
 function initialstates(rng::AbstractRNG, cell::LSMCell)
     return (
-        rng = replicate(rng),
+        rng = __owned_replicate(rng),
         encoder = __init_encoder_st(rng, cell.encoder),
     )
 end
 
 __init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
 function __init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
-    return (rng = replicate(rng),)
+    return (rng = __owned_replicate(rng),)
 end
 
 function Base.show(io::IO, cell::LSMCell)
     print(io, "LSMCell(", cell.in_dims, " => ", cell.out_dims)
-    print(io, ", tspan = ")
+    print(io, ", tspan=")
     show(io, cell.tspan)
-    cell.input_dt === nothing || print(io, ", input_dt = ", cell.input_dt)
+    cell.input_dt === nothing || print(io, ", input_dt=", cell.input_dt)
+    cell.neuron == LIFNeuron() || print(io, ", neuron=", cell.neuron)
+    cell.encoder == CurrentInjection() || print(io, ", encoder=", cell.encoder)
+    cell.feature_map == ExponentialSpikeFilter() || print(io, ", feature_map=", cell.feature_map)
+    has_bias(cell) && print(io, ", use_bias=true")
+    __show_args(io, cell.args)
+    for (k, v) in pairs(cell.kwargs)
+        print(io, ", ", k, "=", v)
+    end
     return print(io, ")")
 end

@@ -16,7 +16,6 @@ end
 
 function encoding(rm::RandomMaps, input_vector, tot_encoded_vector)
     input_size = size(input_vector, 1)
-    #single_encoded_size = Int(size(tot_encoded_vector, 1)/permutations)
     new_tot_enc_vec = copy(tot_encoded_vector)
 
     for i in 1:(rm.permutations)
@@ -52,7 +51,6 @@ end
 
 function init_maps(input_size, permutations, mapped_vector_size)
     maps = Array{Int}(undef, permutations, input_size)
-    #tot_size = input_size*permutations
 
     for i in 1:permutations
         maps[i, :] = mapping(input_size, mapped_vector_size)
@@ -62,14 +60,13 @@ function init_maps(input_size, permutations, mapped_vector_size)
 end
 
 function mapping(input_size, mapped_vector_size)
-    #sample(1:mapped_vector_size, input_size; replace=false)
     return randperm(mapped_vector_size)[1:input_size]
 end
 
 function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
     rm = reca.enc
     T = eltype(inp)
-    ca0 = T.(encoding(rm, inp, T.(ca_prev)))
+    ca0 = encoding(rm, inp, __ca_state_type(reca.automaton, T).(ca_prev))
     ca = CellularAutomaton(reca.automaton, ca0, rm.generations + 1)
     evo = ca.evolution
     feat2T = evo[2:end, :]
@@ -77,6 +74,9 @@ function (reca::RECACell)((inp, (ca_prev,)), ps, st::NamedTuple)
     ca_last = evo[end, :]
     return (T.(feats), (T.(ca_last),)), st
 end
+
+__ca_state_type(::CellularAutomata.CCA, ::Type{T}) where {T} = T
+__ca_state_type(_, ::Type) = Int
 
 function (reca::RECACell)(inp::AbstractVector, ps, st::NamedTuple)
     ca = st.ca

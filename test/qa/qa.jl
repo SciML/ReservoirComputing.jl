@@ -43,6 +43,7 @@ rc_internal_hooks = (
 const REEXPORTS = (
     :apply, :initialparameters, :initialstates, :setup,
     :orthogonal, :rand32, :randn32, :sparse_init, :zeros32,
+    :QRFactorization,
 )
 
 run_qa(

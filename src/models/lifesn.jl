@@ -72,7 +72,7 @@ Reservoir (passed to [`ESNCell`](@ref) via [`LIFESNCell`](@ref)):
   - `init_input`: Initializer for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initializer for reservoir bias (used if `use_bias=true`).
     Default: `zeros32`.
-  - `init_state`: Initializer used when an external state is not provided.
+  - `init_state`: Initializer for the reservoir state every window starts from.
     Default: `randn32`.
   - `use_bias`: Whether the reservoir uses a bias term. Default: `false`.
 

@@ -2,13 +2,16 @@ name: Benchmark this PR
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
     paths-ignore: ['docs/**']
 
 permissions:
   pull-requests: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   benchmark:
     runs-on: ubuntu-latest

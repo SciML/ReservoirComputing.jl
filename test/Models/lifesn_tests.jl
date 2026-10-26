@@ -281,6 +281,27 @@ begin
         @test length(pred) == out_dims
     end
 
+    @testset "LIFESN: states depend only on the last lookback_horizon inputs" begin
+        rng = MersenneTwister(11)
+        in_dims, res_dims, out_dims, H = 2, 20, 2, 3
+
+        model = LIFESN(
+            in_dims, res_dims, out_dims, tanh;
+            lookback_horizon = H, init_state = zeros32,
+        )
+        ps, st = setup(rng, model)
+
+        tail = randn(rng, Float32, in_dims, H)
+        data_a = hcat(randn(rng, Float32, in_dims, 5), tail)
+        data_b = hcat(randn(rng, Float32, in_dims, 5), tail)
+
+        states_a, _ = collectstates(model, data_a, ps, st)
+        states_b, _ = collectstates(model, data_b, ps, st)
+
+        @test states_a[:, end] ≈ states_b[:, end] rtol = 1.0e-6
+        @test !(states_a[:, 1] ≈ states_b[:, 1])
+    end
+
     @testset "LIFESN: resetcarry!" begin
         rng = MersenneTwister(55)
         in_dims, res_dims, out_dims = 3, 5, 2

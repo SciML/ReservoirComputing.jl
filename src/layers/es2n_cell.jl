@@ -83,7 +83,7 @@ function ES2NCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
-        proximity::AbstractFloat = 1.0
+        proximity::Real = 1.0
     )
     return ES2NCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,
@@ -117,9 +117,10 @@ end
 
 function Base.show(io::IO, esn::ES2NCell)
     print(io, "ES2NCell($(esn.in_dims) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.proximity != eltype(esn.proximity)(1.0)
         print(io, ", proximity=$(esn.proximity)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

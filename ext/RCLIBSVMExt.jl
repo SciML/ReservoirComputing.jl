@@ -27,13 +27,13 @@ function __fit_readout(
     size_target = size(target, 1)
 
     if size_target == 1
-        vec_target = vec(target)
-        model = LIBSVM.fit!(svr, perm_states, vec_target)
+        vec_target = Float64.(vec(target))
+        model = LIBSVM.fit!(deepcopy(svr), perm_states, vec_target)
         return model
     else
         models = Vector{Any}(undef, size_target)
         for (idx, row_target) in enumerate(eachrow(target))
-            models[idx] = LIBSVM.fit!(svr, perm_states, row_target)
+            models[idx] = LIBSVM.fit!(deepcopy(svr), perm_states, Float64.(row_target))
         end
         return models
     end
@@ -42,9 +42,12 @@ end
 __has_models(ps) = (ps isa NamedTuple) && (:models in propertynames(ps))
 
 function (svmro::SVMReadout)(inp::AbstractArray, ps, st::NamedTuple)
-    if !__has_models(ps)
-        return inp, st
-    end
+    __has_models(ps) || throw(
+        ArgumentError(
+            "SVMReadout has no fitted models; train it with a LIBSVM objective " *
+                "(e.g. `LIBSVM.EpsilonSVR()`) first."
+        )
+    )
     models = getfield(ps, :models)
 
     vec_like = false

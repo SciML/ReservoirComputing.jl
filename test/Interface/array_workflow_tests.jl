@@ -207,4 +207,87 @@ begin
             @test all(isfinite, autoregressive)
         end
     end
+
+    @testset "integer and Float16 data give float states" begin
+        model = ESN(2, 6, 2; init_reservoir = rand_sparse(; sparsity = 0.5))
+        ps, st = setup(MersenneTwister(404), model)
+        int_data = rand(MersenneTwister(405), 0:1, 2, 10)
+        states, _ = collectstates(model, int_data, ps, st)
+        @test eltype(states) === Float32
+        @test states ≈ first(collectstates(model, Float32.(int_data), ps, st))
+        ps_trained, _ = train(
+            model, int_data, Float32.(int_data), ps, st;
+            objective = RidgeRegression(1.0e-6)
+        )
+        @test all(isfinite, ps_trained.readout.weight)
+        half_states, _ = collectstates(model, Float16.(int_data), ps, st)
+        @test eltype(half_states) === Float32
+    end
+
+    @testset "named ReservoirChain wraps functions and adds Collect" begin
+        layers = (
+            res = StatefulLayer(ESNCell(2 => 5; init_reservoir = rand_sparse(; sparsity = 0.5))),
+            double = x -> 2 .* x,
+            ro = LinearReadout(5 => 2),
+        )
+        named = ReservoirChain(layers)
+        @test keys(named.layers) == (:res, :double, :ro_1, :ro)
+        @test named.layers.ro_1 isa Collect
+        @test keys(ReservoirChain(; layers...).layers) == keys(named.layers)
+        @test keys(ReservoirChain(named.layers).layers) == keys(named.layers)
+        @test length(named[3:4]) == 2
+        @test_throws ArgumentError ReservoirChain((; ro_1 = NLAT2(), ro = LinearReadout(5 => 2)))
+
+        positional = ReservoirChain(values(layers)...)
+        data = rand(MersenneTwister(406), Float32, 2, 12)
+        ps, st = setup(MersenneTwister(407), named)
+        ps_pos, st_pos = setup(MersenneTwister(407), positional)
+        states, _ = collectstates(named, data, ps, st)
+        @test states == first(collectstates(positional, data, ps_pos, st_pos))
+
+        ps_trained, st_trained = train(
+            named, data, data, ps, st; objective = RidgeRegression(1.0e-6)
+        )
+        @test size(ps_trained.ro.weight) == (2, 5)
+        output, _ = predict(named, 3, ps_trained, st_trained; initialdata = data[:, end])
+        @test size(output) == (2, 3)
+    end
+
+    @testset "explicit Collect before readout is not doubled" begin
+        res() = StatefulLayer(ESNCell(2 => 5; init_reservoir = rand_sparse(; sparsity = 0.5)))
+        ncollect(c) = count(l -> l isa Collect, values(c.layers))
+        data = rand(MersenneTwister(408), Float32, 2, 12)
+        explicit = (
+            ReservoirChain(res(), Collect(), LinearReadout(5 => 2)),
+            ReservoirChain([res(), Collect(), LinearReadout(5 => 2)]),
+            ReservoirChain((; res = res(), c = Collect(), ro = LinearReadout(5 => 2))),
+        )
+        grouped = (
+            ReservoirChain(res(), Collect(), (LinearReadout(5 => 2),)),
+            ReservoirChain(res(), Collect(), [LinearReadout(5 => 2)]),
+            ReservoirChain([res(), [Collect(), (LinearReadout(5 => 2),)]]),
+            ReservoirChain((; res = res(), c = Collect(), head = (LinearReadout(5 => 2),))),
+            ReservoirChain(res(), (x -> x, Collect()), LinearReadout(5 => 2)),
+        )
+        for chain in (explicit..., grouped...)
+            @test length(chain.layers) == (chain === grouped[end] ? 4 : 3)
+            @test ncollect(chain) == 1
+            ps, st = setup(MersenneTwister(409), chain)
+            states, _ = collectstates(chain, data, ps, st)
+            @test size(states) == (5, 12)
+            ps_trained, st_trained = train(
+                chain, data, data, ps, st; objective = RidgeRegression(1.0e-6)
+            )
+            @test size(first(chain(data, ps_trained, st_trained))) == (2, 12)
+        end
+        @test keys(explicit[1].layers) == (:layer_1, :layer_2, :layer_3)
+
+        implicit = ReservoirChain(res(), LinearReadout(5 => 2))
+        @test length(implicit.layers) == 3
+        @test ncollect(implicit) == 1
+        @test ncollect(ReservoirChain([res(), LinearReadout(5 => 2)])) == 1
+        separated = ReservoirChain(res(), Collect(), x -> 2 .* x, LinearReadout(10 => 2))
+        @test ncollect(separated) == 2
+        @test ncollect(ReservoirChain(res(), Collect(), LinearReadout(5 => 2; include_collect = false))) == 1
+    end
 end

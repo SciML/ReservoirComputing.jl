@@ -10,10 +10,12 @@ Continuous-time Echo State Network cell
 ([Lukosevicius2012](@cite)). Integrates the ODE
 
 ```math
-\dot{\mathbf{x}}(t) = -\mathbf{x}(t) + \tanh\!\left(
+\dot{\mathbf{x}}(t) = -\mathbf{x}(t) + \sigma\!\left(
     \mathbf{W}_{\text{in}}\,\mathbf{u}(t)
     + \mathbf{W}_r\,\mathbf{x}(t) + \mathbf{b}\right)
 ```
+
+where ``\sigma`` is `activation`.
 
 ## Arguments
 
@@ -33,9 +35,10 @@ Continuous-time Echo State Network cell
   - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initialiser for the bias. Only used if `use_bias=true`.
     Default: `zeros32`.
-  - `init_state`: Initialiser for the initial hidden state.
-    Default: `zeros32`.
-  - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`.
+  - `init_state`: Initialiser for the initial hidden state, sampled from the
+    layer's `rng` when the state holds no carry. Default: `zeros32`.
+  - `equations`: ODE right-hand side `(dx, x, p, t) -> nothing`. `p` holds
+    the parameters, `activation`, and the input signal `p.input(t)`.
     Default: continuous-time leaky-integrator ESN ODE.
   - `use_jac_prototype`: Attach a sparse `jac_prototype` to the underlying
     `ODEFunction`, when a prototype is available for the current
@@ -106,28 +109,35 @@ function initialparameters(rng::AbstractRNG, cell::ContinuousESNCell)
     return ps
 end
 
-function initialstates(::AbstractRNG, ::ContinuousESNCell)
-    return NamedTuple()
+function initialstates(rng::AbstractRNG, ::ContinuousESNCell)
+    return (rng = __owned_replicate(rng),)
 end
 
 function __continuous_esn_rhs!(dx, x, p, t)
     input_t = p.input(t)
+    σ = p.activation
     mul!(dx, p.reservoir_matrix, x)
     mul!(dx, p.input_matrix, input_t, true, true)
     if haskey(p, :bias)
-        @. dx = -x + tanh(dx + p.bias)
+        @. dx = -x + σ(dx + p.bias)
     else
-        @. dx = -x + tanh(dx)
+        @. dx = -x + σ(dx)
     end
     return nothing
 end
 
 function Base.show(io::IO, cell::ContinuousESNCell)
     print(io, "ContinuousESNCell(", cell.in_dims, " => ", cell.out_dims)
-    print(io, ", tspan = ")
+    print(io, ", tspan=")
     show(io, cell.tspan)
-    cell.input_dt === nothing || print(io, ", input_dt = ", cell.input_dt)
-    has_bias(cell) || print(io, ", use_bias = false")
-    known(cell.use_jac_prototype) && print(io, ", use_jac_prototype = true")
+    cell.input_dt === nothing || print(io, ", input_dt=", cell.input_dt)
+    cell.activation === tanh || print(io, ", activation=", cell.activation)
+    cell.equations === __continuous_esn_rhs! || print(io, ", equations=", cell.equations)
+    __show_args(io, cell.args)
+    has_bias(cell) && print(io, ", use_bias=true")
+    known(cell.use_jac_prototype) && print(io, ", use_jac_prototype=true")
+    for (k, v) in pairs(cell.kwargs)
+        print(io, ", ", k, "=", v)
+    end
     return print(io, ")")
 end

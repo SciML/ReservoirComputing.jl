@@ -55,7 +55,18 @@ begin
             shown = String(take!(io))
 
             @test occursin("MemoryResESNCell(", shown)
-            @test occursin("use_bias=false", shown)
+            @test !occursin("use_bias", shown)
+
+            @test sprint(show, MemoryResESNCell((3, 4) => 5)) ==
+                "MemoryResESNCell((3, 4) => 5)"
+            @test sprint(show, MemoryResESNCell((3, 4) => 5, identity)) ==
+                "MemoryResESNCell((3, 4) => 5, identity)"
+            @test sprint(show, MemoryESNCell((3, 4) => 5)) == "MemoryESNCell((3, 4) => 5)"
+            @test sprint(show, MemoryESNCell((3, 4) => 5, identity)) ==
+                "MemoryESNCell((3, 4) => 5, identity)"
+
+            cell_b = build_memresesn(3, 4, 5; use_bias = True())
+            @test occursin("use_bias=true", sprint(show, cell_b))
 
             cell_ab = build_memresesn(3, 4, 5; alpha = 0.25, beta = 0.75)
             io2 = IOBuffer()
@@ -98,6 +109,18 @@ begin
 
             @test haskey(ps, :bias)
             @test size(ps.bias) == (res_dims,)
+        end
+
+        @testset "standalone use is rejected" begin
+            rng = MersenneTwister(5)
+            cell = build_memresesn(3, 4, 5)
+            ps = initialparameters(rng, cell)
+            st = initialstates(rng, cell)
+            x = randn(rng, Float32, 3)
+            @test_throws ArgumentError cell(x, ps, st)
+            @test_throws ArgumentError ReservoirComputing.StatefulLayer(cell)(
+                x, ps, (cell = st, carry = nothing)
+            )
         end
 
         @testset "initialstates has rng" begin
@@ -236,30 +259,6 @@ begin
             h_new, _ = y_tuple
 
             @test h_new ≈ U .+ M
-        end
-
-        @testset "forward: implicit init builds hidden and memory states" begin
-            rng = MersenneTwister(8)
-            D = 3
-            cell = build_memresesn(
-                D,
-                D,
-                D;
-                activation = identity,
-                init_input = _W_I,
-                init_reservoir = _W_ZZ,
-                init_memory = _W_ZZ,
-                init_orthogonal = _W_ZZ,
-                alpha = 0.0,
-                beta = 1.0,
-            )
-            ps = initialparameters(rng, cell)
-            st = initialstates(rng, cell)
-
-            u = Float32[1, 2, 3]
-            (y_tuple, _) = cell(u, ps, st)
-            h_new, _ = y_tuple
-            @test h_new ≈ u
         end
     end
 

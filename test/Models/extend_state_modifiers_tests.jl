@@ -118,6 +118,57 @@ begin
         @test_throws ArgumentError ESN(3, 5, 1; readout_in_dims = 0)
     end
 
+    @testset "readout width follows Pad, ExtendedSquare and DelayLayer" begin
+        for (mods, width) in (
+                ((Pad(),), 6),
+                ((ExtendedSquare(),), 10),
+                ((DelayLayer(5; num_delays = 2),), 15),
+                ((ExtendedSquare(), Pad()), 11),
+            )
+            model = ESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = mods
+            )
+            ps, st = setup(MersenneTwister(311), model)
+            @test size(ps.readout.weight) == (1, width)
+            output, _ = apply(model, _EXTEND_INPUT, ps, st)
+            @test size(output) == (1, 1)
+        end
+
+        hybrid = HybridESN(
+            __zero_knowledge, 1, 3, 5, 1;
+            init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = (Pad(),)
+        )
+        @test size(setup(MersenneTwister(311), hybrid)[1].readout.weight) == (1, 7)
+        deep = DeepESN(
+            3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = [nothing, Pad()]
+        )
+        @test size(setup(MersenneTwister(311), deep)[1].readout.weight) == (1, 6)
+        state_delayed = StateDelayESN(
+            3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = (Pad(),)
+        )
+        @test size(setup(MersenneTwister(311), state_delayed)[1].readout.weight) == (1, 16)
+        both_delayed = DelayESN(
+            3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = (Pad(),)
+        )
+        @test size(setup(MersenneTwister(311), both_delayed)[1].readout.weight) == (1, 11)
+
+        delayed = ESN(
+            2, 4, 2;
+            init_reservoir = _EXTEND_RESERVOIR_INIT,
+            state_modifiers = (DelayLayer(4; num_delays = 1),)
+        )
+        ps, st = setup(MersenneTwister(311), delayed)
+        data = reshape(Float32.(1:16), 2, 8) ./ 10
+        ps_trained, st_trained = train(
+            delayed, data, data, ps, st; objective = RidgeRegression(Float32, 1.0f-6)
+        )
+        @test size(ps_trained.readout.weight) == (2, 8)
+        autoregressive, _ = predict(
+            delayed, 3, ps_trained, st_trained; initialdata = data[:, 1]
+        )
+        @test size(autoregressive) == (2, 3)
+    end
+
     @testset "collectstates preserves each external input" begin
         model = ESN(
             3, 5, 1;

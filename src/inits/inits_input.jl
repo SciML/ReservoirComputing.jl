@@ -8,8 +8,7 @@ a range defined by `scaling`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -94,16 +93,13 @@ end
 Create and return a weighted input layer matrix. In this matrix, each
 of the input signals `in_size` connects to the reservoir nodes
 `res_size`/`in_size`. The nonzero entries are distributed uniformly
-within a range defined by `scaling` [Lu2017](@cite).
-
-Please note that this initializer computes its own reservoir size! If
-the computed reservoir size is different than the provided one it will raise a
-warning.
+within a range defined by `scaling` [Lu2017](@cite). If `res_size` is not a
+multiple of `in_size`, the first `res_size % in_size` inputs connect to one
+additional reservoir node. An `ArgumentError` is thrown if `res_size < in_size`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -174,12 +170,13 @@ julia> all(all(iszero(weight) || lower <= weight <= upper for weight in column) 
 true
 ```
 
-Example of matrix size change:
+When `res_size` is not a multiple of `in_size`, the first `res_size % in_size`
+columns connect to one more reservoir node than the others:
 
 ```jldoctest weightedinit
-julia> res_input = @test_logs (:warn, r"Reservoir size has changed") weighted_init(MersenneTwister(9), Float32, 8, 3);
+julia> res_input = weighted_init(MersenneTwister(9), Float32, 8, 3);
 
-julia> size(res_input) == (6, 3) && all(count(!iszero, column) == 2 for column in eachcol(res_input))
+julia> size(res_input) == (8, 3) && [count(!iszero, column) for column in eachcol(res_input)] == [3, 3, 2]
 true
 ```
 
@@ -200,18 +197,15 @@ function weighted_init(
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
-    approx_res_size, in_size = dims
-    res_size = Int(floor(approx_res_size / in_size) * in_size)
-    check_modified_ressize(res_size, approx_res_size)
-
+    res_size, in_size = dims
+    blocks = __weighted_blocks(res_size, in_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    q = floor(Int, res_size / in_size)
 
     for idx in 1:in_size
-        sc_rand = DeviceAgnostic.rand(rng, T, q)
+        sc_rand = DeviceAgnostic.rand(rng, T, length(blocks[idx]))
         new_scaling = scaling isa AbstractVector ? scaling[idx] : scaling
         apply_scale!(sc_rand, new_scaling, T)
-        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = sc_rand
+        layer_matrix[blocks[idx], idx] = sc_rand
     end
 
     return return_init_as(Val(return_sparse), layer_matrix)
@@ -225,16 +219,12 @@ end
 Create and return a minimal weighted input layer matrix.
 This initializer generates a weighted input matrix with equal, deterministic
 elements in the same construction as [`weighted_minimal]`(@ref),
-inspired by [Lu2017](@cite).
-
-Please note that this initializer computes its own reservoir size! If
-the computed reservoir size is different than the provided one it will raise a
-warning.
+inspired by [Lu2017](@cite). Blocks are distributed as in
+[`weighted_init`](@ref), and an `ArgumentError` is thrown if `res_size < in_size`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -276,12 +266,13 @@ julia> all(count(!iszero, column) == 3 for column in eachcol(res_input)) &&
 true
 ```
 
-Example of different reservoir size for the initializer:
+When `res_size` is not a multiple of `in_size`, the first `res_size % in_size`
+columns connect to one more reservoir node than the others:
 
 ```jldoctest weightedminimal
-julia> res_input = @test_logs (:warn, r"Reservoir size has changed") weighted_minimal(MersenneTwister(13), Float32, 8, 3);
+julia> res_input = weighted_minimal(MersenneTwister(13), Float32, 8, 3);
 
-julia> size(res_input) == (6, 3) && all(count(!iszero, column) == 2 for column in eachcol(res_input))
+julia> size(res_input) == (8, 3) && [count(!iszero, column) for column in eachcol(res_input)] == [3, 3, 2]
 true
 ```
 """
@@ -292,14 +283,12 @@ function weighted_minimal(
         sampling_type = nothing, kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
-    approx_res_size, in_size = dims
-    res_size = Int(floor(approx_res_size / in_size) * in_size)
-    check_modified_ressize(res_size, approx_res_size)
+    res_size, in_size = dims
+    blocks = __weighted_blocks(res_size, in_size)
     layer_matrix = DeviceAgnostic.zeros(rng, T, res_size, in_size)
-    q = floor(Int, res_size / in_size)
 
     for idx in 1:in_size
-        layer_matrix[((idx - 1) * q + 1):((idx) * q), idx] = T(weight) .* ones(T, q)
+        layer_matrix[blocks[idx], idx] = T(weight) .* ones(T, length(blocks[idx]))
     end
     __apply_signs_compat!(rng, signs, layer_matrix, sampling_type, kwargs)
     return return_init_as(Val(return_sparse), layer_matrix)
@@ -314,8 +303,7 @@ networks [Pathak2018](@cite).
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -395,8 +383,7 @@ An optional sign pattern controls which weights have their signs flipped.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -485,8 +472,7 @@ applying:
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -564,8 +550,7 @@ the logistic map recurrence:
 ```
 
 ## Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.
@@ -645,8 +630,7 @@ If the provided number of rows does not match `factor * in_size`
 the number of rows is overridden.
 
 ## Arguments
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the matrix. Should follow `res_size x in_size`.

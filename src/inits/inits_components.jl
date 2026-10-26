@@ -63,7 +63,7 @@ end
 
 # error for sparse inits with no SparseArrays.jl call
 function throw_sparse_error(return_sparse::Bool)
-    return if return_sparse && !isdefined(Main, :SparseArrays)
+    return if return_sparse && Base.get_extension(@__MODULE__, :RCSparseArraysExt) === nothing
         error(
             """\n
             Sparse output requested but SparseArrays.jl is not loaded.
@@ -75,15 +75,17 @@ function throw_sparse_error(return_sparse::Bool)
     end
 end
 
-function check_modified_ressize(res_size::Integer, approx_res_size::Integer)
-    return if res_size != approx_res_size
-        @warn """Reservoir size has changed!\n
-            Computed reservoir size ($res_size) does not equal the \
-        provided reservoir size ($approx_res_size). \n
-            Using computed value ($res_size). Make sure to modify the \
-        reservoir initializer accordingly. \n
-        """
+function __weighted_blocks(res_size::Integer, in_size::Integer)
+    if res_size < in_size
+        throw(
+            ArgumentError(
+                "res_size ($res_size) must be at least in_size ($in_size) so that every input is connected to a reservoir unit"
+            )
+        )
     end
+    q, r = divrem(res_size, in_size)
+    stops = cumsum([q + (j <= r) for j in 1:in_size])
+    return [(stop - (q + (j <= r)) + 1):stop for (j, stop) in enumerate(stops)]
 end
 
 function check_res_size(dims::Integer...)
@@ -110,6 +112,26 @@ function check_inf_nan(weights::AbstractMatrix)
     return nothing
 end
 
+"""
+    __sparse_init(rng, T, dims...; sparsity, std)
+
+Call `sparse_init` with `sparsity`, the fraction of zeroed entries per column, capped at
+the largest fraction that keeps one nonzero entry in each column.
+
+`sparse_init` zeroes `ceil(sparsity * rows)` entries per column, which is every entry when
+`rows < 1 / (1 - sparsity)` and leaves a matrix with spectral radius 0. The cap is the
+midpoint `(rows - 1.5) / rows` of the interval of fractions that zero exactly `rows - 1`
+entries, so floating-point rounding inside `sparse_init` cannot raise the count to `rows`.
+Values of `sparsity` that already leave a nonzero entry in each column give the same
+output and consume the same random numbers as a direct `sparse_init` call.
+"""
+function __sparse_init(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...; sparsity::Number, std::Number
+    ) where {T <: Number}
+    rows = first(dims)
+    max_sparsity = max(0.0, (rows - 1.5) / rows)
+    return sparse_init(rng, T, dims...; sparsity = min(sparsity, max_sparsity), std)
+end
 
 ## scale spectral radius
 """
@@ -122,16 +144,37 @@ given radius
 
   - `matrix`: Matrix to be scaled.
   - `radius`: desidered radius to scale the given matrix to
+
+# Throws
+
+  - `ArgumentError`: if the spectral radius of `matrix` is zero or not finite, or so small
+    that `radius` divided by it overflows, since the matrix cannot be rescaled to `radius`.
+    Nilpotent matrices, such as the ones built by [`delay_line`](@ref) and
+    [`forward_connection`](@ref), have spectral radius 0. Also thrown if the scaled entries
+    overflow the element type of `matrix`, in which case `matrix` has already been
+    overwritten.
 """
 function scale_radius!(reservoir_matrix::AbstractMatrix, radius::AbstractFloat)
     rho_w = maximum(abs.(eigvals(reservoir_matrix)))
-    reservoir_matrix .*= radius / rho_w
-    if Inf in unique(reservoir_matrix) || -Inf in unique(reservoir_matrix)
-        error(
-            """\n
-              Sparsity too low for size of the matrix.
-              Increase res_size or increase sparsity.\n
-            """
+    factor = radius / rho_w
+    if !isfinite(rho_w) || !isfinite(factor)
+        throw(
+            ArgumentError(
+                "Cannot rescale a matrix with spectral radius $rho_w to radius " *
+                    "$radius. Increase `sparsity` or the reservoir size, or do not pass " *
+                    "`radius` for nilpotent topologies such as `delay_line` and " *
+                    "`forward_connection`."
+            )
+        )
+    end
+    reservoir_matrix .*= factor
+    if any(!isfinite, reservoir_matrix)
+        throw(
+            ArgumentError(
+                "Rescaling the matrix to radius $radius overflows its element type " *
+                    "$(eltype(reservoir_matrix)). Use a smaller `radius` or a wider " *
+                    "element type."
+            )
         )
     end
     return reservoir_matrix
@@ -347,8 +390,7 @@ Adds a delay line in the `reservoir_matrix`, with given `shift` and
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a delay line. Can be either a single number
     or an array.
@@ -410,8 +452,7 @@ Adds a backward connection in the `reservoir_matrix`, with given `shift` and
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a backward connection. Can be either a single number
     or an array.
@@ -482,8 +523,7 @@ Adds a simple cycle in the `reservoir_matrix`, with given
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -544,8 +584,7 @@ Adds a reverse simple cycle in the `reservoir_matrix`, with given
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -607,8 +646,7 @@ Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `ju
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a simple cycle. Can be either a single number
     or an array.
@@ -712,13 +750,13 @@ end
 """
     self_loop!([rng], reservoir_matrix, weight; signs = nothing)
 
-Adds jumps to a given `reservoir_matrix` with chosen `weight` and determined `jump_size`.
-`weight` can be either a number or an array.
+Sets the diagonal of `reservoir_matrix` to `weight`, adding a self loop to each node.
+`weight` can be a number, a vector of length `size(reservoir_matrix, 1)`, or a function
+`weight(rng, n)` returning such a vector.
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`
-    from WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `reservoir_matrix`: matrix to be changed.
   - `weight`: weight to add as a self loop. Can be either a single number
     or an array.
@@ -790,9 +828,7 @@ to a permutation matrix.
 ## Arguments
 
   - `rng`: Random number generator used when `permutation_matrix === nothing`.
-    Default is typically `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
-    (if you provide a wrapper method without `rng`).
+    Default is `Xoshiro(1234)` when using the wrapper method without `rng`.
   - `reservoir_matrix`: The reservoir weight matrix to be permuted.
   - `permutation_matrix`: A square permutation matrix of matching size. If `nothing`,
     a random permutation is used.
@@ -828,8 +864,10 @@ for init_component in (
         :simple_cycle!, :reverse_simple_cycle!, :self_loop!,
     )
     @eval begin
-        function ($init_component)(args...; kwargs...)
-            return $init_component(Utils.default_rng(), args...; kwargs...)
+        function ($init_component)(reservoir_matrix::AbstractMatrix, args...; kwargs...)
+            return $init_component(
+                Utils.default_rng(), reservoir_matrix, args...; kwargs...
+            )
         end
     end
 end

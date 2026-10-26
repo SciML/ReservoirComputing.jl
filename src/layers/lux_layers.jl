@@ -73,7 +73,8 @@ You can build a chain from:
 In all cases, function objects are automatically wrapped via `WrappedFunction`
 so they can participate like regular layers. If a [`LinearReadout`](@ref) with
 `include_collect=true` is present, the chain automatically inserts a [`Collect`](@ref)
-layer immediately before that readout.
+layer immediately before that readout, unless a `Collect` already directly precedes
+it. This holds for every constructor.
 
 Use `name` to optionally tag the chain instance.
 
@@ -100,6 +101,10 @@ updated states for every layer.
     holds the parameters for that layer.
   - Field names are generated as `:layer_1, :layer_2, ...` when constructed
     positionally, or preserved when you pass a `NamedTuple`/keyword constructor.
+    A named entry `k` that expands to several layers (a [`LinearReadout`](@ref)
+    with `include_collect=true` becomes `Collect()` followed by the readout,
+    unless a `Collect` already precedes it) gives `:k_1, :k_2, ...` to the added
+    layers and `:k` to the last one.
 
 ## States
 
@@ -119,7 +124,9 @@ updated states for every layer.
     `WrappedFunction(f)`. Non-layer, non-function objects will error.
   - **Auto-collect for readouts:** When a [`LinearReadout`](@ref) has
     `include_collect=true`, the constructor expands it to `(Collect(), readout)`
-    so that downstream tooling can capture features consistently.
+    so that downstream tooling can capture features consistently. No `Collect`
+    is added when the layer right before the readout is already a `Collect`, so
+    `ReservoirChain(reservoir, Collect(), LinearReadout(n => m))` has exactly one.
 
 """
 @concrete struct ReservoirChain <: AbstractLuxWrapperLayer{:layers}
@@ -131,27 +138,54 @@ function ReservoirChain(xs...; name = nothing)
     return ReservoirChain(named_tuple_layers(wrap_functions_in_chain_call(xs)...), name)
 end
 ReservoirChain(xs::AbstractVector; kwargs...) = ReservoirChain(xs...; kwargs...)
-ReservoirChain(nt::NamedTuple; name = nothing) = ReservoirChain(nt, name)
+function ReservoirChain(nt::NamedTuple; name = nothing)
+    names = Symbol[]
+    layers = AbstractLuxLayer[]
+    for (key, layer) in pairs(nt)
+        start = length(layers)
+        __wrap_into!(layers, (layer,))
+        added = length(layers) - start
+        for idx in 1:added
+            push!(names, idx == added ? key : Symbol(key, :_, idx))
+        end
+    end
+    allunique(names) || throw(
+        ArgumentError("ReservoirChain layer names must be unique, got $(Tuple(names)).")
+    )
+    return ReservoirChain(NamedTuple{Tuple(names)}(Tuple(layers)), name)
+end
 ReservoirChain(; name = nothing, kwargs...) = ReservoirChain((; kwargs...); name)
 
 function wrap_functions_in_chain_call(layers::Union{AbstractVector, Tuple})
     new_layers = []
-    for l in layers
-        f = wrap_functions_in_chain_call(l)
-        if f isa Tuple || f isa AbstractVector
-            append!(new_layers, f)
-        elseif f isa Function
-            push!(new_layers, WrappedFunction(f))
-        elseif f isa AbstractLuxLayer
-            push!(new_layers, f)
-        else
-            throw(ArgumentError("Encountered a non-AbstractLuxLayer ($(typeof(f))) in ReservoirChain."))
-        end
-    end
+    __wrap_into!(new_layers, layers)
     return layers isa AbstractVector ? new_layers : Tuple(new_layers)
 end
 
 wrap_functions_in_chain_call(x) = x
+
+function __wrap_into!(acc, layers)
+    for l in layers
+        if l isa Tuple || l isa AbstractVector
+            __wrap_into!(acc, l)
+            continue
+        end
+        f = wrap_functions_in_chain_call(l)
+        if f isa Tuple && !isempty(acc) && last(acc) isa Collect && first(f) isa Collect
+            f = Base.tail(f)
+        end
+        for g in (f isa Tuple ? f : (f,))
+            if g isa Function
+                push!(acc, WrappedFunction(g))
+            elseif g isa AbstractLuxLayer
+                push!(acc, g)
+            else
+                throw(ArgumentError("Encountered a non-AbstractLuxLayer ($(typeof(g))) in ReservoirChain."))
+            end
+        end
+    end
+    return acc
+end
 
 function __readout_include_collect(ro::LinearReadout)
     res = known(getproperty(ro, Val(:include_collect)))
@@ -189,7 +223,7 @@ end
 
 Base.getindex(c::ReservoirChain, i::Int) = c.layers[i]
 function Base.getindex(c::ReservoirChain, i::AbstractArray)
-    return ReservoirChain(index_namedtuple(c.layers, i))
+    return ReservoirChain(index_namedtuple(c.layers, i), nothing)
 end
 
 function Base.getproperty(c::ReservoirChain, name::Symbol)
@@ -203,15 +237,11 @@ Base.length(c::ReservoirChain) = length(c.layers)
 Base.lastindex(c::ReservoirChain) = lastindex(c.layers)
 Base.firstindex(c::ReservoirChain) = firstindex(c.layers)
 
-### from Lux.Utils
-function sample_replicate(rng::AbstractRNG)
-    rand(rng)
-    return replicate(rng)
-end
-
 function init_hidden_state(rng::AbstractRNG, rnn, inp)
-    y = similar(inp, rnn.out_dims, Base.size(inp, 2))
-    copyto!(y, rnn.init_state(rng, size(y)...))
+    h0 = rnn.init_state(rng, rnn.out_dims, Base.size(inp, 2))
+    T = promote_type(eltype(inp), eltype(h0))
+    y = similar(inp, T, rnn.out_dims, Base.size(inp, 2))
+    copyto!(y, h0)
     return ArrayInterface.aos_to_soa(y)
 end
 

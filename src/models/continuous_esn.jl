@@ -2,7 +2,7 @@
     ContinuousESN(in_dims, res_dims, out_dims, [activation,] tspan, args...;
         use_bias = false,
         init_reservoir = rand_sparse, init_input = scaled_rand,
-        init_bias = zeros32, init_state = randn32,
+        init_bias = zeros32, init_state = zeros32,
         equations = __continuous_esn_rhs!,
         state_modifiers = (), readout_activation = identity,
         readout_in_dims = nothing, input_dt = nothing,
@@ -16,7 +16,7 @@ optional `state_modifiers`, and a [`LinearReadout`](@ref).
 
 ```math
 \begin{aligned}
-    \dot{\mathbf{x}}(t) &= -\mathbf{x}(t) + \tanh\!\left(
+    \dot{\mathbf{x}}(t) &= -\mathbf{x}(t) + \sigma\!\left(
         \mathbf{W}_{\text{in}}\,\mathbf{u}(t) + \mathbf{W}_r\,\mathbf{x}(t)
         + \mathbf{b}\right) \\
     \mathbf{z}(t) &= \mathrm{Mods}\!\left(\mathbf{x}(t)\right) \\
@@ -30,7 +30,7 @@ optional `state_modifiers`, and a [`LinearReadout`](@ref).
   - `in_dims`: Input dimension.
   - `res_dims`: Reservoir (hidden state) dimension.
   - `out_dims`: Output dimension.
-  - `activation`: Reservoir activation. Default: `tanh`.
+  - `activation`: Reservoir activation ``\sigma``. Default: `tanh`.
   - `tspan`: Integration interval `(t0, t1)` for `collectstates`.
     Length-2, strictly increasing, finite.
   - `args...`: Forwarded to `solve` positionally. The solver algorithm
@@ -44,8 +44,9 @@ Reservoir (passed to [`ContinuousESNCell`](@ref)):
   - `init_reservoir`: Initialiser for `W_r`. Default: [`rand_sparse`](@ref).
   - `init_input`: Initialiser for `W_in`. Default: [`scaled_rand`](@ref).
   - `init_bias`: Initialiser for `b`. Default: `zeros32`.
-  - `init_state`: Initialiser for the initial hidden state.
-    Default: `randn32`.
+  - `init_state`: Initialiser for the initial hidden state, sampled from the
+    reservoir state's `rng` when there is no carry. Default: `zeros32`, so a
+    fresh state starts from the origin.
   - `equations`: ODE right-hand side function `(dx, x, p, t) -> nothing`.
     Default is the continuous-time leaky-integrator ESN ODE.
   - `input_dt`: Duration of each input column in `collectstates` and of
