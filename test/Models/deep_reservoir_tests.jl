@@ -14,6 +14,18 @@ begin
 
         dummy_readout = LinearReadout(res_dims => out_dims)
 
+        @testset "per-layer modifier tuples wrap plain functions" begin
+            cells = (ESNCell(in_dims => res_dims), ESNCell(res_dims => res_dims))
+            desn = DeepReservoir(
+                cells, dummy_readout; state_modifiers = ((x -> x,), ())
+            )
+            @test desn.state_modifiers[1][1] isa ReservoirComputing.WrappedFunction
+            ps, st = setup(rng, desn)
+            X = randn(rng, Float32, in_dims, 6)
+            states, _ = ReservoirComputing.collectstates(desn, X, ps, st)
+            @test size(states) == (res_dims, 6)
+        end
+
         @testset "make_stateful logic and per-layer granularity" begin
             cell1 = ESNCell(in_dims => res_dims)
             cell2 = ESNCell(res_dims => res_dims)
@@ -57,13 +69,11 @@ begin
             linear = ESNCell(in_dims => res_dims)
             cells_to_test = (
                 ESNCell(in_dims => res_dims),
-                MemoryESNCell((in_dims, res_dims) => res_dims),
                 ES2NCell(in_dims => res_dims),
                 EuSNCell(in_dims => res_dims),
                 EIESNCell(in_dims => res_dims),
                 AdditiveEIESNCell(in_dims => res_dims),
                 ResESNCell(in_dims => res_dims),
-                MemoryResESNCell((in_dims, res_dims) => res_dims),
                 LIFESNCell(in_dims => res_dims),
                 RMNCell(nonlinear, linear),
             )

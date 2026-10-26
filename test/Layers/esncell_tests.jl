@@ -76,7 +76,16 @@ begin
 
             @test occursin("$(cell_name(C))(3 => 5", shown)
             @test occursin(Regex("$(mix_label(C))=0\\.3(f0)?"), shown)
-            @test occursin("use_bias=false", shown)
+            @test !occursin("use_bias", shown)
+
+            cell_b = build_cell(C, 3, 5; mix = 0.3, use_bias = True())
+            @test occursin("use_bias=true", sprint(show, cell_b))
+            cell_d = build_cell(C, 3, 5; use_bias = False())
+            @test occursin("$(cell_name(C))(3 => 5", sprint(show, cell_d))
+            @test !occursin("use_bias", sprint(show, cell_d))
+
+            @test sprint(show, C(3 => 5)) == "$(cell_name(C))(3 => 5)"
+            @test sprint(show, C(3 => 5, identity)) == "$(cell_name(C))(3 => 5, identity)"
         end
 
         @testset "$(cell_name(C)): initialparameters shapes & bias flag" begin
@@ -295,6 +304,25 @@ begin
         end
     end
 
+    @testset "integer scalar keywords are accepted" begin
+        @test ESNCell(2 => 5; leak_coefficient = 1).leak_coefficient == 1
+        @test EuSNCell(2 => 5; leak_coefficient = 1, diffusion = 1).diffusion == 1
+        @test ES2NCell(2 => 5; proximity = 1).proximity == 1
+        @test ResESNCell(2 => 5; alpha = 1, beta = 1).alpha == 1
+        @test ReservoirComputing.MemoryESNCell((2, 3) => 5; leak_coefficient = 1) isa Any
+        @test ReservoirComputing.MemoryResESNCell((2, 3) => 5; alpha = 1, beta = 1) isa Any
+        @test RMNResESN(2, 3, 20, 2; alpha = 1, beta = 1) isa RMNResESN
+        rng = MersenneTwister(3)
+        cell_int = ESNCell(2 => 20; leak_coefficient = 1)
+        cell_float = ESNCell(2 => 20; leak_coefficient = 1.0)
+        ps = initialparameters(MersenneTwister(1), cell_int)
+        st = initialstates(MersenneTwister(1), cell_int)
+        x = randn(rng, Float32, 2)
+        y_int, _ = cell_int(x, ps, st)
+        y_float, _ = cell_float(x, ps, st)
+        @test y_int[1] == y_float[1]
+    end
+
     @testset "ResESNCell: decoupled alpha/beta" begin
         cell = ResESNCell(
             3 => 3,
@@ -327,6 +355,93 @@ begin
             es2n_result = (1.0f0 - p) .* h0 .+ p .* x
             @test !(y ≈ es2n_result)
         end
+    end
+
+    @testset "EuSNCell: forward-Euler update" begin
+        @testset "state is kept when the activation term is zero" begin
+            cell = EuSNCell(
+                1 => 2,
+                identity;
+                leak_coefficient = 0.1,
+                diffusion = 0.0,
+                init_input = _W_ZZ,
+                init_reservoir = _W_ZZ,
+            )
+            ps = initialparameters(MersenneTwister(0), cell)
+
+            (y_tuple, _) = cell((Float32[0], (Float32[1, 2],)), ps, NamedTuple())
+            y, (hcarry,) = y_tuple
+
+            @test y ≈ Float32[1, 2]
+            @test hcarry ≈ y
+        end
+
+        @testset "h + ε φ((W_r - W_rᵀ - γ I) h + W_in u)" begin
+            cell = EuSNCell(
+                2 => 2,
+                identity;
+                leak_coefficient = 0.5,
+                diffusion = 0.25,
+                init_input = _W_I,
+                init_reservoir = (rng, m, n) -> Float32[0 1; 0 0],
+            )
+            ps = initialparameters(MersenneTwister(0), cell)
+
+            x = Float32[0.5, -1]
+            h0 = Float32[1, 2]
+            (y_tuple, _) = cell((x, (h0,)), ps, NamedTuple())
+            y, (hcarry,) = y_tuple
+
+            expected = Float32[
+                1 + 0.5 * (0.5 + (-0.25 * 1 + 1 * 2)),
+                2 + 0.5 * (-1 + (-1 * 1 - 0.25 * 2)),
+            ]
+            @test y ≈ expected
+            @test hcarry ≈ y
+        end
+    end
+
+    @testset "EuSNCell: matches (W - Wᵀ - γI) h + b formula" begin
+        for use_bias in (false, true)
+            cell = EuSNCell(3 => 7; use_bias, diffusion = 0.3, leak_coefficient = 0.4)
+            ps = initialparameters(MersenneTwister(5), cell)
+            if use_bias
+                ps = merge(ps, (; bias = rand(MersenneTwister(6), Float32, 7)))
+            end
+            x = rand(MersenneTwister(7), Float32, 3)
+            h = rand(MersenneTwister(8), Float32, 7)
+            (y, _), _ = cell((x, (h,)), ps, NamedTuple())
+            W = ps.reservoir_matrix
+            A = W .- transpose(W) .- 0.3f0 .* Matrix{Float32}(I, 7, 7)
+            pre = ps.input_matrix * x .+ A * h
+            use_bias && (pre = pre .+ ps.bias)
+            @test y ≈ h .+ 0.4f0 .* tanh.(pre) rtol = 1.0f-5
+        end
+    end
+
+    @testset "EuSNCell: bias is not absorbed by the recurrent term" begin
+        cell = EuSNCell(
+            1 => 1, identity; use_bias = true, diffusion = 1.0, leak_coefficient = 1.0,
+            init_input = _W_ZZ, init_reservoir = (rng, m, n) -> Float32[1.0f8;;]
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        ps = merge(ps, (; bias = Float32[1]))
+        (y, _), _ = cell((Float32[0], (Float32[1],)), ps, NamedTuple())
+        @test y == Float32[1]
+    end
+
+    @testset "EuSN: the default initial state is zero" begin
+        cell = EuSNCell(3 => 30)
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        x = Float32[0.3, -0.2, 0.5]
+
+        (y_default, _), _ = cell(x, ps, st)
+        (y_zero, _), _ = cell((x, (zeros(Float32, 30, 1),)), ps, st)
+
+        @test y_default == y_zero
+        @test cell.init_state === zeros32
+        @test EuSN(3, 30, 2).reservoir.cell.init_state === zeros32
     end
 
 end

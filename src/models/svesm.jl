@@ -9,8 +9,11 @@ Support Vector Echo-State Machine [ShiHan2007](@cite).
 `SVESM` replaces the linear readout of an [`ESN`](@ref) with a
 [`SVMReadout`](@ref), performing support vector regression in the
 high-dimensional reservoir state space (the "reservoir trick").
-Training requires LIBSVM.jl to be loaded and a `LIBSVM.AbstractSVR`
-instance to be passed as the `objective` keyword to [`train`](@ref).
+Training requires LIBSVM.jl and a `LIBSVM.AbstractSVR` instance, for example
+`LIBSVM.EpsilonSVR()`, passed as the `objective` keyword to [`train`](@ref). Load
+LIBSVM.jl with `import LIBSVM` rather than `using LIBSVM`: LIBSVM exports its own
+`predict`, which makes ReservoirComputing's [`predict`](@ref) ambiguous when both
+packages are brought in with `using`.
 
 ## Equations
 

@@ -47,7 +47,7 @@ abstract type AbstractEchoStateNetworkCell <: AbstractReservoirRecurrentCell end
 
 @doc raw"""
     ESNCell(in_dims => out_dims, [activation];
-        use_bias=false, init_bias=rand32,
+        use_bias=false, init_bias=zeros32,
         init_reservoir=rand_sparse, init_input=scaled_rand,
         init_state=randn32, leak_coefficient=1.0)
 
@@ -72,7 +72,7 @@ Echo State Network (ESN) recurrent cell with optional leaky integration.
 
   - `use_bias`: Whether to include a bias term. Default: `false`.
   - `init_bias`: Initializer for the bias. Used only if `use_bias=true`.
-      Default is `rand32`.
+      Default is `zeros32`.
   - `init_reservoir`: Initializer for the reservoir matrix `W_res`.
     Default is [`rand_sparse`](@ref).
   - `init_input`: Initializer for the input matrix `W_in`.
@@ -118,7 +118,6 @@ Created by `initialstates(rng, esn)`:
     init_bias
     init_reservoir
     init_input
-    #init_feedback::F
     init_state
     leak_coefficient
     use_bias <: StaticBool
@@ -129,7 +128,7 @@ function ESNCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32,
-        leak_coefficient::Union{AbstractFloat, AbstractVector} = 1.0
+        leak_coefficient::Union{Real, AbstractVector} = 1.0
     )
 
     if isa(leak_coefficient, AbstractVector)
@@ -159,11 +158,24 @@ function initialparameters(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
 end
 
 function initialstates(rng::AbstractRNG, esn::AbstractEchoStateNetworkCell)
-    return (rng = sample_replicate(rng),)
+    return (rng = __owned_sample_replicate(rng),)
 end
 
 function init_hidden_states(rng::AbstractRNG, cell::AbstractEchoStateNetworkCell, inp::AbstractArray)
     return (init_hidden_state(rng, cell, inp),)
+end
+
+function __owned_replicate(rng::AbstractRNG)
+    return replicate(rng)
+end
+
+function __owned_replicate(rng::Random.TaskLocalRNG)
+    return copy(rng)
+end
+
+function __owned_sample_replicate(rng::AbstractRNG)
+    rand(rng)
+    return __owned_replicate(rng)
 end
 
 function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTuple)
@@ -201,9 +213,10 @@ end
 
 function Base.show(io::IO, esn::ESNCell)
     print(io, "ESNCell($(esn.in_dims) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if !(esn.leak_coefficient isa Number && esn.leak_coefficient == 1.0)
         print(io, ", leak_coefficient=$(esn.leak_coefficient)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

@@ -238,6 +238,8 @@ A linear [`LinearReadout`](@ref) maps these features to `out_dims`.
   Default is none.
 - `readout_activation`: Activation applied by the readout
   Default is `identity`.
+- `readout_in_dims`: Readout input width for a custom dimension-changing
+  modifier. `nothing` infers the width for `Extend`. Default: `nothing`.
 - `rng`: Random number generator used to draw the input maps when the model is
   constructed. Default is `Random.default_rng()`.
 """

@@ -89,7 +89,7 @@ function ResESNCell(
         activation = tanh_fast; use_bias::BoolType = False(), init_bias = zeros32,
         init_reservoir = rand_sparse, init_input = scaled_rand,
         init_state = randn32, init_orthogonal = orthogonal,
-        alpha::AbstractFloat = 1.0, beta::AbstractFloat = 1.0
+        alpha::Real = 1.0, beta::Real = 1.0
     )
     return ResESNCell(
         activation, in_dims, out_dims, init_bias, init_reservoir,
@@ -126,12 +126,13 @@ end
 
 function Base.show(io::IO, esn::ResESNCell)
     print(io, "ResESNCell($(esn.in_dims) => $(esn.out_dims)")
+    esn.activation === tanh_fast || print(io, ", ", esn.activation)
     if esn.alpha != eltype(esn.alpha)(1.0)
         print(io, ", alpha=$(esn.alpha)")
     end
     if esn.beta != eltype(esn.beta)(1.0)
         print(io, ", beta=$(esn.beta)")
     end
-    has_bias(esn) || print(io, ", use_bias=false")
+    has_bias(esn) && print(io, ", use_bias=true")
     return print(io, ")")
 end

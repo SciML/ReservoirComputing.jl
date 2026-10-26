@@ -193,6 +193,21 @@ begin
             Y, _ = hesn(X, ps, st)
             @test Y ≈ max.(expected_linear, 0.0f0)
         end
+
+        @testset "Lux layer knowledge model and state key order" begin
+            km = LinearReadout(2 => 3, tanh; include_collect = false)
+            hesn = HybridESN(km, 3, 2, 6, 2; init_reservoir = rand_sparse(; sparsity = 0.5))
+            @test hesn.knowledge_model === km
+            ps, st = setup(MersenneTwister(6), hesn)
+            @test size(ps.knowledge_model.weight) == (3, 2)
+            X = rand(MersenneTwister(7), Float32, 2, 5)
+            states, _ = collectstates(hesn, X, ps, st)
+            @test states[1:3, :] ≈ tanh.(ps.knowledge_model.weight * X)
+            _, st1 = hesn(X[:, 1], ps, st)
+            _, st2 = hesn(X[:, 2], ps, st1)
+            @test keys(st1) == keys(st)
+            @test typeof(st2) == typeof(st1)
+        end
     end
 
 end

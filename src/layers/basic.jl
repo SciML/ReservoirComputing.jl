@@ -184,9 +184,9 @@ end
 function Base.show(io::IO, ro::LinearReadout)
     print(io, "LinearReadout($(ro.in_dims) => $(ro.out_dims)")
     (ro.activation == identity) || print(io, ", $(ro.activation)")
-    has_bias(ro) || print(io, ", use_bias=false")
+    has_bias(ro) && print(io, ", use_bias=true")
     ic = known(getproperty(ro, Val(:include_collect)))
-    ic === true && print(io, ", include_collect=true")
+    ic === false && print(io, ", include_collect=false")
     return print(io, ")")
 end
 
@@ -337,9 +337,9 @@ sequence, delayed entries correspond to zero padding.
 
   - `num_delays`: Number of delayed copies to keep. The output
     will have `(num_delays + 1) * input_dim` entries: the current vector plus
-    `num_delays` past vectors. Default is 2.
+    `num_delays` past vectors. Must be non-negative. Default is 2.
   - `stride`: Delay stride in layer calls. The internal buffer
-    is updated only when `clock % stride == 0`. Default is 1.
+    is updated only when `clock % stride == 0`. Must be at least 1. Default is 1.
   - `init_delay`: Initializer(s) for the delays. Must be either a
     single function (e.g. `zeros32`, `randn32`) or an `NTuple` of
     `num_delays` functions, e.g. `(zeros32, randn32)`. If a single function
@@ -364,10 +364,13 @@ None
 ## States
 
   - `history`: a matrix whose column j holds the j-th most recent stored input.
-    On a stride update, the columns are shifted and the current input is placed
-    in column 1.
+    On a stride update, a new matrix is returned with the columns shifted and the
+    current input placed in column 1. The matrix of the input state is not modified.
   - `clock`: A counter that updates each call of the layer. The delay buffer is
     updated when `clock % stride == 0`.
+  - `rng`: an owned copy of the RNG given to `initialstates`. The first call samples
+    the initial `history` from a copy of it and returns the advanced copy, so the RNG
+    of the input state is never advanced.
 """
 @concrete struct DelayLayer <: AbstractLuxLayer
     in_dims <: Int
@@ -377,6 +380,10 @@ None
 end
 
 function DelayLayer(in_dims; num_delays::Int = 2, stride::Int = 1, init_delay = zeros32)
+    num_delays >= 0 || throw(
+        ArgumentError("num_delays must be non-negative, got $num_delays")
+    )
+    stride >= 1 || throw(ArgumentError("stride must be positive, got $stride"))
     if init_delay isa Tuple
         length(init_delay) == num_delays || throw(
             DimensionMismatch(
@@ -399,7 +406,7 @@ function initialstates(rng::AbstractRNG, dl::DelayLayer)
     history = nothing
     clock = 0
 
-    return (history = history, clock = clock, rng = rng)
+    return (history = history, clock = clock, rng = __owned_replicate(rng))
 end
 
 function init_delay_history(::Nothing, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
@@ -421,22 +428,31 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
             "DelayLayer expected input with $(dl.in_dims) rows, got $(size(inp, 1))."
         )
     )
-    history = init_delay_history(st.history, st.rng, dl, inp)
+    rng = st.history === nothing ? __owned_replicate(st.rng) : st.rng
+    history = init_delay_history(st.history, rng, dl, inp)
     inp_with_delay = vcat(inp, vec(history))
     clock = st.clock + 1
     if dl.num_delays > 0 && (clock % dl.stride == 0)
-        @views history[:, 2:end] .= history[:, 1:(end - 1)]
-        @views history[:, 1] .= inp
+        shifted = similar(history)
+        @views shifted[:, 2:end] .= history[:, 1:(end - 1)]
+        @views shifted[:, 1] .= inp
+        history = shifted
     end
 
-    return inp_with_delay, (history = history, clock = clock, rng = st.rng)
+    return inp_with_delay, (history = history, clock = clock, rng = rng)
 end
 
 function Base.show(io::IO, dl::DelayLayer)
-    print(io, "DelayLayer(", dl.in_dims, "; num_delays=", dl.num_delays)
+    print(io, "DelayLayer(", dl.in_dims)
+    sep = "; "
+    if dl.num_delays != 2
+        print(io, sep, "num_delays=", dl.num_delays)
+        sep = ", "
+    end
 
     if dl.stride != 1
-        print(io, ", stride=", dl.stride)
+        print(io, sep, "stride=", dl.stride)
+        sep = ", "
     end
 
     inits = dl.init_delay
@@ -444,9 +460,9 @@ function Base.show(io::IO, dl::DelayLayer)
         all_same = all(f -> f === first(inits), inits)
         if all_same && first(inits) === zeros32
         elseif all_same
-            print(io, ", init_delay=", first(inits))
+            print(io, sep, "init_delay=", first(inits))
         else
-            print(io, ", init_delay=(")
+            print(io, sep, "init_delay=(")
             for (i, f) in enumerate(inits)
                 i > 1 && print(io, ", ")
                 show(io, f)
@@ -525,17 +541,15 @@ function initialstates(rng::AbstractRNG, l::NonlinearFeaturesLayer)
 end
 
 function (nfl::NonlinearFeaturesLayer)(inp::AbstractVector, ps, st)
-    feature_vector = Any[]
-    if known(nfl.include_input) === true
-        push!(feature_vector, inp)
-    end
-    for func in nfl.features
-        nonlin_feat = func(inp)
-        push!(feature_vector, nonlin_feat)
-    end
-    out = reduce(vcat, feature_vector)
+    feats = map(func -> func(inp), nfl.features)
+    out = known(nfl.include_input) === true ? reduce(vcat, feats; init = inp) : reduce(vcat, feats)
 
     return out, st
+end
+
+function (nfl::NonlinearFeaturesLayer)(inp::AbstractMatrix, ps, st)
+    cols = map(col -> first(nfl(col, ps, st)), eachcol(inp))
+    return reduce(hcat, cols), st
 end
 
 function Base.show(io::IO, nfl::NonlinearFeaturesLayer)
@@ -553,11 +567,7 @@ function Base.show(io::IO, nfl::NonlinearFeaturesLayer)
     end
 
     inc = ReservoirComputing.known(nfl.include_input)
-    if inc === true
-        print(io, ", include_input=true")
-    elseif inc === false
-        print(io, ", include_input=false")
-    end
+    inc === false && print(io, ", include_input=false")
 
     return print(io, ")")
 end

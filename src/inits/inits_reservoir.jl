@@ -6,10 +6,12 @@ Create and return a random sparse reservoir matrix.
 The matrix will be of size specified by `dims`, with specified `sparsity`
 and scaled spectral radius according to `radius`.
 
+Every column keeps at least one nonzero entry, whatever the size and `sparsity`, so
+the matrix is never all zero and can be scaled to `radius`.
+
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -18,8 +20,10 @@ and scaled spectral radius according to `radius`.
 
   - `radius`: The desired spectral radius of the reservoir.
     Defaults to 1.0.
-  - `sparsity`: The sparsity level of the reservoir matrix,
-    controlling the fraction of zero elements. Defaults to 0.1.
+  - `sparsity`: Fraction of nonzero entries in each column of the reservoir matrix.
+    Each column has about `sparsity * n` nonzero entries for an `n`-by-`n` matrix and
+    never fewer than one, so reservoirs with `n < 1 / sparsity` get a single nonzero
+    entry per column. Defaults to 0.1.
   - `return_sparse`: flag for returning a `sparse` matrix.
     `true` requires `SparseArrays` to be loaded.
     Default is `false`.
@@ -37,6 +41,15 @@ julia> dense_matrix = rand_sparse(rng, 5, 5; sparsity = 0.8);
 
 julia> size(sparse_matrix) == size(dense_matrix) == (5, 5) &&
        count(!iszero, sparse_matrix) < count(!iszero, dense_matrix)
+true
+```
+
+Small reservoirs keep one nonzero entry per column:
+
+```jldoctest randsparse
+julia> small_matrix = rand_sparse(MersenneTwister(123), 5, 5);
+
+julia> all(==(1), count(!iszero, small_matrix; dims = 1))
 true
 ```
 
@@ -60,7 +73,7 @@ function rand_sparse(
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     lcl_sparsity = T(1) - sparsity #consistency with current implementations
-    reservoir_matrix = sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
+    reservoir_matrix = __sparse_init(rng, T, dims...; sparsity = lcl_sparsity, std = std)
     reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     check_inf_nan(reservoir_matrix)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -79,8 +92,7 @@ the top `top_k` connections, and scales the spectral radius to `radius`.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -208,8 +220,7 @@ Returns an initializer to build a sparse reservoir matrix with the given
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -290,6 +301,7 @@ function pseudo_svd(
         return_diag::Bool = false
     ) where {T <: Number}
     isempty(dims) && throw(ArgumentError("expected at least one dimension, got none"))
+    length(dims) == 1 || check_res_size(dims...)
     res_dim = Int(dims[1])
 
     reservoir_matrix = create_diag(
@@ -302,7 +314,9 @@ function pseudo_svd(
         i = rand_range(rng, res_dim)
         j = rand_range(rng, res_dim)
         θ = DeviceAgnostic.rand(rng, T) * T(2) .- T(1)
-        reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
+        if i != j
+            reservoir_matrix = reservoir_matrix * create_qmatrix(rng, T, res_dim, i, j, θ)
+        end
         tmp = get_sparsity(reservoir_matrix, res_dim)
     end
     check_inf_nan(reservoir_matrix)
@@ -378,8 +392,7 @@ closest valid order is used.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -481,8 +494,7 @@ otherwise, it generates a random connectivity pattern.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -610,8 +622,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -744,8 +755,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -908,8 +918,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix.
     Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
@@ -1063,8 +1072,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1182,8 +1190,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1271,8 +1278,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1408,8 +1414,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1553,8 +1558,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1647,8 +1651,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1827,8 +1830,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -1968,8 +1970,7 @@ W_{i,j} =
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -2097,8 +2098,7 @@ W_{i,j} =
 
 # Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()` from
-    WeightInitializers.
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Element type of the matrix. Default is `Float32`.
   - `dims`: Dimensions of the output matrix (must be two-dimensional).
 
@@ -2211,8 +2211,7 @@ This construction yields:
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -2293,6 +2292,7 @@ function permutation_init(
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     permute_matrix!(rng, reservoir_matrix, permutation_matrix)
@@ -2309,8 +2309,7 @@ Creates a diagonal reservoir [Fette2005](@cite).
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()`from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
@@ -2411,6 +2410,7 @@ function diagonal_init(
         return_diag::Bool = false, kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
+    check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
     self_loop!(rng, reservoir_matrix, weight; kwargs...)
     if return_diag
@@ -2507,8 +2507,7 @@ It guarantees structural symmetry by only adding complete diagonals.
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix. Must be square.
 
@@ -2606,8 +2605,7 @@ with random uniform weights in the range `(-1, 1)` until the target `sparsity` i
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix. Must be square.
 
@@ -2724,8 +2722,7 @@ minimal-complexity Echo State Networks (ESNs).
 
 ## Arguments
 
-  - `rng`: Random number generator. Default is `Utils.default_rng()` from
-    [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers).
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
   - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix. Must be square.
 

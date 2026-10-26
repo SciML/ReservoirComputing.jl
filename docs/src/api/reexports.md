@@ -1,8 +1,9 @@
 # Reexported API
 
 `using ReservoirComputing` also brings a small, fixed set of names from
-[LuxCore](https://lux.csail.mit.edu/stable/api/Building_Blocks/LuxCore) and
+[LuxCore](https://lux.csail.mit.edu/stable/api/Building_Blocks/LuxCore),
 [WeightInitializers](https://lux.csail.mit.edu/stable/api/Building_Blocks/WeightInitializers)
+and [LinearSolve](https://docs.sciml.ai/LinearSolve/stable/)
 into scope, so the tutorials on this site run on `using ReservoirComputing` alone.
 ReservoirComputing does not document these names — it only reexports them. Their
 documentation lives with the packages that own them, linked below.
@@ -62,3 +63,19 @@ The rest of the WeightInitializers surface — `glorot_normal`, `glorot_uniform`
 16/64-bit and complex `ones*`/`rand*`/`randn*`/`zeros*` variants — is **not**
 reexported and must be imported from WeightInitializers directly. They are all valid
 `init_*` arguments; ReservoirComputing simply does not name any of them as a default.
+
+## Default ridge solver (owned by LinearSolve)
+
+[`train`](train.md) fits a [`RidgeRegression`](@ref) objective with LinearSolve's QR
+factorization when no `solver` is given, so that one algorithm is reexported:
+
+  - `QRFactorization` — the default `solver` for ridge training, also accepted
+    explicitly as `train(...; solver = QRFactorization())`.
+
+It is the same binding that LinearSolve exports, so a script that does
+`using ReservoirComputing, LinearSolve` can call `QRFactorization()` unqualified.
+The other LinearSolve algorithms, such as `SVDFactorization()`, are **not**
+reexported and need `using LinearSolve`.
+
+Owned and documented by
+[LinearSolve](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/).

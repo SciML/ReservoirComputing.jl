@@ -49,6 +49,7 @@ begin
 
             ro_b = LinearReadout(7 => 5; use_bias = True())
             @test LuxCore.parameterlength(ro_b) == 5 * 7 + 5
+            @test ReservoirComputing.parameterlength === LuxCore.parameterlength
         end
 
         @testset "forward pass: vector, no-bias, identity" begin
@@ -89,11 +90,11 @@ begin
         end
 
         @testset "show" begin
-            ro = LinearReadout(5 => 3; use_bias = False(), include_collect = True())
-            s = sprint(show, ro)
-            @test occursin("LinearReadout(5 => 3", s)
-            @test occursin("use_bias=false", s)
-            @test occursin("include_collect=true", s)
+            @test sprint(show, LinearReadout(5 => 3)) == "LinearReadout(5 => 3)"
+            @test sprint(show, LinearReadout(5 => 3, tanh)) == "LinearReadout(5 => 3, tanh)"
+            ro = LinearReadout(5 => 3; use_bias = True(), include_collect = False())
+            @test sprint(show, ro) ==
+                "LinearReadout(5 => 3, use_bias=true, include_collect=false)"
         end
 
         @testset "include_collect causes Collect() insertion" begin
@@ -167,6 +168,13 @@ begin
     end
 
     @testset "DelayLayer" begin
+        @testset "show" begin
+            @test sprint(show, DelayLayer(3)) == "DelayLayer(3)"
+            @test sprint(show, DelayLayer(3; num_delays = 4, stride = 2)) ==
+                "DelayLayer(3; num_delays=4, stride=2)"
+            @test sprint(show, DelayLayer(3; stride = 2)) == "DelayLayer(3; stride=2)"
+        end
+
         rng = MersenneTwister(123)
 
         @testset "constructor & init_delay expansion" begin
@@ -181,6 +189,18 @@ begin
             init2(rng, d, b) = fill(Float32(2), d, b)
             dl2 = DelayLayer(3; num_delays = 2, init_delay = (init1, init2))
             @test dl2.init_delay === (init1, init2)
+        end
+
+        @testset "constructor validation" begin
+            @test_throws ArgumentError DelayLayer(3; stride = 0)
+            @test_throws ArgumentError DelayLayer(3; stride = -2)
+            @test_throws ArgumentError DelayLayer(3; num_delays = -1)
+            @test DelayLayer(3; num_delays = 0).num_delays == 0
+            @test_throws ArgumentError NGRC(2, 2; num_delays = 2, stride = 0)
+            @test_throws ArgumentError InputDelayESN(2, 10, 2; stride = 0)
+            @test_throws ArgumentError StateDelayESN(2, 10, 2; stride = 0)
+            @test_throws ArgumentError DelayESN(2, 10, 2; input_stride = 0)
+            @test_throws ArgumentError DelayESN(2, 10, 2; state_stride = 0)
         end
 
         @testset "initialstates & init_delay_history" begin
@@ -252,9 +272,95 @@ begin
             badx = rand(rng, Float32, 2)
             @test_throws DimensionMismatch dl(badx, ps, st)
         end
+
+        @testset "a call does not modify the history of its input state" begin
+            dl = DelayLayer(2; num_delays = 2, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+
+            history = Float32[1 2; 3 4]
+            st = (history = history, clock = 0, rng = rng)
+            y, st_new = dl(Float32[5, 6], ps, st)
+
+            @test history == Float32[1 2; 3 4]
+            @test st.history === history
+            @test y == Float32[5, 6, 1, 3, 2, 4]
+            @test st_new.history == Float32[5 1; 6 3]
+            @test st_new.history !== history
+            @test st_new.clock == 1
+
+            y_again, st_again = dl(Float32[5, 6], ps, st)
+            @test y_again == y
+            @test st_again.history == st_new.history
+        end
+
+        @testset "states returned by earlier calls keep their history" begin
+            dl = DelayLayer(1; num_delays = 2, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+            st0 = initialstates(rng, dl)
+
+            _, st1 = dl(Float32[1], ps, st0)
+            _, st2 = dl(Float32[2], ps, st1)
+            _, st3 = dl(Float32[3], ps, st2)
+
+            @test st1.history == Float32[1 0]
+            @test st2.history == Float32[2 1]
+            @test st3.history == Float32[3 2]
+
+            y_a, _ = dl(Float32[9], ps, st1)
+            y_b, _ = dl(Float32[9], ps, st1)
+            @test y_a == y_b == Float32[9, 1, 0]
+            @test st1.history == Float32[1 0]
+        end
+
+        @testset "single-column matrix input" begin
+            dl = DelayLayer(2; num_delays = 1, stride = 1, init_delay = zeros32)
+            ps = initialparameters(rng, dl)
+            st0 = initialstates(rng, dl)
+
+            y1, st1 = dl(Float32[1; 2;;], ps, st0)
+            y2, st2 = dl(Float32[3; 4;;], ps, st1)
+
+            @test y1 == Float32[1; 2; 0; 0;;]
+            @test y2 == Float32[3; 4; 1; 2;;]
+            @test st1.history == Float32[1; 2;;]
+            @test st2.history == Float32[3; 4;;]
+        end
+
+        @testset "initialization does not advance the RNG of the input state" begin
+            for make_rng in (Random.default_rng, () -> Xoshiro(3), () -> MersenneTwister(3))
+                dl = DelayLayer(2; num_delays = 2, init_delay = randn32)
+                caller_rng = make_rng()
+                caller_before = copy(caller_rng)
+                st = initialstates(caller_rng, dl)
+                rng_before = copy(st.rng)
+
+                @test copy(caller_rng) == caller_before
+                @test st.rng !== caller_rng
+
+                y_1, st_1 = dl(Float32[1, 2], NamedTuple(), st)
+                y_2, st_2 = dl(Float32[1, 2], NamedTuple(), st)
+
+                @test st.rng == rng_before
+                @test st.history === nothing
+                @test any(!iszero, y_1[3:end])
+                @test y_1 == y_2
+                @test st_1.history == st_2.history
+                @test st_1.rng !== st.rng
+
+                _, st_3 = dl(Float32[3, 4], NamedTuple(), st_1)
+                @test st_3.rng === st_1.rng
+            end
+        end
     end
 
     @testset "NonlinearFeaturesLayer" begin
+        @testset "show" begin
+            @test sprint(show, NonlinearFeaturesLayer(abs)) ==
+                "NonlinearFeaturesLayer(features=(abs))"
+            @test sprint(show, NonlinearFeaturesLayer(abs; include_input = false)) ==
+                "NonlinearFeaturesLayer(features=(abs), include_input=false)"
+        end
+
         rng = MersenneTwister(123)
 
         @testset "constructor & flags" begin
@@ -275,6 +381,34 @@ begin
             @test length(nfl_id.features) == 0
             ii_id = ReservoirComputing.known(nfl_id.include_input)
             @test ii_id === true
+        end
+
+        @testset "matrix input applies features per column" begin
+            kr = x -> kron(x, x)
+            nfl = NonlinearFeaturesLayer(kr, x -> x .^ 2)
+            X = rand(MersenneTwister(1), Float32, 3, 4)
+            Y, _ = nfl(X, NamedTuple(), NamedTuple())
+            @test size(Y) == (3 + 9 + 3, 4)
+            for j in 1:4
+                @test Y[:, j] == first(nfl(X[:, j], NamedTuple(), NamedTuple()))
+            end
+            Y1, _ = nfl(X[:, 1:1], NamedTuple(), NamedTuple())
+            @test Y1 == Y[:, 1:1]
+        end
+
+        @testset "inside a ReservoirChain after a reservoir cell" begin
+            chain = ReservoirChain(
+                StatefulLayer(ESNCell(3 => 5)),
+                NonlinearFeaturesLayer(x -> x .^ 2),
+                LinearReadout(10 => 2)
+            )
+            ps, st = setup(MersenneTwister(2), chain)
+            X = rand(MersenneTwister(3), Float32, 3, 12)
+            states, _ = collectstates(chain, X, ps, st)
+            @test size(states) == (10, 12)
+            (ps_t, st_t) = train(chain, X, X[1:2, :], ps, st; objective = RidgeRegression(Float32, 1.0f-6))
+            out, _ = predict(chain, X, ps_t, st_t)
+            @test size(out) == (2, 12)
         end
 
         @testset "initialparameters / initialstates" begin

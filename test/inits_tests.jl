@@ -25,6 +25,16 @@ begin
         return isapprox(spectral_radius, target_radius; atol = tolerance)
     end
 
+    function one_per_column(::Type{T}, n, sparsity) where {T}
+        W = ReservoirComputing.__sparse_init(Xoshiro(1), T, n, n; sparsity, std = one(T))
+        return all(==(1), count(!iszero, W; dims = 1))
+    end
+
+    function reference_rand_sparse(rng, ::Type{T}, n, sparsity) where {T}
+        W = sparse_init(rng, T, n, n; sparsity = T(1) - sparsity, std = T(1))
+        return scale_radius!(W, T(1))
+    end
+
     ft = [Float16, Float32, Float64]
     reservoir_inits = [
         band_init,
@@ -79,6 +89,158 @@ begin
             @test check_radius(sp, radius)
         end
 
+        @testset "Small reservoirs keep a nonzero entry in every column" begin
+            @testset "ESN with $n neurons" for n in 1:12
+                ps, _ = setup(Xoshiro(1), ESN(2, n, 2))
+                W = ps.reservoir.reservoir_matrix
+                @test size(W) == (n, n)
+                @test all(>=(1), count(!iszero, W; dims = 1))
+                @test check_radius(W, radius; tolerance = 1.0e-4)
+            end
+
+            @testset "RMNESN" begin
+                ps, _ = setup(Xoshiro(1), RMNESN(2, 4, 6, 2))
+                @test size(ps.reservoir.linear_reservoir.reservoir_matrix) == (4, 4)
+                @test size(ps.reservoir.nonlinear_reservoir.reservoir_matrix) == (6, 6)
+            end
+
+            @testset "dale_sparse" begin
+                W = dale_sparse(Xoshiro(1), Float32, 5, 5)
+                @test all(>=(1), count(!iszero, W; dims = 1))
+                @test all(>=(0), W[:, 1:4])
+                @test all(<=(0), W[:, 5])
+                @test check_radius(W, radius; tolerance = 1.0e-4)
+
+                @testset "n = $n" for n in 2:12
+                    W = dale_sparse(Xoshiro(1), Float64, n, n)
+                    @test all(>=(1), count(!iszero, W; dims = 1))
+                    @test check_radius(W, radius)
+                end
+            end
+
+            @testset "Extreme sparsity values" begin
+                dense = rand_sparse(Xoshiro(1), Float32, 8, 8; sparsity = 1.0)
+                @test all(==(8), count(!iszero, dense; dims = 1))
+                single = rand_sparse(Xoshiro(1), Float32, 8, 8; sparsity = 0.0)
+                @test all(==(1), count(!iszero, single; dims = 1))
+                @test check_radius(single, radius; tolerance = 1.0e-4)
+            end
+
+            @testset "Rounding of the sparsity bound: $T" for T in (Float32, Float64)
+                sizes = vcat(1:200, 1000)
+                @test all(one_per_column(T, n, T(1)) for n in sizes)
+                @test all(one_per_column(T, n, T((n - 1) / n)) for n in sizes)
+                @test all(one_per_column(T, n, nextfloat(T((n - 1) / n))) for n in sizes)
+            end
+        end
+
+        @testset "rand_sparse output is unchanged where it already worked" begin
+            @testset "$T, n = $n, sparsity = $sparsity" for T in (Float16, Float32, Float64),
+                    n in (5, 10, 11, 20, 50, 100),
+                    sparsity in (0.2, 0.3, 0.5, 0.8)
+
+                @test rand_sparse(Xoshiro(1), T, n, n; sparsity) ==
+                    reference_rand_sparse(Xoshiro(1), T, n, sparsity)
+            end
+
+            @testset "Default sparsity, $T, n = $n" for T in (Float16, Float32, Float64),
+                    n in (10, 11, 20, 50, 100)
+
+                @test rand_sparse(Xoshiro(1), T, n, n) ==
+                    reference_rand_sparse(Xoshiro(1), T, n, T(0.1))
+            end
+
+            @testset "Random number stream" begin
+                @testset "Nothing capped" begin
+                    rng = Xoshiro(1)
+                    reference_rng = copy(rng)
+                    W = rand_sparse(rng, Float32, 20, 20)
+                    @test W == reference_rand_sparse(reference_rng, Float32, 20, 0.1f0)
+                    @test rng == reference_rng
+                    @test rng != Xoshiro(1)
+                end
+
+                @testset "Capped, output unchanged" begin
+                    rng = Xoshiro(1)
+                    reference_rng = copy(rng)
+                    W = rand_sparse(rng, Float64, 5, 5; sparsity = 0.2)
+                    @test all(==(1), count(!iszero, W; dims = 1))
+                    @test W == reference_rand_sparse(reference_rng, Float64, 5, 0.2)
+                    @test rng == reference_rng
+                    @test rng != Xoshiro(1)
+                end
+
+                @testset "All-zero matrix rescued" begin
+                    rng = Xoshiro(1)
+                    reference_rng = copy(rng)
+                    rand_sparse(rng, Float32, 5, 5)
+                    sparse_init(
+                        reference_rng, Float32, 5, 5; sparsity = 1.0f0 - 0.1f0, std = 1.0f0
+                    )
+                    @test rng == reference_rng
+                    @test rng != Xoshiro(1)
+                end
+            end
+
+            @testset "Recorded sparsity structure" begin
+                W32 = rand_sparse(Xoshiro(1), Float32, 20, 20)
+                @test count(!iszero, W32) == 40
+                @test all(==(2), count(!iszero, W32; dims = 1))
+
+                W64 = rand_sparse(Xoshiro(1), Float64, 50, 50; sparsity = 0.2)
+                @test count(!iszero, W64) == 500
+                @test all(==(10), count(!iszero, W64; dims = 1))
+            end
+        end
+
+        @testset "scale_radius! rejects matrices it cannot rescale" begin
+            @test_throws ArgumentError scale_radius!(zeros(4, 4), 0.9)
+            @test_throws ArgumentError scale_radius!(zeros(Float32, 4, 4), 0.9f0)
+            @test_throws "spectral radius 0" scale_radius!(zeros(4, 4), 0.9)
+            @test_throws "nilpotent" delay_line(Xoshiro(1), Float32, 6, 6; radius = 0.9)
+            @test_throws "nilpotent" forward_connection(
+                Xoshiro(1), Float32, 6, 6; radius = 0.9
+            )
+            @test delay_line(Xoshiro(1), Float32, 6, 6) isa Matrix{Float32}
+
+            matrix = [0.0 2.0; 1.0 0.0]
+            @test scale_radius!(matrix, 0.5) === matrix
+            @test check_radius(matrix, 0.5)
+
+            @testset "Scaling factor overflows" begin
+                tiny = reshape([1.0e-310], 1, 1)
+                @test_throws ArgumentError scale_radius!(tiny, 1.0)
+                @test tiny == reshape([1.0e-310], 1, 1)
+                @test_throws ArgumentError simple_cycle(
+                    Xoshiro(1), Float64, 5, 5; cycle_weight = 1.0e-310, radius = 1.0
+                )
+            end
+
+            @testset "Scaled entries overflow" begin
+                @test_throws ArgumentError scale_radius!([1.0 1.0e300; 0.0 1.0], 1.0e10)
+                @test_throws "overflows" scale_radius!([1.0 1.0e300; 0.0 1.0], 1.0e10)
+                @test_throws "overflows" scale_radius!(Float32[1 1.0f30; 0 1], 1.0f10)
+            end
+        end
+
+        @testset "Rng-less component fallbacks" begin
+            @testset "$component" for component in (
+                    delay_line!, add_jumps!, backward_connection!,
+                    simple_cycle!, reverse_simple_cycle!, self_loop!,
+                )
+                @test_throws MethodError component(zeros(3, 3), "w", 1)
+                @test_throws MethodError component(Xoshiro(1), zeros(3, 3), "w", 1)
+            end
+
+            matrix = zeros(Float32, 5, 5)
+            delay_line!(matrix, 5.0, 2)
+            @test matrix[3, 1] == matrix[4, 2] == matrix[5, 3] == 5.0f0
+
+            matrix = zeros(Float32, 5, 5)
+            self_loop!(matrix, 1.0)
+            @test diag(matrix) == fill(1.0f0, 5)
+        end
+
         @testset "add_jumps! validates public arguments" begin
             @test_throws DimensionMismatch add_jumps!(
                 Xoshiro(1), zeros(Float32, 3, 4), 0.1f0, 1
@@ -110,6 +272,34 @@ begin
             ]
             dl = init(res_size, res_size)
             @test sort(unique(dl)) == Float32.([0.0, 0.1])
+        end
+
+        @testset "pseudo_svd keeps the singular values of the diagonal" begin
+            for seed in 1:20
+                expected = sort(
+                    diag(
+                        ReservoirComputing.create_diag(
+                            Xoshiro(seed), Float64, 10, 1.0
+                        )
+                    )
+                )
+                matrix = pseudo_svd(Xoshiro(seed), Float64, 10, 10; sparsity = 0.3)
+                @test sort(svdvals(matrix)) ≈ expected atol = 1.0e-12
+            end
+        end
+
+        @testset "pseudo_svd accepts a single dimension" begin
+            @test pseudo_svd(Xoshiro(1), Float32, 5) == pseudo_svd(Xoshiro(1), Float32, 5, 5)
+            @test pseudo_svd(Xoshiro(1), Float32, 5; return_diag = true) ==
+                pseudo_svd(Xoshiro(1), Float32, 5, 5; return_diag = true)
+        end
+
+        @testset "Non-square dims throw: $init" for init in [
+                reservoir_inits...,
+                dale_sparse,
+                wigner_init,
+            ]
+            @test_throws DimensionMismatch init(Xoshiro(1), Float32, 5, 8)
         end
     end
 
@@ -283,6 +473,31 @@ begin
                 8, 3; model_in_size = 4
             )
         end
+    end
+
+    @testset "Weighted input initializers sizes" begin
+        for (rs, ins) in ((8, 3), (30, 7), (9, 3), (5, 5), (7, 1), (11, 4))
+            q, r = divrem(rs, ins)
+            counts = [q + (j <= r) for j in 1:ins]
+            for init in (weighted_init, weighted_minimal), sp in (false, true)
+                m = @test_nowarn init(Xoshiro(1), Float32, rs, ins; return_sparse = sp)
+                @test size(m) == (rs, ins)
+                @test [count(!iszero, c) for c in eachcol(Matrix(m))] == counts
+                @test all(count(!iszero, row) == 1 for row in eachrow(Matrix(m)))
+                rows = [findall(!iszero, c) for c in eachcol(Matrix(m))]
+                @test reduce(vcat, rows) == collect(1:rs)
+            end
+        end
+        @test_throws ArgumentError weighted_init(Xoshiro(1), Float32, 2, 3)
+        @test_throws ArgumentError weighted_minimal(Xoshiro(1), Float32, 2, 3)
+        @test_throws ArgumentError weighted_init(Xoshiro(1), Float32, 0, 3)
+        @test size(weighted_init(Xoshiro(1), Float32, 8, 3; scaling = [0.1, 0.2, 0.3])) == (8, 3)
+        @test size(weighted_init(Xoshiro(1), Float32, 8, 3; scaling = [(0.1, 0.2), (0.1, 0.2), (0.1, 0.2)])) == (8, 3)
+        esn = ESN(3, 20, 3; init_input = weighted_init)
+        ps, st = setup(Xoshiro(1), esn)
+        @test size(ps.reservoir.input_matrix) == (20, 3)
+        y, _ = esn(rand(Float32, 3, 5), ps, st)
+        @test size(y) == (3, 5)
     end
 
 end

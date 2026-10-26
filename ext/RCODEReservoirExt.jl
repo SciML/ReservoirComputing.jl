@@ -6,9 +6,9 @@ using LuxCore: apply, replicate
 using Random: AbstractRNG, randexp
 using SciMLBase: FullSpecialize, ODEFunction, ODEProblem, init, reinit!, remake, solve,
     solve!, NullParameters, VectorContinuousCallback, DiscreteCallback, CallbackSet,
-    successful_retcode
+    successful_retcode, add_tstop!
 using Static: known, static
-using WeightInitializers: randn32, zeros32
+using WeightInitializers: zeros32
 
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
@@ -354,7 +354,7 @@ function ReservoirComputing.ContinuousESN(
         init_bias = zeros32,
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
-        init_state = randn32,
+        init_state = zeros32,
         equations = ReservoirComputing.__continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
@@ -406,6 +406,20 @@ function ReservoirComputing.ContinuousESN(
     return ContinuousESN(in_dims, res_dims, out_dims, tanh, tspan, args...; kwargs...)
 end
 
+function __continuous_esn_u0(cell::ContinuousESNCell, st_res, ps_res)
+    c = get(st_res, :carry, nothing)
+    c === nothing || return copy(first(c)), st_res
+    T = eltype(ps_res.input_matrix)
+    haskey(st_res, :rng) || return zeros(T, cell.out_dims), st_res
+    rng = replicate(st_res.rng)
+    u0 = T.(vec(cell.init_state(rng, cell.out_dims, 1)))
+    return u0, merge(st_res, (rng = rng,))
+end
+
+function __continuous_esn_params(cell::ContinuousESNCell, ps_res, input_fn)
+    return merge((; cell.activation), __build_solve_params(nothing, ps_res, input_fn))
+end
+
 function __collectstates(
         cell::ContinuousESNCell,
         rc::AbstractReservoirComputer,
@@ -433,14 +447,8 @@ function __collectstates(
     sample_ts = collect(range(t0 + Δt, t1; length = n_samples))
 
     input_interp = __make_input_fn(data, input_ts)
-    solve_p = __build_solve_params(nothing, ps.reservoir, input_interp)
-
-    # `u0` element type follows `ps.reservoir.input_matrix` so the solver
-    # state, the parameter pack, and the input signal share a numeric
-    # type. The user controls eltype through the `init_*` initialisers.
-    u0 = __seed_u(
-        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    )
+    solve_p = __continuous_esn_params(cell, ps.reservoir, input_interp)
+    u0, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
     jac_prototype = known(cell.use_jac_prototype) ?
         __reservoir_jac_prototype(cell.equations, ps.reservoir.reservoir_matrix) :
         nothing
@@ -462,7 +470,7 @@ function __collectstates(
     )
 
     newst = (
-        reservoir = __with_carry(st.reservoir, sol.u[end]),
+        reservoir = __with_carry(st_res, sol.u[end]),
         state_modifiers = st_mods,
         readout = st.readout,
     )
@@ -490,9 +498,7 @@ function __predict(
     window_starts = @view ts[1:(end - 1)]
     window_ends = @view ts[2:end]
 
-    current_state = __seed_u(
-        st.reservoir, () -> zeros(eltype(ps.reservoir.input_matrix), cell.out_dims)
-    )
+    current_state, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
     current_input = initialdata
 
     st_mods = st.state_modifiers
@@ -504,7 +510,7 @@ function __predict(
     ode_fn = ODEFunction{true, FullSpecialize}(cell.equations; jac_prototype = jac_prototype)
 
     input_fn = ConstantInputWindow(current_input)
-    solve_p = __build_solve_params(nothing, ps.reservoir, input_fn)
+    solve_p = __continuous_esn_params(cell, ps.reservoir, input_fn)
     sub_prob = ODEProblem{true, FullSpecialize}(
         ode_fn, current_state, (window_starts[1], window_ends[1]), solve_p
     )
@@ -546,7 +552,7 @@ function __predict(
     end
 
     newst = (
-        reservoir = __with_carry(st.reservoir, current_state),
+        reservoir = __with_carry(st_res, current_state),
         state_modifiers = st_mods,
         readout = st_ro,
     )
@@ -621,7 +627,9 @@ function __lsm_fire!(integrator, unit::Integer)
     T = eltype(integrator.u)
     t = integrator.t
     integrator.u[unit] = T(neuron.v_reset)
-    p.ref_until[unit] = t + T(neuron.tau_ref)
+    ref_end = t + oftype(t, neuron.tau_ref)
+    p.ref_until[unit] = ref_end
+    t < ref_end < p.t_end[1] && add_tstop!(integrator, ref_end)
     W = p.reservoir_matrix
     @inbounds for post in 1:n_units
         integrator.u[n_units + post] += W[post, unit]
@@ -783,7 +791,8 @@ function __lsm_pack(cell::LSMCell, ps_res, input_fn, n_units::Int, ::Type{T}) wh
         reservoir_matrix = ps_res.reservoir_matrix,
         input = input_fn,
         I_ext = zeros(T, n_units),
-        ref_until = fill(typemin(T), n_units),
+        ref_until = fill(typemin(Float64), n_units),
+        t_end = [typemax(Float64)],
         spike_t = T[],
         spike_i = Int[],
     )
@@ -844,6 +853,7 @@ function __collectstates(
     solve_p = __lsm_pack(cell, ps.reservoir, input_fn, n_units, T)
     u0, st_res_new = __lsm_u0(cell, st.reservoir, n_units, T)
 
+    solve_p.t_end[1] = last(sample_ts)
     tstops = poisson_times === nothing ? sample_ts : sort!(vcat(sample_ts, poisson_times))
     ode_fn = ODEFunction{true, FullSpecialize}(__lsm_rhs!)
     prob = ODEProblem{true, FullSpecialize}(ode_fn, u0, cell.tspan, solve_p)
@@ -944,6 +954,10 @@ function __predict(
             integrator, current_state;
             t0 = t_lo, tf = t_hi, erase_sol = true, reset_dt = true,
         )
+        solve_p.t_end[1] = t_hi
+        for ref_end in solve_p.ref_until
+            t_lo < ref_end < t_hi && add_tstop!(integrator, oftype(integrator.t, ref_end))
+        end
         solve!(integrator)
         successful_retcode(integrator.sol) || throw(
             ErrorException("LSM AR step failed with retcode $(integrator.sol.retcode)")

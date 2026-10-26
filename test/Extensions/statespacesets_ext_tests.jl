@@ -35,7 +35,7 @@ begin
         @test stack(pred_set) ≈ pred_matrix
 
         empty_set = view(train_set, 1:0)
-        @test_throws ArgumentError train(model, empty_set, empty_set, ps, st)
+        @test_throws ArgumentError train(model, empty_set, view(target_set, 1:0), ps, st)
         @test_throws ArgumentError predict(model, empty_set, ps, st)
     end
 end
