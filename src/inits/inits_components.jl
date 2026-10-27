@@ -184,6 +184,18 @@ function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Nothing)
     return reservoir_matrix
 end
 
+__expand_weight(::Type{T}, weight::Number, n::Integer) where {T} = fill(T(weight), n)
+function __expand_weight(::Type{T}, weight::AbstractVector, n::Integer) where {T}
+    length(weight) == n || throw(
+        DimensionMismatch("weight vector must have length $n, got length $(length(weight))")
+    )
+    return T.(weight)
+end
+
+function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Real)
+    return scale_radius!(reservoir_matrix, float(radius))
+end
+
 function __validate_add_jumps_arguments(reservoir_matrix, jump_size, start)
     N = size(reservoir_matrix, 1)
     N == size(reservoir_matrix, 2) || throw(
@@ -846,6 +858,10 @@ function permute_matrix!(
     mul!(tmp, reservoir_matrix, t_pm)
     copyto!(reservoir_matrix, tmp)
     return reservoir_matrix
+end
+
+function permute_matrix!(reservoir_matrix::AbstractMatrix, args...)
+    return permute_matrix!(Utils.default_rng(), reservoir_matrix, args...)
 end
 
 function create_permutation_matrix(perm_array::AbstractVector{Int}, reservoir_matrix)

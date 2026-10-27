@@ -229,8 +229,11 @@ Returns an initializer to build a sparse reservoir matrix with the given
 
   - `max_value`: The maximum absolute value of elements in the matrix.
     Default is 1.0
-  - `sparsity`: The desired sparsity level of the reservoir matrix.
-    Default is 0.1
+  - `sparsity`: Threshold on the ratio of nonzero to zero entries of the matrix.
+    Random rotations are applied to the diagonal matrix until
+    `count(!iszero, W) / count(iszero, W) > sparsity`, so the fraction of nonzero
+    entries ends up slightly above `sparsity / (1 + sparsity)` (for example, about
+    9% for `0.1`, and about 37.5% for `0.6`). Default is 0.1
   - `sorted`: A boolean indicating whether to sort the singular values before
     creating the diagonal matrix. Default is `true`.
   - `reverse_sort`: A boolean indicating whether to reverse the sorted
@@ -418,7 +421,7 @@ julia> size(res_matrix)
 """
 function chaotic_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
-        extra_edge_probability::AbstractFloat = T(0.1f0), radius::AbstractFloat = one(T),
+        extra_edge_probability::Real = T(0.1f0), radius::Real = one(T),
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -453,7 +456,7 @@ function chaotic_init(
     reservoir_matrix = random_weight_matrix .* adjacency_matrix
     current_spectral_radius = maximum(abs, eigvals(reservoir_matrix))
     if current_spectral_radius != 0
-        reservoir_matrix .*= radius / current_spectral_radius
+        reservoir_matrix .*= float(radius) / current_spectral_radius
     end
     check_inf_nan(reservoir_matrix)
 
@@ -462,7 +465,7 @@ end
 
 function digital_chaotic_adjacency(
         rng::AbstractRNG, bit_precision::Integer;
-        extra_edge_probability::AbstractFloat = 0.1
+        extra_edge_probability::Real = 0.1
     )
     matrix_order = 2^(2 * bit_precision)
     adjacency_matrix = DeviceAgnostic.zeros(rng, Int, matrix_order, matrix_order)
@@ -482,8 +485,8 @@ end
 
 """
     low_connectivity([rng], [T], dims...;
-        connected=false, in_degree = 1, radius = 1.0,
-        cut_cycle = false, radius=nothing, return_sparse = false)
+        connected=false, in_degree = 1, cut_cycle = false,
+        radius=nothing, return_sparse = false)
 
 Construct an internal reservoir connectivity matrix with low connectivity.
 
@@ -505,8 +508,6 @@ otherwise, it generates a random connectivity pattern.
     Default is `false`.
   - `in_degree`: The number of incoming connections per node.
     Must not exceed the number of nodes. Default is 1.
-  - `radius`: The desired spectral radius of the reservoir.
-    Defaults to 1.0.
   - `cut_cycle`: If `true`, removes one edge from the cycle to cut it.
     Default is `false`.
   - `radius`: The desired spectral radius of the reservoir.
@@ -528,7 +529,7 @@ true
 function low_connectivity(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         return_sparse::Bool = false, connected::Bool = false,
-        in_degree::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
+        in_degree::Integer = 1, radius::Union{Real, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     check_res_size(dims...)
@@ -557,8 +558,7 @@ end
 
 function build_cycle(
         ::Val{false}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0f0),
-        cut_cycle::Bool = false
+        in_degree::Integer = 1, cut_cycle::Bool = false
     ) where {T <: Number}
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, res_size, res_size)
     for idx in 1:res_size
@@ -567,13 +567,12 @@ function build_cycle(
             reservoir_matrix[idx, jdx] = T(randn(rng))
         end
     end
-    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     return reservoir_matrix
 end
 
 function build_cycle(
         ::Val{true}, rng::AbstractRNG, ::Type{T}, res_size::Int;
-        in_degree::Integer = 1, radius::Number = T(1.0f0), cut_cycle::Bool = false
+        in_degree::Integer = 1, cut_cycle::Bool = false
     ) where {
         T <:
         Number,
@@ -584,7 +583,6 @@ function build_cycle(
         reservoir_matrix[perm[idx], perm[idx + 1]] = T(randn(rng))
     end
     reservoir_matrix[perm[res_size], perm[1]] = T(randn(rng))
-    reservoir_matrix = scale_radius!(reservoir_matrix, T(radius))
     if cut_cycle
         cut_cycle_edge!(reservoir_matrix, rng)
     end
@@ -724,7 +722,7 @@ julia> res_matrix = delay_line(5, 5; return_sparse=true)
 function delay_line(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         delay_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        return_sparse::Bool = false, radius::Union{Real, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -883,7 +881,7 @@ function delayline_backward(
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0), delay_shift::Integer = 1,
         fb_shift::Integer = 1, return_sparse::Bool = false,
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple()
     ) where {T <: Number}
@@ -1040,7 +1038,7 @@ function cycle_jumps(
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_weight::Union{Number, AbstractVector} = T(0.1f0),
         jump_size::Integer = 3, return_sparse::Bool = false,
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         cycle_kwargs::NamedTuple = NamedTuple(),
         jump_kwargs::NamedTuple = NamedTuple()
     ) where {T <: Number}
@@ -1159,7 +1157,7 @@ julia> res_matrix = simple_cycle(5, 5; return_sparse=true)
 function simple_cycle(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        return_sparse::Bool = false, radius::Union{Real, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -1197,8 +1195,10 @@ W_{i,j} =
 ## Keyword arguments
 
   - `cycle_weight`: Weight of the upper cycle connections in the reservoir matrix.
+    This can be provided as a single value or as a vector of length `res_size`.
     Default is 0.1.
   - `second_cycle_weight`: Weight of the lower cycle connections in the reservoir matrix.
+    This can be provided as a single value or as a vector of length `res_size`.
     Default is 0.1.
   - `radius`: The desired spectral radius of the reservoir.
     If `nothing` is passed, no scaling takes place.
@@ -1237,22 +1237,25 @@ function double_cycle(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
+    res_size = size(reservoir_matrix, 1)
+    first_weights = __expand_weight(T, cycle_weight, res_size)
+    second_weights = __expand_weight(T, second_cycle_weight, res_size)
 
     for uidx in first(axes(reservoir_matrix, 1)):(last(axes(reservoir_matrix, 1)) - 1)
-        reservoir_matrix[uidx + 1, uidx] = T.(cycle_weight)
+        reservoir_matrix[uidx + 1, uidx] = first_weights[uidx]
     end
     for lidx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
-        reservoir_matrix[lidx - 1, lidx] = T.(second_cycle_weight)
+        reservoir_matrix[lidx - 1, lidx] = second_weights[lidx - 1]
     end
 
-    reservoir_matrix[1, dims[1]] = T.(second_cycle_weight)
-    reservoir_matrix[dims[1], 1] = T.(cycle_weight)
+    reservoir_matrix[1, dims[1]] = second_weights[end]
+    reservoir_matrix[dims[1], 1] = first_weights[end]
     scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
 end
@@ -1377,7 +1380,7 @@ function true_doublecycle(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         second_cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        return_sparse::Bool = false, radius::Union{Real, Nothing} = nothing,
         cycle_kwargs::NamedTuple = NamedTuple(),
         second_cycle_kwargs::NamedTuple = NamedTuple()
     ) where {T <: Number}
@@ -1522,7 +1525,7 @@ function selfloop_cycle(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         return_sparse::Bool = false, selfloop_kwargs::NamedTuple = NamedTuple(),
         cycle_kwargs::NamedTuple = NamedTuple()
     ) where {T <: Number}
@@ -1570,8 +1573,10 @@ W_{i,j} =
     you want to populate.
     Default is 0.1.
   - `selfloop_weight`: Weight of the self loops in the reservoir matrix.
+    This can be provided as a single value or as a vector of length `res_size`.
     Default is 0.1.
-  - `fb_weight`: Weight of the self loops in the reservoir matrix.
+  - `fb_weight`: Weight of the backward connections in the reservoir matrix.
+    This can be provided as a single value or as a vector of length `res_size`.
     Default is 0.1.
   - `radius`: The desired spectral radius of the reservoir.
     If `nothing` is passed, no scaling takes place.
@@ -1605,23 +1610,25 @@ function selfloop_backward_cycle(
         cycle_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = simple_cycle(
         rng, T, dims...;
-        cycle_weight = T.(cycle_weight), return_sparse = false
+        cycle_weight = __expand_weight(T, cycle_weight, first(dims)), return_sparse = false
     )
+    selfloop_weights = __expand_weight(T, selfloop_weight, size(reservoir_matrix, 1))
+    fb_weights = __expand_weight(T, fb_weight, size(reservoir_matrix, 1))
     for idx in axes(reservoir_matrix, 1)
         if isodd(idx)
-            reservoir_matrix[idx, idx] = T.(selfloop_weight)
+            reservoir_matrix[idx, idx] = selfloop_weights[idx]
         end
     end
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
         if iseven(idx)
-            reservoir_matrix[idx - 1, idx] = T.(fb_weight)
+            reservoir_matrix[idx - 1, idx] = fb_weights[idx]
         end
     end
     scale_radius!(reservoir_matrix, radius)
@@ -1793,7 +1800,7 @@ function selfloop_delayline_backward(
         delay_weight::Union{Number, AbstractVector} = T(0.1f0),
         fb_weight::Union{Number, AbstractVector} = delay_weight,
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0),
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        return_sparse::Bool = false, radius::Union{Real, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         fb_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()
@@ -1938,7 +1945,7 @@ function selfloop_forwardconnection(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0),
         selfloop_weight::Union{Number, AbstractVector} = T(0.1f0), shift::Integer = 2,
-        return_sparse::Bool = false, radius::Union{AbstractFloat, Nothing} = nothing,
+        return_sparse::Bool = false, radius::Union{Real, Nothing} = nothing,
         delay_kwargs::NamedTuple = NamedTuple(),
         selfloop_kwargs::NamedTuple = NamedTuple()
     ) where {T <: Number}
@@ -2062,7 +2069,7 @@ julia> reservoir_matrix = forward_connection(10, 10; return_sparse=true)
 function forward_connection(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         forward_weight::Union{Number, AbstractVector} = T(0.1f0),
-        radius::Union{AbstractFloat, Nothing} = nothing, return_sparse::Bool = false,
+        radius::Union{Real, Nothing} = nothing, return_sparse::Bool = false,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -2157,7 +2164,7 @@ julia> res_matrix = block_diagonal(10, 10; block_size=2, block_weight=[0.5, 2.0,
 function block_diagonal(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         block_weight::Union{Number, AbstractVector} = T(1),
-        block_size::Integer = 1, radius::Union{AbstractFloat, Nothing} = nothing,
+        block_size::Integer = 1, radius::Union{Real, Nothing} = nothing,
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
@@ -2288,7 +2295,7 @@ function permutation_init(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         weight = T(0.1), return_sparse::Bool = false,
         permutation_matrix::Union{Nothing, AbstractMatrix} = nothing,
-        radius::Union{AbstractFloat, Nothing} = nothing,
+        radius::Union{Real, Nothing} = nothing,
         kwargs...
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
