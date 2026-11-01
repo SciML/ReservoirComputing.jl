@@ -280,29 +280,33 @@ that time step.
 - `st`: Updated model states.
 
 """
+@inline function __chain_collect_step(::Tuple{}, ::Tuple{}, _, st, inp, state_vec)
+    return (state_vec === nothing ? copy(inp) : state_vec), st
+end
+
+@inline function __chain_collect_step(layers::Tuple, names::Tuple, ps, st, inp, state_vec)
+    layer = first(layers)
+    if layer isa AbstractReservoirTrainableLayer
+        return (state_vec === nothing ? copy(inp) : state_vec), st
+    end
+    name = first(names)
+    out, st_i = layer(inp, ps[name], st[name])
+    st = merge(st, NamedTuple{(name,)}((st_i,)))
+    if layer isa AbstractReservoirCollectionLayer
+        state_vec = state_vec === nothing ? copy(out) : vcat(state_vec, out)
+    end
+    return __chain_collect_step(Base.tail(layers), Base.tail(names), ps, st, out, state_vec)
+end
+
 function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
     __require_nonempty_data(data, "collectstates")
-    newst = st
-    collected = Any[]
-    for inp in eachcol(data)
-        inp_tmp = inp
-        state_vec = nothing
-        for (name, layer) in pairs(rc.layers)
-            if layer isa AbstractReservoirTrainableLayer
-                break
-            end
-            inp_tmp, st_i = layer(inp_tmp, ps[name], newst[name])
-            newst = merge(newst, (; name => st_i))
-            if layer isa AbstractReservoirCollectionLayer
-                state_vec = state_vec === nothing ? copy(inp_tmp) : vcat(state_vec, inp_tmp)
-            end
-        end
-        push!(collected, state_vec === nothing ? copy(inp_tmp) : state_vec)
-    end
-    firstcol = collected[1]
-    states = similar(firstcol, eltype(data), length(firstcol), length(collected))
-    for idx in eachindex(collected)
-        states[:, idx] .= collected[idx]
+    cols = eachcol(data)
+    col, newst = __chain_collect_step(values(rc.layers), keys(rc.layers), ps, st, first(cols), nothing)
+    states = similar(col, eltype(data), length(col), size(data, 2))
+    states[:, 1] .= col
+    for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
+        col, newst = __chain_collect_step(values(rc.layers), keys(rc.layers), ps, newst, inp, nothing)
+        states[:, idx] .= col
     end
     return states, newst
 end
