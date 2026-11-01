@@ -111,4 +111,35 @@ begin
         end
     end
 
+    @testset "ReservoirChain collectstates inference and values" begin
+        chain = ReservoirChain(
+            StatefulLayer(ESNCell(IN_DIMS => 6)), Collect(), NLAT2(), Collect(),
+            LinearReadout(12 => OUT_DIMS)
+        )
+        ps, st = setup(MersenneTwister(SEED), chain)
+        data = randn(MersenneTwister(SEED + 1), Float32, IN_DIMS, T)
+
+        @inferred collectstates(chain, data, ps, st)
+        states, st_end = collectstates(chain, data, ps, st)
+
+        ref = zeros(Float32, 12, T)
+        cur = st
+        for (t, x) in enumerate(eachcol(data))
+            h, s1 = chain.layers.layer_1(x, ps.layer_1, cur.layer_1)
+            h2, s3 = chain.layers.layer_3(h, ps.layer_3, cur.layer_3)
+            h3, s4 = chain.layers.layer_4(h2, ps.layer_4, cur.layer_4)
+            ref[:, t] .= vcat(h, h3)
+            cur = merge(cur, (layer_1 = s1, layer_3 = s3, layer_4 = s4))
+        end
+        @test states == ref
+        @test st_end == cur
+        @test_throws ArgumentError collectstates(chain, zeros(Float32, IN_DIMS, 0), ps, st)
+
+        chain1 = ReservoirChain(
+            StatefulLayer(ESNCell(IN_DIMS => 6)), LinearReadout(6 => OUT_DIMS)
+        )
+        ps1, st1 = setup(MersenneTwister(SEED), chain1)
+        @inferred collectstates(chain1, data, ps1, st1)
+    end
+
 end
