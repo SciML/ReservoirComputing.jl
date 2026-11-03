@@ -100,6 +100,74 @@ begin
             @test propertynames(st2) == propertynames(st)
         end
 
+        @testset "resetcarry! restores the initial delay state" begin
+            ngrc = NGRC(
+                2, 1; num_delays = 2, features = (square_feature,), include_input = True(),
+            )
+            ps, st = setup(MersenneTwister(2), ngrc)
+            X = rand(MersenneTwister(3), Float32, 2, 30)
+            Y = rand(MersenneTwister(4), Float32, 1, 30)
+            ps_tr, st_tr = train(
+                ngrc, X, Y, ps, st; objective = RidgeRegression(1.0e-4),
+            )
+            Xt = rand(MersenneTwister(5), Float32, 2, 10)
+            _, st_new = setup(MersenneTwister(2), ngrc)
+            st_fresh = merge(st_tr, (reservoir = st_new.reservoir,))
+            y_fresh, _ = predict(ngrc, Xt, ps_tr, st_fresh)
+
+            y_carried, _ = predict(ngrc, Xt, ps_tr, deepcopy(st_tr))
+            @test y_carried != y_fresh
+
+            st_reset = resetcarry!(rng, ngrc, deepcopy(st_tr))
+            @test st_reset.reservoir.history === nothing
+            @test st_reset.reservoir.clock == 0
+            @test st_reset.readout == st_tr.readout
+            y_reset, _ = predict(ngrc, Xt, ps_tr, st_reset)
+            @test y_reset == y_fresh
+
+            st_zero = resetcarry!(rng, ngrc, deepcopy(st_tr); init_carry = zeros32)
+            y_zero, _ = predict(ngrc, Xt, ps_tr, st_zero)
+            @test y_zero == y_fresh
+
+            ones_init = (rng, dims...) -> ones(Float32, dims...)
+            st_ones = resetcarry!(rng, ngrc, deepcopy(st_tr); init_carry = ones_init)
+            @test st_ones.reservoir.history == ones(Float32, 2, 2)
+            @test st_ones.reservoir.clock == 0
+            _, st_ones_ps = resetcarry!(rng, ngrc, ps_tr, st_tr; init_carry = ones_init)
+            @test st_ones_ps.reservoir.history == ones(Float32, 2, 2)
+            y_ones, _ = predict(ngrc, Xt, ps_tr, st_ones)
+            @test size(y_ones) == size(y_fresh)
+        end
+
+        @testset "resetcarry! resets DelayLayers among the state modifiers" begin
+            ngrc = NGRC(
+                2, 1; num_delays = 2, include_input = True(),
+                state_modifiers = (DelayLayer(6; num_delays = 2),),
+            )
+            ps, st0 = setup(MersenneTwister(2), ngrc)
+            X1 = rand(MersenneTwister(3), Float32, 2, 10)
+            X2 = rand(MersenneTwister(4), Float32, 2, 10)
+            run = st -> first(predict(ngrc, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = predict(ngrc, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+
+            st_reset = resetcarry!(rng, ngrc, deepcopy(st1))
+            @test st_reset.state_modifiers[end].history === nothing
+            @test st_reset.state_modifiers[end].clock == 0
+            @test run(st_reset) == ref
+
+            st_zero = resetcarry!(rng, ngrc, deepcopy(st1); init_carry = zeros32)
+            @test run(st_zero) == ref
+
+            ones_init = (rng, dims...) -> ones(Float32, dims...)
+            st_ones = resetcarry!(rng, ngrc, deepcopy(st1); init_carry = ones_init)
+            @test st_ones.state_modifiers[end].history == ones(Float32, 6, 2)
+            @test st_ones.state_modifiers[end].clock == 0
+            @test st_ones.readout == st1.readout
+            @test run(st_ones) != ref
+        end
+
         @testset "simple 1D linear system learning" begin
             # x_{t+1} = a * x_t with a = 0.8
             a = 0.8f0

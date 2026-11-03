@@ -4,7 +4,8 @@ begin
     using Random
     using LinearAlgebra
     using ReservoirComputing
-    using LuxCore: initialparameters, initialstates
+    using LuxCore: initialparameters, initialstates, setup
+    using WeightInitializers: zeros32
     using Static
 
     const _I32 = (m, n) -> Matrix{Float32}(I, m, n)
@@ -371,6 +372,34 @@ begin
             y, _ = y_tuple
 
             @test y ≈ max.(x, 0.0f0)
+        end
+    end
+
+    @testset "resetcarry! keeps the RMNCell carry structure" begin
+        for Model in (RMNESN, RMNResESN)
+            mdl = Model(
+                3, 12, 20, 2, tanh; init_state = zeros32, init_memory_state = zeros32,
+            )
+            ps, st = setup(MersenneTwister(7), mdl)
+            x = rand(MersenneTwister(8), Float32, 3, 1)
+            carry_dims = carry -> map(state -> size(state, 1), carry)
+
+            st_pre = resetcarry!(MersenneTwister(1), mdl, st; init_carry = zeros32)
+            @test carry_dims(st_pre.reservoir.carry) == (20, 12)
+            y_pre, _ = mdl(x, ps, st_pre)
+            @test size(y_pre) == (2, 1)
+
+            _, st1 = mdl(x, ps, st)
+            st_post = resetcarry!(MersenneTwister(1), mdl, st1; init_carry = zeros32)
+            @test carry_dims(st_post.reservoir.carry) == (20, 12)
+            y_post, _ = mdl(x, ps, st_post)
+            @test size(y_post) == (2, 1)
+
+            st_clear = resetcarry!(MersenneTwister(1), mdl, st1)
+            @test st_clear.reservoir.carry === nothing
+            y_clear, _ = mdl(x, ps, st_clear)
+            y_fresh, _ = mdl(x, ps, st)
+            @test y_clear == y_fresh
         end
     end
 

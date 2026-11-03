@@ -329,4 +329,57 @@ begin
         @test length(first(st3.reservoir.carry)) == res_dims
     end
 
+    @testset "LIFESN: resetcarry! restarts the window replay" begin
+        const_state = (rng, m, B) -> fill(0.3f0, m, B)
+        X1 = randn(MersenneTwister(1), Float32, 3, 12)
+        X2 = randn(MersenneTwister(2), Float32, 3, 10)
+        build(init_state; kwargs...) = LIFESN(
+            3, 20, 3, tanh; lookback_horizon = 3, init_state = init_state, kwargs...
+        )
+        run_seq(model, ps, st, mode) = mode == :teacher ? predict(model, X2, ps, st) :
+            predict(model, 7, ps, st; initialdata = X2[:, 1])
+
+        for mode in (:teacher, :autoregressive), init_state in (zeros32, const_state, randn32)
+            model = build(init_state)
+            ps, st = setup(MersenneTwister(7), model)
+            expected, _ = run_seq(model, ps, deepcopy(st), mode)
+            _, st_used = predict(model, X1, ps, deepcopy(st))
+
+            for st_in in (deepcopy(st), st_used)
+                st_reset = resetcarry!(MersenneTwister(7), model, deepcopy(st_in))
+                @test st_reset.reservoir.cell.start_states === nothing
+                @test st_reset.reservoir.cell.input_buffer === nothing
+                @test first(run_seq(model, ps, st_reset, mode)) == expected
+            end
+
+            init_state === randn32 && continue
+
+            other = build(randn32)
+            ps_o, st_o = setup(MersenneTwister(7), other)
+            ref_model = build(init_state)
+            expected_f, _ = run_seq(ref_model, ps_o, deepcopy(st), mode)
+            _, st_o_used = predict(other, X1, ps_o, deepcopy(st_o))
+            st_f = resetcarry!(
+                MersenneTwister(7), other, st_o_used; init_carry = init_state
+            )
+            @test first(st_f.reservoir.cell.start_states) == st_f.reservoir.carry[1]
+            @test first(run_seq(other, ps_o, st_f, mode)) == expected_f
+        end
+    end
+
+    @testset "LIFESN: resetcarry! keeps readout states and resets delays" begin
+        model = LIFESN(
+            3, 20, 3, tanh; lookback_horizon = 3, init_state = zeros32,
+            state_modifiers = (DelayLayer(20; num_delays = 2),),
+            readout_in_dims = 60,
+        )
+        X = randn(MersenneTwister(1), Float32, 3, 10)
+        ps, st = setup(MersenneTwister(7), model)
+        expected, _ = predict(model, X, ps, deepcopy(st))
+        _, st_used = predict(model, X, ps, deepcopy(st))
+        st_reset = resetcarry!(MersenneTwister(7), model, deepcopy(st_used))
+        @test st_reset.readout == st_used.readout
+        @test first(predict(model, X, ps, st_reset)) == expected
+    end
+
 end

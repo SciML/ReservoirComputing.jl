@@ -279,7 +279,7 @@ begin
             end
         end
 
-        @testset "lazy initialization does not advance the RNG of the input state" begin
+        @testset "lazy initialization does not advance the RNG of the state" begin
             x = Float32[0.3]
 
             for make_rng in _RNG_MAKERS, ctor in cell_ctors
@@ -298,7 +298,7 @@ begin
                 @test st_1.input_buffer == st_2.input_buffer
                 @test st_1.start_states == st_2.start_states
                 @test st_1.rng == st_2.rng
-                @test st_1.rng !== st.rng
+                @test st_1.rng === st.rng
 
                 (_, _), st_3 = lif(x, ps, st_1)
                 @test st_3.rng === st_1.rng
@@ -358,7 +358,7 @@ begin
                 @test old_layout.rng == rng_before
                 @test haskey(st_old, :start_states)
                 @test st_old.start_states == start_states
-                @test st_old.rng == rng_after
+                @test st_old.rng == rng_before
                 @test st_old.input_buffer == st_new.input_buffer
                 @test y_old == y_new
                 @test carry_old == carry_new

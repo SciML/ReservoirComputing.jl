@@ -442,6 +442,41 @@ begin
     # 12. Non-NamedTuple `prob.p` rejected with a clear error
     # ---------------------------------------------------------------------------
 
+    @testset "SciMLProblemReservoir: resetcarry! with init_carry" begin
+        n, T_steps = 3, 6
+        function decay_rhs!(dx, x, p, t)
+            return dx .= .-x .+ sum(p.input(t))
+        end
+        build = u0 -> ReservoirComputer(
+            SciMLProblemReservoir(
+                ODEProblem(decay_rhs!, u0, (0.0, 1.0), (;)),
+                TerminalStateSampling(), (0.0, 1.0), Tsit5(),
+            ),
+            LinearReadout(n => 1),
+        )
+        rc = build(zeros(n))
+        rc03 = build(fill(0.3, n))
+        ps, st0 = setup(MersenneTwister(0), rc)
+        ps03, st03 = setup(MersenneTwister(0), rc03)
+        data = ones(Float64, 1, T_steps)
+        const03 = (rng, d...) -> fill(0.3, d...)
+        run = (m, p, st) -> first(collectstates(m, data, p, deepcopy(st)))
+        base = run(rc, ps, st0)
+        ref03 = run(rc03, ps03, st03)
+        @test ref03 != base
+        _, st1 = collectstates(rc, data, ps, deepcopy(st0))
+        for st in (st0, st1)
+            st_zero = resetcarry!(MersenneTwister(1), rc, deepcopy(st); init_carry = zeros32)
+            @test first(st_zero.reservoir.carry) isa Vector{Float64}
+            @test length(first(st_zero.reservoir.carry)) == n
+            @test run(rc, ps, st_zero) == base
+            st_const = resetcarry!(MersenneTwister(1), rc, deepcopy(st); init_carry = const03)
+            @test run(rc, ps, st_const) == ref03
+            st_clear = resetcarry!(MersenneTwister(1), rc, deepcopy(st))
+            @test run(rc, ps, st_clear) == base
+        end
+    end
+
     @testset "Non-NamedTuple prob.p errors clearly" begin
         function rhs!(dx, x, p, t)
             return dx .= .-x
