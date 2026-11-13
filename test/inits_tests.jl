@@ -72,6 +72,62 @@ begin
     ]
 
     @testset "Reservoir Initializers" begin
+        @testset "Small-world initializer" begin
+            zero_rewiring = small_world(
+                MersenneTwister(42), Float64, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test zero_rewiring == small_world(
+                MersenneTwister(42), Float64, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test size(zero_rewiring) == (20, 20)
+            @test eltype(zero_rewiring) == Float64
+            @test all(iszero, diag(zero_rewiring))
+            @test count(!iszero, zero_rewiring) == 20 * 4
+            @test (zero_rewiring .!= 0) == transpose(zero_rewiring .!= 0)
+            @test check_radius(zero_rewiring, 1.0)
+
+            full_rewiring = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 1.0, radius = 0.75f0,
+            )
+            @test count(!iszero, full_rewiring) == 20 * 4
+            @test (full_rewiring .!= 0) == transpose(full_rewiring .!= 0)
+            @test check_radius(full_rewiring, 0.75f0)
+            @test (full_rewiring .!= 0) != (zero_rewiring .!= 0)
+
+            dense = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.3,
+            )
+            sparse = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.3, return_sparse = true,
+            )
+            @test sparse isa SparseMatrixCSC{Float32}
+            @test Matrix(sparse) == dense
+
+            @test_throws DimensionMismatch small_world(
+                MersenneTwister(42), 20, 19; num_neighbors = 4, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 0, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 3, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 20, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 4, rewiring_probability = -0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 4, rewiring_probability = 1.1
+            )
+        end
+
         @testset "Sizes and types: $init $T" for init in reservoir_inits, T in ft
             #sizes
             @test size(init(res_size, res_size)) == (res_size, res_size)
