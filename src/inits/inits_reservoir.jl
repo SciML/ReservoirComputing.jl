@@ -104,6 +104,28 @@ scaled to the requested spectral radius.
   - `radius`: Desired spectral radius of the reservoir. Defaults to 1.0.
   - `return_sparse`: Flag for returning a `sparse` matrix. `true` requires
     `SparseArrays` to be loaded. Default is `false`.
+
+## Examples
+
+Create a ring lattice by disabling rewiring:
+
+```jldoctest smallworld
+julia> reservoir_matrix = small_world(MersenneTwister(123), 5, 5;
+           num_neighbors = 2, rewiring_probability = 0.0);
+
+julia> all(==(2), count(!iszero, reservoir_matrix; dims = 1))
+true
+```
+
+Request a sparse reservoir matrix:
+
+```jldoctest smallworld
+julia> reservoir_matrix = small_world(MersenneTwister(123), 5, 5;
+           num_neighbors = 2, rewiring_probability = 0.5, return_sparse = true);
+
+julia> reservoir_matrix isa SparseMatrixCSC{Float32} && size(reservoir_matrix) == (5, 5)
+true
+```
 """
 function small_world(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
