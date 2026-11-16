@@ -88,6 +88,13 @@ begin
             @test (zero_rewiring .!= 0) == transpose(zero_rewiring .!= 0)
             @test check_radius(zero_rewiring, 1.0)
 
+            float16_zero_rewiring = small_world(
+                Xoshiro(56), Float16, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test count(!iszero, float16_zero_rewiring) == 20 * 4
+            @test (float16_zero_rewiring .!= 0) == transpose(float16_zero_rewiring .!= 0)
+
             full_rewiring = small_world(
                 MersenneTwister(42), Float32, 20, 20;
                 num_neighbors = 4, rewiring_probability = 1.0, radius = 0.75f0,

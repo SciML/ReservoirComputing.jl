@@ -177,9 +177,9 @@ function small_world(
         end
     end
 
-    reservoir_matrix = (
-        T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
-    ) .* adjacency_matrix
+    weights = T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
+    weights = ifelse.(iszero.(weights), eps(T), weights)
+    reservoir_matrix = weights .* adjacency_matrix
     reservoir_matrix = scale_radius!(reservoir_matrix, radius)
     check_inf_nan(reservoir_matrix)
 
