@@ -72,6 +72,8 @@ where full details and examples are provided.
     cycle where odd nodes self-loop and even nodes have forward/backward links.
 - [`selfloop_forwardconnection`](inits/selfloop_forwardconnection.md): Adds self-loops
     onto a forward-connection reservoir (stride-2).
+- [`small_world`](inits/small_world.md): Creates a Watts-Strogatz small-world
+    reservoir with configurable neighbourhood size and rewiring probability.
 - [`simple_cycle`](inits/simple_cycle.md): Builds a basic directed ring
     reservoir with uniform weights.
 - [`toeplitz_init`](inits/toeplitz_init.md): Creates Toeplitz sparse reservoir topology 
