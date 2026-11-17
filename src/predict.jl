@@ -87,33 +87,22 @@ function __autoregressive_predict(rc, steps::Integer, ps, st, initialdata::Abstr
     return outputs, st
 end
 
-function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
+function __teacher_forced_predict(rc, data::AbstractMatrix, ps, st)
     __require_nonempty_data(data, "predict")
-    T = size(data, 2)
-
-    y1, st = apply(rc, data[:, 1], ps, st)
-    Y = similar(y1, size(y1, 1), T)
-    Y[:, 1] .= y1
-
-    for t in 2:T
-        yt, st = apply(rc, data[:, t], ps, st)
-        Y[:, t] .= yt
+    input_cols = eachcol(data)
+    current_output, st = apply(rc, first(input_cols), ps, st)
+    outputs = similar(current_output, length(current_output), size(data, 2))
+    outputs[:, 1] .= current_output
+    for (idx, input_col) in Iterators.drop(enumerate(input_cols), 1)
+        current_output, st = apply(rc, input_col, ps, st)
+        outputs[:, idx] .= current_output
     end
-    return Y, st
+    return outputs, st
 end
 
-# Two-level dispatch on the reservoir field, mirroring `collectstates` / `__collectstates`.
-# Continuous reservoirs (`AbstractSciMLProblemReservoir`) plug in their own `__predict`
-# methods from `RCODEReservoirExt`; everything else hits the fallbacks below, which
-# replicate the discrete `predict(::AbstractLuxLayer, …)` bodies above.
-#
-# Not every `AbstractReservoirComputer` subtype carries a `:reservoir` field —
-# `DeepESN`, for instance, owns a tuple of cells under `:cells`. For those
-# subtypes we cannot extract a "reservoir layer" to dispatch on, so we pass
-# `nothing` and let the `::Any` fallback take the discrete loop. (Concrete
-# types like `DeepESN` already provide their own specialised `collectstates`,
-# and `predict` itself only depends on `apply(rc, …)`, which works through
-# their own `(rc::DeepESN)(…)` call.)
+function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
+    return __teacher_forced_predict(rc, data, ps, st)
+end
 
 function predict(
         rc::AbstractReservoirComputer, steps::Integer, ps, st;
@@ -161,17 +150,5 @@ function __predict(
 end
 
 function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
-    __require_nonempty_data(data, "predict")
-    n_samples = size(data, 2)
-
-    input_cols = eachcol(data)
-    first_output, st = apply(rc, first(input_cols), ps, st)
-    outputs = similar(first_output, size(first_output, 1), n_samples)
-    outputs[:, 1] .= first_output
-
-    for (idx, input_col) in Iterators.drop(enumerate(input_cols), 1)
-        current_output, st = apply(rc, input_col, ps, st)
-        outputs[:, idx] .= current_output
-    end
-    return outputs, st
+    return __teacher_forced_predict(rc, data, ps, st)
 end
