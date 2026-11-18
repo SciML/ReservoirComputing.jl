@@ -255,6 +255,17 @@ begin
             )
         end
 
+        @testset "loadpatterns rejects EuSN" begin
+            rng7 = MersenneTwister(4)
+            concept_eusn = Conceptor(EuSN(1, 10, 1; use_bias = true))
+            ps_eusn = initialparameters(rng7, concept_eusn)
+            st_eusn = initialstates(rng7, concept_eusn)
+            signal_eusn = reshape(Float32.(sin.(0.5 .* (1:50))), 1, :)
+            @test_throws "EuSNCell" loadpatterns(
+                rng7, concept_eusn, [:s => signal_eusn], ps_eusn, st_eusn; washout = 10
+            )
+        end
+
         @testset "morph_conceptor" begin
             rng4 = MersenneTwister(5)
             esn = ESN(1, 25, 1; use_bias = true)
