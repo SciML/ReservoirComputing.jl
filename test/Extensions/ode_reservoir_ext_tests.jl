@@ -460,4 +460,28 @@ begin
         @test_throws ArgumentError collectstates(rc, data, ps, st)
     end
 
+    @testset "SciMLProblemReservoir: AbstractVector initialdata and solver failures" begin
+        res_dim, dim = 6, 3
+        tspan = (0.0, 1.0)
+        prob, _, _, _, _ = build_esn_problem(MersenneTwister(31), dim, res_dim, tspan)
+        res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5())
+        rc = ReservoirComputer(res, LinearReadout(res_dim => dim))
+        ps, st = setup(MersenneTwister(0), rc)
+        X = randn(MersenneTwister(1), dim, 4)
+        ref, _ = predict(rc, 3, ps, st; initialdata = X[:, end])
+        from_view, _ = predict(rc, 3, ps, st; initialdata = @view X[:, end])
+        @test from_view == ref
+
+        failing = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); maxiters = 3
+        )
+        rc_fail = ReservoirComputer(failing, LinearReadout(res_dim => dim))
+        ps_f, st_f = setup(MersenneTwister(0), rc_fail)
+        @test_throws "SciMLProblemReservoir solve failed with retcode" collectstates(
+            rc_fail, X, ps_f, st_f
+        )
+        @test_throws "SciMLProblemReservoir AR step failed with retcode" predict(
+            rc_fail, 3, ps_f, st_f; initialdata = X[:, 1]
+        )
+    end
 end

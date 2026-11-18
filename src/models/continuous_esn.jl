@@ -93,11 +93,31 @@ Solve metadata:
     readout
 end
 
+function __continuous_constructor_error(name::String, message::String)
+    if Base.get_extension(@__MODULE__, :RCODEReservoirExt) === nothing
+        error(
+            "$name requires the RCODEReservoirExt extension and an " *
+                "OrdinaryDiffEq solver package. Load `SciMLBase`, `DataInterpolations`, " *
+                "and a solver package (e.g. `OrdinaryDiffEqTsit5`) to enable it."
+        )
+    end
+    return throw(ArgumentError(message))
+end
+
 function ContinuousESN(::Any, ::Any, ::Any, ::Any...; kwargs...)
-    return error(
-        "ContinuousESN requires the RCODEReservoirExt extension and an " *
-            "OrdinaryDiffEq solver package. Load `SciMLBase`, `DataInterpolations`, " *
-            "and a solver package (e.g. `OrdinaryDiffEqTsit5`) to enable it."
+    return __continuous_constructor_error(
+        "ContinuousESN",
+        "No method of ContinuousESN matches the given arguments. Expected " *
+            "`ContinuousESN(in_dims, res_dims, out_dims, [activation], tspan, " *
+            "args...; kwargs...)`."
+    )
+end
+
+function ContinuousESN(::Integer, ::Integer, ::Integer; kwargs...)
+    return __continuous_constructor_error(
+        "ContinuousESN",
+        "ContinuousESN requires `tspan` and a solver, e.g. " *
+            "`ContinuousESN(in_dims, res_dims, out_dims, (t0, t1), Tsit5())`."
     )
 end
 
