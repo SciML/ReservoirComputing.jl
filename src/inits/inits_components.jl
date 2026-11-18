@@ -643,7 +643,7 @@ function reverse_simple_cycle!(
     )
     __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
-        reservoir_matrix[idx - 1, idx] = weight[idx]
+        reservoir_matrix[idx - 1, idx] = weight[idx - 1]
     end
     reservoir_matrix[end, 1] = weight[end]
     return reservoir_matrix

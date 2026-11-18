@@ -1387,9 +1387,9 @@ function true_doublecycle(
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    simple_cycle!(rng, reservoir_matrix, cycle_weight; cycle_kwargs...)
+    simple_cycle!(rng, reservoir_matrix, T.(cycle_weight); cycle_kwargs...)
     reverse_simple_cycle!(
-        rng, reservoir_matrix, second_cycle_weight; second_cycle_kwargs...
+        rng, reservoir_matrix, T.(second_cycle_weight); second_cycle_kwargs...
     )
     scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -2301,7 +2301,8 @@ function permutation_init(
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    weights = weight isa Union{Number, AbstractArray} ? T.(weight) : weight
+    self_loop!(rng, reservoir_matrix, weights; kwargs...)
     permute_matrix!(rng, reservoir_matrix, permutation_matrix)
     scale_radius!(reservoir_matrix, radius)
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -2419,7 +2420,8 @@ function diagonal_init(
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     reservoir_matrix = DeviceAgnostic.zeros(rng, T, dims...)
-    self_loop!(rng, reservoir_matrix, weight; kwargs...)
+    weights = weight isa Union{Number, AbstractArray} ? T.(weight) : weight
+    self_loop!(rng, reservoir_matrix, weights; kwargs...)
     if return_diag
         return Diagonal(diag(reservoir_matrix))
     else
