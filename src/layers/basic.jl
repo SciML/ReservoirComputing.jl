@@ -251,6 +251,24 @@ end
 
 Base.show(io::IO, cl::Collect) = print(io, "Collection point of states")
 
+@inline function __chain_collect_step(::Tuple{}, ::Tuple{}, _, st, inp, state_vec)
+    return (state_vec === nothing ? copy(inp) : state_vec), st
+end
+
+@inline function __chain_collect_step(layers::Tuple, names::Tuple, ps, st, inp, state_vec)
+    layer = first(layers)
+    if layer isa AbstractReservoirTrainableLayer
+        return (state_vec === nothing ? copy(inp) : state_vec), st
+    end
+    name = first(names)
+    out, st_i = layer(inp, ps[name], st[name])
+    st = merge(st, NamedTuple{(name,)}((st_i,)))
+    if layer isa AbstractReservoirCollectionLayer
+        state_vec = state_vec === nothing ? copy(out) : vcat(state_vec, out)
+    end
+    return __chain_collect_step(Base.tail(layers), Base.tail(names), ps, st, out, state_vec)
+end
+
 @doc raw"""
     collectstates(rc, data, ps, st)
 
@@ -280,29 +298,11 @@ that time step.
 - `st`: Updated model states.
 
 """
-@inline function __chain_collect_step(::Tuple{}, ::Tuple{}, _, st, inp, state_vec)
-    return (state_vec === nothing ? copy(inp) : state_vec), st
-end
-
-@inline function __chain_collect_step(layers::Tuple, names::Tuple, ps, st, inp, state_vec)
-    layer = first(layers)
-    if layer isa AbstractReservoirTrainableLayer
-        return (state_vec === nothing ? copy(inp) : state_vec), st
-    end
-    name = first(names)
-    out, st_i = layer(inp, ps[name], st[name])
-    st = merge(st, NamedTuple{(name,)}((st_i,)))
-    if layer isa AbstractReservoirCollectionLayer
-        state_vec = state_vec === nothing ? copy(out) : vcat(state_vec, out)
-    end
-    return __chain_collect_step(Base.tail(layers), Base.tail(names), ps, st, out, state_vec)
-end
-
 function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::NamedTuple)
     __require_nonempty_data(data, "collectstates")
     cols = eachcol(data)
     col, newst = __chain_collect_step(values(rc.layers), keys(rc.layers), ps, st, first(cols), nothing)
-    states = similar(col, eltype(data), length(col), size(data, 2))
+    states = similar(col, eltype(col), length(col), size(data, 2))
     states[:, 1] .= col
     for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
         col, newst = __chain_collect_step(values(rc.layers), keys(rc.layers), ps, newst, inp, nothing)
@@ -327,8 +327,9 @@ At each call, the layer:
 1. Takes the current input vector `h(t)` of length `input_dim`.
 2. Produces an output vector that concatenates:
   + the current input `h(t)`, and
-  + `num_delays` previous inputs stored in an internal buffer.
-3. Updates its internal delay buffer with `h(t)` every `stride` calls.
+  + `num_delays` previous inputs `h(t - stride)`, `h(t - 2 * stride)`, ...,
+    `h(t - num_delays * stride)`, stored in an internal buffer.
+3. Updates its internal delay buffer with `h(t)`.
 
 Newly initialized buffers are filled with zeros, so at the beginning of a
 sequence, delayed entries correspond to zero padding.
@@ -342,8 +343,9 @@ sequence, delayed entries correspond to zero padding.
   - `num_delays`: Number of delayed copies to keep. The output
     will have `(num_delays + 1) * input_dim` entries: the current vector plus
     `num_delays` past vectors. Must be non-negative. Default is 2.
-  - `stride`: Delay stride in layer calls. The internal buffer
-    is updated only when `clock % stride == 0`. Must be at least 1. Default is 1.
+  - `stride`: Spacing, in layer calls, between consecutive delayed copies. At
+    call `t` the output is `(h(t), h(t - stride), ..., h(t - num_delays * stride))`.
+    Must be at least 1. Default is 1.
   - `init_delay`: Initializer(s) for the delays. Must be either a
     single function (e.g. `zeros32`, `randn32`) or an `NTuple` of
     `num_delays` functions, e.g. `(zeros32, randn32)`. If a single function
@@ -367,11 +369,12 @@ None
 
 ## States
 
-  - `history`: a matrix whose column j holds the j-th most recent stored input.
-    On a stride update, a new matrix is returned with the columns shifted and the
-    current input placed in column 1. The matrix of the input state is not modified.
-  - `clock`: A counter that updates each call of the layer. The delay buffer is
-    updated when `clock % stride == 0`.
+  - `history`: a matrix with `num_delays * stride` columns whose column j holds
+    the input from j calls ago. On every call, a new matrix is returned with the
+    columns shifted and the current input placed in column 1. The matrix of the
+    input state is not modified. Before enough inputs have been seen, the k-th
+    group of `stride` columns is filled from the k-th initializer of `init_delay`.
+  - `clock`: A counter that updates each call of the layer.
   - `rng`: an owned copy of the RNG given to `initialstates`. The first call samples
     the initial `history` from a copy of it and returns the advanced copy, so the RNG
     of the input state is never advanced.
@@ -414,15 +417,24 @@ function initialstates(rng::AbstractRNG, dl::DelayLayer)
 end
 
 function init_delay_history(::Nothing, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
-    history = similar(inp, dl.in_dims, dl.num_delays)
-    for (init, delay_col) in zip(dl.init_delay, eachcol(history))
-        delay_col .= init(rng, dl.in_dims, 1)
+    history = similar(inp, dl.in_dims, dl.num_delays * dl.stride)
+    for (k, init) in enumerate(dl.init_delay)
+        cols = ((k - 1) * dl.stride + 1):(k * dl.stride)
+        history[:, cols] .= init(rng, dl.in_dims, 1)
     end
 
     return history
 end
 
 function init_delay_history(history::AbstractMatrix, rng::AbstractRNG, dl::DelayLayer, inp::AbstractVecOrMat)
+    expected = (dl.in_dims, dl.num_delays * dl.stride)
+    size(history) == expected || throw(
+        DimensionMismatch(
+            "DelayLayer history has size $(size(history)), expected $expected " *
+                "(in_dims, num_delays * stride). The state must be reinitialised " *
+                "with `initialstates` (or `setup`)."
+        )
+    )
     return history
 end
 
@@ -434,9 +446,9 @@ function (dl::DelayLayer)(inp::AbstractVecOrMat, ps, st::NamedTuple)
     )
     rng = st.history === nothing ? __owned_replicate(st.rng) : st.rng
     history = init_delay_history(st.history, rng, dl, inp)
-    inp_with_delay = vcat(inp, vec(history))
+    inp_with_delay = vcat(inp, vec(@view history[:, (dl.stride):(dl.stride):end]))
     clock = st.clock + 1
-    if dl.num_delays > 0 && (clock % dl.stride == 0)
+    if dl.num_delays > 0
         shifted = similar(history)
         @views shifted[:, 2:end] .= history[:, 1:(end - 1)]
         @views shifted[:, 1] .= inp

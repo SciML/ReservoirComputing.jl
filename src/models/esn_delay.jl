@@ -63,8 +63,8 @@ Delay expansion (on input):
   - `num_delays`: Number of past input states to include in the tapped-delay
     vector. The `DelayLayer` output has `(num_delays + 1) * in_dims` entries.
     Default: `1`.
-  - `stride`: Delay stride in layer calls. The delay buffer is updated only
-    when the internal clock is a multiple of `stride`. Default: `1`.
+  - `stride`: Spacing, in time steps, between consecutive delayed copies.
+    Default: `1`.
 
 Composition:
 
@@ -232,8 +232,8 @@ Delay expansion:
   - `num_delays`: Number of past reservoir states to include in the tapped-delay
     vector. The `DelayLayer` output has `(num_delays + 1) * res_dims` entries
     (current state plus `num_delays` past states). Default: `1`.
-  - `stride`: Delay stride in layer calls. The delay buffer is updated only when
-    the internal clock is a multiple of `stride`. Default: `1`.
+  - `stride`: Spacing, in time steps, between consecutive delayed copies.
+    Default: `1`.
 
 Composition:
 
@@ -403,14 +403,16 @@ Input delay expansion:
   - `num_input_delays`: Number of past input steps to include. The effective
     input to the reservoir has size `(num_input_delays + 1) * in_dims`.
     Default: `1`.
-  - `input_stride`: Stride for the input delay buffer. Default: `1`.
+  - `input_stride`: Spacing, in time steps, between consecutive delayed
+    input copies. Default: `1`.
 
 State delay expansion:
 
   - `num_state_delays`: Number of past reservoir states to include. The
     readout receives a vector of size `(num_state_delays + 1) * res_dims`.
     Default: `1`.
-  - `state_stride`: Stride for the state delay buffer. Default: `1`.
+  - `state_stride`: Spacing, in time steps, between consecutive delayed
+    state copies. Default: `1`.
 
 Composition:
 
