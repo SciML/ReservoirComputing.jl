@@ -185,4 +185,17 @@ end
     )
     ps_bad, st_bad = setup(rng, rc_bad)
     @test_throws ArgumentError train(rc_bad, x, y, ps_bad, st_bad)
+
+    for named in (true, false)
+        rc_after = ReservoirChain(
+            StatefulLayer(ESNCell(2 => 5)), LinearReadout(5 => 2),
+            CustomTrainableReadout(2, 1, named)
+        )
+        ps_a, st_a = setup(rng, rc_after)
+        x2 = randn(rng, Float32, 2, 60)
+        y2 = randn(rng, Float32, 2, 60)
+        ps_a2, _ = train(rc_after, x2, y2, ps_a, st_a)
+        @test size(ps_a2.layer_3.weight) == (2, 5)
+        @test ps_a2.layer_4 == ps_a.layer_4
+    end
 end

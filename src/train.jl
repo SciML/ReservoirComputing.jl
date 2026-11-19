@@ -299,8 +299,6 @@ end
     end
 end
 
-__setreadout(::Any, p, _) = p
-__setreadout(::LinearReadout, p::NamedTuple, W) = __setweight_rt(p, W)
 function __setreadout(layer::AbstractReservoirTrainableLayer, p::NamedTuple, W)
     haskey(p, :weight) && return __setweight_rt(p, W)
     throw(
@@ -312,7 +310,9 @@ function __setreadout(layer::AbstractReservoirTrainableLayer, p::NamedTuple, W)
     )
 end
 
-@generated function __addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
+@generated function __addreadout(
+        layers::NamedTuple{K}, ps::NamedTuple{K}, W, ::Val{S} = Val(false)
+    ) where {K, S}
     if length(K) == 0
         return :(NamedTuple())
     end
@@ -320,13 +320,22 @@ end
     Kq = __quote_keys(K)
     tailKq = __quote_keys(tailK)
 
-    head_val = :(__setreadout(getfield(layers, 1), getfield(ps, 1), W))
+    L = fieldtype(layers, 1)
+    trainable = L <: AbstractReservoirTrainableLayer
+    head_val = if L <: LinearReadout
+        :(__setweight_rt(getfield(ps, 1), W))
+    elseif trainable && !S
+        :(__setreadout(getfield(layers, 1), getfield(ps, 1), W))
+    else
+        :(getfield(ps, 1))
+    end
 
     tail_call = :(
         __addreadout(
             NamedTuple{$tailKq}(Base.tail(layers)),
             NamedTuple{$tailKq}(Base.tail(ps)),
-            W
+            W,
+            Val($(S || trainable))
         )
     )
 
