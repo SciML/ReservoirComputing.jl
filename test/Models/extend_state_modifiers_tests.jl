@@ -118,6 +118,30 @@ begin
         @test_throws ArgumentError ESN(3, 5, 1; readout_in_dims = 0)
     end
 
+    @testset "readout width follows the op wrapped by Extend" begin
+        for (mods, width) in (
+                ((Extend(DelayLayer(5; num_delays = 2)),), 3 + 15),
+                ((Extend(ReservoirComputing.WrappedFunction(Pad())),), 3 + 6),
+                ((Extend(Collect()),), 3 + 5),
+                ((Extend(Extend(Collect())),), 3 + 5 + 5),
+                ((Extend(ReservoirComputing.WrappedFunction(identity)),), 3 + 5),
+            )
+            model = ESN(
+                3, 5, 1; init_reservoir = _EXTEND_RESERVOIR_INIT, state_modifiers = mods
+            )
+            ps, st = setup(MersenneTwister(311), model)
+            features, _ = ReservoirComputing.__partial_apply(
+                model, _EXTEND_INPUT, ps, st
+            )
+            @test size(ps.readout.weight, 2) == width
+            @test size(ps.readout.weight, 2) == size(features, 1)
+            states, _ = collectstates(model, repeat(_EXTEND_INPUT, 1, 4), ps, st)
+            @test size(ps.readout.weight, 2) == size(states, 1)
+            output, _ = model(_EXTEND_INPUT, ps, st)
+            @test length(output) == 1
+        end
+    end
+
     @testset "readout width follows Pad, ExtendedSquare and DelayLayer" begin
         for (mods, width) in (
                 ((Pad(),), 6),

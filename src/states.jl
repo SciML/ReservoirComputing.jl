@@ -129,9 +129,11 @@ the input.
 
 When `Extend` is used in a model's `state_modifiers`, `op` receives the current
 reservoir features while the concatenated input is the input to the model (or to
-the current layer of a deep model). Automatic readout sizing assumes that `op`
-preserves the feature width; pass `readout_in_dims` to the model constructor when
-it does not.
+the current layer of a deep model). Automatic readout sizing uses `input_dims`
+plus the width reported by `op`, which is known for `Pad`, `ExtendedSquare`,
+`DelayLayer` and functions wrapped in `WrappedFunction` that have a width method.
+For any other `op` the width is assumed unchanged; pass `readout_in_dims` to the
+model constructor when that is wrong.
 """
 @concrete struct Extend <: AbstractLuxWrapperLayer{:op}
     op <: AbstractLuxLayer
@@ -154,8 +156,8 @@ end
     return vcat(inp, state), (; op = st_op)
 end
 
-@inline function __state_modifier_output_dims(::Extend, state_dims::Int, input_dims::Int)
-    return input_dims + state_dims
+@inline function __state_modifier_output_dims(ex::Extend, state_dims::Int, input_dims::Int)
+    return input_dims + __state_modifier_output_dims(ex.op, state_dims, state_dims)
 end
 
 @inline function __state_modifier_output_dims(

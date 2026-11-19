@@ -742,7 +742,14 @@ function loadpatterns(
         reg_recurrent::Real = 1.0e-4,
         reg_readout::Real = 1.0e-2,
     )
-    __check_conceptor_model(concept.model)
+    __check_conceptor_model(concept.model) isa EuSNCell && throw(
+        ArgumentError(
+            "loadpatterns is not supported for EuSNCell: it rewrites `reservoir_matrix`, " *
+                "but EuSNCell does not apply `reservoir_matrix` directly (it uses " *
+                "`reservoir_matrix - reservoir_matrix' - gamma * I`), so the loaded " *
+                "patterns would be wrong"
+        )
+    )
     rps = reservoir_params(ps)
     element_type = float(eltype(rps.reservoir_matrix))
     original_recurrent_weights = element_type.(rps.reservoir_matrix)
