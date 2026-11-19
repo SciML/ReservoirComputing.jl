@@ -185,7 +185,7 @@ function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTu
 end
 
 function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = eltype(inp)
+    T = promote_type(eltype(inp), eltype(hidden_state))
     bias = safe_getproperty(ps, Val(:bias))
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)

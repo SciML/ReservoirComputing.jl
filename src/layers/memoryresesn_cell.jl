@@ -137,7 +137,7 @@ function (esn::MemoryResESNCell)(
         (inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
         ps, st::NamedTuple
     )
-    T = eltype(inp)
+    T = promote_type(eltype(inp), eltype(hidden_state))
     bias = safe_getproperty(ps, Val(:bias))
     t_alpha = T(esn.alpha)
     t_beta = T(esn.beta)

@@ -1164,4 +1164,21 @@ begin
         end
     end
 
+    @testset "Integer input with fractional hyperparameters" begin
+        x = rand(1:10, 2, 20)
+        models = (
+            ESN(2, 5, 2; leak_coefficient = 0.5),
+            EIESN(2, 5, 2),
+            AdditiveEIESN(2, 5, 2),
+            ES2N(2, 5, 2; proximity = 0.5),
+            ResESN(2, 5, 2; alpha = 0.5),
+            EuSN(2, 5, 2; leak_coefficient = 0.5),
+        )
+        for m in models
+            ps, st = setup(MersenneTwister(1), m)
+            states, _ = collectstates(m, x, ps, st)
+            @test eltype(states) == Float32
+            @test size(states) == (5, 20)
+        end
+    end
 end
