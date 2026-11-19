@@ -299,6 +299,19 @@ end
     end
 end
 
+__setreadout(::Any, p, _) = p
+__setreadout(::LinearReadout, p::NamedTuple, W) = __setweight_rt(p, W)
+function __setreadout(layer::AbstractReservoirTrainableLayer, p::NamedTuple, W)
+    haskey(p, :weight) && return __setweight_rt(p, W)
+    throw(
+        ArgumentError(
+            "cannot install trained weights in $(typeof(layer)): its parameters have no " *
+                "`weight` field. Define `ReservoirComputing.addreadout!` for the chain " *
+                "or give the layer a `weight` parameter."
+        )
+    )
+end
+
 @generated function __addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
     if length(K) == 0
         return :(NamedTuple())
@@ -307,11 +320,7 @@ end
     Kq = __quote_keys(K)
     tailKq = __quote_keys(tailK)
 
-    head_val = :(
-        (getfield(layers, 1) isa LinearReadout)
-            ? __setweight_rt(getfield(ps, 1), W)
-            : getfield(ps, 1)
-    )
+    head_val = :(__setreadout(getfield(layers, 1), getfield(ps, 1), W))
 
     tail_call = :(
         __addreadout(

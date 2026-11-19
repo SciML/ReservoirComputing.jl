@@ -3,6 +3,7 @@ using Random
 using LinearAlgebra
 using ReservoirComputing
 using LuxCore: setup
+import LuxCore
 
 @testset "addreadout! validates parameter structure" begin
     rng = MersenneTwister(901)
@@ -152,4 +153,36 @@ end
 
     @test ReservoirComputing.QRFactorization === linearsolve_qr
     @test Core.eval(user_module, :(QRFactorization())) isa linearsolve_qr
+end
+
+struct CustomTrainableReadout <: ReservoirComputing.AbstractReservoirTrainableLayer
+    n::Int
+    m::Int
+    named::Bool
+end
+function LuxCore.initialparameters(::AbstractRNG, l::CustomTrainableReadout)
+    W = zeros(Float32, l.m, l.n)
+    return l.named ? (; weight = W) : (; w = W)
+end
+LuxCore.initialstates(::AbstractRNG, ::CustomTrainableReadout) = NamedTuple()
+function (l::CustomTrainableReadout)(x, ps, st)
+    return (l.named ? ps.weight : ps.w) * x, st
+end
+
+@testset "train installs weights in custom trainable layers" begin
+    rng = MersenneTwister(77)
+    x = randn(rng, Float32, 2, 60)
+    y = randn(rng, Float32, 1, 60)
+
+    rc = ReservoirChain(StatefulLayer(ESNCell(2 => 8)), CustomTrainableReadout(8, 1, true))
+    ps, st = setup(rng, rc)
+    ps2, _ = train(rc, x, y, ps, st)
+    @test size(ps2.layer_2.weight) == (1, 8)
+    @test ps2.layer_2.weight != ps.layer_2.weight
+
+    rc_bad = ReservoirChain(
+        StatefulLayer(ESNCell(2 => 8)), CustomTrainableReadout(8, 1, false)
+    )
+    ps_bad, st_bad = setup(rng, rc_bad)
+    @test_throws ArgumentError train(rc_bad, x, y, ps_bad, st_bad)
 end
