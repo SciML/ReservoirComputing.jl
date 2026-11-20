@@ -72,6 +72,64 @@ begin
     ]
 
     @testset "Reservoir Initializers" begin
+        @testset "Scale-free initializer" begin
+            initial_nodes = 4
+            attachments = 2
+            num_nodes = 20
+            reservoir_matrix = scale_free(
+                MersenneTwister(42), Float64, num_nodes, num_nodes;
+                initial_nodes, attachments,
+            )
+            @test reservoir_matrix == scale_free(
+                MersenneTwister(42), Float64, num_nodes, num_nodes;
+                initial_nodes, attachments,
+            )
+            @test size(reservoir_matrix) == (num_nodes, num_nodes)
+            @test eltype(reservoir_matrix) == Float64
+            @test all(iszero, diag(reservoir_matrix))
+            @test (reservoir_matrix .!= 0) == transpose(reservoir_matrix .!= 0)
+            expected_edges = initial_nodes * (initial_nodes - 1) ÷ 2 +
+                (num_nodes - initial_nodes) * attachments
+            @test count(!iszero, reservoir_matrix) == 2 * expected_edges
+            @test all(>=(attachments), count(!iszero, reservoir_matrix; dims = 1))
+            @test check_radius(reservoir_matrix, 1.0)
+
+            dense = scale_free(
+                MersenneTwister(7), Float32, num_nodes, num_nodes;
+                initial_nodes, attachments, radius = 0.75f0,
+            )
+            sparse = scale_free(
+                MersenneTwister(7), Float32, num_nodes, num_nodes;
+                initial_nodes, attachments, radius = 0.75f0, return_sparse = true,
+            )
+            @test sparse isa SparseMatrixCSC{Float32}
+            @test Matrix(sparse) == dense
+            @test check_radius(dense, 0.75f0)
+
+            initial_graph = scale_free(
+                MersenneTwister(11), Float64, initial_nodes, initial_nodes;
+                initial_nodes, attachments = initial_nodes,
+            )
+            @test count(!iszero, initial_graph) == initial_nodes * (initial_nodes - 1)
+            @test check_radius(initial_graph, 1.0)
+
+            @test_throws DimensionMismatch scale_free(
+                MersenneTwister(42), 20, 19; initial_nodes = 4, attachments = 2
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 1, attachments = 1
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 21, attachments = 1
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 4, attachments = 0
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 4, attachments = 5
+            )
+        end
+
         @testset "Small-world initializer" begin
             zero_rewiring = small_world(
                 MersenneTwister(42), Float64, 20, 20;
