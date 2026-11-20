@@ -113,6 +113,38 @@ begin
             @test count(!iszero, initial_graph) == initial_nodes * (initial_nodes - 1)
             @test check_radius(initial_graph, 1.0)
 
+            preferential = scale_free(
+                Xoshiro(1), Float64, 4, 4;
+                initial_nodes = 2, attachments = 1,
+            )
+            @test !iszero(preferential[1, 3])
+            @test !iszero(preferential[1, 4])
+            @test iszero(preferential[2, 4])
+
+            float32_regression = scale_free(
+                Xoshiro(1971721), Float32, 3, 3;
+                initial_nodes = 2, attachments = 1,
+            )
+            float16_regression = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1,
+            )
+            @test check_radius(Float64.(float32_regression), 1.0; tolerance = 1.0e-3)
+            @test check_radius(Float64.(float16_regression), 1.0; tolerance = 0.04)
+
+            invalid_radius_rng = Xoshiro(1)
+            @test_throws ArgumentError scale_free(
+                invalid_radius_rng, Float64, 4, 4;
+                initial_nodes = 2, attachments = 1, radius = -0.75,
+            )
+            @test rand(invalid_radius_rng) == rand(Xoshiro(1))
+            @test_throws ArgumentError scale_free(
+                Xoshiro(1), Int, 4, 4; initial_nodes = 2, attachments = 1,
+            )
+            @test_throws ArgumentError scale_free(
+                Xoshiro(1), ComplexF32, 4, 4; initial_nodes = 2, attachments = 1,
+            )
+
             @test_throws DimensionMismatch scale_free(
                 MersenneTwister(42), 20, 19; initial_nodes = 4, attachments = 2
             )

@@ -200,7 +200,8 @@ scaled to the requested spectral radius.
 ## Arguments
 
   - `rng`: Random number generator. Default is `Xoshiro(1234)`.
-  - `T`: Type of the elements in the reservoir matrix. Default is `Float32`.
+  - `T`: Real floating-point type of the elements in the reservoir matrix.
+    Default is `Float32`.
   - `dims`: Dimensions of the reservoir matrix.
 
 ## Keyword arguments
@@ -245,12 +246,24 @@ function scale_free(
         rng::AbstractRNG, ::Type{T}, dims::Integer...;
         initial_nodes::Integer,
         attachments::Integer,
-        radius::Real = one(T),
+        radius = one(T),
         return_sparse::Bool = false
     ) where {T <: Number}
     throw_sparse_error(return_sparse)
     check_res_size(dims...)
     num_nodes = first(dims)
+
+    T <: AbstractFloat || throw(
+        ArgumentError("scale_free requires a real floating-point element type, got $T")
+    )
+    radius isa Real || throw(ArgumentError("radius must be real, got $(typeof(radius))"))
+    converted_radius = T(radius)
+    isfinite(converted_radius) || throw(
+        ArgumentError("radius must be finite, got $radius")
+    )
+    converted_radius >= zero(T) || throw(
+        ArgumentError("radius must be nonnegative, got $radius")
+    )
 
     2 <= initial_nodes <= num_nodes || throw(
         ArgumentError(
@@ -300,10 +313,48 @@ function scale_free(
         end
     end
 
-    weights = T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
-    weights = ifelse.(iszero.(weights), eps(T), weights)
-    reservoir_matrix = weights .* adjacency_matrix
-    reservoir_matrix = scale_radius!(reservoir_matrix, radius)
+    working_type = promote_type(T, Float64)
+    target_radius = working_type(converted_radius)
+    radius_tolerance = sqrt(eps(T))
+    max_weight_attempts = 100
+
+    reservoir_matrix = zeros(T, num_nodes, num_nodes)
+    for _ in 1:max_weight_attempts
+        weights = T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
+        weights = ifelse.(iszero.(weights), eps(T), weights)
+        reservoir_matrix .= weights .* adjacency_matrix
+
+        if iszero(converted_radius)
+            fill!(reservoir_matrix, zero(T))
+            break
+        end
+
+        spectral_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+        (!isfinite(spectral_radius) || iszero(spectral_radius)) && continue
+        reservoir_matrix .*= T(target_radius / spectral_radius)
+        any(!isfinite, reservoir_matrix) && continue
+
+        realized_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+        if isapprox(
+                realized_radius, target_radius;
+                rtol = radius_tolerance,
+                atol = radius_tolerance * max(one(working_type), target_radius)
+            )
+            break
+        end
+    end
+
+    realized_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+    isapprox(
+        realized_radius, target_radius;
+        rtol = radius_tolerance,
+        atol = radius_tolerance * max(one(working_type), target_radius)
+    ) || throw(
+        ArgumentError(
+            "could not generate weights with spectral radius $converted_radius after " *
+                "$max_weight_attempts attempts; use a wider floating-point element type"
+        )
+    )
     check_inf_nan(reservoir_matrix)
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
