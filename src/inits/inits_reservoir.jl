@@ -257,12 +257,15 @@ function scale_free(
         ArgumentError("scale_free requires a real floating-point element type, got $T")
     )
     radius isa Real || throw(ArgumentError("radius must be real, got $(typeof(radius))"))
-    converted_radius = T(radius)
-    isfinite(converted_radius) || throw(
+    isfinite(radius) || throw(
         ArgumentError("radius must be finite, got $radius")
     )
-    converted_radius >= zero(T) || throw(
+    radius >= zero(radius) || throw(
         ArgumentError("radius must be nonnegative, got $radius")
+    )
+    converted_radius = T(radius)
+    isfinite(converted_radius) || throw(
+        ArgumentError("radius must be finite after conversion to $T, got $radius")
     )
 
     2 <= initial_nodes <= num_nodes || throw(
@@ -319,6 +322,7 @@ function scale_free(
     max_weight_attempts = 100
 
     reservoir_matrix = zeros(T, num_nodes, num_nodes)
+    accepted = false
     for _ in 1:max_weight_attempts
         weights = T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
         weights = ifelse.(iszero.(weights), eps(T), weights)
@@ -326,6 +330,7 @@ function scale_free(
 
         if iszero(converted_radius)
             fill!(reservoir_matrix, zero(T))
+            accepted = true
             break
         end
 
@@ -338,18 +343,14 @@ function scale_free(
         if isapprox(
                 realized_radius, target_radius;
                 rtol = radius_tolerance,
-                atol = radius_tolerance * max(one(working_type), target_radius)
+                atol = zero(working_type)
             )
+            accepted = true
             break
         end
     end
 
-    realized_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
-    isapprox(
-        realized_radius, target_radius;
-        rtol = radius_tolerance,
-        atol = radius_tolerance * max(one(working_type), target_radius)
-    ) || throw(
+    accepted || throw(
         ArgumentError(
             "could not generate weights with spectral radius $converted_radius after " *
                 "$max_weight_attempts attempts; use a wider floating-point element type"

@@ -132,12 +132,41 @@ begin
             @test check_radius(Float64.(float32_regression), 1.0; tolerance = 1.0e-3)
             @test check_radius(Float64.(float16_regression), 1.0; tolerance = 0.04)
 
+            tree_radius(matrix) = sqrt(abs(sum(
+                BigFloat(matrix[i, j]) * BigFloat(matrix[j, i])
+                    for i in axes(matrix, 1) for j in (i + 1):size(matrix, 2)
+            )))
+            float32_small_radius = scale_free(
+                Xoshiro(1971721), Float32, 3, 3;
+                initial_nodes = 2, attachments = 1, radius = 0.001,
+            )
+            float16_small_radius = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1, radius = 0.01,
+            )
+            @test isapprox(
+                tree_radius(float32_small_radius), BigFloat(Float32(0.001));
+                rtol = sqrt(eps(Float32)), atol = 0,
+            )
+            @test isapprox(
+                tree_radius(float16_small_radius), BigFloat(Float16(0.01));
+                rtol = sqrt(eps(Float16)), atol = 0,
+            )
+
             invalid_radius_rng = Xoshiro(1)
             @test_throws ArgumentError scale_free(
                 invalid_radius_rng, Float64, 4, 4;
                 initial_nodes = 2, attachments = 1, radius = -0.75,
             )
             @test rand(invalid_radius_rng) == rand(Xoshiro(1))
+            for (T, radius) in ((Float16, -1.0e-8), (Float32, -1.0e-100))
+                tiny_negative_radius_rng = Xoshiro(1)
+                @test_throws ArgumentError scale_free(
+                    tiny_negative_radius_rng, T, 4, 4;
+                    initial_nodes = 2, attachments = 1, radius,
+                )
+                @test rand(tiny_negative_radius_rng) == rand(Xoshiro(1))
+            end
             @test_throws ArgumentError scale_free(
                 Xoshiro(1), Int, 4, 4; initial_nodes = 2, attachments = 1,
             )
