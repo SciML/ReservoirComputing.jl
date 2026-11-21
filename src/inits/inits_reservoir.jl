@@ -141,7 +141,7 @@ function small_world(
     2 <= num_neighbors < num_nodes || throw(
         ArgumentError(
             "num_neighbors must be at least two and smaller than the number of nodes " *
-            "(got num_neighbors=$(num_neighbors), num_nodes=$(num_nodes))"
+                "(got num_neighbors=$(num_neighbors), num_nodes=$(num_nodes))"
         )
     )
     iseven(num_neighbors) || throw(
@@ -181,6 +181,181 @@ function small_world(
     weights = ifelse.(iszero.(weights), eps(T), weights)
     reservoir_matrix = weights .* adjacency_matrix
     reservoir_matrix = scale_radius!(reservoir_matrix, radius)
+    check_inf_nan(reservoir_matrix)
+
+    return return_init_as(Val(return_sparse), reservoir_matrix)
+end
+
+@doc raw"""
+    scale_free([rng], [T], dims...;
+        initial_nodes, attachments, radius=1.0, return_sparse=false)
+
+Create a reservoir whose undirected connection topology follows the
+Barabási-Albert preferential-attachment model. The network starts with a complete
+graph of `initial_nodes` nodes. Each remaining node connects to `attachments`
+different existing nodes, sampled with probability proportional to their degree.
+Connection weights are sampled uniformly from ``[-1, 1]`` before the matrix is
+scaled to the requested spectral radius.
+
+## Arguments
+
+  - `rng`: Random number generator. Default is `Xoshiro(1234)`.
+  - `T`: Real floating-point type of the elements in the reservoir matrix.
+    Default is `Float32`.
+  - `dims`: Dimensions of the reservoir matrix.
+
+## Keyword arguments
+
+  - `initial_nodes`: Number of nodes in the initial complete graph. It must be at
+    least two and no larger than the total number of nodes.
+  - `attachments`: Number of existing nodes that each new node connects to. It
+    must be positive and no larger than `initial_nodes`.
+  - `radius`: Desired spectral radius of the reservoir. Defaults to 1.0.
+  - `return_sparse`: Flag for returning a `sparse` matrix. `true` requires
+    `SparseArrays` to be loaded. Default is `false`.
+
+## References
+
+Barabási, A.-L. and Albert, R. (1999). Emergence of scaling in random networks.
+*Science*, 286(5439), 509-512. [doi:10.1126/science.286.5439.509](https://doi.org/10.1126/science.286.5439.509)
+
+## Examples
+
+Create a scale-free reservoir:
+
+```jldoctest scalefree
+julia> reservoir_matrix = scale_free(MersenneTwister(123), 8, 8;
+           initial_nodes = 3, attachments = 2);
+
+julia> size(reservoir_matrix) == (8, 8) &&
+       (reservoir_matrix .!= 0) == transpose(reservoir_matrix .!= 0)
+true
+```
+
+Request a sparse reservoir matrix:
+
+```jldoctest scalefree
+julia> reservoir_matrix = scale_free(MersenneTwister(123), 8, 8;
+           initial_nodes = 3, attachments = 2, return_sparse = true);
+
+julia> reservoir_matrix isa SparseMatrixCSC{Float32} && size(reservoir_matrix) == (8, 8)
+true
+```
+"""
+function scale_free(
+        rng::AbstractRNG, ::Type{T}, dims::Integer...;
+        initial_nodes::Integer,
+        attachments::Integer,
+        radius = one(T),
+        return_sparse::Bool = false
+    ) where {T <: Number}
+    throw_sparse_error(return_sparse)
+    check_res_size(dims...)
+    num_nodes = first(dims)
+
+    T <: AbstractFloat || throw(
+        ArgumentError("scale_free requires a real floating-point element type, got $T")
+    )
+    radius isa Real || throw(ArgumentError("radius must be real, got $(typeof(radius))"))
+    isfinite(radius) || throw(
+        ArgumentError("radius must be finite, got $radius")
+    )
+    radius >= zero(radius) || throw(
+        ArgumentError("radius must be nonnegative, got $radius")
+    )
+    converted_radius = T(radius)
+    isfinite(converted_radius) || throw(
+        ArgumentError("radius must be finite after conversion to $T, got $radius")
+    )
+
+    2 <= initial_nodes <= num_nodes || throw(
+        ArgumentError(
+            "initial_nodes must be at least two and no larger than the number of nodes " *
+                "(got initial_nodes=$(initial_nodes), num_nodes=$(num_nodes))"
+        )
+    )
+    1 <= attachments <= initial_nodes || throw(
+        ArgumentError(
+            "attachments must be positive and no larger than initial_nodes " *
+                "(got attachments=$(attachments), initial_nodes=$(initial_nodes))"
+        )
+    )
+
+    adjacency_matrix = falses(num_nodes, num_nodes)
+    degrees = zeros(Int, num_nodes)
+    for first_node in 1:(initial_nodes - 1), second_node in (first_node + 1):initial_nodes
+        adjacency_matrix[first_node, second_node] = true
+        adjacency_matrix[second_node, first_node] = true
+        degrees[first_node] += 1
+        degrees[second_node] += 1
+    end
+
+    for new_node in (initial_nodes + 1):num_nodes
+        selected_nodes = falses(new_node - 1)
+        for _ in 1:attachments
+            available_degree = sum(
+                node -> selected_nodes[node] ? 0 : degrees[node], 1:(new_node - 1)
+            )
+            draw = rand(rng, 1:available_degree)
+            cumulative_degree = 0
+            selected_node = 0
+            for existing_node in 1:(new_node - 1)
+                selected_nodes[existing_node] && continue
+                cumulative_degree += degrees[existing_node]
+                if draw <= cumulative_degree
+                    selected_node = existing_node
+                    break
+                end
+            end
+
+            adjacency_matrix[new_node, selected_node] = true
+            adjacency_matrix[selected_node, new_node] = true
+            selected_nodes[selected_node] = true
+            degrees[new_node] += 1
+            degrees[selected_node] += 1
+        end
+    end
+
+    working_type = promote_type(T, Float64)
+    target_radius = working_type(converted_radius)
+    radius_tolerance = sqrt(eps(T))
+    max_weight_attempts = 100
+
+    reservoir_matrix = zeros(T, num_nodes, num_nodes)
+    accepted = false
+    for _ in 1:max_weight_attempts
+        weights = T(2) .* DeviceAgnostic.rand(rng, T, num_nodes, num_nodes) .- T(1)
+        weights = ifelse.(iszero.(weights), eps(T), weights)
+        reservoir_matrix .= weights .* adjacency_matrix
+
+        if iszero(converted_radius)
+            fill!(reservoir_matrix, zero(T))
+            accepted = true
+            break
+        end
+
+        spectral_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+        (!isfinite(spectral_radius) || iszero(spectral_radius)) && continue
+        reservoir_matrix .*= T(target_radius / spectral_radius)
+        any(!isfinite, reservoir_matrix) && continue
+
+        realized_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+        if isapprox(
+                realized_radius, target_radius;
+                rtol = radius_tolerance,
+                atol = zero(working_type)
+            )
+            accepted = true
+            break
+        end
+    end
+
+    accepted || throw(
+        ArgumentError(
+            "could not generate weights with spectral radius $converted_radius after " *
+                "$max_weight_attempts attempts; use a wider floating-point element type"
+        )
+    )
     check_inf_nan(reservoir_matrix)
 
     return return_init_as(Val(return_sparse), reservoir_matrix)
@@ -2949,7 +3124,7 @@ for initializer in (
         :selfloop_cycle, :selfloop_backward_cycle, :selfloop_delayline_backward, :selfloop_forwardconnection,
         :forward_connection, :true_doublecycle, :block_diagonal, :permutation_init,
         :diagonal_init, :wigner_init, :rand_hyper, :band_init, :toeplitz_init,
-        :dale_sparse, :small_world,
+        :dale_sparse, :scale_free, :small_world,
     )
     @eval begin
         function ($initializer)(dims::Integer...; kwargs...)
