@@ -157,6 +157,28 @@ begin
                 rtol = sqrt(eps(Float16)), atol = 0,
             )
 
+            float64_subnormal = scale_free(
+                Xoshiro(6), Float64, 3, 3;
+                initial_nodes = 2, attachments = 1,
+                radius = nextfloat(0.0), return_sparse = true,
+            )
+            float16_subnormal = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1,
+                radius = nextfloat(Float16(0)),
+            )
+            @test count(!iszero, float64_subnormal) == 4
+            @test count(!iszero, float16_subnormal) == 4
+            @test isapprox(
+                tree_radius(float64_subnormal) / BigFloat(nextfloat(0.0)), BigFloat(1);
+                rtol = sqrt(eps(Float64)), atol = 0,
+            )
+            @test isapprox(
+                tree_radius(float16_subnormal) / BigFloat(nextfloat(Float16(0))),
+                BigFloat(1);
+                rtol = sqrt(eps(Float16)), atol = 0,
+            )
+
             invalid_radius_rng = Xoshiro(1)
             @test_throws ArgumentError scale_free(
                 invalid_radius_rng, Float64, 4, 4;
@@ -170,6 +192,18 @@ begin
                     initial_nodes = 2, attachments = 1, radius,
                 )
                 @test rand(tiny_negative_radius_rng) == rand(Xoshiro(1))
+            end
+            for (T, radius) in (
+                    (Float16, 1.0e-8),
+                    (Float32, 1.0e-100),
+                    (Float64, big"1e-400"),
+                )
+                tiny_positive_radius_rng = Xoshiro(1)
+                @test_throws ArgumentError scale_free(
+                    tiny_positive_radius_rng, T, 3, 3;
+                    initial_nodes = 2, attachments = 1, radius,
+                )
+                @test rand(tiny_positive_radius_rng) == rand(Xoshiro(1))
             end
             @test_throws ArgumentError scale_free(
                 Xoshiro(1), Int, 4, 4; initial_nodes = 2, attachments = 1,

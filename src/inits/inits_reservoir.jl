@@ -267,6 +267,9 @@ function scale_free(
     isfinite(converted_radius) || throw(
         ArgumentError("radius must be finite after conversion to $T, got $radius")
     )
+    radius > zero(radius) && iszero(converted_radius) && throw(
+        ArgumentError("positive radius $radius rounds to zero after conversion to $T")
+    )
 
     2 <= initial_nodes <= num_nodes || throw(
         ArgumentError(
@@ -338,10 +341,12 @@ function scale_free(
         (!isfinite(spectral_radius) || iszero(spectral_radius)) && continue
         reservoir_matrix .*= T(target_radius / spectral_radius)
         any(!isfinite, reservoir_matrix) && continue
+        (reservoir_matrix .!= 0) == adjacency_matrix || continue
 
-        realized_radius = maximum(abs, eigvals(working_type.(reservoir_matrix)))
+        normalized_matrix = working_type.(reservoir_matrix) ./ target_radius
+        realized_radius = maximum(abs, eigvals(normalized_matrix))
         if isapprox(
-                realized_radius, target_radius;
+                realized_radius, one(working_type);
                 rtol = radius_tolerance,
                 atol = zero(working_type)
             )
