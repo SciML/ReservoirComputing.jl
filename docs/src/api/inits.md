@@ -62,6 +62,8 @@ where full details and examples are provided.
     in the Poincaré ball and constructing weights based on hyperbolic distances between them.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
     reservoir with controlled sparsity and spectral radius.
+- [`scale_free`](inits/scale_free.md): Creates a Barabási-Albert reservoir
+    using degree-based preferential attachment.
 - [`dale_sparse`](inits/dale_sparse.md): Dale-compliant sparse reservoir
     (E/I column signs).
 - [`selfloop_cycle`](inits/selfloop_cycle.md): Builds a simple cycle
