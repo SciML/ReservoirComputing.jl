@@ -62,6 +62,8 @@ where full details and examples are provided.
     in the Poincaré ball and constructing weights based on hyperbolic distances between them.
 - [`rand_sparse`](inits/rand_sparse.md): Generates a random sparse
     reservoir with controlled sparsity and spectral radius.
+- [`scale_free`](inits/scale_free.md): Creates a Barabási-Albert reservoir
+    using degree-based preferential attachment.
 - [`dale_sparse`](inits/dale_sparse.md): Dale-compliant sparse reservoir
     (E/I column signs).
 - [`selfloop_cycle`](inits/selfloop_cycle.md): Builds a simple cycle
@@ -72,6 +74,8 @@ where full details and examples are provided.
     cycle where odd nodes self-loop and even nodes have forward/backward links.
 - [`selfloop_forwardconnection`](inits/selfloop_forwardconnection.md): Adds self-loops
     onto a forward-connection reservoir (stride-2).
+- [`small_world`](inits/small_world.md): Creates a Watts-Strogatz small-world
+    reservoir with configurable neighbourhood size and rewiring probability.
 - [`simple_cycle`](inits/simple_cycle.md): Builds a basic directed ring
     reservoir with uniform weights.
 - [`toeplitz_init`](inits/toeplitz_init.md): Creates Toeplitz sparse reservoir topology 
