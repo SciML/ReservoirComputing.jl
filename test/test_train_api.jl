@@ -199,3 +199,42 @@ end
         @test ps_a2.layer_4 == ps_a.layer_4
     end
 end
+
+struct CustomMatrixReadout <: ReservoirComputing.AbstractReservoirTrainableLayer
+    n::Int
+    m::Int
+end
+function LuxCore.initialparameters(::AbstractRNG, l::CustomMatrixReadout)
+    return (; weight = Matrix{Float64}(I, l.m, l.n))
+end
+LuxCore.initialstates(::AbstractRNG, ::CustomMatrixReadout) = NamedTuple()
+(l::CustomMatrixReadout)(x, ps, st) = ps.weight * x, st
+
+@testset "custom trainable readout is the only layer fitted" begin
+    rng = MersenneTwister(78)
+    x = randn(rng, 2, 80)
+    target = [2.0 0.0; 0.0 3.0]
+    rc = ReservoirChain(CustomMatrixReadout(2, 2), LinearReadout(2 => 2))
+    ps, st = setup(rng, rc)
+    ps = merge(ps, (; layer_3 = (; weight = Matrix{Float64}(I, 2, 2))))
+    ps2, _ = train(rc, x, target * x, ps, st)
+    @test ps2.layer_3 == ps.layer_3
+    @test ps2.layer_1.weight ≈ target
+    @test first(rc([1.0, 1.0], ps2, st)) ≈ [2.0, 3.0]
+
+    rc_rows = ReservoirChain(CustomMatrixReadout(2, 1), LinearReadout(1 => 2))
+    ps_r, st_r = setup(rng, rc_rows)
+    ps_r2, _ = train(rc_rows, x, x[1:1, :], ps_r, st_r)
+    @test size(ps_r2.layer_1.weight) == (1, 2)
+    @test ps_r2.layer_3 == ps_r.layer_3
+end
+
+@testset "custom trainable readout validates fitted shape" begin
+    rng = MersenneTwister(79)
+    x = randn(rng, 2, 40)
+    rc = ReservoirChain(CustomMatrixReadout(2, 1))
+    ps, st = setup(rng, rc)
+    @test_throws DimensionMismatch train(rc, x, x, ps, st)
+    ps2, _ = train(rc, x, x[1:1, :], ps, st)
+    @test size(ps2.layer_1.weight) == (1, 2)
+end

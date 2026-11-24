@@ -195,7 +195,7 @@ function __readout_out_dims(rc::AbstractReservoirComputer)
 end
 function __readout_out_dims(rc::ReservoirChain)
     for layer in rc.layers
-        layer isa Union{LinearReadout, SVMReadout} && return layer.out_dims
+        layer isa AbstractReservoirTrainableLayer && return __readout_out_dims(layer)
     end
     return nothing
 end
@@ -300,14 +300,21 @@ end
 end
 
 function __setreadout(layer::AbstractReservoirTrainableLayer, p::NamedTuple, W)
-    haskey(p, :weight) && return __setweight_rt(p, W)
-    throw(
+    haskey(p, :weight) || throw(
         ArgumentError(
             "cannot install trained weights in $(typeof(layer)): its parameters have no " *
-                "`weight` field. Define `ReservoirComputing.addreadout!` for the chain " *
-                "or give the layer a `weight` parameter."
+                "`weight` field. Give the layer a `weight` parameter holding an " *
+                "(n_outputs, n_features) matrix."
         )
     )
+    old = p.weight
+    old isa AbstractMatrix && size(old) != size(W) && throw(
+        DimensionMismatch(
+            "fitted readout weight has size $(size(W)), but $(typeof(layer)) " *
+                "initializes `weight` with size $(size(old))"
+        )
+    )
+    return __setweight_rt(p, W)
 end
 
 @generated function __addreadout(
@@ -322,9 +329,11 @@ end
 
     L = fieldtype(layers, 1)
     trainable = L <: AbstractReservoirTrainableLayer
-    head_val = if L <: LinearReadout
+    head_val = if S
+        :(getfield(ps, 1))
+    elseif L <: LinearReadout
         :(__setweight_rt(getfield(ps, 1), W))
-    elseif trainable && !S
+    elseif trainable
         :(__setreadout(getfield(layers, 1), getfield(ps, 1), W))
     else
         :(getfield(ps, 1))

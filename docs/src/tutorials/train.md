@@ -99,7 +99,9 @@ ReservoirComputing.__fit_readout(
 
 The columns of `states` and `target_data` are aligned training samples. A
 matrix-valued result must have size `(n_outputs, n_features)` and is installed
-in a standard linear readout. Backends that return another fitted object must
+in the first trainable layer of the chain: a standard linear readout, or a
+custom [`ReservoirComputing.AbstractReservoirTrainableLayer`](@ref) whose parameters
+have a `weight` matrix of that size. Backends that return another fitted object must
 also implement `ReservoirComputing.addreadout!` for compatible model and
 readout types.
 
