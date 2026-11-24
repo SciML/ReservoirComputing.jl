@@ -473,3 +473,19 @@ begin
     end
 
 end
+
+@testset "generic predict passes owned column copies" begin
+    data = Float64[3 1 2; 1 3 1; 2 2 3]
+    original = copy(data)
+    chain = ReservoirChain(sort!)
+    ps, st = setup(MersenneTwister(1), chain)
+    out, _ = predict(chain, data, ps, st)
+    @test data == original
+    @test out == mapreduce(sort, hcat, eachcol(original))
+
+    onlyvector(x::Vector) = 2 .* x
+    chain_v = ReservoirChain(onlyvector)
+    ps_v, st_v = setup(MersenneTwister(1), chain_v)
+    out_v, _ = predict(chain_v, data, ps_v, st_v)
+    @test out_v == 2 .* original
+end

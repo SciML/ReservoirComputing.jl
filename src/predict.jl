@@ -87,9 +87,8 @@ function __autoregressive_predict(rc, steps::Integer, ps, st, initialdata::Abstr
     return outputs, st
 end
 
-function __teacher_forced_predict(rc, data::AbstractMatrix, ps, st)
+function __teacher_forced_predict(rc, data::AbstractMatrix, input_cols, ps, st)
     __require_nonempty_data(data, "predict")
-    input_cols = eachcol(data)
     current_output, st = apply(rc, first(input_cols), ps, st)
     outputs = similar(current_output, length(current_output), size(data, 2))
     outputs[:, 1] .= current_output
@@ -101,7 +100,8 @@ function __teacher_forced_predict(rc, data::AbstractMatrix, ps, st)
 end
 
 function predict(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st)
-    return __teacher_forced_predict(rc, data, ps, st)
+    input_cols = (data[:, t] for t in axes(data, 2))
+    return __teacher_forced_predict(rc, data, input_cols, ps, st)
 end
 
 function predict(
@@ -150,5 +150,5 @@ function __predict(
 end
 
 function __predict(::Any, rc::AbstractReservoirComputer, data::AbstractMatrix, ps, st)
-    return __teacher_forced_predict(rc, data, ps, st)
+    return __teacher_forced_predict(rc, data, eachcol(data), ps, st)
 end
