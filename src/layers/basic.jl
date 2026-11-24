@@ -306,9 +306,21 @@ function collectstates(rc::AbstractLuxLayer, data::AbstractMatrix, ps, st::Named
     states[:, 1] .= col
     for (idx, inp) in Base.Iterators.drop(Base.enumerate(cols), 1)
         col, newst = __chain_collect_step(values(rc.layers), keys(rc.layers), ps, newst, inp, nothing)
-        states[:, idx] .= col
+        states = __store_column!(states, col, idx)
     end
     return states, newst
+end
+
+function __store_column!(states::AbstractMatrix, col::AbstractArray, idx::Integer)
+    T = promote_type(eltype(states), eltype(col))
+    if T === eltype(states)
+        states[:, idx] .= col
+        return states
+    end
+    wider = similar(states, T, size(states))
+    copyto!(view(wider, :, 1:(idx - 1)), view(states, :, 1:(idx - 1)))
+    wider[:, idx] .= col
+    return wider
 end
 
 function collectstates(rc::AbstractLuxLayer, data::AbstractVector, ps, st::NamedTuple)

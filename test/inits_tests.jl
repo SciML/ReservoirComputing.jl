@@ -461,8 +461,30 @@ begin
             @test eltype(permutation_init(Xoshiro(1), Float64, 6, 6; weight = w)) == Float64
             @test eltype(true_doublecycle(Xoshiro(1), Float64, 6, 6; cycle_weight = w)) ==
                 Float64
-            scalar_weight = permutation_init(Xoshiro(1), 4, 4; weight = 0.3)
-            @test all(==(0.3f0), filter(!iszero, scalar_weight))
+            perm = Float32[0 1 0 0; 0 0 0 1; 1 0 0 0; 0 0 1 0]
+            scalar_weight = permutation_init(
+                Xoshiro(1), 4, 4; weight = 0.3, permutation_matrix = perm
+            )
+            @test scalar_weight == 0.3f0 .* perm
+        end
+
+        @testset "signs are applied before conversion to the matrix eltype" begin
+            w = [1, -2, 3, -4]
+            expected = UInt8.(Diagonal([1, 2, 3, 4]))
+            @test diagonal_init(
+                Xoshiro(1), UInt8, 4, 4; weight = w, signs = RegularSigns()
+            ) == expected
+            @test permutation_init(
+                Xoshiro(1), UInt8, 4, 4; weight = w, signs = RegularSigns(),
+                permutation_matrix = Matrix{UInt8}(I, 4, 4)
+            ) == expected
+            @test true_doublecycle(
+                Xoshiro(1), UInt8, 4, 4; cycle_weight = w,
+                second_cycle_weight = w,
+                cycle_kwargs = (; signs = RegularSigns()),
+                second_cycle_kwargs = (; signs = RegularSigns())
+            ) isa Matrix{UInt8}
+            @test w == [1, -2, 3, -4]
         end
 
         @testset "Sign patterns" begin

@@ -212,6 +212,51 @@ begin
         @test preds1 ≈ preds2
     end
 
+    @testset "Autoregressive predict gives identical results for all seed containers" begin
+        function seed_rhs!(dx, x, p, t)
+            return dx[1] = p.input(t)[1] - x[1]
+        end
+        tspan = (0.0, 1.0)
+        prob = ODEProblem(seed_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        dense, _ = predict(rc, 3, ps, st; initialdata = [1.0])
+        from_view, _ = predict(rc, 3, ps, st; initialdata = view([1.0, 0.0], 1:1))
+        from_range, _ = predict(rc, 3, ps, st; initialdata = 1.0:1.0)
+        from_any, _ = predict(rc, 3, ps, st; initialdata = view(Any[1.0], 1:1))
+        from_int, _ = predict(rc, 3, ps, st; initialdata = [1])
+        single, _ = predict(rc, 1, ps, st; initialdata = [1.0])
+        @test single[1] ≈ 1 - exp(-1)
+        @test from_view == dense
+        @test from_range == dense
+        @test from_any == dense
+        @test from_int == dense
+    end
+
+    @testset "Autoregressive predict Any-eltype seed matches dense Int seed" begin
+        large = 9007199254740993
+        function sentinel_rhs!(dx, x, p, t)
+            return dx[1] = p.input(t)[1] == large ? 1.0 : 0.0
+        end
+        tspan = (0.0, 1.0)
+        prob = ODEProblem(sentinel_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        dense, _ = predict(rc, 1, ps, st; initialdata = [large])
+        from_view, _ = predict(rc, 1, ps, st; initialdata = view([large, 0], 1:1))
+        from_any, _ = predict(rc, 1, ps, st; initialdata = view(Any[large], 1:1))
+        @test from_view == dense
+        @test from_any == dense
+    end
+
     @testset "Autoregressive predict uses carry" begin
         rng = MersenneTwister(37)
         res_dim, dim, T_steps, steps = 8, 2, 16, 4

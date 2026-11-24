@@ -129,11 +129,13 @@ function __make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
 
-__input_vector(x::Vector) = x
-__input_vector(x::AbstractVector) = copyto!(similar(x, float(eltype(x))), x)
+function __input_vector(x::AbstractVector, state::AbstractVector)
+    T = promote_type(eltype(x), eltype(state))
+    return copyto!(Vector{isconcretetype(T) ? T : eltype(state)}(undef, length(x)), x)
+end
 
-mutable struct ConstantInputWindow{T <: AbstractVector}
-    u_vec::T
+mutable struct ConstantInputWindow{V <: AbstractVector}
+    u_vec::V
 end
 
 (input::ConstantInputWindow)(t) = input.u_vec
@@ -293,7 +295,7 @@ function __predict(
     window_ends = @view ts[2:end]
 
     current_state = __seed_u(st.reservoir, () -> res.prob.u0)
-    current_input = __input_vector(initialdata)
+    current_input = __input_vector(initialdata, current_state)
 
     st_mods = st.state_modifiers
     st_ro = st.readout
@@ -320,7 +322,7 @@ function __predict(
     # conversion at the column assignment.
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
+        copyto!(input_fn.u_vec, current_input)
         reinit!(
             integrator, current_state;
             t0 = t_lo,
@@ -517,7 +519,7 @@ function __predict(
     window_ends = @view ts[2:end]
 
     current_state, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
-    current_input = __input_vector(initialdata)
+    current_input = __input_vector(initialdata, current_state)
 
     st_mods = st.state_modifiers
     st_ro = st.readout
@@ -541,7 +543,7 @@ function __predict(
 
     local outputs
     for (step_idx, (t_lo, t_hi)) in enumerate(zip(window_starts, window_ends))
-        input_fn.u_vec = convert(typeof(input_fn.u_vec), current_input)
+        copyto!(input_fn.u_vec, current_input)
         reinit!(
             integrator, current_state;
             t0 = t_lo,

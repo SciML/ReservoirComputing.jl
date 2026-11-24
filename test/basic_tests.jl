@@ -166,6 +166,20 @@ begin
             @test states == states_f
         end
 
+        @testset "later columns wider than the first are kept" begin
+            narrow_then_wide(x) = isinteger(x[1]) ? Int.(x) : x
+            rc = ReservoirChain(narrow_then_wide, Collect())
+            ps, st = setup(rng, rc)
+            states, _ = collectstates(rc, [1.0 1.25], ps, st)
+            @test states == [1.0 1.25]
+            single_then_double(x) = isinteger(x[1]) ? Float32.(x) : x
+            rc = ReservoirChain(single_then_double, Collect())
+            ps, st = setup(rng, rc)
+            states, _ = collectstates(rc, [1.0 1.0000000000000002], ps, st)
+            @test states[1, 2] == 1.0000000000000002
+            @test states[1, 1] == 1.0
+        end
+
         @testset "docstring is attached to the chain method" begin
             doc = string(@doc collectstates)
             @test occursin("Run the sequence", doc)

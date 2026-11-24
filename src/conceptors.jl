@@ -728,8 +728,10 @@ conceptor library populated.
 
 ## Throws
 
-- `ArgumentError`: If a name is not a `Symbol`, an aperture is missing, or washout
-  is not in `1:(signal length - 1)`.
+- `ArgumentError`: If a name is not a `Symbol`, an aperture is missing, washout
+  is not in `1:(signal length - 1)`, the wrapped model has `state_modifiers` or a
+  reservoir that is not a `StatefulLayer` around one recurrent cell, or the cell is an
+  [`EuSNCell`](@ref), whose recurrence does not apply `reservoir_matrix` directly.
 """
 function loadpatterns(
         rng::AbstractRNG,
