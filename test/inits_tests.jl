@@ -72,6 +72,226 @@ begin
     ]
 
     @testset "Reservoir Initializers" begin
+        @testset "Scale-free initializer" begin
+            initial_nodes = 4
+            attachments = 2
+            num_nodes = 20
+            reservoir_matrix = scale_free(
+                MersenneTwister(42), Float64, num_nodes, num_nodes;
+                initial_nodes, attachments,
+            )
+            @test reservoir_matrix == scale_free(
+                MersenneTwister(42), Float64, num_nodes, num_nodes;
+                initial_nodes, attachments,
+            )
+            @test size(reservoir_matrix) == (num_nodes, num_nodes)
+            @test eltype(reservoir_matrix) == Float64
+            @test all(iszero, diag(reservoir_matrix))
+            @test (reservoir_matrix .!= 0) == transpose(reservoir_matrix .!= 0)
+            expected_edges = initial_nodes * (initial_nodes - 1) ÷ 2 +
+                (num_nodes - initial_nodes) * attachments
+            @test count(!iszero, reservoir_matrix) == 2 * expected_edges
+            @test all(>=(attachments), count(!iszero, reservoir_matrix; dims = 1))
+            @test check_radius(reservoir_matrix, 1.0)
+
+            dense = scale_free(
+                MersenneTwister(7), Float32, num_nodes, num_nodes;
+                initial_nodes, attachments, radius = 0.75f0,
+            )
+            sparse = scale_free(
+                MersenneTwister(7), Float32, num_nodes, num_nodes;
+                initial_nodes, attachments, radius = 0.75f0, return_sparse = true,
+            )
+            @test sparse isa SparseMatrixCSC{Float32}
+            @test Matrix(sparse) == dense
+            @test check_radius(dense, 0.75f0)
+
+            initial_graph = scale_free(
+                MersenneTwister(11), Float64, initial_nodes, initial_nodes;
+                initial_nodes, attachments = initial_nodes,
+            )
+            @test count(!iszero, initial_graph) == initial_nodes * (initial_nodes - 1)
+            @test check_radius(initial_graph, 1.0)
+
+            preferential = scale_free(
+                Xoshiro(1), Float64, 4, 4;
+                initial_nodes = 2, attachments = 1,
+            )
+            @test !iszero(preferential[1, 3])
+            @test !iszero(preferential[1, 4])
+            @test iszero(preferential[2, 4])
+
+            float32_regression = scale_free(
+                Xoshiro(1971721), Float32, 3, 3;
+                initial_nodes = 2, attachments = 1,
+            )
+            float16_regression = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1,
+            )
+            @test check_radius(Float64.(float32_regression), 1.0; tolerance = 1.0e-3)
+            @test check_radius(Float64.(float16_regression), 1.0; tolerance = 0.04)
+
+            tree_radius(matrix) = sqrt(
+                abs(
+                    sum(
+                        BigFloat(matrix[i, j]) * BigFloat(matrix[j, i])
+                            for i in axes(matrix, 1) for j in (i + 1):size(matrix, 2)
+                    )
+                )
+            )
+            float32_small_radius = scale_free(
+                Xoshiro(1971721), Float32, 3, 3;
+                initial_nodes = 2, attachments = 1, radius = 0.001,
+            )
+            float16_small_radius = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1, radius = 0.01,
+            )
+            @test isapprox(
+                tree_radius(float32_small_radius), BigFloat(Float32(0.001));
+                rtol = sqrt(eps(Float32)), atol = 0,
+            )
+            @test isapprox(
+                tree_radius(float16_small_radius), BigFloat(Float16(0.01));
+                rtol = sqrt(eps(Float16)), atol = 0,
+            )
+
+            float64_subnormal = scale_free(
+                Xoshiro(6), Float64, 3, 3;
+                initial_nodes = 2, attachments = 1,
+                radius = nextfloat(0.0), return_sparse = true,
+            )
+            float16_subnormal = scale_free(
+                Xoshiro(19672), Float16, 3, 3;
+                initial_nodes = 2, attachments = 1,
+                radius = nextfloat(Float16(0)),
+            )
+            @test count(!iszero, float64_subnormal) == 4
+            @test count(!iszero, float16_subnormal) == 4
+            @test isapprox(
+                tree_radius(float64_subnormal) / BigFloat(nextfloat(0.0)), BigFloat(1);
+                rtol = sqrt(eps(Float64)), atol = 0,
+            )
+            @test isapprox(
+                tree_radius(float16_subnormal) / BigFloat(nextfloat(Float16(0))),
+                BigFloat(1);
+                rtol = sqrt(eps(Float16)), atol = 0,
+            )
+
+            invalid_radius_rng = Xoshiro(1)
+            @test_throws ArgumentError scale_free(
+                invalid_radius_rng, Float64, 4, 4;
+                initial_nodes = 2, attachments = 1, radius = -0.75,
+            )
+            @test rand(invalid_radius_rng) == rand(Xoshiro(1))
+            for (T, radius) in ((Float16, -1.0e-8), (Float32, -1.0e-100))
+                tiny_negative_radius_rng = Xoshiro(1)
+                @test_throws ArgumentError scale_free(
+                    tiny_negative_radius_rng, T, 4, 4;
+                    initial_nodes = 2, attachments = 1, radius,
+                )
+                @test rand(tiny_negative_radius_rng) == rand(Xoshiro(1))
+            end
+            for (T, radius) in (
+                    (Float16, 1.0e-8),
+                    (Float32, 1.0e-100),
+                    (Float64, big"1e-400"),
+                )
+                tiny_positive_radius_rng = Xoshiro(1)
+                @test_throws ArgumentError scale_free(
+                    tiny_positive_radius_rng, T, 3, 3;
+                    initial_nodes = 2, attachments = 1, radius,
+                )
+                @test rand(tiny_positive_radius_rng) == rand(Xoshiro(1))
+            end
+            @test_throws ArgumentError scale_free(
+                Xoshiro(1), Int, 4, 4; initial_nodes = 2, attachments = 1,
+            )
+            @test_throws ArgumentError scale_free(
+                Xoshiro(1), ComplexF32, 4, 4; initial_nodes = 2, attachments = 1,
+            )
+
+            @test_throws DimensionMismatch scale_free(
+                MersenneTwister(42), 20, 19; initial_nodes = 4, attachments = 2
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 1, attachments = 1
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 21, attachments = 1
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 4, attachments = 0
+            )
+            @test_throws ArgumentError scale_free(
+                MersenneTwister(42), 20, 20; initial_nodes = 4, attachments = 5
+            )
+        end
+
+        @testset "Small-world initializer" begin
+            zero_rewiring = small_world(
+                MersenneTwister(42), Float64, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test zero_rewiring == small_world(
+                MersenneTwister(42), Float64, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test size(zero_rewiring) == (20, 20)
+            @test eltype(zero_rewiring) == Float64
+            @test all(iszero, diag(zero_rewiring))
+            @test count(!iszero, zero_rewiring) == 20 * 4
+            @test (zero_rewiring .!= 0) == transpose(zero_rewiring .!= 0)
+            @test check_radius(zero_rewiring, 1.0)
+
+            float16_zero_rewiring = small_world(
+                Xoshiro(56), Float16, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.0,
+            )
+            @test count(!iszero, float16_zero_rewiring) == 20 * 4
+            @test (float16_zero_rewiring .!= 0) == transpose(float16_zero_rewiring .!= 0)
+
+            full_rewiring = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 1.0, radius = 0.75f0,
+            )
+            @test count(!iszero, full_rewiring) == 20 * 4
+            @test (full_rewiring .!= 0) == transpose(full_rewiring .!= 0)
+            @test check_radius(full_rewiring, 0.75f0)
+            @test (full_rewiring .!= 0) != (zero_rewiring .!= 0)
+
+            dense = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.3,
+            )
+            sparse = small_world(
+                MersenneTwister(42), Float32, 20, 20;
+                num_neighbors = 4, rewiring_probability = 0.3, return_sparse = true,
+            )
+            @test sparse isa SparseMatrixCSC{Float32}
+            @test Matrix(sparse) == dense
+
+            @test_throws DimensionMismatch small_world(
+                MersenneTwister(42), 20, 19; num_neighbors = 4, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 0, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 3, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 20, rewiring_probability = 0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 4, rewiring_probability = -0.1
+            )
+            @test_throws ArgumentError small_world(
+                MersenneTwister(42), 20, 20; num_neighbors = 4, rewiring_probability = 1.1
+            )
+        end
+
         @testset "Sizes and types: $init $T" for init in reservoir_inits, T in ft
             #sizes
             @test size(init(res_size, res_size)) == (res_size, res_size)
