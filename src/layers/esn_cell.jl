@@ -185,7 +185,7 @@ function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTu
 end
 
 function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = promote_type(eltype(inp), eltype(hidden_state))
+    T = __cell_eltype(inp, hidden_state, ps.input_matrix, ps.reservoir_matrix)
     bias = safe_getproperty(ps, Val(:bias))
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
@@ -193,6 +193,13 @@ function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
     lc = __format_leak(T, esn.leak_coefficient)
     h_new = __one_minus_leak(T, lc) .* hidden_state .+ lc .* candidate_h
     return (h_new, (h_new,)), st
+end
+
+__concrete_eltype_or_bottom(::Type{T}) where {T} = isconcretetype(T) ? T : Union{}
+
+function __cell_eltype(xs::AbstractArray...)
+    T = promote_type(map(x -> __concrete_eltype_or_bottom(eltype(x)), xs)...)
+    return T === Union{} ? Float64 : float(T)
 end
 
 function __format_leak(::Type{T}, leak::Number) where {T <: Number}

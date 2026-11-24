@@ -123,7 +123,7 @@ function initialparameters(rng::AbstractRNG, cell::EIESNCell)
 end
 
 function (cell::EIESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = promote_type(eltype(inp), eltype(hidden_state))
+    T = __cell_eltype(inp, hidden_state, ps.input_matrix, ps.reservoir_matrix)
 
     b_ex = safe_getproperty(ps, Val(:bias_ex))
     b_inh = safe_getproperty(ps, Val(:bias_inh))

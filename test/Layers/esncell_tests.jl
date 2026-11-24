@@ -444,4 +444,107 @@ begin
         @test EuSN(3, 30, 2).reservoir.cell.init_state === zeros32
     end
 
+    @testset "ESNCell: numeric values in an abstractly typed carry" begin
+        cell = ESNCell(
+            1 => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ,
+            init_state = (rng, m, B) -> zeros(Float32, m),
+            leak_coefficient = 0.5
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        x = Float32[2]
+
+        for h in (Any[1.0f0], Real[1.0f0])
+            (y, _), _ = cell((x, (h,)), ps, st)
+            @test y == Float32[1.5]
+            @test eltype(y) == Float32
+        end
+
+        cell_any = ESNCell(
+            1 => 1, identity;
+            init_input = (rng, m, n) -> Matrix{Any}(ones(Float32, m, n)),
+            init_reservoir = (rng, m, n) -> Matrix{Any}(zeros(Float32, m, n)),
+            init_state = (rng, m, B) -> Any[0.0f0],
+            leak_coefficient = 0.5
+        )
+        ps_any = initialparameters(MersenneTwister(0), cell_any)
+        st_any = initialstates(MersenneTwister(0), cell_any)
+        (y_any, _), _ = cell_any(x, ps_any, st_any)
+        @test y_any ≈ [1.0]
+    end
+
+    @testset "memory cells: coefficients follow the memory carry precision" begin
+        x = Float32[2]
+        h = Float32[1]
+        m = BigFloat[1] .+ BigFloat(2)^-30
+        cand = 2 + m[1]
+
+        cell = ReservoirComputing.MemoryESNCell(
+            (1, 1) => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, init_memory = _W_I,
+            leak_coefficient = 0.1
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        (y, _), _ = cell((x, (h, m)), ps, st)
+        expected = (1 - BigFloat(0.1)) * 1 + BigFloat(0.1) * cand
+        @test eltype(y) == BigFloat
+        @test isapprox(y[1], expected; rtol = BigFloat(10)^-20)
+
+        rcell = ReservoirComputing.MemoryResESNCell(
+            (1, 1) => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, init_memory = _W_I,
+            init_orthogonal = _W_I, alpha = 0.3, beta = 0.1
+        )
+        rps = initialparameters(MersenneTwister(0), rcell)
+        rst = initialstates(MersenneTwister(0), rcell)
+        (ry, _), _ = rcell((x, (h, m)), rps, rst)
+        rexpected = BigFloat(0.3) * 1 + BigFloat(0.1) * cand
+        @test eltype(ry) == BigFloat
+        @test isapprox(ry[1], rexpected; rtol = BigFloat(10)^-20)
+    end
+
+    @testset "integer input and carry follow the weight eltype" begin
+        cell = ESNCell(
+            1 => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, leak_coefficient = 1.0
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        (y, _), _ = cell(([2], ([1],)), ps, st)
+        @test y == Float32[2]
+        @test eltype(y) == Float32
+    end
+
+    @testset "full cell calls are inferred" begin
+        for T in (Float32, Float64)
+            w = (rng, m, n) -> ones(T, m, n)
+            z = (rng, m, n) -> zeros(T, m, n)
+            x = T[2]
+            h = T[1]
+            cell = ESNCell(1 => 1, identity; init_input = w, init_reservoir = z, leak_coefficient = 0.5)
+            ps = initialparameters(MersenneTwister(0), cell)
+            st = initialstates(MersenneTwister(0), cell)
+            @test @inferred(cell((x, (h,)), ps, st))[1][1] isa Vector{T}
+            mcell = ReservoirComputing.MemoryESNCell(
+                (1, 1) => 1, identity;
+                init_input = w, init_reservoir = z, init_memory = w, leak_coefficient = 0.5
+            )
+            mps = initialparameters(MersenneTwister(0), mcell)
+            mst = initialstates(MersenneTwister(0), mcell)
+            @test @inferred(mcell((x, (h, h)), mps, mst))[1][1] isa Vector{T}
+        end
+    end
+
+    @testset "cell element type helper is inferred" begin
+        f = ReservoirComputing.__cell_eltype
+        @test @inferred(f(Float32[1], Float32[1])) === Float32
+        @test @inferred(f([1], Float32[1])) === Float32
+        @test @inferred(f([1], [1])) === Float64
+        @test @inferred(f(Float32[1], BigFloat[1])) === BigFloat
+        @test f(Float32[1], Any[1.0f0]) === Float32
+        @test f(Any[1.0f0], Real[1.0f0]) === Float64
+    end
+
 end
