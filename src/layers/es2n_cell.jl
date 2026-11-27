@@ -104,7 +104,7 @@ function initialparameters(rng::AbstractRNG, esn::ES2NCell)
 end
 
 function (esn::ES2NCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = __cell_eltype(inp, hidden_state, ps.input_matrix, ps.reservoir_matrix, ps.orthogonal_matrix)
+    T = __cell_eltype((esn.proximity,), inp, hidden_state, ps.input_matrix, ps.reservoir_matrix, ps.orthogonal_matrix)
     bias = safe_getproperty(ps, Val(:bias))
     t_prox = T(esn.proximity)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)

@@ -517,6 +517,69 @@ begin
         @test eltype(y) == Float32
     end
 
+    @testset "ESNCell: exact arithmetic domains" begin
+        for (x, h, leak, expected) in (
+                ([7 // 5], [2 // 7], 2 // 3, [36 // 35]),
+                ([2^53 + 1], [0], 1, [2^53 + 1]),
+                ([2], [1], 0.5, [1.5]),
+                ([2], [1], [0.5], [1.5;;]),
+                ([2^53 + 1], [0], [1], [2^53 + 1;;]),
+            )
+            cell = ESNCell(1 => 1, identity; leak_coefficient = leak)
+            ps = (; input_matrix = ones(Int, 1, 1), reservoir_matrix = zeros(Int, 1, 1))
+            (y, _), _ = cell((x, (h,)), ps, NamedTuple())
+            @test y == expected
+            @test eltype(y) === eltype(expected)
+        end
+    end
+
+    @testset "integer input with fractional leak follows Float32 weights" begin
+        cell = ESNCell(1 => 1, identity; leak_coefficient = 0.5)
+        ps = (; input_matrix = ones(Float32, 1, 1), reservoir_matrix = zeros(Float32, 1, 1))
+        (y, _), _ = cell(([2], ([1],)), ps, NamedTuple())
+        @test y == Float32[1.5]
+        @test eltype(y) === Float32
+    end
+
+    @testset "all cell coefficients preserve exact domains" begin
+        for (constructor, dims, coefficients) in (
+                (ESNCell, 1 => 1, (; leak_coefficient = 1)),
+                (ES2NCell, 1 => 1, (; proximity = 1)),
+                (ResESNCell, 1 => 1, (; alpha = 0, beta = 1)),
+                (EuSNCell, 1 => 1, (; leak_coefficient = 1, diffusion = 0)),
+                (EIESNCell, 1 => 1, (; exc_recurrence_scale = 1, inh_recurrence_scale = 0, exc_output_scale = 1, inh_output_scale = 0)),
+                (AdditiveEIESNCell, 1 => 1, (; exc_recurrence_scale = 1, inh_recurrence_scale = 0, exc_output_scale = 1, inh_output_scale = 0)),
+                (ReservoirComputing.MemoryESNCell, (1, 1) => 1, (; leak_coefficient = 1)),
+                (ReservoirComputing.MemoryResESNCell, (1, 1) => 1, (; alpha = 0, beta = 1)),
+            )
+            @testset "$constructor" begin
+                cell = constructor(dims, identity; use_bias = false, coefficients...)
+                for value in (2^53 + 1, 7 // 5, 2.0f0, 2.0)
+                    T = typeof(value)
+                    ps = (;
+                        input_matrix = ones(T, 1, 1), reservoir_matrix = zeros(T, 1, 1),
+                        orthogonal_matrix = ones(T, 1, 1), memory_matrix = zeros(T, 1, 1),
+                    )
+                    carry = dims.first isa Tuple ? (T[0], T[0]) : (T[0],)
+                    (y, _), _ = @inferred cell((T[value], carry), ps, NamedTuple())
+                    @test y == [value]
+                    @test eltype(y) === T
+                end
+                for key in keys(coefficients)
+                    fractional = merge(coefficients, NamedTuple{(key,)}((0.5,)))
+                    fractional_cell = constructor(dims, identity; use_bias = false, fractional...)
+                    ps = (;
+                        input_matrix = ones(Int, 1, 1), reservoir_matrix = zeros(Int, 1, 1),
+                        orthogonal_matrix = ones(Int, 1, 1), memory_matrix = zeros(Int, 1, 1),
+                    )
+                    carry = dims.first isa Tuple ? ([0], [0]) : ([0],)
+                    (y, _), _ = fractional_cell(([2], carry), ps, NamedTuple())
+                    @test eltype(y) === Float64
+                end
+            end
+        end
+    end
+
     @testset "full cell calls are inferred" begin
         for T in (Float32, Float64)
             w = (rng, m, n) -> ones(T, m, n)
@@ -539,12 +602,18 @@ begin
 
     @testset "cell element type helper is inferred" begin
         f = ReservoirComputing.__cell_eltype
-        @test @inferred(f(Float32[1], Float32[1])) === Float32
-        @test @inferred(f([1], Float32[1])) === Float32
-        @test @inferred(f([1], [1])) === Float64
-        @test @inferred(f(Float32[1], BigFloat[1])) === BigFloat
-        @test f(Float32[1], Any[1.0f0]) === Float32
-        @test f(Any[1.0f0], Real[1.0f0]) === Float64
+        @test @inferred(f((0.5,), Float32[1], Float32[1])) === Float32
+        @test @inferred(f((0.5,), [1], Float32[1])) === Float32
+        @test @inferred(f((1,), [1], [1])) === Int
+        @test @inferred(f((0.5,), Float32[1], BigFloat[1])) === BigFloat
+        @test f((0.5,), Float32[1], Any[1.0f0]) === Float32
+        @test f((1,), Any[1.0f0], Real[1.0f0]) === Float64
+        @test f((1.0,), [1], [1]) === Int
+        @test f((0.5,), [1], [1]) === Float64
+        @test f((1, 0.5), [1], [1]) === Float64
+        @test f(([1, 1],), [1], [1]) === Int
+        @test f(([1, 0.5],), [1], [1]) === Float64
+        @test @inferred(f((2 // 3,), [7 // 5], [2 // 7])) === Rational{Int}
     end
 
 end

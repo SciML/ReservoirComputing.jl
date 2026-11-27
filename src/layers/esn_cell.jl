@@ -185,7 +185,7 @@ function (esn::AbstractEchoStateNetworkCell)(inp::AbstractArray, ps, st::NamedTu
 end
 
 function (esn::ESNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = __cell_eltype(inp, hidden_state, ps.input_matrix, ps.reservoir_matrix)
+    T = __cell_eltype((esn.leak_coefficient,), inp, hidden_state, ps.input_matrix, ps.reservoir_matrix)
     bias = safe_getproperty(ps, Val(:bias))
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
     w_state = dense_bias(ps.reservoir_matrix, hidden_state, bias)
@@ -197,9 +197,17 @@ end
 
 __concrete_eltype_or_bottom(::Type{T}) where {T} = isconcretetype(T) ? T : Union{}
 
-function __cell_eltype(xs::AbstractArray...)
+__integer_coefficient(x::Number) = isinteger(x)
+__integer_coefficient(x::AbstractArray) = all(isinteger, x)
+
+function __cell_eltype(coefficients::Tuple, xs::AbstractArray...)
     T = promote_type(map(x -> __concrete_eltype_or_bottom(eltype(x)), xs)...)
-    return T === Union{} ? Float64 : float(T)
+    if T === Union{}
+        return Float64
+    elseif T <: Integer && !all(__integer_coefficient, coefficients)
+        return float(T)
+    end
+    return T
 end
 
 function __format_leak(::Type{T}, leak::Number) where {T <: Number}

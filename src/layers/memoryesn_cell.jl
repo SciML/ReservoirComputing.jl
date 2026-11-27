@@ -122,7 +122,7 @@ function (esn::MemoryESNCell)(
         (inp, (hidden_state, memory_state))::Tuple{AbstractArray, Tuple{AbstractArray, AbstractArray}},
         ps, st::NamedTuple
     )
-    T = __cell_eltype(inp, hidden_state, memory_state, ps.input_matrix, ps.reservoir_matrix, ps.memory_matrix)
+    T = __cell_eltype((esn.leak_coefficient,), inp, hidden_state, memory_state, ps.input_matrix, ps.reservoir_matrix, ps.memory_matrix)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)
     win_inp = dense_bias(ps.input_matrix, inp, nothing)
