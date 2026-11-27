@@ -78,8 +78,18 @@ function addreadout!(rc::ReservoirChain, models, ps::NamedTuple, st::NamedTuple)
         )
     )
     new_vals = map(Base.OneTo(length(propertynames(rc.layers)))) do i
-        getfield(rc.layers, i) isa SVMReadout ? merge(getfield(ps, i), (models = models,)) :
+        layer = getfield(rc.layers, i)
+        if layer isa SVMReadout
+            model_count = models isa AbstractVector ? length(models) : 1
+            model_count == layer.out_dims || throw(
+                DimensionMismatch(
+                    "SVMReadout expects $(layer.out_dims) fitted models, got $model_count."
+                )
+            )
+            merge(getfield(ps, i), (models = models,))
+        else
             getfield(ps, i)
+        end
     end
     new_ps = NamedTuple{propertynames(rc.layers)}(Tuple(new_vals))
     return new_ps, st

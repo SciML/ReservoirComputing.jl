@@ -331,6 +331,8 @@ end
     trainable = L <: AbstractReservoirTrainableLayer
     head_val = if S
         :(getfield(ps, 1))
+    elseif L <: SVMReadout
+        :(__svmreadout_matrix_error())
     elseif L <: LinearReadout
         :(__setweight_rt(getfield(ps, 1), W))
     elseif trainable
@@ -363,7 +365,6 @@ function addreadout!(
                 "$(propertynames(rc.layers))"
         )
     )
-    any(Base.Fix2(isa, SVMReadout), rc.layers) && __svmreadout_matrix_error()
     new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end

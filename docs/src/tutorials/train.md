@@ -110,9 +110,8 @@ user supplies `solver=nothing`; otherwise it forwards the solver together with
 any additional keywords. Extension methods should reject unsupported solvers
 and keywords with an `ArgumentError`.
 
-`__fit_readout` is an internal extension interface and is not a user-facing
-training entry point. Its compatibility is not guaranteed before version 1.0.
-Users should always call the model-level `train` API.
+`__fit_readout` and `addreadout!` are internal package extension hooks. Their
+signatures and behavior may change before version 1.0.
 
 ## Support Vector Regression
 
