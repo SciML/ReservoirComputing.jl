@@ -192,6 +192,10 @@ function __expand_weight(::Type{T}, weight::AbstractVector, n::Integer) where {T
     return T.(weight)
 end
 
+function __writable_weight(weight::AbstractArray{T}) where {T <: Unsigned}
+    return copyto!(similar(weight, signed(widen(T))), weight)
+end
+
 __writable_weight(weight::AbstractArray) = copyto!(similar(weight), weight)
 __writable_weight(weight) = weight
 

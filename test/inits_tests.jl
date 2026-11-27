@@ -707,6 +707,27 @@ begin
             @test w == [1, -2, 3, -4]
         end
 
+        @testset "unsigned source weights preserve negative signs" begin
+            w = UInt8[1, 2, 3, 4]
+            expected = Float64.(Diagonal([1, -2, 3, -4]))
+            @test diagonal_init(
+                Xoshiro(1), Float64, 4, 4; weight = w, signs = RegularSigns()
+            ) == expected
+            @test w == UInt8[1, 2, 3, 4]
+            @test permutation_init(
+                Xoshiro(1), Float64, 4, 4; weight = w, signs = RegularSigns(),
+                permutation_matrix = Matrix{Float64}(I, 4, 4)
+            ) == expected
+            @test w == UInt8[1, 2, 3, 4]
+            @test true_doublecycle(
+                Xoshiro(1), Float64, 4, 4; cycle_weight = w,
+                second_cycle_weight = w,
+                cycle_kwargs = (; signs = RegularSigns()),
+                second_cycle_kwargs = (; signs = RegularSigns())
+            ) == [0.0 1.0 0.0 -4.0; 1.0 0.0 -2.0 0.0; 0.0 -2.0 0.0 3.0; -4.0 0.0 3.0 0.0]
+            @test w == UInt8[1, 2, 3, 4]
+        end
+
         @testset "Sign patterns" begin
             @test all(==(0.1f0), minimal_init(Xoshiro(0), Float32, 2, 3))
 

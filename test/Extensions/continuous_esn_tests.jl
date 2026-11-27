@@ -395,6 +395,21 @@ begin
         @test from_range == from_vector
     end
 
+    @testset "ContinuousESN: autoregressive predict replaces shorter feedback" begin
+        function sum_input_rhs!(dx, x, p, t)
+            return dx[1] = sum(p.input(t))
+        end
+        esn = ContinuousESN(
+            2, 1, 1, (0.0, 2.0), Tsit5(); equations = sum_input_rhs!,
+            reltol = 1.0e-10, abstol = 1.0e-12,
+        )
+        ps, st = setup(MersenneTwister(0), esn)
+        ps = merge(ps, (; readout = merge(ps.readout, (; weight = ones(1, 1)))))
+        st = merge(st, (; reservoir = merge(st.reservoir, (; carry = ([0.0],)))))
+        predictions, _ = predict(esn, 2, ps, st; initialdata = [1.0, 4.0])
+        @test predictions ≈ [5.0 10.0]
+    end
+
     @testset "ContinuousESN: failed solves throw" begin
         esn = ContinuousESN(2, 10, 2, (0.0, 1.0), Tsit5(); maxiters = 3)
         ps, st = setup(MersenneTwister(1), esn)

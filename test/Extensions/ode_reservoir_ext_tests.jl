@@ -238,23 +238,41 @@ begin
     end
 
     @testset "Autoregressive predict Any-eltype seed matches dense Int seed" begin
-        large = 9007199254740993
-        function sentinel_rhs!(dx, x, p, t)
-            return dx[1] = p.input(t)[1] == large ? 1.0 : 0.0
+        function integer_seed_rhs!(dx, x, p, t)
+            return dx[1] = p.input(t)[1]
         end
         tspan = (0.0, 1.0)
-        prob = ODEProblem(sentinel_rhs!, [0.0], tspan, (;))
+        prob = ODEProblem(integer_seed_rhs!, [0.0], tspan, (;))
         res = SciMLProblemReservoir(
             prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
         )
         rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
         ps, st = setup(MersenneTwister(0), rc)
         ps = merge(ps, (; readout = (; weight = ones(1, 1))))
-        dense, _ = predict(rc, 1, ps, st; initialdata = [large])
-        from_view, _ = predict(rc, 1, ps, st; initialdata = view([large, 0], 1:1))
-        from_any, _ = predict(rc, 1, ps, st; initialdata = view(Any[large], 1:1))
+        dense, _ = predict(rc, 1, ps, st; initialdata = [3])
+        from_view, _ = predict(rc, 1, ps, st; initialdata = view([3, 0], 1:1))
+        from_any, _ = predict(rc, 1, ps, st; initialdata = view(Any[3], 1:1))
+        from_range, _ = predict(rc, 1, ps, st; initialdata = 3:3)
+        @test dense ≈ fill(3.0, 1, 1)
+        @test from_range == dense
         @test from_view == dense
         @test from_any == dense
+    end
+
+    @testset "Autoregressive predict replaces shorter feedback" begin
+        function sum_input_rhs!(dx, x, p, t)
+            return dx[1] = sum(p.input(t))
+        end
+        tspan = (0.0, 2.0)
+        prob = ODEProblem(sum_input_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        predictions, _ = predict(rc, 2, ps, st; initialdata = [1.0, 4.0])
+        @test predictions ≈ [5.0 10.0]
     end
 
     @testset "Autoregressive predict uses carry" begin
