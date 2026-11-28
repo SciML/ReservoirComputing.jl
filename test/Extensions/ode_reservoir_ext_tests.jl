@@ -212,6 +212,69 @@ begin
         @test preds1 ≈ preds2
     end
 
+    @testset "Autoregressive predict gives identical results for all seed containers" begin
+        function seed_rhs!(dx, x, p, t)
+            return dx[1] = p.input(t)[1] - x[1]
+        end
+        tspan = (0.0, 1.0)
+        prob = ODEProblem(seed_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        dense, _ = predict(rc, 3, ps, st; initialdata = [1.0])
+        from_view, _ = predict(rc, 3, ps, st; initialdata = view([1.0, 0.0], 1:1))
+        from_range, _ = predict(rc, 3, ps, st; initialdata = 1.0:1.0)
+        from_any, _ = predict(rc, 3, ps, st; initialdata = view(Any[1.0], 1:1))
+        from_int, _ = predict(rc, 3, ps, st; initialdata = [1])
+        single, _ = predict(rc, 1, ps, st; initialdata = [1.0])
+        @test single[1] ≈ 1 - exp(-1)
+        @test from_view == dense
+        @test from_range == dense
+        @test from_any == dense
+        @test from_int == dense
+    end
+
+    @testset "Autoregressive predict Any-eltype seed matches dense Int seed" begin
+        function integer_seed_rhs!(dx, x, p, t)
+            return dx[1] = p.input(t)[1]
+        end
+        tspan = (0.0, 1.0)
+        prob = ODEProblem(integer_seed_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        dense, _ = predict(rc, 1, ps, st; initialdata = [3])
+        from_view, _ = predict(rc, 1, ps, st; initialdata = view([3, 0], 1:1))
+        from_any, _ = predict(rc, 1, ps, st; initialdata = view(Any[3], 1:1))
+        from_range, _ = predict(rc, 1, ps, st; initialdata = 3:3)
+        @test dense ≈ fill(3.0, 1, 1)
+        @test from_range == dense
+        @test from_view == dense
+        @test from_any == dense
+    end
+
+    @testset "Autoregressive predict replaces shorter feedback" begin
+        function sum_input_rhs!(dx, x, p, t)
+            return dx[1] = sum(p.input(t))
+        end
+        tspan = (0.0, 2.0)
+        prob = ODEProblem(sum_input_rhs!, [0.0], tspan, (;))
+        res = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); reltol = 1.0e-10, abstol = 1.0e-12
+        )
+        rc = ReservoirComputer(res, LinearReadout(1 => 1; use_bias = false))
+        ps, st = setup(MersenneTwister(0), rc)
+        ps = merge(ps, (; readout = (; weight = ones(1, 1))))
+        predictions, _ = predict(rc, 2, ps, st; initialdata = [1.0, 4.0])
+        @test predictions ≈ [5.0 10.0]
+    end
+
     @testset "Autoregressive predict uses carry" begin
         rng = MersenneTwister(37)
         res_dim, dim, T_steps, steps = 8, 2, 16, 4
@@ -460,4 +523,28 @@ begin
         @test_throws ArgumentError collectstates(rc, data, ps, st)
     end
 
+    @testset "SciMLProblemReservoir: AbstractVector initialdata and solver failures" begin
+        res_dim, dim = 6, 3
+        tspan = (0.0, 1.0)
+        prob, _, _, _, _ = build_esn_problem(MersenneTwister(31), dim, res_dim, tspan)
+        res = SciMLProblemReservoir(prob, TerminalStateSampling(), tspan, Tsit5())
+        rc = ReservoirComputer(res, LinearReadout(res_dim => dim))
+        ps, st = setup(MersenneTwister(0), rc)
+        X = randn(MersenneTwister(1), dim, 4)
+        ref, _ = predict(rc, 3, ps, st; initialdata = X[:, end])
+        from_view, _ = predict(rc, 3, ps, st; initialdata = @view X[:, end])
+        @test from_view == ref
+
+        failing = SciMLProblemReservoir(
+            prob, TerminalStateSampling(), tspan, Tsit5(); maxiters = 3
+        )
+        rc_fail = ReservoirComputer(failing, LinearReadout(res_dim => dim))
+        ps_f, st_f = setup(MersenneTwister(0), rc_fail)
+        @test_throws "SciMLProblemReservoir solve failed with retcode" collectstates(
+            rc_fail, X, ps_f, st_f
+        )
+        @test_throws "SciMLProblemReservoir AR step failed with retcode" predict(
+            rc_fail, 3, ps_f, st_f; initialdata = X[:, 1]
+        )
+    end
 end

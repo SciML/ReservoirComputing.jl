@@ -13,6 +13,7 @@ using WeightInitializers: zeros32
 using ReservoirComputing: ReservoirComputing,
     AbstractReservoirComputer,
     AbstractSciMLProblemReservoir,
+    BoolType,
     ContinuousESN,
     ContinuousESNCell,
     CurrentInjection,
@@ -128,8 +129,13 @@ function __make_const_input_fn(u_vec::AbstractVector, t_lo, t_hi)
     return ConstantInterpolation([u_vec, u_vec], [t_lo, t_hi]; cache_parameters = true)
 end
 
-mutable struct ConstantInputWindow{T <: AbstractVector}
-    u_vec::T
+function __input_vector(x::AbstractVector, state::AbstractVector)
+    T = promote_type(eltype(x), eltype(state))
+    return copyto!(Vector{isconcretetype(T) ? T : eltype(state)}(undef, length(x)), x)
+end
+
+mutable struct ConstantInputWindow{V <: AbstractVector}
+    u_vec::V
 end
 
 (input::ConstantInputWindow)(t) = input.u_vec
@@ -226,6 +232,11 @@ function __collectstates(
         dense = false,
         res.kwargs...
     )
+    successful_retcode(sol) || throw(
+        ErrorException(
+            "SciMLProblemReservoir solve failed with retcode $(sol.retcode)"
+        )
+    )
 
     raw_states = __sample(res.sampler, sol)
     modified_states, st_mods = __apply_modifiers_continuous(
@@ -284,7 +295,7 @@ function __predict(
     window_ends = @view ts[2:end]
 
     current_state = __seed_u(st.reservoir, () -> res.prob.u0)
-    current_input = initialdata
+    current_input = __input_vector(initialdata, current_state)
 
     st_mods = st.state_modifiers
     st_ro = st.readout
@@ -320,6 +331,12 @@ function __predict(
             reset_dt = true,
         )
         solve!(integrator)
+        successful_retcode(integrator.sol) || throw(
+            ErrorException(
+                "SciMLProblemReservoir AR step failed with retcode " *
+                    "$(integrator.sol.retcode)"
+            )
+        )
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
@@ -350,7 +367,7 @@ end
 function ReservoirComputing.ContinuousESN(
         in_dims::Integer, res_dims::Integer, out_dims::Integer,
         activation, tspan, args...;
-        use_bias::Bool = false,
+        use_bias::BoolType = false,
         init_bias = zeros32,
         init_reservoir = rand_sparse,
         init_input = scaled_rand,
@@ -358,7 +375,7 @@ function ReservoirComputing.ContinuousESN(
         equations = ReservoirComputing.__continuous_esn_rhs!,
         state_modifiers = (),
         readout_activation = identity,
-        use_jac_prototype::Bool = false,
+        use_jac_prototype::BoolType = false,
         readout_in_dims = nothing,
         kwargs...
     )
@@ -462,6 +479,9 @@ function __collectstates(
         dense = false,
         cell.kwargs...
     )
+    successful_retcode(sol) || throw(
+        ErrorException("ContinuousESN solve failed with retcode $(sol.retcode)")
+    )
 
     raw_states = __sample(TerminalStateSampling(), sol)
     modified_states, st_mods = __apply_modifiers_continuous(
@@ -499,7 +519,7 @@ function __predict(
     window_ends = @view ts[2:end]
 
     current_state, st_res = __continuous_esn_u0(cell, st.reservoir, ps.reservoir)
-    current_input = initialdata
+    current_input = __input_vector(initialdata, current_state)
 
     st_mods = st.state_modifiers
     st_ro = st.readout
@@ -532,6 +552,12 @@ function __predict(
             reset_dt = true,
         )
         solve!(integrator)
+        successful_retcode(integrator.sol) || throw(
+            ErrorException(
+                "ContinuousESN AR step failed with retcode " *
+                    "$(integrator.sol.retcode)"
+            )
+        )
         current_state = integrator.u
 
         if !isempty(rc.state_modifiers)
@@ -565,7 +591,7 @@ function ReservoirComputing.LSM(
         neuron = LIFNeuron(),
         encoder = CurrentInjection(),
         feature_map = ExponentialSpikeFilter(),
-        use_bias::Bool = false,
+        use_bias::BoolType = false,
         init_bias = zeros32,
         init_reservoir = dale_sparse,
         init_input = scaled_rand,

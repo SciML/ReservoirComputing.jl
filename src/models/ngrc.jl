@@ -24,8 +24,8 @@ Next Generation Reservoir Computing [Gauthier2021](@cite).
     [`DelayLayer`](@ref) outputs a vector of length
     `(num_delays + 1) * in_dims` (current input plus `num_delays` past inputs).
     Default: `2`.
-  - `stride`: Delay stride in layer calls. The delay buffer is updated only when
-    the internal clock is a multiple of `stride`. Default: `1`.
+  - `stride`: Spacing, in time steps, between consecutive delayed copies.
+    Default: `1`.
   - `init_delay`: Initializer (or tuple of initializers) for the delay history,
     passed to [`DelayLayer`](@ref). Each initializer function is called as
     `init(rng, in_dims, 1)` to fill one delay column. Default: `zeros32`.

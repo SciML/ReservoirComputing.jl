@@ -646,4 +646,12 @@ begin
         @test se[1:n_in, :] == data
         @test size(ps_e.readout.weight, 2) == size(se, 1)
     end
+
+    @testset "LSM: constructor argument handling" begin
+        @test_throws "tspan" LSM(2, 10, 2)
+        @test_throws ArgumentError LSM(2, 10, 2)
+        lsm = LSM(2, 5, 1, (0.0, 1.0), Tsit5(); use_bias = ReservoirComputing.True())
+        @test ReservoirComputing.has_bias(lsm.reservoir)
+        @test LSM(lsm.reservoir, lsm.state_modifiers, lsm.readout) isa LSM
+    end
 end

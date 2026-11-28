@@ -16,6 +16,7 @@ using CellularAutomata, DataInterpolations, LIBSVM, MLJLinearModels, SparseArray
 rc_internal_hooks = (
     :AbstractInputEncoding,
     :AbstractReservoirComputer,
+    :BoolType,
     :IntegerType,
     :__apply_seq,
     :__apply_state_modifiers,

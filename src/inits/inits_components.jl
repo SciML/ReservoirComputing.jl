@@ -192,6 +192,13 @@ function __expand_weight(::Type{T}, weight::AbstractVector, n::Integer) where {T
     return T.(weight)
 end
 
+function __writable_weight(weight::AbstractArray{T}) where {T <: Unsigned}
+    return copyto!(similar(weight, signed(widen(T))), weight)
+end
+
+__writable_weight(weight::AbstractArray) = copyto!(similar(weight), weight)
+__writable_weight(weight) = weight
+
 function scale_radius!(reservoir_matrix::AbstractMatrix, radius::Real)
     return scale_radius!(reservoir_matrix, float(radius))
 end
@@ -594,6 +601,12 @@ end
 Adds a reverse simple cycle in the `reservoir_matrix`, with given
 `weight`. The `weight` can be a single number or an array.
 
+For an array `weight`, `weight[i]` is the weight of the edge from node `i + 1` to
+node `i` for `i = 1, ..., n - 1`, and `weight[n]` is the weight of the closing edge
+from node `1` to node `n`. This matches the convention of [`simple_cycle!`](@ref), so
+the result is the transpose of the matrix `simple_cycle!` produces with the same
+`weight`.
+
 # Arguments
 
   - `rng`: Random number generator. Default is `Xoshiro(1234)`.
@@ -621,11 +634,11 @@ julia> matrix = zeros(Float32, 5, 5)
 
 julia> reverse_simple_cycle!(matrix, 1.0; signs = RegularSigns())
 5×5 Matrix{Float32}:
- 0.0  -1.0  0.0   0.0  0.0
- 0.0   0.0  1.0   0.0  0.0
- 0.0   0.0  0.0  -1.0  0.0
- 0.0   0.0  0.0   0.0  1.0
- 1.0   0.0  0.0   0.0  0.0
+ 0.0  1.0   0.0  0.0   0.0
+ 0.0  0.0  -1.0  0.0   0.0
+ 0.0  0.0   0.0  1.0   0.0
+ 0.0  0.0   0.0  0.0  -1.0
+ 1.0  0.0   0.0  0.0   0.0
 ```
 """
 function reverse_simple_cycle!(
@@ -643,7 +656,7 @@ function reverse_simple_cycle!(
     )
     __apply_signs_compat!(rng, signs, weight, sampling_type, kwargs)
     for idx in (first(axes(reservoir_matrix, 1)) + 1):last(axes(reservoir_matrix, 1))
-        reservoir_matrix[idx - 1, idx] = weight[idx]
+        reservoir_matrix[idx - 1, idx] = weight[idx - 1]
     end
     reservoir_matrix[end, 1] = weight[end]
     return reservoir_matrix

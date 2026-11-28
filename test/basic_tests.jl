@@ -155,6 +155,39 @@ begin
             @test states[:, 1] ≈ x
         end
 
+        @testset "integer data yields float features" begin
+            rc = ReservoirChain(StatefulLayer(ESNCell(2 => 5)), LinearReadout(5 => 2))
+            ps, st = setup(rng, rc)
+            X = rand(rng, 1:3, 2, 10)
+            states, _ = collectstates(rc, X, ps, st)
+            @test eltype(states) == Float32
+            @test size(states) == (5, 10)
+            states_f, _ = collectstates(rc, Float32.(X), ps, st)
+            @test states == states_f
+        end
+
+        @testset "later columns wider than the first are kept" begin
+            narrow_then_wide(x) = isinteger(x[1]) ? Int.(x) : x
+            rc = ReservoirChain(narrow_then_wide, Collect())
+            ps, st = setup(rng, rc)
+            states, _ = collectstates(rc, [1.0 1.25], ps, st)
+            @test states == [1.0 1.25]
+            single_then_double(x) = isinteger(x[1]) ? Float32.(x) : x
+            rc = ReservoirChain(single_then_double, Collect())
+            ps, st = setup(rng, rc)
+            states, _ = collectstates(rc, [1.0 1.0000000000000002], ps, st)
+            @test states[1, 2] == 1.0000000000000002
+            @test states[1, 1] == 1.0
+        end
+
+        @testset "docstring is attached to the chain method" begin
+            doc = string(@doc collectstates)
+            @test occursin("Run the sequence", doc)
+            @test !occursin(
+                "Run the sequence", string(@doc ReservoirComputing.__chain_collect_step)
+            )
+        end
+
         @testset "st threading preserved" begin
             rc = ReservoirChain(F_id, Collect(), ro)
             ps, st = setup(rng, rc)
@@ -214,10 +247,12 @@ begin
             x = rand(rng, Float32, 2)
             y, st2 = dl(x, ps, st)
 
-            @test size(st2.history) == (2, 2)
+            @test size(st2.history) == (2, 4)
             @test st2.clock == 1
-            @test st2.history[:, 1] == fill(Float32(1), 2)
-            @test st2.history[:, 2] == fill(Float32(2), 2)
+            @test st2.history[:, 1] == x
+            @test st2.history[:, 2] == fill(Float32(1), 2)
+            @test st2.history[:, 3] == fill(Float32(1), 2)
+            @test st2.history[:, 4] == fill(Float32(2), 2)
             @test length(y) == 2 * (dl.num_delays + 1)
         end
 
@@ -260,8 +295,51 @@ begin
 
             @test outputs[1] ≈ Float32[1, 0, 0]
             @test outputs[2] ≈ Float32[2, 0, 0]
-            @test outputs[3] ≈ Float32[3, 2, 0]
+            @test outputs[3] ≈ Float32[3, 1, 0]
             @test outputs[4] ≈ Float32[4, 2, 0]
+            @test outputs[5] ≈ Float32[5, 3, 1]
+            @test outputs[6] ≈ Float32[6, 4, 2]
+        end
+
+        @testset "stride > 1 gives constant lags" begin
+            for stride in (2, 3), num_delays in (1, 2, 3)
+                dl = DelayLayer(2; num_delays = num_delays, stride = stride)
+                ps = initialparameters(rng, dl)
+                st = initialstates(rng, dl)
+                xs = [Float32[t, -t] for t in 1:12]
+                for t in eachindex(xs)
+                    y, st = dl(xs[t], ps, st)
+                    expected = reduce(
+                        vcat,
+                        [
+                            t - k * stride >= 1 ? xs[t - k * stride] : zeros(Float32, 2)
+                                for k in 0:num_delays
+                        ]
+                    )
+                    @test y == expected
+                end
+            end
+        end
+
+        @testset "history with an unexpected size is rejected" begin
+            dl = DelayLayer(1; num_delays = 2, stride = 2)
+            ps = initialparameters(rng, dl)
+            old_layout = (history = Float32[4 2], clock = 4, rng = rng)
+            @test_throws DimensionMismatch dl(Float32[5], ps, old_layout)
+            wrong_rows = (history = zeros(Float32, 2, 4), clock = 4, rng = rng)
+            @test_throws DimensionMismatch dl(Float32[5], ps, wrong_rows)
+            right_size = (history = Float32[4 3 2 1], clock = 4, rng = rng)
+            y, st_new = dl(Float32[5], ps, right_size)
+            @test y == Float32[5, 3, 1]
+            @test size(st_new.history) == (1, 4)
+            for stride in (1, 3)
+                dl0 = DelayLayer(2; num_delays = 0, stride = stride)
+                st0 = initialstates(rng, dl0)
+                y0, st1 = dl0(Float32[1, 2], initialparameters(rng, dl0), st0)
+                y1, _ = dl0(Float32[3, 4], initialparameters(rng, dl0), st1)
+                @test y0 == Float32[1, 2]
+                @test y1 == Float32[3, 4]
+            end
         end
 
         @testset "dimension mismatch assertion" begin

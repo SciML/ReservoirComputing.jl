@@ -66,10 +66,18 @@ Solve:
 end
 
 function LSM(::Any, ::Any, ::Any, ::Any...; kwargs...)
-    return error(
-        "LSM requires the RCODEReservoirExt extension and an " *
-            "OrdinaryDiffEq solver package. Load `SciMLBase`, `DataInterpolations`, " *
-            "and a solver package (e.g. `OrdinaryDiffEqTsit5`) to enable it."
+    return __continuous_constructor_error(
+        "LSM",
+        "No method of LSM matches the given arguments. Expected " *
+            "`LSM(in_dims, res_dims, out_dims, tspan, args...; kwargs...)`."
+    )
+end
+
+function LSM(::Integer, ::Integer, ::Integer; kwargs...)
+    return __continuous_constructor_error(
+        "LSM",
+        "LSM requires `tspan` and a solver, e.g. " *
+            "`LSM(in_dims, res_dims, out_dims, (t0, t1), Tsit5())`."
     )
 end
 

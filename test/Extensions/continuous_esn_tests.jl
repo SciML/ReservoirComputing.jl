@@ -381,4 +381,69 @@ begin
         s2, _ = collectstates(esn, data, ps, deepcopy(st))
         @test s1 == s2
     end
+
+    @testset "ContinuousESN: AR predict accepts AbstractVector initialdata" begin
+        esn = ContinuousESN(2, 10, 2, (0.0, 1.0), Tsit5())
+        ps, st = setup(MersenneTwister(1), esn)
+        X = rand(MersenneTwister(2), Float32, 2, 6)
+        ref, _ = predict(esn, 3, ps, st; initialdata = X[:, end])
+        from_view, _ = predict(esn, 3, ps, st; initialdata = @view X[:, end])
+        @test from_view == ref
+        rng_data = 0.1:0.1:0.2
+        from_range, _ = predict(esn, 3, ps, st; initialdata = rng_data)
+        from_vector, _ = predict(esn, 3, ps, st; initialdata = collect(rng_data))
+        @test from_range == from_vector
+    end
+
+    @testset "ContinuousESN: autoregressive predict replaces shorter feedback" begin
+        function sum_input_rhs!(dx, x, p, t)
+            return dx[1] = sum(p.input(t))
+        end
+        esn = ContinuousESN(
+            2, 1, 1, (0.0, 2.0), Tsit5(); equations = sum_input_rhs!,
+            reltol = 1.0e-10, abstol = 1.0e-12,
+        )
+        ps, st = setup(MersenneTwister(0), esn)
+        ps = merge(ps, (; readout = merge(ps.readout, (; weight = ones(1, 1)))))
+        st = merge(st, (; reservoir = merge(st.reservoir, (; carry = ([0.0],)))))
+        predictions, _ = predict(esn, 2, ps, st; initialdata = [1.0, 4.0])
+        @test predictions ≈ [5.0 10.0]
+    end
+
+    @testset "ContinuousESN: failed solves throw" begin
+        esn = ContinuousESN(2, 10, 2, (0.0, 1.0), Tsit5(); maxiters = 3)
+        ps, st = setup(MersenneTwister(1), esn)
+        X = rand(MersenneTwister(2), Float32, 2, 20)
+        @test_throws "ContinuousESN solve failed with retcode" collectstates(esn, X, ps, st)
+        @test_throws "ContinuousESN solve failed with retcode" predict(esn, X, ps, st)
+        @test_throws "ContinuousESN AR step failed with retcode" predict(
+            esn, 3, ps, st; initialdata = X[:, 1]
+        )
+    end
+
+    @testset "ContinuousESN: constructor argument handling" begin
+        @test_throws "tspan" ContinuousESN(2, 10, 2)
+        @test_throws ArgumentError ContinuousESN(2, 10, 2)
+        @test_throws ArgumentError ContinuousESN(2, 10, 2; use_bias = true)
+        err = try
+            ContinuousESN(2, 10, 2, 5)
+        catch e
+            e
+        end
+        @test err isa ArgumentError
+        @test !occursin("RCODEReservoirExt", err.msg)
+
+        esn = ContinuousESN(2, 10, 2, (0.0, 1.0), Tsit5())
+        rebuilt = ContinuousESN(esn.reservoir, esn.state_modifiers, esn.readout)
+        @test rebuilt isa ContinuousESN
+
+        static_esn = ContinuousESN(
+            2, 10, 2, (0.0, 1.0), Tsit5();
+            use_bias = ReservoirComputing.True(),
+            use_jac_prototype = ReservoirComputing.False()
+        )
+        @test ReservoirComputing.has_bias(static_esn.reservoir)
+        ps, _ = setup(MersenneTwister(1), static_esn)
+        @test haskey(ps.reservoir, :bias)
+    end
 end

@@ -646,6 +646,88 @@ begin
             @test sort(unique(dl)) == Float32.([-0.1, 0.1])
         end
 
+        @testset "reverse_simple_cycle! weight vector convention" begin
+            weights = [1.0, 2.0, 3.0, 4.0]
+            reverse_cycle = reverse_simple_cycle!(Xoshiro(1), zeros(4, 4), weights)
+            @test [reverse_cycle[k, k + 1] for k in 1:3] == [1.0, 2.0, 3.0]
+            @test reverse_cycle[4, 1] == 4.0
+            @test count(!iszero, reverse_cycle) == 4
+            forward_cycle = simple_cycle!(Xoshiro(1), zeros(4, 4), weights)
+            @test reverse_cycle == forward_cycle'
+            @test reverse_simple_cycle!(Xoshiro(1), zeros(3, 3), 2.0) ==
+                [0.0 2.0 0.0; 0.0 0.0 2.0; 2.0 0.0 0.0]
+            @test weights == [1.0, 2.0, 3.0, 4.0]
+        end
+
+        @testset "permutation_init, diagonal_init and true_doublecycle keep weights" begin
+            w = fill(0.5f0, 6)
+            permutation_init(Xoshiro(1), 6, 6; weight = w, signs = RegularSigns(2))
+            @test w == fill(0.5f0, 6)
+            w = fill(0.5f0, 6)
+            true_doublecycle(
+                Xoshiro(1), 6, 6; cycle_weight = w,
+                cycle_kwargs = (; signs = RegularSigns(2))
+            )
+            @test w == fill(0.5f0, 6)
+            w = fill(0.5f0, 6)
+            true_doublecycle(
+                Xoshiro(1), 6, 6; second_cycle_weight = w,
+                second_cycle_kwargs = (; signs = RegularSigns(2))
+            )
+            @test w == fill(0.5f0, 6)
+            diagonal_init(Xoshiro(1), 6, 6; weight = w, signs = RegularSigns(2))
+            @test w == fill(0.5f0, 6)
+            @test eltype(diagonal_init(Xoshiro(1), Float64, 6, 6; weight = w)) == Float64
+            @test eltype(permutation_init(Xoshiro(1), Float64, 6, 6; weight = w)) == Float64
+            @test eltype(true_doublecycle(Xoshiro(1), Float64, 6, 6; cycle_weight = w)) ==
+                Float64
+            perm = Float32[0 1 0 0; 0 0 0 1; 1 0 0 0; 0 0 1 0]
+            scalar_weight = permutation_init(
+                Xoshiro(1), 4, 4; weight = 0.3, permutation_matrix = perm
+            )
+            @test scalar_weight == 0.3f0 .* perm
+        end
+
+        @testset "signs are applied before conversion to the matrix eltype" begin
+            w = [1, -2, 3, -4]
+            expected = UInt8.(Diagonal([1, 2, 3, 4]))
+            @test diagonal_init(
+                Xoshiro(1), UInt8, 4, 4; weight = w, signs = RegularSigns()
+            ) == expected
+            @test permutation_init(
+                Xoshiro(1), UInt8, 4, 4; weight = w, signs = RegularSigns(),
+                permutation_matrix = Matrix{UInt8}(I, 4, 4)
+            ) == expected
+            @test true_doublecycle(
+                Xoshiro(1), UInt8, 4, 4; cycle_weight = w,
+                second_cycle_weight = w,
+                cycle_kwargs = (; signs = RegularSigns()),
+                second_cycle_kwargs = (; signs = RegularSigns())
+            ) isa Matrix{UInt8}
+            @test w == [1, -2, 3, -4]
+        end
+
+        @testset "unsigned source weights preserve negative signs" begin
+            w = UInt8[1, 2, 3, 4]
+            expected = Float64.(Diagonal([1, -2, 3, -4]))
+            @test diagonal_init(
+                Xoshiro(1), Float64, 4, 4; weight = w, signs = RegularSigns()
+            ) == expected
+            @test w == UInt8[1, 2, 3, 4]
+            @test permutation_init(
+                Xoshiro(1), Float64, 4, 4; weight = w, signs = RegularSigns(),
+                permutation_matrix = Matrix{Float64}(I, 4, 4)
+            ) == expected
+            @test w == UInt8[1, 2, 3, 4]
+            @test true_doublecycle(
+                Xoshiro(1), Float64, 4, 4; cycle_weight = w,
+                second_cycle_weight = w,
+                cycle_kwargs = (; signs = RegularSigns()),
+                second_cycle_kwargs = (; signs = RegularSigns())
+            ) == [0.0 1.0 0.0 -4.0; 1.0 0.0 -2.0 0.0; 0.0 -2.0 0.0 3.0; -4.0 0.0 3.0 0.0]
+            @test w == UInt8[1, 2, 3, 4]
+        end
+
         @testset "Sign patterns" begin
             @test all(==(0.1f0), minimal_init(Xoshiro(0), Float32, 2, 3))
 
