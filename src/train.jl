@@ -195,7 +195,7 @@ function __readout_out_dims(rc::AbstractReservoirComputer)
 end
 function __readout_out_dims(rc::ReservoirChain)
     for layer in rc.layers
-        layer isa Union{LinearReadout, SVMReadout} && return layer.out_dims
+        layer isa AbstractReservoirTrainableLayer && return __readout_out_dims(layer)
     end
     return nothing
 end
@@ -299,7 +299,27 @@ end
     end
 end
 
-@generated function __addreadout(layers::NamedTuple{K}, ps::NamedTuple{K}, W) where {K}
+function __setreadout(layer::AbstractReservoirTrainableLayer, p::NamedTuple, W)
+    haskey(p, :weight) || throw(
+        ArgumentError(
+            "cannot install trained weights in $(typeof(layer)): its parameters have no " *
+                "`weight` field. Give the layer a `weight` parameter holding an " *
+                "(n_outputs, n_features) matrix."
+        )
+    )
+    old = p.weight
+    old isa AbstractMatrix && size(old) != size(W) && throw(
+        DimensionMismatch(
+            "fitted readout weight has size $(size(W)), but $(typeof(layer)) " *
+                "initializes `weight` with size $(size(old))"
+        )
+    )
+    return __setweight_rt(p, W)
+end
+
+@generated function __addreadout(
+        layers::NamedTuple{K}, ps::NamedTuple{K}, W, ::Val{S} = Val(false)
+    ) where {K, S}
     if length(K) == 0
         return :(NamedTuple())
     end
@@ -307,17 +327,26 @@ end
     Kq = __quote_keys(K)
     tailKq = __quote_keys(tailK)
 
-    head_val = :(
-        (getfield(layers, 1) isa LinearReadout)
-            ? __setweight_rt(getfield(ps, 1), W)
-            : getfield(ps, 1)
-    )
+    L = fieldtype(layers, 1)
+    trainable = L <: AbstractReservoirTrainableLayer
+    head_val = if S
+        :(getfield(ps, 1))
+    elseif L <: SVMReadout
+        :(__svmreadout_matrix_error())
+    elseif L <: LinearReadout
+        :(__setweight_rt(getfield(ps, 1), W))
+    elseif trainable
+        :(__setreadout(getfield(layers, 1), getfield(ps, 1), W))
+    else
+        :(getfield(ps, 1))
+    end
 
     tail_call = :(
         __addreadout(
             NamedTuple{$tailKq}(Base.tail(layers)),
             NamedTuple{$tailKq}(Base.tail(ps)),
-            W
+            W,
+            Val($(S || trainable))
         )
     )
 
@@ -336,7 +365,6 @@ function addreadout!(
                 "$(propertynames(rc.layers))"
         )
     )
-    any(Base.Fix2(isa, SVMReadout), rc.layers) && __svmreadout_matrix_error()
     new_ps = __addreadout(rc.layers, ps, W)
     return new_ps, st
 end

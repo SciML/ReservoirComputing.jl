@@ -2,6 +2,9 @@ using Test
 using Random
 using ReservoirComputing
 using LuxCore: setup
+import LuxCore
+using LinearAlgebra: I
+using ConcreteStructs: @concrete
 using MLJLinearModels
 using LIBSVM
 
@@ -222,4 +225,66 @@ end
     prediction = LIBSVM.predict(fitted_model, permutedims(states))
     @test length(prediction) == size(states, 2)
     @test all(isfinite, prediction)
+end
+
+@concrete struct CustomSVMMatrixReadout <: ReservoirComputing.AbstractReservoirTrainableLayer end
+
+function LuxCore.initialparameters(::AbstractRNG, ::CustomSVMMatrixReadout)
+    return (; weight = Matrix{Float64}(I, 2, 2))
+end
+
+LuxCore.initialstates(::AbstractRNG, ::CustomSVMMatrixReadout) = NamedTuple()
+(::CustomSVMMatrixReadout)(x, ps, st) = ps.weight * x, st
+
+@testset "train model-level: custom readouts with LIBSVM" begin
+    @testset "train model-level: LIBSVM validates downstream model counts" begin
+        rng = MersenneTwister(43)
+        x = [1.0 0.0 -1.0 0.0; 0.0 1.0 0.0 -1.0]
+        rc = ReservoirChain(CustomSVMMatrixReadout(), SVMReadout(2 => 2))
+        ps, st = setup(rng, rc)
+        @test_throws DimensionMismatch train(
+            rc, x, x[1:1, :], ps, st; objective = EpsilonSVR()
+        )
+        @test_throws DimensionMismatch train(
+            rc, x, vcat(x, x[1:1, :]), ps, st; objective = EpsilonSVR()
+        )
+        ps2, st2 = train(rc, x, x, ps, st; objective = EpsilonSVR())
+        @test length(first(rc(x[:, end], ps2, st2))) == 2
+        @test ps2.layer_1 === ps.layer_1
+
+        scalar_rc = ReservoirChain(CustomSVMMatrixReadout(), SVMReadout(2 => 1))
+        scalar_ps, scalar_st = setup(rng, scalar_rc)
+        scalar_ps2, scalar_st2 = train(
+            scalar_rc, x, x[1:1, :], scalar_ps, scalar_st; objective = EpsilonSVR()
+        )
+        @test length(first(scalar_rc(x[:, end], scalar_ps2, scalar_st2))) == 1
+
+        mixed_rc = ReservoirChain(
+            CustomSVMMatrixReadout(), SVMReadout(2 => 2), SVMReadout(2 => 1)
+        )
+        mixed_ps, mixed_st = setup(rng, mixed_rc)
+        @test_throws DimensionMismatch train(
+            mixed_rc, x, x, mixed_ps, mixed_st; objective = EpsilonSVR()
+        )
+    end
+
+    @testset "train model-level: ridge preserves prefit downstream LIBSVM" begin
+        rng = MersenneTwister(47)
+        x = [1.0 0.0 -1.0 0.0; 0.0 1.0 0.0 -1.0]
+        target = [2.0 0.0; 0.0 3.0]
+        svm = ReservoirChain(SVMReadout(2 => 2))
+        svm_ps, svm_st = setup(rng, svm)
+        fitted_ps, _ = train(svm, x, x, svm_ps, svm_st; objective = EpsilonSVR())
+        @test_throws ArgumentError train(svm, x, x, svm_ps, svm_st)
+
+        rc = ReservoirChain(CustomSVMMatrixReadout(), SVMReadout(2 => 2))
+        ps, st = setup(rng, rc)
+        ps = merge(ps, (; layer_3 = last(fitted_ps)))
+        @test length(first(rc(x[:, end], ps, st))) == 2
+        ps2, st2 = train(rc, x, target * x, ps, st)
+        @test ps2.layer_1.weight ≈ target
+        @test ps2.layer_3 === ps.layer_3
+        @test ps2.layer_3.models === ps.layer_3.models
+        @test length(first(rc(x[:, end], ps2, st2))) == 2
+    end
 end

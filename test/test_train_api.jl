@@ -3,6 +3,7 @@ using Random
 using LinearAlgebra
 using ReservoirComputing
 using LuxCore: setup
+import LuxCore
 
 @testset "addreadout! validates parameter structure" begin
     rng = MersenneTwister(901)
@@ -152,4 +153,88 @@ end
 
     @test ReservoirComputing.QRFactorization === linearsolve_qr
     @test Core.eval(user_module, :(QRFactorization())) isa linearsolve_qr
+end
+
+struct CustomTrainableReadout <: ReservoirComputing.AbstractReservoirTrainableLayer
+    n::Int
+    m::Int
+    named::Bool
+end
+function LuxCore.initialparameters(::AbstractRNG, l::CustomTrainableReadout)
+    W = zeros(Float32, l.m, l.n)
+    return l.named ? (; weight = W) : (; w = W)
+end
+LuxCore.initialstates(::AbstractRNG, ::CustomTrainableReadout) = NamedTuple()
+function (l::CustomTrainableReadout)(x, ps, st)
+    return (l.named ? ps.weight : ps.w) * x, st
+end
+
+@testset "train installs weights in custom trainable layers" begin
+    rng = MersenneTwister(77)
+    x = randn(rng, Float32, 2, 60)
+    y = randn(rng, Float32, 1, 60)
+
+    rc = ReservoirChain(StatefulLayer(ESNCell(2 => 8)), CustomTrainableReadout(8, 1, true))
+    ps, st = setup(rng, rc)
+    ps2, _ = train(rc, x, y, ps, st)
+    @test size(ps2.layer_2.weight) == (1, 8)
+    @test ps2.layer_2.weight != ps.layer_2.weight
+
+    rc_bad = ReservoirChain(
+        StatefulLayer(ESNCell(2 => 8)), CustomTrainableReadout(8, 1, false)
+    )
+    ps_bad, st_bad = setup(rng, rc_bad)
+    @test_throws ArgumentError train(rc_bad, x, y, ps_bad, st_bad)
+
+    for named in (true, false)
+        rc_after = ReservoirChain(
+            StatefulLayer(ESNCell(2 => 5)), LinearReadout(5 => 2),
+            CustomTrainableReadout(2, 1, named)
+        )
+        ps_a, st_a = setup(rng, rc_after)
+        x2 = randn(rng, Float32, 2, 60)
+        y2 = randn(rng, Float32, 2, 60)
+        ps_a2, _ = train(rc_after, x2, y2, ps_a, st_a)
+        @test size(ps_a2.layer_3.weight) == (2, 5)
+        @test ps_a2.layer_4 == ps_a.layer_4
+    end
+end
+
+struct CustomMatrixReadout <: ReservoirComputing.AbstractReservoirTrainableLayer
+    n::Int
+    m::Int
+end
+function LuxCore.initialparameters(::AbstractRNG, l::CustomMatrixReadout)
+    return (; weight = Matrix{Float64}(I, l.m, l.n))
+end
+LuxCore.initialstates(::AbstractRNG, ::CustomMatrixReadout) = NamedTuple()
+(l::CustomMatrixReadout)(x, ps, st) = ps.weight * x, st
+
+@testset "custom trainable readout is the only layer fitted" begin
+    rng = MersenneTwister(78)
+    x = randn(rng, 2, 80)
+    target = [2.0 0.0; 0.0 3.0]
+    rc = ReservoirChain(CustomMatrixReadout(2, 2), LinearReadout(2 => 2))
+    ps, st = setup(rng, rc)
+    ps = merge(ps, (; layer_3 = (; weight = Matrix{Float64}(I, 2, 2))))
+    ps2, _ = train(rc, x, target * x, ps, st)
+    @test ps2.layer_3 == ps.layer_3
+    @test ps2.layer_1.weight ≈ target
+    @test first(rc([1.0, 1.0], ps2, st)) ≈ [2.0, 3.0]
+
+    rc_rows = ReservoirChain(CustomMatrixReadout(2, 1), LinearReadout(1 => 2))
+    ps_r, st_r = setup(rng, rc_rows)
+    ps_r2, _ = train(rc_rows, x, x[1:1, :], ps_r, st_r)
+    @test size(ps_r2.layer_1.weight) == (1, 2)
+    @test ps_r2.layer_3 == ps_r.layer_3
+end
+
+@testset "custom trainable readout validates fitted shape" begin
+    rng = MersenneTwister(79)
+    x = randn(rng, 2, 40)
+    rc = ReservoirChain(CustomMatrixReadout(2, 1))
+    ps, st = setup(rng, rc)
+    @test_throws DimensionMismatch train(rc, x, x, ps, st)
+    ps2, _ = train(rc, x, x[1:1, :], ps, st)
+    @test size(ps2.layer_1.weight) == (1, 2)
 end

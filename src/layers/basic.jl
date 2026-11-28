@@ -69,6 +69,14 @@ marked layer and subsequent layers are not executed while generating training
 features. Mark only a layer that consumes the collected features, and ensure
 its input dimension matches the stable feature dimension produced before it.
 
+[`train`](@ref) installs the fitted matrix in the first trainable layer of the
+chain, which may be a [`LinearReadout`](@ref) or a subtype of this marker.
+Later trainable layers are left unchanged. For a custom subtype, the
+parameters must be a `NamedTuple` with a `weight` field holding an
+`(n_outputs, n_features)` matrix. The fitted matrix replaces `weight`, and
+training throws a `DimensionMismatch` if the size differs from the initialized
+`weight`.
+
 ## Example
 
 ```julia

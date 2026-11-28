@@ -99,7 +99,9 @@ ReservoirComputing.__fit_readout(
 
 The columns of `states` and `target_data` are aligned training samples. A
 matrix-valued result must have size `(n_outputs, n_features)` and is installed
-in a standard linear readout. Backends that return another fitted object must
+in the first trainable layer of the chain: a standard linear readout, or a
+custom [`ReservoirComputing.AbstractReservoirTrainableLayer`](@ref) whose parameters
+have a `weight` matrix of that size. Backends that return another fitted object must
 also implement `ReservoirComputing.addreadout!` for compatible model and
 readout types.
 
@@ -108,9 +110,8 @@ user supplies `solver=nothing`; otherwise it forwards the solver together with
 any additional keywords. Extension methods should reject unsupported solvers
 and keywords with an `ArgumentError`.
 
-`__fit_readout` is an internal extension interface and is not a user-facing
-training entry point. Its compatibility is not guaranteed before version 1.0.
-Users should always call the model-level `train` API.
+`__fit_readout` and `addreadout!` are internal package extension hooks. Their
+signatures and behavior may change before version 1.0.
 
 ## Support Vector Regression
 
