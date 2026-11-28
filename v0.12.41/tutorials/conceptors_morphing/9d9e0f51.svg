@@ -1,0 +1,900 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000" viewBox="0 0 4000 4000">
+<defs>
+  <clipPath id="clip050">
+    <rect x="0" y="0" width="4000" height="4000"/>
+  </clipPath>
+</defs>
+<path clip-path="url(#clip050)" d="M0 4000 L4000 4000 L4000 0 L0 0  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip051">
+    <rect x="3602" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<path clip-path="url(#clip050)" d="M47.2441 397.2 L397.2 397.2 L397.2 47.2441 L47.2441 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip052">
+    <rect x="47" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,397.2 397.2,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,47.2441 397.2,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,397.2 47.2441,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,397.2 397.2,47.2441 "/>
+<polyline clip-path="url(#clip052)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,66.9371 80.7305,324.882 104.312,171.243 127.894,137.737 151.476,456.92 175.058,3.53096 198.64,394.087 222.222,135.515 245.804,290.159 269.386,318.183 292.968,-5.45567 316.55,451.106 340.132,77.3619 363.714,321.506 387.296,180.8 "/>
+<path clip-path="url(#clip050)" d="M491.689 397.2 L841.645 397.2 L841.645 47.2441 L491.689 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip053">
+    <rect x="491" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,397.2 841.645,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,47.2441 841.645,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,397.2 491.689,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,397.2 841.645,47.2441 "/>
+<polyline clip-path="url(#clip053)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,310.432 525.175,189.989 548.757,103.3 572.339,454.98 595.921,24.1304 619.503,347.499 643.085,160.281 666.667,241.137 690.249,406.298 713.831,0.212724 737.413,421.577 760.994,126.845 784.576,302.004 808.158,263.827 831.74,13.1212 "/>
+<path clip-path="url(#clip050)" d="M936.133 397.2 L1286.09 397.2 L1286.09 47.2441 L936.133 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip054">
+    <rect x="936" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,397.2 1286.09,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,47.2441 1286.09,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,397.2 936.133,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,397.2 1286.09,47.2441 "/>
+<polyline clip-path="url(#clip054)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,172.471 969.619,271.079 993.201,370.935 1016.78,8.09591 1040.37,430.832 1063.95,130.938 1087.53,299.728 1111.11,254.565 1134.69,24.7214 1158.28,451.438 1181.86,91.2218 1205.44,298.223 1229.02,204.034 1252.6,95.4017 1276.18,451.486 "/>
+<path clip-path="url(#clip050)" d="M1380.58 397.2 L1730.53 397.2 L1730.53 47.2441 L1380.58 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip055">
+    <rect x="1380" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,397.2 1730.53,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,47.2441 1730.53,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,397.2 1380.58,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,397.2 1730.53,47.2441 "/>
+<polyline clip-path="url(#clip055)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,281.513 1414.06,213.453 1437.65,127.111 1461.23,446.558 1484.81,32.6078 1508.39,298.098 1531.97,188.814 1555.56,224.945 1579.14,428.788 1602.72,10.2191 1626.3,341.853 1649.88,187.999 1673.47,261.046 1697.05,391.821 1720.63,14.9777 "/>
+<path clip-path="url(#clip050)" d="M1825.02 397.2 L2174.98 397.2 L2174.98 47.2441 L1825.02 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip056">
+    <rect x="1825" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,397.2 2174.98,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,47.2441 2174.98,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,397.2 1825.02,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,397.2 2174.98,47.2441 "/>
+<polyline clip-path="url(#clip056)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,109.867 1858.51,266.099 1882.09,258.326 1905.67,79.9759 1929.25,446.296 1952.84,81.1105 1976.42,261.369 2000,245.458 2023.58,135.272 2047.16,443.19 2070.75,41.8954 2094.33,272.715 2117.91,217.965 2141.49,220.9 2165.07,430.749 "/>
+<path clip-path="url(#clip050)" d="M2269.47 397.2 L2619.42 397.2 L2619.42 47.2441 L2269.47 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip057">
+    <rect x="2269" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,397.2 2619.42,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,47.2441 2619.42,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,397.2 2269.47,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,397.2 2619.42,47.2441 "/>
+<polyline clip-path="url(#clip057)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,326.305 2302.95,237.119 2326.53,259.449 2350.12,403.944 2373.7,28.4988 2397.28,331.068 2420.86,236.594 2444.44,258.161 2468.03,402.62 2491.61,29.4022 2515.19,336.998 2538.77,235.669 2562.35,257.45 2585.94,400.466 2609.52,30.6876 "/>
+<path clip-path="url(#clip050)" d="M2713.91 397.2 L3063.87 397.2 L3063.87 47.2441 L2713.91 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip058">
+    <rect x="2713" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,397.2 3063.87,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,47.2441 3063.87,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,397.2 2713.91,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,397.2 3063.87,47.2441 "/>
+<polyline clip-path="url(#clip058)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,296.598 2747.4,398.136 2770.98,37.7874 2794.56,280.716 2818.14,318.038 2841.72,296.598 2865.31,398.136 2888.89,37.7873 2912.47,280.716 2936.05,318.038 2959.63,296.598 2983.22,398.136 3006.8,37.7873 3030.38,280.716 3053.96,318.038 "/>
+<path clip-path="url(#clip050)" d="M3158.36 397.2 L3508.31 397.2 L3508.31 47.2441 L3158.36 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip059">
+    <rect x="3158" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,397.2 3508.31,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,47.2441 3508.31,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,397.2 3158.36,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,397.2 3508.31,47.2441 "/>
+<polyline clip-path="url(#clip059)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,308.11 3191.84,379.211 3215.42,60.642 3239.01,242.606 3262.59,401.474 3286.17,308.11 3309.75,379.211 3333.33,60.642 3356.92,242.606 3380.5,401.474 3404.08,308.11 3427.66,379.211 3451.24,60.642 3474.83,242.606 3498.41,401.474 "/>
+<path clip-path="url(#clip050)" d="M3602.8 397.2 L3952.76 397.2 L3952.76 47.2441 L3602.8 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0510">
+    <rect x="3602" y="47" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,397.2 3952.76,397.2 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,47.2441 3952.76,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,397.2 3602.8,47.2441 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,397.2 3952.76,47.2441 "/>
+<polyline clip-path="url(#clip0510)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,119 3636.29,178.4 3659.87,397.315 3683.45,305.427 3707.03,407.125 3730.61,108.555 3754.2,148.878 3777.78,429.521 3801.36,337.395 3824.94,370.729 3848.52,165.351 3872.11,62.7405 3895.69,447.025 3919.27,293.142 3942.85,344.221 "/>
+<path clip-path="url(#clip050)" d="M47.2441 841.645 L397.2 841.645 L397.2 491.689 L47.2441 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0511">
+    <rect x="47" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,841.645 397.2,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,491.689 397.2,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,841.645 47.2441,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,841.645 397.2,491.689 "/>
+<polyline clip-path="url(#clip0511)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,712.638 80.7305,470.999 104.312,875.335 127.894,561.539 151.476,755.593 175.058,652.823 198.64,513.877 222.222,880.782 245.804,524.617 269.386,758.696 292.968,622.293 316.55,588.163 340.132,877.655 363.714,483.2 387.296,782.387 "/>
+<path clip-path="url(#clip050)" d="M491.689 841.645 L841.645 841.645 L841.645 491.689 L491.689 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0512">
+    <rect x="491" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,841.645 841.645,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,491.689 841.645,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,841.645 491.689,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,841.645 841.645,491.689 "/>
+<polyline clip-path="url(#clip0512)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,488.454 525.175,874.863 548.757,571.766 572.339,750.473 595.921,657.974 619.503,510.165 643.085,876.858 666.667,550.772 690.249,747.905 713.831,644.189 737.413,542.295 760.994,877.793 784.576,520.797 808.158,745.095 831.74,625.953 "/>
+<path clip-path="url(#clip050)" d="M936.133 841.645 L1286.09 841.645 L1286.09 491.689 L936.133 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0513">
+    <rect x="936" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,841.645 1286.09,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,491.689 1286.09,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,841.645 936.133,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,841.645 1286.09,491.689 "/>
+<polyline clip-path="url(#clip0513)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,831.303 969.619,610.262 993.201,743.57 1016.78,732.649 1040.37,480.679 1063.95,864.642 1087.53,602.918 1111.11,745.345 1134.69,685.104 1158.28,489.036 1181.86,871.152 1205.44,597.877 1229.02,746.096 1252.6,671.575 1276.18,495.577 "/>
+<path clip-path="url(#clip050)" d="M1380.58 841.645 L1730.53 841.645 L1730.53 491.689 L1380.58 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0514">
+    <rect x="1380" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,841.645 1730.53,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,491.689 1730.53,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,841.645 1380.58,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,841.645 1730.53,491.689 "/>
+<polyline clip-path="url(#clip0514)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,491.937 1414.06,868.462 1437.65,629.817 1461.23,745.675 1484.81,668.922 1508.39,491.937 1531.97,868.462 1555.56,629.817 1579.14,745.675 1602.72,668.922 1626.3,491.937 1649.88,868.462 1673.47,629.817 1697.05,745.675 1720.63,668.922 "/>
+<path clip-path="url(#clip050)" d="M1825.02 841.645 L2174.98 841.645 L2174.98 491.689 L1825.02 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0515">
+    <rect x="1825" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,841.645 2174.98,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,491.689 2174.98,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,841.645 1825.02,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,841.645 2174.98,491.689 "/>
+<polyline clip-path="url(#clip0515)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,491.548 1858.51,866.991 1882.09,660.291 1905.67,737.689 1929.25,666.575 1952.84,491.548 1976.42,866.991 2000,660.291 2023.58,737.689 2047.16,666.575 2070.75,491.548 2094.33,866.991 2117.91,660.291 2141.49,737.689 2165.07,666.575 "/>
+<path clip-path="url(#clip050)" d="M2269.47 841.645 L2619.42 841.645 L2619.42 491.689 L2269.47 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0516">
+    <rect x="2269" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,841.645 2619.42,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,491.689 2619.42,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,841.645 2269.47,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,841.645 2619.42,491.689 "/>
+<polyline clip-path="url(#clip0516)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,496.28 2302.95,868.315 2326.53,676.422 2350.12,725.128 2373.7,671.504 2397.28,496.282 2420.86,868.315 2444.44,676.416 2468.03,725.125 2491.61,671.507 2515.19,496.284 2538.77,868.316 2562.35,676.411 2585.94,725.122 2609.52,671.51 "/>
+<path clip-path="url(#clip050)" d="M2713.91 841.645 L3063.87 841.645 L3063.87 491.689 L2713.91 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0517">
+    <rect x="2713" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,841.645 3063.87,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,491.689 3063.87,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,841.645 2713.91,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,841.645 3063.87,491.689 "/>
+<polyline clip-path="url(#clip0517)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,580.018 2747.4,523.027 2770.98,856.026 2794.56,758.321 2818.14,779.77 2841.72,632.372 2865.31,492.831 2888.89,864.16 2912.47,736.915 2936.05,761.605 2959.63,662.861 2983.22,489.572 3006.8,866.065 3030.38,723.095 3053.96,750.626 "/>
+<path clip-path="url(#clip050)" d="M3158.36 841.645 L3508.31 841.645 L3508.31 491.689 L3158.36 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0518">
+    <rect x="3158" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,841.645 3508.31,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,491.689 3508.31,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,841.645 3158.36,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,841.645 3508.31,491.689 "/>
+<polyline clip-path="url(#clip0518)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,814.491 3191.84,753.523 3215.42,843.678 3239.01,628.553 3262.59,558.559 3286.17,856.218 3309.75,776.658 3333.33,803.767 3356.92,665.346 3380.5,496.17 3404.08,866.844 3427.66,751.032 3451.24,776.054 3474.83,695.886 3498.41,494.159 "/>
+<path clip-path="url(#clip050)" d="M3602.8 841.645 L3952.76 841.645 L3952.76 491.689 L3602.8 491.689  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0519">
+    <rect x="3602" y="491" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,841.645 3952.76,841.645 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,491.689 3952.76,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,841.645 3602.8,491.689 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,841.645 3952.76,491.689 "/>
+<polyline clip-path="url(#clip0519)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,532.999 3636.29,855.423 3659.87,770.888 3683.45,802.687 3707.03,756.294 3730.61,533.113 3754.2,855.37 3777.78,770.924 3801.36,802.732 3824.94,756.349 3848.52,533.177 3872.11,855.308 3895.69,770.996 3919.27,802.787 3942.85,756.37 "/>
+<path clip-path="url(#clip050)" d="M47.2441 1286.09 L397.2 1286.09 L397.2 936.133 L47.2441 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0520">
+    <rect x="47" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1286.09 397.2,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,936.133 397.2,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1286.09 47.2441,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,1286.09 397.2,936.133 "/>
+<polyline clip-path="url(#clip0520)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,970.011 80.7305,1280.32 104.312,1062.99 127.894,1227.29 151.476,1089.48 175.058,970.011 198.64,1280.32 222.222,1062.99 245.804,1227.29 269.386,1089.48 292.968,970.011 316.55,1280.32 340.132,1062.99 363.714,1227.29 387.296,1089.48 "/>
+<path clip-path="url(#clip050)" d="M491.689 1286.09 L841.645 1286.09 L841.645 936.133 L491.689 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0521">
+    <rect x="491" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1286.09 841.645,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,936.133 841.645,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1286.09 491.689,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,1286.09 841.645,936.133 "/>
+<polyline clip-path="url(#clip0521)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,956.995 525.175,1271.75 548.757,1111.15 572.339,1218.74 595.921,1090.11 619.503,956.995 643.085,1271.75 666.667,1111.15 690.249,1218.74 713.831,1090.11 737.413,956.995 760.994,1271.75 784.576,1111.15 808.158,1218.74 831.74,1090.11 "/>
+<path clip-path="url(#clip050)" d="M936.133 1286.09 L1286.09 1286.09 L1286.09 936.133 L936.133 936.133  Z" fill="#e0e0e0" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0522">
+    <rect x="936" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1286.09 1286.09,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,936.133 1286.09,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1286.09 936.133,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,1286.09 1286.09,936.133 "/>
+<polyline clip-path="url(#clip0522)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:10; stroke-opacity:1; fill:none" points="946.037,954.989 969.619,1266.62 993.201,1147.41 1016.78,1205.12 1040.37,1083.17 1063.95,954.989 1087.53,1266.62 1111.11,1147.41 1134.69,1205.12 1158.28,1083.17 1181.86,954.989 1205.44,1266.62 1229.02,1147.41 1252.6,1205.12 1276.18,1083.17 "/>
+<path clip-path="url(#clip050)" d="M1380.58 1286.09 L1730.53 1286.09 L1730.53 936.133 L1380.58 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0523">
+    <rect x="1380" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1286.09 1730.53,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,936.133 1730.53,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1286.09 1380.58,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,1286.09 1730.53,936.133 "/>
+<polyline clip-path="url(#clip0523)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,957.844 1414.06,1263.83 1437.65,1176.88 1461.23,1195.11 1484.81,1070.71 1508.39,957.844 1531.97,1263.83 1555.56,1176.88 1579.14,1195.11 1602.72,1070.71 1626.3,957.844 1649.88,1263.83 1673.47,1176.88 1697.05,1195.11 1720.63,1070.71 "/>
+<path clip-path="url(#clip050)" d="M1825.02 1286.09 L2174.98 1286.09 L2174.98 936.133 L1825.02 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0524">
+    <rect x="1825" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1286.09 2174.98,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,936.133 2174.98,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1286.09 1825.02,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,1286.09 2174.98,936.133 "/>
+<polyline clip-path="url(#clip0524)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,960.147 1858.51,1263.36 1882.09,1198.59 1905.67,1191.32 1929.25,1065.07 1952.84,960.147 1976.42,1263.36 2000,1198.59 2023.58,1191.32 2047.16,1065.07 2070.75,960.147 2094.33,1263.36 2117.91,1198.59 2141.49,1191.32 2165.07,1065.07 "/>
+<path clip-path="url(#clip050)" d="M2269.47 1286.09 L2619.42 1286.09 L2619.42 936.133 L2269.47 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0525">
+    <rect x="2269" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1286.09 2619.42,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,936.133 2619.42,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1286.09 2269.47,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,1286.09 2619.42,936.133 "/>
+<polyline clip-path="url(#clip0525)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,959.292 2302.95,1264.71 2326.53,1214.28 2350.12,1193.49 2373.7,1070.42 2397.28,959.292 2420.86,1264.71 2444.44,1214.28 2468.03,1193.49 2491.61,1070.42 2515.19,959.292 2538.77,1264.71 2562.35,1214.28 2585.94,1193.49 2609.52,1070.42 "/>
+<path clip-path="url(#clip050)" d="M2713.91 1286.09 L3063.87 1286.09 L3063.87 936.133 L2713.91 936.133  Z" fill="#e0e0e0" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0526">
+    <rect x="2713" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1286.09 3063.87,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,936.133 3063.87,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1286.09 2713.91,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,1286.09 3063.87,936.133 "/>
+<polyline clip-path="url(#clip0526)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:10; stroke-opacity:1; fill:none" points="2723.82,956.407 2747.4,1266.33 2770.98,1226.51 2794.56,1201.43 2818.14,1087.63 2841.72,956.407 2865.31,1266.33 2888.89,1226.51 2912.47,1201.43 2936.05,1087.63 2959.63,956.407 2983.22,1266.33 3006.8,1226.51 3030.38,1201.43 3053.96,1087.63 "/>
+<path clip-path="url(#clip050)" d="M3158.36 1286.09 L3508.31 1286.09 L3508.31 936.133 L3158.36 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0527">
+    <rect x="3158" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1286.09 3508.31,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,936.133 3508.31,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1286.09 3158.36,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,1286.09 3508.31,936.133 "/>
+<polyline clip-path="url(#clip0527)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,956.149 3191.84,1265.84 3215.42,1238.83 3239.01,1213.2 3262.59,1115.55 3286.17,956.149 3309.75,1265.84 3333.33,1238.83 3356.92,1213.2 3380.5,1115.55 3404.08,956.149 3427.66,1265.84 3451.24,1238.83 3474.83,1213.2 3498.41,1115.55 "/>
+<path clip-path="url(#clip050)" d="M3602.8 1286.09 L3952.76 1286.09 L3952.76 936.133 L3602.8 936.133  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0528">
+    <rect x="3602" y="936" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1286.09 3952.76,1286.09 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,936.133 3952.76,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1286.09 3602.8,936.133 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,1286.09 3952.76,936.133 "/>
+<polyline clip-path="url(#clip0528)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,966.146 3636.29,1251.9 3659.87,1259.67 3683.45,1224.92 3707.03,1152.37 3730.61,966.146 3754.2,1251.9 3777.78,1259.67 3801.36,1224.92 3824.94,1152.37 3848.52,966.146 3872.11,1251.9 3895.69,1259.67 3919.27,1224.92 3942.85,1152.37 "/>
+<path clip-path="url(#clip050)" d="M47.2441 1730.53 L397.2 1730.53 L397.2 1380.58 L47.2441 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0529">
+    <rect x="47" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1730.53 397.2,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1380.58 397.2,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1730.53 47.2441,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,1730.53 397.2,1380.58 "/>
+<polyline clip-path="url(#clip0529)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,1600.26 80.7305,1518.46 104.312,1677.61 127.894,1621.09 151.476,1479.23 175.058,1570.71 198.64,1481.38 222.222,1659.75 245.804,1660.23 269.386,1501.84 292.968,1530.99 316.55,1471.75 340.132,1628.03 363.714,1687.29 387.296,1511.66 "/>
+<path clip-path="url(#clip050)" d="M491.689 1730.53 L841.645 1730.53 L841.645 1380.58 L491.689 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0530">
+    <rect x="491" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1730.53 841.645,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1380.58 841.645,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1730.53 491.689,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,1730.53 841.645,1380.58 "/>
+<polyline clip-path="url(#clip0530)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,1666.08 525.175,1660.77 548.757,1532.59 572.339,1471.25 595.921,1523.49 619.503,1633.78 643.085,1679.41 666.667,1552.53 690.249,1463.44 713.831,1532.49 737.413,1599.27 760.994,1689.59 784.576,1567.56 808.158,1475.22 831.74,1526.46 "/>
+<path clip-path="url(#clip050)" d="M936.133 1730.53 L1286.09 1730.53 L1286.09 1380.58 L936.133 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0531">
+    <rect x="936" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1730.53 1286.09,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1380.58 1286.09,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1730.53 936.133,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,1730.53 1286.09,1380.58 "/>
+<polyline clip-path="url(#clip0531)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,1488.71 969.619,1496.6 993.201,1566.08 1016.78,1683.73 1040.37,1625.5 1063.95,1523 1087.53,1457.28 1111.11,1565.86 1134.69,1665.26 1158.28,1647.17 1181.86,1549.54 1205.44,1440.63 1229.02,1569.24 1252.6,1639.28 1276.18,1665.46 "/>
+<path clip-path="url(#clip050)" d="M1380.58 1730.53 L1730.53 1730.53 L1730.53 1380.58 L1380.58 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0532">
+    <rect x="1380" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1730.53 1730.53,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1380.58 1730.53,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1730.53 1380.58,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,1730.53 1730.53,1380.58 "/>
+<polyline clip-path="url(#clip0532)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,1592.15 1414.06,1660.34 1437.65,1650.33 1461.23,1551.17 1484.81,1431.46 1508.39,1588.93 1531.97,1648.23 1555.56,1661.18 1579.14,1559.82 1602.72,1432.44 1626.3,1584.97 1649.88,1639.77 1673.47,1667.73 1697.05,1565.54 1720.63,1435.12 "/>
+<path clip-path="url(#clip050)" d="M1825.02 1730.53 L2174.98 1730.53 L2174.98 1380.58 L1825.02 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0533">
+    <rect x="1825" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1730.53 2174.98,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1380.58 2174.98,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1730.53 1825.02,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,1730.53 2174.98,1380.58 "/>
+<polyline clip-path="url(#clip0533)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,1632.08 1858.51,1685.13 1882.09,1599.01 1905.67,1466.06 1929.25,1500.05 1952.84,1624.89 1976.42,1688.81 2000,1607.61 2023.58,1483.95 2047.16,1469.86 2070.75,1618.62 2094.33,1688.63 2117.91,1616.65 2141.49,1504.42 2165.07,1448.06 "/>
+<path clip-path="url(#clip050)" d="M2269.47 1730.53 L2619.42 1730.53 L2619.42 1380.58 L2269.47 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0534">
+    <rect x="2269" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1730.53 2619.42,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1380.58 2619.42,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1730.53 2269.47,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,1730.53 2619.42,1380.58 "/>
+<polyline clip-path="url(#clip0534)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,1649.35 2302.95,1686.16 2326.53,1608.7 2350.12,1470.42 2373.7,1487.31 2397.28,1641.08 2420.86,1691.04 2444.44,1616.34 2468.03,1488.31 2491.61,1460.52 2515.19,1632.3 2538.77,1692.07 2562.35,1622.88 2585.94,1506.18 2609.52,1444.4 "/>
+<path clip-path="url(#clip050)" d="M2713.91 1730.53 L3063.87 1730.53 L3063.87 1380.58 L2713.91 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0535">
+    <rect x="2713" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1730.53 3063.87,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1380.58 3063.87,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1730.53 2713.91,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,1730.53 3063.87,1380.58 "/>
+<polyline clip-path="url(#clip0535)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,1635.93 2747.4,1696.78 2770.98,1634.17 2794.56,1521.94 2818.14,1438.3 2841.72,1625.56 2865.31,1695.26 2888.89,1639.37 2912.47,1534.1 2936.05,1434.82 2959.63,1616.13 2983.22,1693.16 3006.8,1644.9 3030.38,1545.36 3053.96,1433.58 "/>
+<path clip-path="url(#clip050)" d="M3158.36 1730.53 L3508.31 1730.53 L3508.31 1380.58 L3158.36 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0536">
+    <rect x="3158" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1730.53 3508.31,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1380.58 3508.31,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1730.53 3158.36,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,1730.53 3508.31,1380.58 "/>
+<polyline clip-path="url(#clip0536)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,1459.59 3191.84,1657.15 3215.42,1701.96 3239.01,1643.57 3262.59,1529.51 3286.17,1444.77 3309.75,1639.12 3333.33,1702.55 3356.92,1647.16 3380.5,1542.97 3404.08,1439.9 3427.66,1624.27 3451.24,1701.63 3474.83,1651.55 3498.41,1555.35 "/>
+<path clip-path="url(#clip050)" d="M3602.8 1730.53 L3952.76 1730.53 L3952.76 1380.58 L3602.8 1380.58  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0537">
+    <rect x="3602" y="1380" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1730.53 3952.76,1730.53 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1380.58 3952.76,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1730.53 3602.8,1380.58 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,1730.53 3952.76,1380.58 "/>
+<polyline clip-path="url(#clip0537)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,1594.98 3636.29,1706.52 3659.87,1684.55 3683.45,1636.05 3707.03,1531.95 3730.61,1544.05 3754.2,1695.26 3777.78,1696.26 3801.36,1659.95 3824.94,1571.57 3848.52,1505.04 3872.11,1659.35 3895.69,1705.89 3919.27,1672.93 3942.85,1600.73 "/>
+<path clip-path="url(#clip050)" d="M47.2441 2174.98 L397.2 2174.98 L397.2 1825.02 L47.2441 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0538">
+    <rect x="47" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2174.98 397.2,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,1825.02 397.2,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2174.98 47.2441,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,2174.98 397.2,1825.02 "/>
+<polyline clip-path="url(#clip0538)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,1906.38 80.7305,1988.55 104.312,2101.99 127.894,2109.41 151.476,2030.93 175.058,1915.25 198.64,1911.23 222.222,1996.83 245.804,2108.02 269.386,2104.11 292.968,2023.69 316.55,1909.32 340.132,1916.31 363.714,2005.03 387.296,2112.95 "/>
+<path clip-path="url(#clip050)" d="M491.689 2174.98 L841.645 2174.98 L841.645 1825.02 L491.689 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0539">
+    <rect x="491" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2174.98 841.645,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,1825.02 841.645,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2174.98 491.689,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,2174.98 841.645,1825.02 "/>
+<polyline clip-path="url(#clip0539)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,1972.68 525.175,2085.51 548.757,2118.93 572.339,2046.44 595.921,1933.14 619.503,1904.48 643.085,1983.37 666.667,2096.14 690.249,2113.72 713.831,2037.6 737.413,1922.79 760.994,1910.33 784.576,1994.21 808.158,2104.91 831.74,2107.38 "/>
+<path clip-path="url(#clip050)" d="M936.133 2174.98 L1286.09 2174.98 L1286.09 1825.02 L936.133 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0540">
+    <rect x="936" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2174.98 1286.09,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,1825.02 1286.09,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2174.98 936.133,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,2174.98 1286.09,1825.02 "/>
+<polyline clip-path="url(#clip0540)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,2069.36 969.619,2123.69 993.201,2060.42 1016.78,1952.34 1040.37,1900.75 1063.95,1972.8 1087.53,2084.38 1111.11,2120.04 1134.69,2049.79 1158.28,1937 1181.86,1906.18 1205.44,1985.95 1229.02,2097.25 1252.6,2114.02 1276.18,2038.69 "/>
+<path clip-path="url(#clip050)" d="M1380.58 2174.98 L1730.53 2174.98 L1730.53 1825.02 L1380.58 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0541">
+    <rect x="1380" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2174.98 1730.53,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,1825.02 1730.53,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2174.98 1380.58,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,2174.98 1730.53,1825.02 "/>
+<polyline clip-path="url(#clip0541)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,2124.64 1414.06,2078.26 1437.65,1979.47 1461.23,1900.24 1484.81,1958.98 1508.39,2067.31 1531.97,2124.65 1555.56,2066 1579.14,1958.93 1602.72,1902.08 1626.3,1973.96 1649.88,2084.9 1673.47,2121.06 1697.05,2053.34 1720.63,1940.54 "/>
+<path clip-path="url(#clip050)" d="M1825.02 2174.98 L2174.98 2174.98 L2174.98 1825.02 L1825.02 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0542">
+    <rect x="1825" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2174.98 2174.98,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,1825.02 2174.98,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2174.98 1825.02,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,2174.98 2174.98,1825.02 "/>
+<polyline clip-path="url(#clip0542)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,2102.17 1858.51,2018.93 1882.09,1912.49 1905.67,1937.03 1929.25,2038.13 1952.84,2123.24 1976.42,2090.39 2000,1997.88 2023.58,1905.08 2047.16,1952.03 2070.75,2058.78 2094.33,2125.83 2117.91,2077.41 2141.49,1974.91 2165.07,1903.17 "/>
+<path clip-path="url(#clip050)" d="M2269.47 2174.98 L2619.42 2174.98 L2619.42 1825.02 L2269.47 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0543">
+    <rect x="2269" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2174.98 2619.42,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,1825.02 2619.42,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2174.98 2269.47,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,2174.98 2619.42,1825.02 "/>
+<polyline clip-path="url(#clip0543)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,2068.9 2302.95,1958.91 2326.53,1911.02 2350.12,1992.13 2373.7,2100.33 2397.28,2119.1 2420.86,2052.3 2444.44,1938.87 2468.03,1920.69 2491.61,2013.19 2515.19,2113.72 2538.77,2109.97 2562.35,2033.15 2585.94,1923.22 2609.52,1934.08 "/>
+<path clip-path="url(#clip050)" d="M2713.91 2174.98 L3063.87 2174.98 L3063.87 1825.02 L2713.91 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0544">
+    <rect x="2713" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2174.98 3063.87,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,1825.02 3063.87,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2174.98 2713.91,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,2174.98 3063.87,1825.02 "/>
+<polyline clip-path="url(#clip0544)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,2055.4 2747.4,1945.2 2770.98,1929.46 2794.56,2025.09 2818.14,2118.11 2841.72,2110.39 2865.31,2034.83 2888.89,1929.25 2912.47,1944.11 2936.05,2047.68 2959.63,2125.14 2983.22,2099.93 3006.8,2011.97 3030.38,1918.79 3053.96,1961.38 "/>
+<path clip-path="url(#clip050)" d="M3158.36 2174.98 L3508.31 2174.98 L3508.31 1825.02 L3158.36 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0545">
+    <rect x="3158" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2174.98 3508.31,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,1825.02 3508.31,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2174.98 3158.36,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,2174.98 3508.31,1825.02 "/>
+<polyline clip-path="url(#clip0545)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,2095.64 3191.84,2008.36 3215.42,1934.74 3239.01,1989 3262.59,2090.4 3286.17,2124.32 3309.75,2084.44 3333.33,1990.15 3356.92,1935.38 3380.5,2007.02 3404.08,2103.76 3427.66,2120.86 3451.24,2070.63 3474.83,1972.49 3498.41,1941.51 "/>
+<path clip-path="url(#clip050)" d="M3602.8 2174.98 L3952.76 2174.98 L3952.76 1825.02 L3602.8 1825.02  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0546">
+    <rect x="3602" y="1825" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2174.98 3952.76,2174.98 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,1825.02 3952.76,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2174.98 3602.8,1825.02 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,2174.98 3952.76,1825.02 "/>
+<polyline clip-path="url(#clip0546)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,2046.13 3636.29,2069.93 3659.87,2081.97 3683.45,2073.07 3707.03,2051.85 3730.61,2037.78 3754.2,2047.85 3777.78,2071.24 3801.36,2081.67 3824.94,2071.65 3848.52,2050.53 3872.11,2038.04 3895.69,2049.57 3919.27,2072.43 3942.85,2081.28 "/>
+<path clip-path="url(#clip050)" d="M47.2441 2619.42 L397.2 2619.42 L397.2 2269.47 L47.2441 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0547">
+    <rect x="47" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2619.42 397.2,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2269.47 397.2,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2619.42 47.2441,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,2619.42 397.2,2269.47 "/>
+<polyline clip-path="url(#clip0547)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,2569.17 80.7305,2582.75 104.312,2516.47 127.894,2384.59 151.476,2311.27 175.058,2331.14 198.64,2438.42 222.222,2557.26 245.804,2585.59 269.386,2535.15 292.968,2408.82 316.55,2317.17 340.132,2320.94 363.714,2412.34 387.296,2540.78 "/>
+<path clip-path="url(#clip050)" d="M491.689 2619.42 L841.645 2619.42 L841.645 2269.47 L491.689 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0548">
+    <rect x="491" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2619.42 841.645,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2269.47 841.645,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2619.42 491.689,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,2619.42 841.645,2269.47 "/>
+<polyline clip-path="url(#clip0548)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,2420.08 525.175,2544.39 548.757,2585.43 572.339,2548.3 595.921,2435.58 619.503,2330.2 643.085,2317.43 666.667,2389.1 690.249,2518.91 713.831,2584.24 737.413,2565.27 760.994,2468.33 784.576,2348.02 808.158,2313.06 831.74,2363.85 "/>
+<path clip-path="url(#clip050)" d="M936.133 2619.42 L1286.09 2619.42 L1286.09 2269.47 L936.133 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0549">
+    <rect x="936" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2619.42 1286.09,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2269.47 1286.09,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2619.42 936.133,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,2619.42 1286.09,2269.47 "/>
+<polyline clip-path="url(#clip0549)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,2316.32 969.619,2346.75 993.201,2455.97 1016.78,2564.37 1040.37,2581.65 1063.95,2525.5 1087.53,2406.44 1111.11,2322.38 1134.69,2329.35 1158.28,2416.71 1181.86,2540.31 1205.44,2584.49 1229.02,2551.58 1252.6,2446.55 1276.18,2338.6 "/>
+<path clip-path="url(#clip050)" d="M1380.58 2619.42 L1730.53 2619.42 L1730.53 2269.47 L1380.58 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0550">
+    <rect x="1380" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2619.42 1730.53,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2269.47 1730.53,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2619.42 1380.58,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,2619.42 1730.53,2269.47 "/>
+<polyline clip-path="url(#clip0550)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,2515.82 1414.06,2398.76 1437.65,2323.97 1461.23,2335.71 1484.81,2424.43 1508.39,2544.35 1531.97,2583.68 1555.56,2549.34 1579.14,2446.97 1602.72,2342.22 1626.3,2322.25 1649.88,2380.32 1673.47,2503.15 1697.05,2579.65 1720.63,2571.08 "/>
+<path clip-path="url(#clip050)" d="M1825.02 2619.42 L2174.98 2619.42 L2174.98 2269.47 L1825.02 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0551">
+    <rect x="1825" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2619.42 2174.98,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2269.47 2174.98,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2619.42 1825.02,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,2619.42 2174.98,2269.47 "/>
+<polyline clip-path="url(#clip0551)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,2503.52 1858.51,2578.79 1882.09,2571.89 1905.67,2498.19 1929.25,2383.87 1952.84,2325.17 1976.42,2345.93 2000,2440.82 2023.58,2553.64 2047.16,2582.79 2070.75,2543.23 2094.33,2440.63 2117.91,2342.82 2141.49,2326.67 2165.07,2384.28 "/>
+<path clip-path="url(#clip050)" d="M2269.47 2619.42 L2619.42 2619.42 L2619.42 2269.47 L2269.47 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0552">
+    <rect x="2269" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2619.42 2619.42,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2269.47 2619.42,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2619.42 2269.47,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,2619.42 2619.42,2269.47 "/>
+<polyline clip-path="url(#clip0552)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,2381.5 2302.95,2329.11 2326.53,2349.92 2350.12,2442.27 2373.7,2552.8 2397.28,2582.92 2420.86,2547.25 2444.44,2450.5 2468.03,2352.37 2491.61,2328.88 2515.19,2375.22 2538.77,2488.56 2562.35,2573.79 2585.94,2577.29 2609.52,2516.89 "/>
+<path clip-path="url(#clip050)" d="M2713.91 2619.42 L3063.87 2619.42 L3063.87 2269.47 L2713.91 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0553">
+    <rect x="2713" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2619.42 3063.87,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2269.47 3063.87,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2619.42 2713.91,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,2619.42 3063.87,2269.47 "/>
+<polyline clip-path="url(#clip0553)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,2497 2747.4,2575.04 2770.98,2577.28 2794.56,2517.59 2818.14,2413.97 2841.72,2341.52 2865.31,2339.01 2888.89,2402.54 2912.47,2518.03 2936.05,2579.96 2959.63,2571.09 2983.22,2499.64 3006.8,2394.57 3030.38,2336.1 3053.96,2345.85 "/>
+<path clip-path="url(#clip050)" d="M3158.36 2619.42 L3508.31 2619.42 L3508.31 2269.47 L3158.36 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0554">
+    <rect x="3158" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2619.42 3508.31,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2269.47 3508.31,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2619.42 3158.36,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,2619.42 3508.31,2269.47 "/>
+<polyline clip-path="url(#clip0554)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,2543.05 3191.84,2451.47 3215.42,2363.83 3239.01,2337.28 3262.59,2370.43 3286.17,2468.44 3309.75,2562.69 3333.33,2583.33 3356.92,2544.45 3380.5,2453.46 3404.08,2364.96 3427.66,2337.23 3451.24,2369.18 3474.83,2466.15 3498.41,2561.6 "/>
+<path clip-path="url(#clip050)" d="M3602.8 2619.42 L3952.76 2619.42 L3952.76 2269.47 L3602.8 2269.47  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0555">
+    <rect x="3602" y="2269" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2619.42 3952.76,2619.42 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2269.47 3952.76,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2619.42 3602.8,2269.47 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,2619.42 3952.76,2269.47 "/>
+<polyline clip-path="url(#clip0555)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,2373.56 3636.29,2342.61 3659.87,2365.28 3683.45,2448.58 3707.03,2548.82 3730.61,2584.4 3754.2,2561.89 3777.78,2484.23 3801.36,2392.57 3824.94,2345.71 3848.52,2353.14 3872.11,2418.2 3895.69,2524.94 3919.27,2580.42 3942.85,2574.78 "/>
+<path clip-path="url(#clip050)" d="M47.2441 3063.87 L397.2 3063.87 L397.2 2713.91 L47.2441 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0556">
+    <rect x="47" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3063.87 397.2,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,2713.91 397.2,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3063.87 47.2441,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,3063.87 397.2,2713.91 "/>
+<polyline clip-path="url(#clip0556)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,2710.9 80.7305,2756.24 104.312,2870.95 127.894,2990.21 151.476,3060.49 175.058,3048.87 198.64,2952.14 222.222,2823.81 245.804,2729.9 269.386,2713.44 292.968,2790.49 316.55,2916.75 340.132,3027.16 363.714,3068.09 387.296,3013.63 "/>
+<path clip-path="url(#clip050)" d="M491.689 3063.87 L841.645 3063.87 L841.645 2713.91 L491.689 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0557">
+    <rect x="491" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3063.87 841.645,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,2713.91 841.645,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3063.87 491.689,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,3063.87 841.645,2713.91 "/>
+<polyline clip-path="url(#clip0557)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,2910.87 525.175,2789.42 548.757,2719.84 572.339,2728.94 595.921,2818.35 619.503,2942.84 643.085,3040.19 666.667,3063.55 690.249,3000.15 713.831,2881.25 737.413,2764.23 760.994,2713.91 784.576,2749.17 808.158,2854.59 831.74,2976.42 "/>
+<path clip-path="url(#clip050)" d="M936.133 3063.87 L1286.09 3063.87 L1286.09 2713.91 L936.133 2713.91  Z" fill="#e0e0e0" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0558">
+    <rect x="936" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3063.87 1286.09,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,2713.91 1286.09,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3063.87 936.133,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,3063.87 1286.09,2713.91 "/>
+<polyline clip-path="url(#clip0558)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:10; stroke-opacity:1; fill:none" points="946.037,3015.97 969.619,3061.72 993.201,3029.2 1016.78,2930.45 1040.37,2806.22 1063.95,2726.67 1087.53,2722.58 1111.11,2797.54 1134.69,2919.01 1158.28,3027.14 1181.86,3062.81 1205.44,3018.76 1229.02,2913.07 1252.6,2791.14 1276.18,2721.91 "/>
+<path clip-path="url(#clip050)" d="M1380.58 3063.87 L1730.53 3063.87 L1730.53 2713.91 L1380.58 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0559">
+    <rect x="1380" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3063.87 1730.53,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,2713.91 1730.53,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3063.87 1380.58,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,3063.87 1730.53,2713.91 "/>
+<polyline clip-path="url(#clip0559)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,2715.89 1414.06,2751.87 1437.65,2849.91 1461.23,2971.3 1484.81,3047.66 1508.39,3055.57 1531.97,2991.62 1555.56,2876.11 1579.14,2762.54 1602.72,2716.39 1626.3,2747.76 1649.88,2842.8 1673.47,2964.32 1697.05,3045.17 1720.63,3057.43 "/>
+<path clip-path="url(#clip050)" d="M1825.02 3063.87 L2174.98 3063.87 L2174.98 2713.91 L1825.02 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0560">
+    <rect x="1825" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3063.87 2174.98,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,2713.91 2174.98,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3063.87 1825.02,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,3063.87 2174.98,2713.91 "/>
+<polyline clip-path="url(#clip0560)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,3045.99 1858.51,3056.64 1882.09,2999.23 1905.67,2890.11 1929.25,2775.58 1952.84,2719.32 1976.42,2735.9 2000,2817.15 2023.58,2935.38 2047.16,3031.78 2070.75,3061.37 2094.33,3020.99 2117.91,2924 2141.49,2804.09 2165.07,2728.31 "/>
+<path clip-path="url(#clip050)" d="M2269.47 3063.87 L2619.42 3063.87 L2619.42 2713.91 L2269.47 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0561">
+    <rect x="2269" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3063.87 2619.42,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,2713.91 2619.42,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3063.87 2269.47,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,3063.87 2619.42,2713.91 "/>
+<polyline clip-path="url(#clip0561)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,2799.34 2302.95,2727.06 2326.53,2722.19 2350.12,2784.13 2373.7,2891.49 2397.28,3003.51 2420.86,3057.56 2444.44,3046.2 2468.03,2974.06 2491.61,2859.56 2515.19,2757.18 2538.77,2715.55 2562.35,2745.43 2585.94,2831.92 2609.52,2948.21 "/>
+<path clip-path="url(#clip050)" d="M2713.91 3063.87 L3063.87 3063.87 L3063.87 2713.91 L2713.91 2713.91  Z" fill="#e0e0e0" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0562">
+    <rect x="2713" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3063.87 3063.87,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,2713.91 3063.87,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3063.87 2713.91,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,3063.87 3063.87,2713.91 "/>
+<polyline clip-path="url(#clip0562)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:10; stroke-opacity:1; fill:none" points="2723.82,2826.16 2747.4,2938.08 2770.98,3029.59 2794.56,3063.98 2818.14,3032.56 2841.72,2947.46 2865.31,2833.9 2888.89,2743.73 2912.47,2713.21 2936.05,2751.58 2959.63,2840.1 2983.22,2952.95 3006.8,3036.93 3030.38,3063.33 3053.96,3024.45 "/>
+<path clip-path="url(#clip050)" d="M3158.36 3063.87 L3508.31 3063.87 L3508.31 2713.91 L3158.36 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0563">
+    <rect x="3158" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3063.87 3508.31,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,2713.91 3508.31,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3063.87 3158.36,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,3063.87 3508.31,2713.91 "/>
+<polyline clip-path="url(#clip0563)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,3064.9 3191.84,3022.51 3215.42,2932.67 3239.01,2824.34 3262.59,2739.13 3286.17,2710.47 3309.75,2749.08 3333.33,2833.8 3356.92,2941.56 3380.5,3029.95 3404.08,3066.56 3427.66,3037.42 3451.24,2956.3 3474.83,2848.12 3498.41,2753.71 "/>
+<path clip-path="url(#clip050)" d="M3602.8 3063.87 L3952.76 3063.87 L3952.76 2713.91 L3602.8 2713.91  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0564">
+    <rect x="3602" y="2713" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3063.87 3952.76,3063.87 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,2713.91 3952.76,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3063.87 3602.8,2713.91 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,3063.87 3952.76,2713.91 "/>
+<polyline clip-path="url(#clip0564)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,2804.98 3636.29,2727.56 3659.87,2708.76 3683.45,2753.2 3707.03,2837.36 3730.61,2940.15 3754.2,3028.01 3777.78,3070 3801.36,3044.79 3824.94,2968.26 3848.52,2867.05 3872.11,2769.14 3895.69,2710.47 3919.27,2720.7 3942.85,2783.12 "/>
+<path clip-path="url(#clip050)" d="M47.2441 3508.31 L397.2 3508.31 L397.2 3158.36 L47.2441 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0565">
+    <rect x="47" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3508.31 397.2,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3158.36 397.2,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3508.31 47.2441,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,3508.31 397.2,3158.36 "/>
+<polyline clip-path="url(#clip0565)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,3163.87 80.7305,3133.54 104.312,3168.16 127.894,3248.73 151.476,3366.23 175.058,3490.54 198.64,3528.5 222.222,3492.56 245.804,3411.1 269.386,3291.97 292.968,3163.87 316.55,3133.54 340.132,3168.16 363.714,3248.73 387.296,3366.23 "/>
+<path clip-path="url(#clip050)" d="M491.689 3508.31 L841.645 3508.31 L841.645 3158.36 L491.689 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0566">
+    <rect x="491" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3508.31 841.645,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3158.36 841.645,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3508.31 491.689,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,3508.31 841.645,3158.36 "/>
+<polyline clip-path="url(#clip0566)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,3192.34 525.175,3135.5 548.757,3155.13 572.339,3222.53 595.921,3331.52 619.503,3460.94 643.085,3522.61 666.667,3508.02 690.249,3442.16 713.831,3331.76 737.413,3192.81 760.994,3135.56 784.576,3154.97 808.158,3222.2 831.74,3331.07 "/>
+<path clip-path="url(#clip050)" d="M936.133 3508.31 L1286.09 3508.31 L1286.09 3158.36 L936.133 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0567">
+    <rect x="936" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3508.31 1286.09,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3158.36 1286.09,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3508.31 936.133,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,3508.31 1286.09,3158.36 "/>
+<polyline clip-path="url(#clip0567)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,3402.02 969.619,3500.36 993.201,3522.57 1016.78,3489.24 1040.37,3407.21 1063.95,3283.89 1087.53,3165.17 1111.11,3135.25 1134.69,3162.85 1158.28,3235.84 1181.86,3346.86 1205.44,3469.89 1229.02,3522.53 1252.6,3506.48 1276.18,3440.3 "/>
+<path clip-path="url(#clip050)" d="M1380.58 3508.31 L1730.53 3508.31 L1730.53 3158.36 L1380.58 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0568">
+    <rect x="1380" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3508.31 1730.53,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3158.36 1730.53,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3508.31 1380.58,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,3508.31 1730.53,3158.36 "/>
+<polyline clip-path="url(#clip0568)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,3180.18 1414.06,3134.73 1437.65,3152.84 1461.23,3214.86 1484.81,3315.05 1508.39,3438.2 1531.97,3513.03 1555.56,3517.53 1579.14,3471.48 1602.72,3378.06 1626.3,3249.32 1649.88,3152.69 1673.47,3136.65 1697.05,3172.68 1720.63,3248.56 "/>
+<path clip-path="url(#clip050)" d="M1825.02 3508.31 L2174.98 3508.31 L2174.98 3158.36 L1825.02 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0569">
+    <rect x="1825" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3508.31 2174.98,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3158.36 2174.98,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3508.31 1825.02,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,3508.31 2174.98,3158.36 "/>
+<polyline clip-path="url(#clip0569)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,3483.49 1858.51,3523.77 1882.09,3506.17 1905.67,3439.32 1929.25,3329.06 1952.84,3199.15 1976.42,3136.33 2000,3143.23 2023.58,3193.76 2047.16,3280.03 2070.75,3395.79 2094.33,3493.31 2117.91,3523.9 2141.49,3500.22 2165.07,3427.33 "/>
+<path clip-path="url(#clip050)" d="M2269.47 3508.31 L2619.42 3508.31 L2619.42 3158.36 L2269.47 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0570">
+    <rect x="2269" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3508.31 2619.42,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3158.36 2619.42,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3508.31 2269.47,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,3508.31 2619.42,3158.36 "/>
+<polyline clip-path="url(#clip0570)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,3168.74 2302.95,3130.36 2326.53,3151.17 2350.12,3207.12 2373.7,3295.81 2397.28,3409.12 2420.86,3499.74 2444.44,3525.14 2468.03,3498.7 2491.61,3424.45 2515.19,3310.38 2538.77,3186.69 2562.35,3132.11 2585.94,3143.18 2609.52,3193.21 "/>
+<path clip-path="url(#clip050)" d="M2713.91 3508.31 L3063.87 3508.31 L3063.87 3158.36 L2713.91 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0571">
+    <rect x="2713" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3508.31 3063.87,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3158.36 3063.87,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3508.31 2713.91,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,3508.31 3063.87,3158.36 "/>
+<polyline clip-path="url(#clip0571)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,3437.92 2747.4,3514.91 2770.98,3525.09 2794.56,3486.75 2818.14,3407.14 2841.72,3292.2 2865.31,3174.95 2888.89,3127.4 2912.47,3143.47 2936.05,3193.05 2959.63,3270.8 2983.22,3375.86 3006.8,3479.21 3030.38,3527.16 3053.96,3515.46 "/>
+<path clip-path="url(#clip050)" d="M3158.36 3508.31 L3508.31 3508.31 L3508.31 3158.36 L3158.36 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0572">
+    <rect x="3158" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3508.31 3508.31,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3158.36 3508.31,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3508.31 3158.36,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,3508.31 3508.31,3158.36 "/>
+<polyline clip-path="url(#clip0572)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,3236.72 3191.84,3142 3215.42,3124.25 3239.01,3157.57 3262.59,3213.97 3286.17,3295.67 3309.75,3398.85 3333.33,3495.86 3356.92,3531.62 3380.5,3511.78 3404.08,3446.36 3427.66,3349.22 3451.24,3230.43 3474.83,3139.3 3498.41,3124.94 "/>
+<path clip-path="url(#clip050)" d="M3602.8 3508.31 L3952.76 3508.31 L3952.76 3158.36 L3602.8 3158.36  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0573">
+    <rect x="3602" y="3158" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3508.31 3952.76,3508.31 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3158.36 3952.76,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3508.31 3602.8,3158.36 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,3508.31 3952.76,3158.36 "/>
+<polyline clip-path="url(#clip0573)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,3396.82 3636.29,3497.18 3659.87,3535.96 3683.45,3516.44 3707.03,3453.24 3730.61,3364.24 3754.2,3252.15 3777.78,3146.84 3801.36,3118.19 3824.94,3147.46 3848.52,3198.6 3872.11,3268.57 3895.69,3363.42 3919.27,3468.64 3942.85,3532.21 "/>
+<path clip-path="url(#clip050)" d="M47.2441 3952.76 L397.2 3952.76 L397.2 3602.8 L47.2441 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0574">
+    <rect x="47" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3952.76 397.2,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3602.8 397.2,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="47.2441,3952.76 47.2441,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="397.2,3952.76 397.2,3602.8 "/>
+<polyline clip-path="url(#clip0574)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="57.1485,3644.75 80.7305,3737.87 104.312,3875.84 127.894,3966.25 151.476,3965.71 175.058,3952.02 198.64,3902.69 222.222,3807.94 245.804,3653.3 269.386,3573.77 292.968,3586.76 316.55,3609.56 340.132,3667.26 363.714,3777.38 387.296,3914.37 "/>
+<path clip-path="url(#clip050)" d="M491.689 3952.76 L841.645 3952.76 L841.645 3602.8 L491.689 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0575">
+    <rect x="491" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3952.76 841.645,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3602.8 841.645,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="491.689,3952.76 491.689,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="841.645,3952.76 841.645,3602.8 "/>
+<polyline clip-path="url(#clip0575)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="501.593,3574.73 525.175,3589.81 548.757,3626.16 572.339,3701.41 595.921,3827.63 619.503,3943.09 643.085,3973.08 666.667,3960.05 690.249,3923.78 713.831,3847.28 737.413,3711.73 760.994,3590.91 784.576,3577 808.158,3591.17 831.74,3631.12 "/>
+<path clip-path="url(#clip050)" d="M936.133 3952.76 L1286.09 3952.76 L1286.09 3602.8 L936.133 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0576">
+    <rect x="936" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3952.76 1286.09,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3602.8 1286.09,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="936.133,3952.76 936.133,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1286.09,3952.76 1286.09,3602.8 "/>
+<polyline clip-path="url(#clip0576)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="946.037,3745.06 969.619,3605.89 993.201,3574.03 1016.78,3584.4 1040.37,3617.66 1063.95,3686.04 1087.53,3801.6 1111.11,3923.59 1134.69,3972.33 1158.28,3965.15 1181.86,3937.48 1205.44,3868.74 1229.02,3745 1252.6,3605.86 1276.18,3574.03 "/>
+<path clip-path="url(#clip050)" d="M1380.58 3952.76 L1730.53 3952.76 L1730.53 3602.8 L1380.58 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0577">
+    <rect x="1380" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3952.76 1730.53,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3602.8 1730.53,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1380.58,3952.76 1380.58,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1730.53,3952.76 1730.53,3602.8 "/>
+<polyline clip-path="url(#clip0577)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1390.48,3969.56 1414.06,3969.82 1437.65,3948.74 1461.23,3885.91 1484.81,3772.44 1508.39,3626.62 1531.97,3573.42 1555.56,3578.08 1579.14,3604.99 1602.72,3661.18 1626.3,3761.06 1649.88,3884.51 1673.47,3963.74 1697.05,3971.05 1720.63,3956.77 "/>
+<path clip-path="url(#clip050)" d="M1825.02 3952.76 L2174.98 3952.76 L2174.98 3602.8 L1825.02 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0578">
+    <rect x="1825" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3952.76 2174.98,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3602.8 2174.98,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1825.02,3952.76 1825.02,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2174.98,3952.76 2174.98,3602.8 "/>
+<polyline clip-path="url(#clip0578)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="1834.93,3605.05 1858.51,3663.07 1882.09,3760.2 1905.67,3878.62 1929.25,3962.34 1952.84,3974.59 1976.42,3961.27 2000,3907.72 2023.58,3809.06 2047.16,3670.68 2070.75,3579.81 2094.33,3571.61 2117.91,3588.02 2141.49,3628 2165.07,3706.94 "/>
+<path clip-path="url(#clip050)" d="M2269.47 3952.76 L2619.42 3952.76 L2619.42 3602.8 L2269.47 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0579">
+    <rect x="2269" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3952.76 2619.42,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3602.8 2619.42,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2269.47,3952.76 2269.47,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2619.42,3952.76 2619.42,3602.8 "/>
+<polyline clip-path="url(#clip0579)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2279.37,3799.42 2302.95,3664.7 2326.53,3577.18 2350.12,3567.81 2373.7,3585.64 2397.28,3623.93 2420.86,3697.63 2444.44,3803.97 2468.03,3917.25 2491.61,3975.29 2515.19,3976.78 2538.77,3949.7 2562.35,3885.2 2585.94,3773.86 2609.52,3636.29 "/>
+<path clip-path="url(#clip050)" d="M2713.91 3952.76 L3063.87 3952.76 L3063.87 3602.8 L2713.91 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0580">
+    <rect x="2713" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3952.76 3063.87,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3602.8 3063.87,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2713.91,3952.76 2713.91,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3063.87,3952.76 3063.87,3602.8 "/>
+<polyline clip-path="url(#clip0580)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="2723.82,3964.33 2747.4,3982.23 2770.98,3967.61 2794.56,3917.71 2818.14,3827.73 2841.72,3705.6 2865.31,3590.1 2888.89,3562.98 2912.47,3573.79 2936.05,3604.26 2959.63,3661.31 2983.22,3751.31 3006.8,3857.16 3030.38,3955.58 3053.96,3982.46 "/>
+<path clip-path="url(#clip050)" d="M3158.36 3952.76 L3508.31 3952.76 L3508.31 3602.8 L3158.36 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<defs>
+  <clipPath id="clip0581">
+    <rect x="3158" y="3602" width="351" height="351"/>
+  </clipPath>
+</defs>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3952.76 3508.31,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3602.8 3508.31,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3158.36,3952.76 3158.36,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3508.31,3952.76 3508.31,3602.8 "/>
+<polyline clip-path="url(#clip0581)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3168.26,3594.19 3191.84,3642.45 3215.42,3721.45 3239.01,3819.24 3262.59,3929.73 3286.17,3984.69 3309.75,3983.31 3333.33,3949.73 3356.92,3885.63 3380.5,3779.64 3404.08,3655.23 3427.66,3569.67 3451.24,3559.52 3474.83,3581.78 3498.41,3619.63 "/>
+<path clip-path="url(#clip050)" d="M3602.8 3952.76 L3952.76 3952.76 L3952.76 3602.8 L3602.8 3602.8  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3952.76 3952.76,3952.76 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3602.8 3952.76,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3602.8,3952.76 3602.8,3602.8 "/>
+<polyline clip-path="url(#clip050)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="3952.76,3952.76 3952.76,3602.8 "/>
+<polyline clip-path="url(#clip051)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4.8; stroke-opacity:1; fill:none" points="3612.7,3704.66 3636.29,3586.7 3659.87,3553.19 3683.45,3568.02 3707.03,3599.77 3730.61,3649.85 3754.2,3731.13 3777.78,3822.02 3801.36,3934.54 3824.94,3990.49 3848.52,3986.49 3872.11,3949.89 3895.69,3887.08 3919.27,3784.23 3942.85,3670.26 "/>
+</svg>

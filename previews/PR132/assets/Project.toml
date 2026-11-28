@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ReservoirComputing = "7c2d2b1e-3dd4-11ea-355a-8f6a8116e294"
+
+[compat]
+Documenter = "0.27"
