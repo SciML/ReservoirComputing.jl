@@ -406,6 +406,13 @@ function initialstates(rng::AbstractRNG, cell::LSMCell)
     )
 end
 
+__carry_dimensions(cell::LSMCell) = (2 * cell.out_dims,)
+
+function __init_carry_state(::LSMCell, init_carry, rng, dim)
+    membrane = vec(init_carry(rng, dim ÷ 2, 1))
+    return vcat(membrane, zero(membrane))
+end
+
 __init_encoder_st(::AbstractRNG, ::CurrentInjection) = NamedTuple()
 function __init_encoder_st(rng::AbstractRNG, ::PoissonRateEncoder)
     return (rng = __owned_replicate(rng),)

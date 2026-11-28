@@ -195,4 +195,100 @@ begin
             @test length(trained_st.cells) == 1
         end
     end
+
+    @testset "resetcarry! resets DelayLayers among the per-layer modifiers" begin
+        res_dims = 12
+        X1 = randn(MersenneTwister(5), Float32, 3, 10)
+        X2 = randn(MersenneTwister(6), Float32, 3, 10)
+        ones_init = (rng, dims...) -> ones(Float32, dims...)
+        models = (
+            DeepReservoir(
+                (
+                    ESNCell(3 => res_dims; init_state = zeros32),
+                    ESNCell(res_dims => res_dims; init_state = zeros32),
+                ),
+                LinearReadout(3 * res_dims => 2);
+                state_modifiers = (nothing, (DelayLayer(res_dims; num_delays = 2),)),
+            ),
+        )
+        for m in models
+            ps, st0 = setup(MersenneTwister(11), m)
+            run = st -> first(collectstates(m, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = collectstates(m, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+            @test run(resetcarry!(MersenneTwister(1), m, deepcopy(st1))) == ref
+            st_zero = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, zeros32)
+            )
+            @test run(st_zero) == ref
+            st_ones = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, ones_init)
+            )
+            delay_st = first(st_ones.state_modifiers[2])
+            delay_st = haskey(delay_st, :op) ? delay_st.op : delay_st
+            @test all(==(1), delay_st.history)
+            @test delay_st.clock == 0
+            @test run(st_ones) != ref
+            st_skip = resetcarry!(
+                MersenneTwister(1), m, deepcopy(st1); init_carry = (nothing, nothing)
+            )
+            @test run(st_skip) == ref
+        end
+    end
+
+    @testset "resetcarry! restarts LIFESNCell layers" begin
+        res_dims = 12
+        X1 = randn(MersenneTwister(5), Float32, 3, 10)
+        X2 = randn(MersenneTwister(6), Float32, 3, 10)
+        ones_init = (rng, dims...) -> ones(Float32, dims...)
+        for init_state in (zeros32, randn32)
+            lif(in_dims) = LIFESNCell(
+                in_dims => res_dims; lookback_horizon = 3, init_state = init_state
+            )
+            esn(in_dims) = ESNCell(in_dims => res_dims; init_state = zeros32)
+            stacks = (
+                ((lif(3),), 1),
+                ((esn(3), lif(res_dims)), 2),
+                ((lif(3), esn(res_dims)), 1),
+            )
+            for (cells, lif_idx) in stacks
+                n = length(cells)
+                m = DeepReservoir(cells, LinearReadout(n * res_dims => 2))
+                ps, st0 = setup(MersenneTwister(11), m)
+                run = st -> first(collectstates(m, X2, ps, deepcopy(st)))
+                ref = run(st0)
+                _, st1 = collectstates(m, X1, ps, deepcopy(st0))
+                @test run(st1) != ref
+
+                st_nothing = resetcarry!(MersenneTwister(1), m, deepcopy(st1))
+                @test st_nothing.cells[lif_idx].cell.start_states === nothing
+                @test st_nothing.cells[lif_idx].cell.input_buffer === nothing
+                @test run(st_nothing) == ref
+
+                if init_state === zeros32
+                    st_zero = resetcarry!(
+                        MersenneTwister(1), m, deepcopy(st1); init_carry = zeros32
+                    )
+                    @test run(st_zero) == ref
+
+                    per_layer = ntuple(i -> i == lif_idx ? zeros32 : nothing, n)
+                    st_layer = resetcarry!(
+                        MersenneTwister(1), m, deepcopy(st1); init_carry = per_layer
+                    )
+                    @test run(st_layer) == ref
+
+                    per_layer_ones = ntuple(i -> i == lif_idx ? ones_init : nothing, n)
+                    st_ones = resetcarry!(
+                        MersenneTwister(1), m, deepcopy(st1); init_carry = per_layer_ones
+                    )
+                    lif_st = st_ones.cells[lif_idx]
+                    @test all(==(1), first(lif_st.cell.start_states))
+                    @test lif_st.cell.start_states == lif_st.carry
+                    @test run(st_ones) != ref
+                end
+            end
+        end
+    end
+
 end

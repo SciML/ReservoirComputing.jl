@@ -351,6 +351,85 @@ begin
         end
     end
 
+    @testset "resetcarry! restores the delay state" begin
+        res_dims = 12
+        delay = DelayLayer(res_dims; num_delays = 2)
+        models = (
+            InputDelayESN(3, res_dims, 2; num_delays = 2, init_state = zeros32),
+            StateDelayESN(3, res_dims, 2; num_delays = 2, init_state = zeros32),
+            DelayESN(
+                3, res_dims, 2; num_input_delays = 2, num_state_delays = 2,
+                init_state = zeros32,
+            ),
+            ESN(
+                3, res_dims, 2; init_state = zeros32, state_modifiers = (delay,),
+                readout_in_dims = 3 * res_dims,
+            ),
+        )
+        X1 = randn(MersenneTwister(5), Float32, 3, 10)
+        X2 = randn(MersenneTwister(6), Float32, 3, 10)
+        ones_init = (rng, dims...) -> ones(Float32, dims...)
+        delay_states = (m, st) -> filter(
+            s -> haskey(s, :history),
+            [haskey(st, :input_delay) ? st.input_delay : (;), st.state_modifiers...],
+        )
+        for m in models
+            ps, st0 = setup(MersenneTwister(11), m)
+            run = st -> first(collectstates(m, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = collectstates(m, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+            @test run(resetcarry!(MersenneTwister(1), m, deepcopy(st1))) == ref
+            st_zero = resetcarry!(MersenneTwister(1), m, deepcopy(st1); init_carry = zeros32)
+            @test run(st_zero) == ref
+            st_ones = resetcarry!(MersenneTwister(1), m, deepcopy(st1); init_carry = ones_init)
+            for s in delay_states(m, st_ones)
+                @test all(==(1), s.history)
+                @test s.clock == 0
+            end
+            @test st_ones.readout == st1.readout
+            @test run(st_ones) != ref
+            _, st_ps = resetcarry!(MersenneTwister(1), m, ps, deepcopy(st1))
+            @test run(st_ps) == ref
+        end
+    end
+
+    @testset "resetcarry! resets DelayLayers inside wrapper modifiers" begin
+        res_dims = 12
+        models = (
+            ESN(
+                3, res_dims, 2; init_state = zeros32,
+                state_modifiers = (Extend(DelayLayer(res_dims; num_delays = 2)),),
+                readout_in_dims = 4 * res_dims,
+            ),
+            ESN(
+                3, res_dims, 2; init_state = zeros32,
+                state_modifiers = (ReservoirChain(DelayLayer(res_dims; num_delays = 2)),),
+                readout_in_dims = 3 * res_dims,
+            ),
+        )
+        X1 = randn(MersenneTwister(5), Float32, 3, 10)
+        X2 = randn(MersenneTwister(6), Float32, 3, 10)
+        ones_init = (rng, dims...) -> ones(Float32, dims...)
+        histories = st -> st isa NamedTuple && haskey(st, :history) ? [st] :
+            reduce(vcat, map(histories, collect(values(st))); init = Any[])
+        for m in models
+            ps, st0 = setup(MersenneTwister(11), m)
+            run = st -> first(collectstates(m, X2, ps, deepcopy(st)))
+            ref = run(st0)
+            _, st1 = collectstates(m, X1, ps, deepcopy(st0))
+            @test run(st1) != ref
+            @test run(resetcarry!(MersenneTwister(1), m, deepcopy(st1))) == ref
+            st_zero = resetcarry!(MersenneTwister(1), m, deepcopy(st1); init_carry = zeros32)
+            @test run(st_zero) == ref
+            st_ones = resetcarry!(MersenneTwister(1), m, deepcopy(st1); init_carry = ones_init)
+            found = histories(st_ones.state_modifiers)
+            @test length(found) == 1
+            @test all(h -> all(==(1), h.history) && h.clock == 0, found)
+            @test run(st_ones) != ref
+        end
+    end
+
     @testset "StateDelayESN forward pass & training" begin
         rng = MersenneTwister(123)
         in_dims, res_dims, out_dims, num_delays = 3, 40, 2, 2
