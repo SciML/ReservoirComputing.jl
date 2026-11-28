@@ -444,4 +444,176 @@ begin
         @test EuSN(3, 30, 2).reservoir.cell.init_state === zeros32
     end
 
+    @testset "ESNCell: numeric values in an abstractly typed carry" begin
+        cell = ESNCell(
+            1 => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ,
+            init_state = (rng, m, B) -> zeros(Float32, m),
+            leak_coefficient = 0.5
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        x = Float32[2]
+
+        for h in (Any[1.0f0], Real[1.0f0])
+            (y, _), _ = cell((x, (h,)), ps, st)
+            @test y == Float32[1.5]
+            @test eltype(y) == Float32
+        end
+
+        cell_any = ESNCell(
+            1 => 1, identity;
+            init_input = (rng, m, n) -> Matrix{Any}(ones(Float32, m, n)),
+            init_reservoir = (rng, m, n) -> Matrix{Any}(zeros(Float32, m, n)),
+            init_state = (rng, m, B) -> Any[0.0f0],
+            leak_coefficient = 0.5
+        )
+        ps_any = initialparameters(MersenneTwister(0), cell_any)
+        st_any = initialstates(MersenneTwister(0), cell_any)
+        (y_any, _), _ = cell_any(x, ps_any, st_any)
+        @test y_any ≈ [1.0]
+    end
+
+    @testset "memory cells: coefficients follow the memory carry precision" begin
+        x = Float32[2]
+        h = Float32[1]
+        m = BigFloat[1] .+ BigFloat(2)^-30
+        cand = 2 + m[1]
+
+        cell = ReservoirComputing.MemoryESNCell(
+            (1, 1) => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, init_memory = _W_I,
+            leak_coefficient = 0.1
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        (y, _), _ = cell((x, (h, m)), ps, st)
+        expected = (1 - BigFloat(0.1)) * 1 + BigFloat(0.1) * cand
+        @test eltype(y) == BigFloat
+        @test isapprox(y[1], expected; rtol = BigFloat(10)^-20)
+
+        rcell = ReservoirComputing.MemoryResESNCell(
+            (1, 1) => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, init_memory = _W_I,
+            init_orthogonal = _W_I, alpha = 0.3, beta = 0.1
+        )
+        rps = initialparameters(MersenneTwister(0), rcell)
+        rst = initialstates(MersenneTwister(0), rcell)
+        (ry, _), _ = rcell((x, (h, m)), rps, rst)
+        rexpected = BigFloat(0.3) * 1 + BigFloat(0.1) * cand
+        @test eltype(ry) == BigFloat
+        @test isapprox(ry[1], rexpected; rtol = BigFloat(10)^-20)
+    end
+
+    @testset "integer input and carry follow the weight eltype" begin
+        cell = ESNCell(
+            1 => 1, identity;
+            init_input = _W_I, init_reservoir = _W_ZZ, leak_coefficient = 1.0
+        )
+        ps = initialparameters(MersenneTwister(0), cell)
+        st = initialstates(MersenneTwister(0), cell)
+        (y, _), _ = cell(([2], ([1],)), ps, st)
+        @test y == Float32[2]
+        @test eltype(y) == Float32
+    end
+
+    @testset "ESNCell: exact arithmetic domains" begin
+        for (x, h, leak, expected) in (
+                ([7 // 5], [2 // 7], 2 // 3, [36 // 35]),
+                ([2^53 + 1], [0], 1, [2^53 + 1]),
+                ([2], [1], 0.5, [1.5]),
+                ([2], [1], [0.5], [1.5;;]),
+                ([2^53 + 1], [0], [1], [2^53 + 1;;]),
+            )
+            cell = ESNCell(1 => 1, identity; leak_coefficient = leak)
+            ps = (; input_matrix = ones(Int, 1, 1), reservoir_matrix = zeros(Int, 1, 1))
+            (y, _), _ = cell((x, (h,)), ps, NamedTuple())
+            @test y == expected
+            @test eltype(y) === eltype(expected)
+        end
+    end
+
+    @testset "integer input with fractional leak follows Float32 weights" begin
+        cell = ESNCell(1 => 1, identity; leak_coefficient = 0.5)
+        ps = (; input_matrix = ones(Float32, 1, 1), reservoir_matrix = zeros(Float32, 1, 1))
+        (y, _), _ = cell(([2], ([1],)), ps, NamedTuple())
+        @test y == Float32[1.5]
+        @test eltype(y) === Float32
+    end
+
+    @testset "all cell coefficients preserve exact domains" begin
+        for (constructor, dims, coefficients) in (
+                (ESNCell, 1 => 1, (; leak_coefficient = 1)),
+                (ES2NCell, 1 => 1, (; proximity = 1)),
+                (ResESNCell, 1 => 1, (; alpha = 0, beta = 1)),
+                (EuSNCell, 1 => 1, (; leak_coefficient = 1, diffusion = 0)),
+                (EIESNCell, 1 => 1, (; exc_recurrence_scale = 1, inh_recurrence_scale = 0, exc_output_scale = 1, inh_output_scale = 0)),
+                (AdditiveEIESNCell, 1 => 1, (; exc_recurrence_scale = 1, inh_recurrence_scale = 0, exc_output_scale = 1, inh_output_scale = 0)),
+                (ReservoirComputing.MemoryESNCell, (1, 1) => 1, (; leak_coefficient = 1)),
+                (ReservoirComputing.MemoryResESNCell, (1, 1) => 1, (; alpha = 0, beta = 1)),
+            )
+            @testset "$constructor" begin
+                cell = constructor(dims, identity; use_bias = false, coefficients...)
+                for value in (2^53 + 1, 7 // 5, 2.0f0, 2.0)
+                    T = typeof(value)
+                    ps = (;
+                        input_matrix = ones(T, 1, 1), reservoir_matrix = zeros(T, 1, 1),
+                        orthogonal_matrix = ones(T, 1, 1), memory_matrix = zeros(T, 1, 1),
+                    )
+                    carry = dims.first isa Tuple ? (T[0], T[0]) : (T[0],)
+                    (y, _), _ = @inferred cell((T[value], carry), ps, NamedTuple())
+                    @test y == [value]
+                    @test eltype(y) === T
+                end
+                for key in keys(coefficients)
+                    fractional = merge(coefficients, NamedTuple{(key,)}((0.5,)))
+                    fractional_cell = constructor(dims, identity; use_bias = false, fractional...)
+                    ps = (;
+                        input_matrix = ones(Int, 1, 1), reservoir_matrix = zeros(Int, 1, 1),
+                        orthogonal_matrix = ones(Int, 1, 1), memory_matrix = zeros(Int, 1, 1),
+                    )
+                    carry = dims.first isa Tuple ? ([0], [0]) : ([0],)
+                    (y, _), _ = fractional_cell(([2], carry), ps, NamedTuple())
+                    @test eltype(y) === Float64
+                end
+            end
+        end
+    end
+
+    @testset "full cell calls are inferred" begin
+        for T in (Float32, Float64)
+            w = (rng, m, n) -> ones(T, m, n)
+            z = (rng, m, n) -> zeros(T, m, n)
+            x = T[2]
+            h = T[1]
+            cell = ESNCell(1 => 1, identity; init_input = w, init_reservoir = z, leak_coefficient = 0.5)
+            ps = initialparameters(MersenneTwister(0), cell)
+            st = initialstates(MersenneTwister(0), cell)
+            @test @inferred(cell((x, (h,)), ps, st))[1][1] isa Vector{T}
+            mcell = ReservoirComputing.MemoryESNCell(
+                (1, 1) => 1, identity;
+                init_input = w, init_reservoir = z, init_memory = w, leak_coefficient = 0.5
+            )
+            mps = initialparameters(MersenneTwister(0), mcell)
+            mst = initialstates(MersenneTwister(0), mcell)
+            @test @inferred(mcell((x, (h, h)), mps, mst))[1][1] isa Vector{T}
+        end
+    end
+
+    @testset "cell element type helper is inferred" begin
+        f = ReservoirComputing.__cell_eltype
+        @test @inferred(f((0.5,), Float32[1], Float32[1])) === Float32
+        @test @inferred(f((0.5,), [1], Float32[1])) === Float32
+        @test @inferred(f((1,), [1], [1])) === Int
+        @test @inferred(f((0.5,), Float32[1], BigFloat[1])) === BigFloat
+        @test f((0.5,), Float32[1], Any[1.0f0]) === Float32
+        @test f((1,), Any[1.0f0], Real[1.0f0]) === Float64
+        @test f((1.0,), [1], [1]) === Int
+        @test f((0.5,), [1], [1]) === Float64
+        @test f((1, 0.5), [1], [1]) === Float64
+        @test f(([1, 1],), [1], [1]) === Int
+        @test f(([1, 0.5],), [1], [1]) === Float64
+        @test @inferred(f((2 // 3,), [7 // 5], [2 // 7])) === Rational{Int}
+    end
+
 end

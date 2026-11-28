@@ -95,7 +95,7 @@ function EuSNCell(
 end
 
 function (esn::EuSNCell)((inp, (hidden_state,))::InputType, ps, st::NamedTuple)
-    T = eltype(inp)
+    T = __cell_eltype((esn.leak_coefficient, esn.diffusion), inp, hidden_state, ps.input_matrix, ps.reservoir_matrix)
     bias = safe_getproperty(ps, Val(:bias))
     t_lc = T(esn.leak_coefficient)
     t_diff = T(esn.diffusion)
